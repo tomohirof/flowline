@@ -1,30 +1,78 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { LoginPage } from './features/auth/pages/LoginPage'
+import { RegisterPage } from './features/auth/pages/RegisterPage'
+import { useAuth, AuthProvider } from './hooks/useAuth'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+function Header() {
+  const { user, loading, logout } = useAuth()
+
+  if (loading)
+    return (
+      <header>
+        <p>読み込み中...</p>
+      </header>
+    )
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-    </>
+    <header data-testid="app-header">
+      <nav>
+        <Link to="/">Flowline</Link>
+        {user ? (
+          <div>
+            <span data-testid="user-name">{user.name}</span>
+            <button onClick={logout} data-testid="logout-button">
+              ログアウト
+            </button>
+          </div>
+        ) : (
+          <div>
+            <Link to="/login">ログイン</Link>
+            <Link to="/register">新規登録</Link>
+          </div>
+        )}
+      </nav>
+    </header>
+  )
+}
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return <p>読み込み中...</p>
+  if (!user) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
+function Dashboard() {
+  return (
+    <div data-testid="dashboard">
+      <h1>ダッシュボード</h1>
+      <p>ようこそ！（実装予定）</p>
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </main>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 
