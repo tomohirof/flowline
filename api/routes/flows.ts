@@ -341,7 +341,13 @@ flows.delete('/:id', async (c) => {
     return c.json({ error: 'アクセス権限がありません' }, 403)
   }
 
-  await db.prepare('DELETE FROM flows WHERE id = ?').bind(flowId).run()
+  // Explicitly delete related data first (D1 may not enforce ON DELETE CASCADE)
+  await db.batch([
+    db.prepare('DELETE FROM arrows WHERE flow_id = ?').bind(flowId),
+    db.prepare('DELETE FROM nodes WHERE flow_id = ?').bind(flowId),
+    db.prepare('DELETE FROM lanes WHERE flow_id = ?').bind(flowId),
+    db.prepare('DELETE FROM flows WHERE id = ?').bind(flowId),
+  ])
 
   return c.json({ message: 'フローを削除しました' })
 })

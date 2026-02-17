@@ -1,11 +1,19 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { LoginPage } from './features/auth/pages/LoginPage'
 import { RegisterPage } from './features/auth/pages/RegisterPage'
+import { FlowEditorPage } from './features/editor/pages/FlowEditorPage'
+import { FlowListPage } from './features/editor/pages/FlowListPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 import './App.css'
 
 function Header() {
   const { user, loading, logout } = useAuth()
+  const location = useLocation()
+
+  // Hide header on flow editor pages (full-screen editor)
+  if (location.pathname.match(/^\/flows\/[^/]+$/)) {
+    return null
+  }
 
   if (loading)
     return (
@@ -43,15 +51,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function Dashboard() {
-  return (
-    <div data-testid="dashboard">
-      <h1>ダッシュボード</h1>
-      <p>ようこそ！（実装予定）</p>
-    </div>
-  )
-}
-
 function App() {
   return (
     <BrowserRouter>
@@ -65,7 +64,23 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Navigate to="/flows" replace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/flows"
+              element={
+                <ProtectedRoute>
+                  <FlowListPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/flows/:id"
+              element={
+                <ProtectedRoute>
+                  <FlowEditorPage />
                 </ProtectedRoute>
               }
             />
