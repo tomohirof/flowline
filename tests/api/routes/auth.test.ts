@@ -174,6 +174,15 @@ describe('Auth API', () => {
       }, env)
       expect(res.status).toBe(201)
     })
+
+    it('should return 400 for malformed JSON body', async () => {
+      const res = await app.request('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'not-json',
+      }, env)
+      expect(res.status).toBe(400)
+    })
   })
 
   // === Login ===
@@ -250,6 +259,15 @@ describe('Auth API', () => {
       const body = await res.json()
       expect(body.user.password_hash).toBeUndefined()
     })
+
+    it('should return 400 for malformed JSON body', async () => {
+      const res = await app.request('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'not-json',
+      }, env)
+      expect(res.status).toBe(400)
+    })
   })
 
   // === Logout ===
@@ -259,6 +277,8 @@ describe('Auth API', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.message).toBe('ログアウトしました')
+      const cookie = res.headers.get('set-cookie')
+      expect(cookie).toContain('auth_token=')
     })
 
     it('should return 200 even without existing session', async () => {

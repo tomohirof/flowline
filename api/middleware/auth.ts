@@ -1,12 +1,7 @@
 import { createMiddleware } from 'hono/factory'
 import { getCookie } from 'hono/cookie'
 import { verifyToken } from '../lib/jwt'
-import type { Bindings } from '../app'
-
-type AuthEnv = {
-  Bindings: Bindings
-  Variables: { userId: string }
-}
+import type { AuthEnv } from '../app'
 
 export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
   const token = getCookie(c, 'auth_token')

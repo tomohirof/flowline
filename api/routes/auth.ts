@@ -4,12 +4,7 @@ import { hashPassword, verifyPassword } from '../lib/password'
 import { createToken } from '../lib/jwt'
 import { generateId } from '../lib/id'
 import { authMiddleware } from '../middleware/auth'
-import type { Bindings } from '../app'
-
-type AuthEnv = {
-  Bindings: Bindings
-  Variables: { userId: string }
-}
+import type { AuthEnv } from '../app'
 
 const auth = new Hono<AuthEnv>()
 
@@ -26,7 +21,12 @@ const COOKIE_OPTIONS = {
 }
 
 auth.post('/register', async (c) => {
-  const body = await c.req.json<{ email?: string; password?: string; name?: string }>()
+  let body: { email?: string; password?: string; name?: string }
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'リクエストの形式が正しくありません' }, 400)
+  }
 
   if (!body.email || !isValidEmail(body.email)) {
     return c.json({ error: 'メールアドレスの形式が正しくありません' }, 400)
@@ -62,7 +62,12 @@ auth.post('/register', async (c) => {
 })
 
 auth.post('/login', async (c) => {
-  const body = await c.req.json<{ email?: string; password?: string }>()
+  let body: { email?: string; password?: string }
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'リクエストの形式が正しくありません' }, 400)
+  }
 
   if (!body.email || !body.password) {
     return c.json({ error: 'メールアドレスまたはパスワードが正しくありません' }, 401)

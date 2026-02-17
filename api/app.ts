@@ -14,5 +14,10 @@ app.get('/health', (c) => {
 
 app.route('/auth', auth)
 
+export type AuthEnv = {
+  Bindings: Bindings
+  Variables: { userId: string }
+}
+
 export { app }
 export type { Bindings }
