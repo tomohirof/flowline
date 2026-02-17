@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react
 import { LoginPage } from './features/auth/pages/LoginPage'
 import { RegisterPage } from './features/auth/pages/RegisterPage'
 import { FlowEditorPage } from './features/editor/pages/FlowEditorPage'
-import { FlowListPage } from './features/editor/pages/FlowListPage'
+import { Dashboard } from './features/dashboard/Dashboard'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 import './App.css'
 
@@ -72,7 +72,7 @@ function App() {
               path="/flows"
               element={
                 <ProtectedRoute>
-                  <FlowListPage />
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
