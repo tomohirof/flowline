@@ -95,15 +95,17 @@ export interface Flow {
 // API response types
 // =============================================
 
+export interface FlowSummary {
+  id: string
+  title: string
+  themeId: string
+  shareToken: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface FlowListResponse {
-  flows: Array<{
-    id: string
-    title: string
-    themeId: string
-    shareToken: string | null
-    createdAt: string
-    updatedAt: string
-  }>
+  flows: FlowSummary[]
 }
 
 export interface FlowDetailResponse {

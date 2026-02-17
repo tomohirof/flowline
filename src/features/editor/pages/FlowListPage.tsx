@@ -1,16 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../../../lib/api'
-import type { FlowListResponse } from '../types'
-
-interface FlowSummary {
-  id: string
-  title: string
-  themeId: string
-  shareToken: string | null
-  createdAt: string
-  updatedAt: string
-}
+import type { FlowListResponse, FlowSummary } from '../types'
 
 export function FlowListPage() {
   const [flows, setFlows] = useState<FlowSummary[]>([])
