@@ -37,7 +37,7 @@ const PALETTES: Palette[] = [
 const THEMES: Record<ThemeId, Theme> = {
   cloud: {
     name: 'Cloud',
-    emoji: '\u2601\uFE0F',
+    emoji: '☁️',
     bg: '#EAEAF2',
     canvasBg: '#EAEAF2',
     dotGrid: '#D6D6E0',
@@ -77,7 +77,7 @@ const THEMES: Record<ThemeId, Theme> = {
   },
   midnight: {
     name: 'Midnight',
-    emoji: '\uD83C\uDF19',
+    emoji: '🌙',
     bg: '#1A1A24',
     canvasBg: '#1A1A24',
     dotGrid: '#2A2A38',
@@ -117,7 +117,7 @@ const THEMES: Record<ThemeId, Theme> = {
   },
   blueprint: {
     name: 'Blueprint',
-    emoji: '\uD83D\uDCD0',
+    emoji: '📐',
     bg: '#E8EDF4',
     canvasBg: '#E8EDF4',
     dotGrid: '#CDD4E0',
@@ -683,7 +683,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
   const insertLaneAt = (i: number): void => {
     setLanes((prev) => {
       const n = [...prev]
-      n.splice(i, 0, { id: uid(), name: `\u30EC\u30FC\u30F3${prev.length + 1}`, ci: i % PALETTES.length })
+      n.splice(i, 0, { id: uid(), name: `レーン${prev.length + 1}`, ci: i % PALETTES.length })
       return n
     })
     setHoveredLaneGap(null)
@@ -773,7 +773,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
       setTimeout(() => inputRef.current?.focus(), 40)
       return
     }
-    setTasks((p) => ({ ...p, [k]: { label: '\u4F5C\u696D', lid, rid } }))
+    setTasks((p) => ({ ...p, [k]: { label: '作業', lid, rid } }))
     const no = [...order, k]
     setOrder(no)
     if (no.length >= 2 && tasks[no[no.length - 2]])
@@ -927,24 +927,24 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
   const selLaneData = selLane ? lanes.find((l) => l.id === selLane) : null
 
   const sideTools: (SideTool | 'sep')[] = [
-    { id: 'select', icon: I.cursor, tip: '\u9078\u629E' },
-    { id: 'connect', icon: I.connect, tip: '\u63A5\u7D9A' },
+    { id: 'select', icon: I.cursor, tip: '選択' },
+    { id: 'connect', icon: I.connect, tip: '接続' },
     'sep',
-    { id: 'addRow', icon: I.addRow, tip: '\u884C\u8FFD\u52A0', action: addRow },
-    { id: 'rmRow', icon: I.rmRow, tip: '\u884C\u524A\u9664', action: rmRow },
+    { id: 'addRow', icon: I.addRow, tip: '行追加', action: addRow },
+    { id: 'rmRow', icon: I.rmRow, tip: '行削除', action: rmRow },
     'sep',
-    { id: 'zoomIn', icon: I.zoomIn, tip: '\u62E1\u5927', action: () => setZoom((z) => Math.min(2, z + 0.1)) },
-    { id: 'zoomOut', icon: I.zoomOut, tip: '\u7E2E\u5C0F', action: () => setZoom((z) => Math.max(0.4, z - 0.1)) },
+    { id: 'zoomIn', icon: I.zoomIn, tip: '拡大', action: () => setZoom((z) => Math.min(2, z + 0.1)) },
+    { id: 'zoomOut', icon: I.zoomOut, tip: '縮小', action: () => setZoom((z) => Math.max(0.4, z - 0.1)) },
     'sep',
     { id: 'export', icon: I.export, tip: 'Export', action: () => setShowExport((v) => !v) },
   ]
 
   // --- Status bar text ---
   const saveStatusText: Record<SaveStatus, string> = {
-    saved: '\u4FDD\u5B58\u6E08\u307F',
-    saving: '\u4FDD\u5B58\u4E2D...',
-    unsaved: '\u672A\u4FDD\u5B58',
-    error: '\u4FDD\u5B58\u30A8\u30E9\u30FC',
+    saved: '保存済み',
+    saving: '保存中...',
+    unsaved: '未保存',
+    error: '保存エラー',
   }
 
   // --- Right Panel ---
@@ -955,39 +955,39 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
       const oi = order.indexOf(selTask)
       return (
         <>
-          <PanelSection label="\u30CE\u30FC\u30C9" T={T}>
-            <PanelRow label="\u30E9\u30D9\u30EB" T={T} />
+          <PanelSection label="ノード" T={T}>
+            <PanelRow label="ラベル" T={T} />
             <PanelInput
-              value={selTaskData.label === '\u4F5C\u696D' ? '' : selTaskData.label}
-              placeholder="\u4F5C\u696D"
+              value={selTaskData.label === '作業' ? '' : selTaskData.label}
+              placeholder="作業"
               onChange={(v: string) =>
-                setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], label: v || '\u4F5C\u696D' } }))
+                setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], label: v || '作業' } }))
               }
               T={T}
             />
           </PanelSection>
-          <PanelSection label="\u30E1\u30E2" T={T}>
+          <PanelSection label="メモ" T={T}>
             <PanelInput
               value={notes[selTask] || ''}
-              placeholder="\u30E1\u30E2\u3092\u8FFD\u52A0\u2026"
+              placeholder="メモを追加…"
               onChange={(v: string) => setNotes((p2) => ({ ...p2, [selTask]: v }))}
               T={T}
             />
           </PanelSection>
-          <PanelSection label="\u60C5\u5831" T={T}>
-            <PanelRow label="\u30EC\u30FC\u30F3" T={T}>
+          <PanelSection label="情報" T={T}>
+            <PanelRow label="レーン" T={T}>
               <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{lane?.name}</span>
             </PanelRow>
             {oi !== -1 && (
-              <PanelRow label="\u9806\u756A" T={T}>
+              <PanelRow label="順番" T={T}>
                 <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{oi + 1}</span>
               </PanelRow>
             )}
           </PanelSection>
-          <PanelSection label="\u64CD\u4F5C" T={T}>
+          <PanelSection label="操作" T={T}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <PanelBtn label="\u2192 \u63A5\u7D9A" color={T.accent} onClick={() => startConnect(selTask)} T={T} />
-              <PanelBtn label="\u524A\u9664" color="#E06060" onClick={() => delTask(selTask)} T={T} />
+              <PanelBtn label="→ 接続" color={T.accent} onClick={() => startConnect(selTask)} T={T} />
+              <PanelBtn label="削除" color="#E06060" onClick={() => delTask(selTask)} T={T} />
             </div>
           </PanelSection>
         </>
@@ -999,7 +999,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
       const fromT = tasks[selArrowData.from], toT = tasks[selArrowData.to]
       return (
         <>
-          <PanelSection label="\u63A5\u7D9A\u7DDA" T={T}>
+          <PanelSection label="接続線" T={T}>
             <PanelRow label="From" T={T}>
               <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{fromT?.label || '?'}</span>
             </PanelRow>
@@ -1007,20 +1007,20 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
               <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{toT?.label || '?'}</span>
             </PanelRow>
           </PanelSection>
-          <PanelSection label="\u30B3\u30E1\u30F3\u30C8" T={T}>
+          <PanelSection label="コメント" T={T}>
             <PanelInput
               value={selArrowData.comment || ''}
-              placeholder="\u30E9\u30D9\u30EB\u3092\u8FFD\u52A0\u2026"
+              placeholder="ラベルを追加…"
               onChange={(v: string) =>
                 setArrows((p) => p.map((a) => (a.id === selArrow ? { ...a, comment: v } : a)))
               }
               T={T}
             />
           </PanelSection>
-          <PanelSection label="\u64CD\u4F5C" T={T}>
+          <PanelSection label="操作" T={T}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <PanelBtn
-                label="\u21C4 \u65B9\u5411\u3092\u9006\u8EE2"
+                label="⇄ 方向を逆転"
                 color={T.accent}
                 onClick={() =>
                   setArrows((p) =>
@@ -1030,7 +1030,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                 T={T}
               />
               <PanelBtn
-                label="\u524A\u9664"
+                label="削除"
                 color="#E06060"
                 onClick={() => {
                   setArrows((p) => p.filter((a) => a.id !== selArrow))
@@ -1048,8 +1048,8 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
     if (selLane && selLaneData) {
       return (
         <>
-          <PanelSection label="\u30EC\u30FC\u30F3" T={T}>
-            <PanelRow label="\u540D\u524D" T={T} />
+          <PanelSection label="レーン" T={T}>
+            <PanelRow label="名前" T={T} />
             <PanelInput
               value={selLaneData.name}
               onChange={(v: string) =>
@@ -1058,7 +1058,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
               T={T}
             />
           </PanelSection>
-          <PanelSection label="\u30AB\u30E9\u30FC" T={T}>
+          <PanelSection label="カラー" T={T}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {PALETTES.map((p, ci) => (
                 <div
@@ -1079,14 +1079,14 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
               ))}
             </div>
           </PanelSection>
-          <PanelSection label="\u9806\u756A" T={T}>
+          <PanelSection label="順番" T={T}>
             <div style={{ display: 'flex', gap: 6 }}>
-              <PanelBtn label="\u2190 \u5DE6\u3078" color={T.accent} onClick={() => moveLane(selLane, -1)} T={T} />
-              <PanelBtn label="\u53F3\u3078 \u2192" color={T.accent} onClick={() => moveLane(selLane, 1)} T={T} />
+              <PanelBtn label="← 左へ" color={T.accent} onClick={() => moveLane(selLane, -1)} T={T} />
+              <PanelBtn label="右へ →" color={T.accent} onClick={() => moveLane(selLane, 1)} T={T} />
             </div>
           </PanelSection>
-          <PanelSection label="\u64CD\u4F5C" T={T}>
-            <PanelBtn label="\u30EC\u30FC\u30F3\u3092\u524A\u9664" color="#E06060" onClick={() => rmLane(selLane)} T={T} full />
+          <PanelSection label="操作" T={T}>
+            <PanelBtn label="レーンを削除" color="#E06060" onClick={() => rmLane(selLane)} T={T} full />
           </PanelSection>
         </>
       )
@@ -1095,7 +1095,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
     // Nothing selected -> Theme & Canvas
     return (
       <>
-        <PanelSection label="\u30C6\u30FC\u30DE" T={T}>
+        <PanelSection label="テーマ" T={T}>
           <div style={{ position: 'relative' }}>
             <div
               onClick={() => setShowThemePicker((v) => !v)}
@@ -1117,7 +1117,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                 <span style={{ fontSize: 14 }}>{THEMES[themeId].emoji}</span>
                 {THEMES[themeId].name}
               </span>
-              <span style={{ fontSize: 10, color: T.panelLabel }}>{showThemePicker ? '\u25B2' : '\u25BC'}</span>
+              <span style={{ fontSize: 10, color: T.panelLabel }}>{showThemePicker ? '▲' : '▼'}</span>
             </div>
             {showThemePicker && (
               <div
@@ -1159,23 +1159,23 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
             )}
           </div>
         </PanelSection>
-        <PanelSection label="\u30AD\u30E3\u30F3\u30D0\u30B9" T={T}>
-          <PanelRow label="\u30EC\u30FC\u30F3\u6570" T={T}>
+        <PanelSection label="キャンバス" T={T}>
+          <PanelRow label="レーン数" T={T}>
             <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{lanes.length}</span>
           </PanelRow>
-          <PanelRow label="\u884C\u6570" T={T}>
+          <PanelRow label="行数" T={T}>
             <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{rows.length}</span>
           </PanelRow>
-          <PanelRow label="\u30CE\u30FC\u30C9\u6570" T={T}>
+          <PanelRow label="ノード数" T={T}>
             <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{Object.keys(tasks).length}</span>
           </PanelRow>
-          <PanelRow label="\u63A5\u7D9A\u6570" T={T}>
+          <PanelRow label="接続数" T={T}>
             <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{arrows.length}</span>
           </PanelRow>
         </PanelSection>
-        <PanelSection label="\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8" T={T}>
+        <PanelSection label="エクスポート" T={T}>
           <PanelBtn
-            label="Mermaid \u30B3\u30FC\u30C9\u3092\u30B3\u30D4\u30FC"
+            label="Mermaid コードをコピー"
             color={T.accent}
             onClick={() => navigator.clipboard?.writeText(exportMermaid())}
             T={T}
@@ -1291,7 +1291,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
             }}
           >
             <span style={{ fontSize: 11, color: T.accent, fontWeight: 500 }}>
-              {'\u2192 \u63A5\u7D9A\u5148\u3092\u30AF\u30EA\u30C3\u30AF'}
+              {'→ 接続先をクリック'}
             </span>
             <button
               onClick={(e: React.MouseEvent) => {
@@ -1313,7 +1313,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                 justifyContent: 'center',
               }}
             >
-              {'\u00D7'}
+              {'×'}
             </button>
           </div>
         )}
@@ -1494,13 +1494,13 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                     {li > 0 && (
                       <g onClick={(e: React.MouseEvent) => { e.stopPropagation(); moveLane(selLane, -1) }} style={{ cursor: 'pointer' }}>
                         <rect x={cx - 44} y={cy - 11} width={30} height={22} rx={6} fill={T.sidebar} stroke={T.laneBorder} strokeWidth={0.5} />
-                        <text x={cx - 29} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={13} fill={T.sidebarIcon} fontWeight={600}>{'\u2190'}</text>
+                        <text x={cx - 29} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={13} fill={T.sidebarIcon} fontWeight={600}>{'←'}</text>
                       </g>
                     )}
                     {li < lanes.length - 1 && (
                       <g onClick={(e: React.MouseEvent) => { e.stopPropagation(); moveLane(selLane, 1) }} style={{ cursor: 'pointer' }}>
                         <rect x={cx + 14} y={cy - 11} width={30} height={22} rx={6} fill={T.sidebar} stroke={T.laneBorder} strokeWidth={0.5} />
-                        <text x={cx + 29} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={13} fill={T.sidebarIcon} fontWeight={600}>{'\u2192'}</text>
+                        <text x={cx + 29} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={13} fill={T.sidebarIcon} fontWeight={600}>{'→'}</text>
                       </g>
                     )}
                   </g>
@@ -1638,11 +1638,11 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                       <foreignObject x={c.x - TW / 2 + 8} y={c.y - TH / 2 + 18} width={TW - 16} height={TH - 22}>
                         <input
                           ref={inputRef}
-                          value={task.label === '\u4F5C\u696D' ? '' : task.label}
-                          placeholder="\u4F5C\u696D"
+                          value={task.label === '作業' ? '' : task.label}
+                          placeholder="作業"
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const v = e.target.value
-                            setTasks((p2) => ({ ...p2, [k]: { ...p2[k], label: v || '\u4F5C\u696D' } }))
+                            setTasks((p2) => ({ ...p2, [k]: { ...p2[k], label: v || '作業' } }))
                           }}
                           onBlur={() => setEditing(null)}
                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') setEditing(null) }}
@@ -1665,10 +1665,10 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                       <text
                         x={c.x} y={c.y + 6} textAnchor="middle" dominantBaseline="central"
                         fontSize={11.5} fontWeight={500}
-                        fill={task.label === '\u4F5C\u696D' ? T.statusText : T.titleColor}
+                        fill={task.label === '作業' ? T.statusText : T.titleColor}
                         style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                       >
-                        {task.label.length > 10 ? task.label.slice(0, 10) + '\u2026' : task.label}
+                        {task.label.length > 10 ? task.label.slice(0, 10) + '…' : task.label}
                       </text>
                     )}
                     {note && !connectFrom && !dragging && (
@@ -1703,12 +1703,12 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation()
                               const nk = k
-                              if (!notes[nk]) setNotes((p2) => ({ ...p2, [nk]: '\u30E1\u30E2' }))
+                              if (!notes[nk]) setNotes((p2) => ({ ...p2, [nk]: 'メモ' }))
                               setEditNote(nk)
                               setTimeout(() => inputRef.current?.focus(), 40)
                             }}
                           >
-                            {note.length > 14 ? note.slice(0, 14) + '\u2026' : note}
+                            {note.length > 14 ? note.slice(0, 14) + '…' : note}
                           </text>
                         )}
                       </g>
@@ -1745,7 +1745,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                         fill={T.commentPill} stroke={T.commentBorder} strokeWidth={0.5}
                       />
                       <text x={mx} y={my - 8} textAnchor="middle" dominantBaseline="central" fontSize={9} fill={T.commentText} fontWeight={500}>
-                        {arrow.comment.length > 18 ? arrow.comment.slice(0, 18) + '\u2026' : arrow.comment}
+                        {arrow.comment.length > 18 ? arrow.comment.slice(0, 18) + '…' : arrow.comment}
                       </text>
                     </g>
                   )}
@@ -1804,7 +1804,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
                 letterSpacing: '0.08em',
               }}
             >
-              {selTask ? '\u30CE\u30FC\u30C9' : selArrow ? '\u63A5\u7D9A\u7DDA' : selLane ? '\u30EC\u30FC\u30F3' : '\u30D7\u30ED\u30D1\u30C6\u30A3'}
+              {selTask ? 'ノード' : selArrow ? '接続線' : selLane ? 'レーン' : 'プロパティ'}
             </span>
           </div>
           {renderRightPanel()}
@@ -1825,18 +1825,18 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
         }}
       >
         <span style={{ fontSize: 10, color: T.statusText }}>
-          {Object.keys(tasks).length} tasks {'\u00B7'} {arrows.length} connections
+          {Object.keys(tasks).length} tasks {'·'} {arrows.length} connections
         </span>
         <span style={{ fontSize: 10, color: T.statusText, opacity: 0.5 }}>
-          {'\u2318Z:\u623B\u3059 \u00B7 \u2318\u21E7Z:\u3084\u308A\u76F4\u3059'}
+          {'⌘Z:戻す · ⌘⇧Z:やり直す'}
         </span>
         <div style={{ flex: 1 }} />
         <span style={{ fontSize: 10, color: T.statusText, opacity: 0.6 }}>
           {connectFrom
-            ? '\u63A5\u7D9A\u5148\u30AF\u30EA\u30C3\u30AF \u00B7 Esc\u89E3\u9664'
+            ? '接続先クリック · Esc解除'
             : dragging
-              ? '\u7A7A\u304D\u30BB\u30EB\u306B\u30C9\u30ED\u30C3\u30D7'
-              : '\u30AF\u30EA\u30C3\u30AF:\u8FFD\u52A0 \u00B7 \u30C9\u30E9\u30C3\u30B0:\u79FB\u52D5 \u00B7 \u30D8\u30C3\u30C0:\u30EC\u30FC\u30F3\u9078\u629E'}
+              ? '空きセルにドロップ'
+              : 'クリック:追加 · ドラッグ:移動 · ヘッダ:レーン選択'}
         </span>
       </div>
     </div>
