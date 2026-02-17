@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
+import { ShareDialog } from './components/ShareDialog'
 import type {
-  Palette,
-  Theme,
   ThemeId,
   TaskData,
   RowData,
@@ -18,144 +17,7 @@ import type {
   FlowSavePayload,
   SaveStatus,
 } from './types'
-
-// =============================================
-// Constants
-// =============================================
-
-const PALETTES: Palette[] = [
-  { dot: '#E8985A', tag: '#FFF4EB', text: '#B06828', name: 'Orange' },
-  { dot: '#5B8EC9', tag: '#EBF3FF', text: '#2D6AB0', name: 'Blue' },
-  { dot: '#9B6BC9', tag: '#F3EBFF', text: '#6B3BA0', name: 'Purple' },
-  { dot: '#5AC98A', tag: '#EBFFEF', text: '#2A7A4A', name: 'Green' },
-  { dot: '#C95A7B', tag: '#FFEBF0', text: '#A03050', name: 'Pink' },
-  { dot: '#5AB5C9', tag: '#EBFAFF', text: '#1A7A90', name: 'Cyan' },
-  { dot: '#C9A85A', tag: '#FFF8EB', text: '#8A6A20', name: 'Gold' },
-  { dot: '#7B5AC9', tag: '#EFEBFF', text: '#5030A0', name: 'Violet' },
-]
-
-const THEMES: Record<ThemeId, Theme> = {
-  cloud: {
-    name: 'Cloud',
-    emoji: '☁️',
-    bg: '#EAEAF2',
-    canvasBg: '#EAEAF2',
-    dotGrid: '#D6D6E0',
-    sidebar: '#fff',
-    sidebarBorder: '#E5E4E9',
-    sidebarIcon: '#999',
-    sidebarActive: '#7C5CFC',
-    sidebarActiveBg: '#F0EBFF',
-    titleBar: '#fff',
-    titleBarBorder: '#E5E4E9',
-    titleColor: '#444',
-    titleSub: '#999',
-    laneBg: '#F5F5F8',
-    laneHeaderBg: '#FAFAFD',
-    laneBorder: '#E8E8EE',
-    laneAccentOpacity: 0.5,
-    nodeStroke: '#E8E7EE',
-    nodeFill: '#fff',
-    nodeShadow: '0 2px 8px rgba(80,80,120,0.10), 0 1px 3px rgba(80,80,120,0.06)',
-    nodeSelStroke: '#7C5CFC',
-    arrowColor: '#C0BEC8',
-    arrowSel: '#7C5CFC',
-    accent: '#7C5CFC',
-    statusBg: '#fff',
-    statusBorder: '#E5E4E9',
-    statusText: '#BBB',
-    commentPill: '#fff',
-    commentBorder: '#E8E7EE',
-    commentText: '#888',
-    panelBg: '#fff',
-    panelBorder: '#E5E4E9',
-    panelText: '#555',
-    panelLabel: '#999',
-    inputBg: '#F8F8FC',
-    inputBorder: '#E0E0E8',
-    laneGap: 6,
-  },
-  midnight: {
-    name: 'Midnight',
-    emoji: '🌙',
-    bg: '#1A1A24',
-    canvasBg: '#1A1A24',
-    dotGrid: '#2A2A38',
-    sidebar: '#222230',
-    sidebarBorder: '#333344',
-    sidebarIcon: '#666680',
-    sidebarActive: '#A78BFA',
-    sidebarActiveBg: '#2D2844',
-    titleBar: '#222230',
-    titleBarBorder: '#333344',
-    titleColor: '#D0D0E0',
-    titleSub: '#666680',
-    laneBg: '#22222E',
-    laneHeaderBg: '#2A2A38',
-    laneBorder: '#333344',
-    laneAccentOpacity: 0.6,
-    nodeStroke: '#3A3A4C',
-    nodeFill: '#2A2A38',
-    nodeShadow: '0 3px 12px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.2)',
-    nodeSelStroke: '#A78BFA',
-    arrowColor: '#555568',
-    arrowSel: '#A78BFA',
-    accent: '#A78BFA',
-    statusBg: '#222230',
-    statusBorder: '#333344',
-    statusText: '#555568',
-    commentPill: '#2A2A38',
-    commentBorder: '#3A3A4C',
-    commentText: '#888898',
-    panelBg: '#222230',
-    panelBorder: '#333344',
-    panelText: '#C0C0D0',
-    panelLabel: '#666680',
-    inputBg: '#2A2A38',
-    inputBorder: '#3A3A4C',
-    laneGap: 6,
-  },
-  blueprint: {
-    name: 'Blueprint',
-    emoji: '📐',
-    bg: '#E8EDF4',
-    canvasBg: '#E8EDF4',
-    dotGrid: '#CDD4E0',
-    sidebar: '#fff',
-    sidebarBorder: '#D8DDE6',
-    sidebarIcon: '#8899AA',
-    sidebarActive: '#3B82F6',
-    sidebarActiveBg: '#EBF2FF',
-    titleBar: '#fff',
-    titleBarBorder: '#D8DDE6',
-    titleColor: '#334155',
-    titleSub: '#8899AA',
-    laneBg: '#F0F3F8',
-    laneHeaderBg: '#F6F8FB',
-    laneBorder: '#D8DDE6',
-    laneAccentOpacity: 0.5,
-    nodeStroke: '#D0D8E4',
-    nodeFill: '#fff',
-    nodeShadow: '0 2px 10px rgba(50,70,100,0.10), 0 1px 3px rgba(50,70,100,0.06)',
-    nodeSelStroke: '#3B82F6',
-    arrowColor: '#AAB8CC',
-    arrowSel: '#3B82F6',
-    accent: '#3B82F6',
-    statusBg: '#fff',
-    statusBorder: '#D8DDE6',
-    statusText: '#99AABB',
-    commentPill: '#fff',
-    commentBorder: '#D0D8E4',
-    commentText: '#7788AA',
-    panelBg: '#fff',
-    panelBorder: '#D8DDE6',
-    panelText: '#445566',
-    panelLabel: '#8899AA',
-    inputBg: '#F4F6FA',
-    inputBorder: '#D0D8E4',
-    laneGap: 6,
-  },
-}
+import { PALETTES, THEMES } from './theme-constants'
 
 const uid = (): string => crypto.randomUUID()
 
@@ -484,13 +346,14 @@ interface FlowEditorProps {
   flow: Flow
   onSave: (payload: FlowSavePayload) => void
   saveStatus: SaveStatus
+  onShareChange?: (token: string | null) => void
 }
 
 // =============================================
 // FlowEditor Component
 // =============================================
 
-export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps) {
+export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: FlowEditorProps) {
   // Initialize state from flow data (lazy initialization to avoid recomputing on every render)
   const [initState] = useState(() => flowToInternalState(flow))
   const [lanes, setLanes] = useState<InternalLane[]>(initState.lanes)
@@ -518,6 +381,8 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
   const [activeTool, setActiveTool] = useState<ToolId | string>('select')
   const [themeId, setThemeId] = useState<ThemeId>(initState.themeId)
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
+  const [showShareDialog, setShowShareDialog] = useState<boolean>(false)
+  const [shareToken, setShareToken] = useState<string | null>(flow.shareToken)
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
 
@@ -1285,6 +1150,29 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
             {title}
           </span>
         )}
+        <button
+          data-testid="share-button"
+          onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowShareDialog(true) }}
+          style={{
+            height: 26,
+            padding: '0 10px',
+            border: shareToken ? `1px solid ${T.accent}40` : `1px solid ${T.titleBarBorder}`,
+            borderRadius: 6,
+            background: shareToken ? `${T.accent}10` : 'transparent',
+            color: shareToken ? T.accent : T.titleSub,
+            cursor: 'pointer',
+            fontSize: 11,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            transition: 'all 0.15s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            marginLeft: 8,
+          }}
+        >
+          {shareToken ? '共有中' : '共有'}
+        </button>
         <div style={{ flex: 1 }} />
         {connectFrom && (
           <div
@@ -1848,6 +1736,19 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
               : 'クリック:追加 · ドラッグ:移動 · ヘッダ:レーン選択'}
         </span>
       </div>
+
+      {/* Share Dialog */}
+      {showShareDialog && (
+        <ShareDialog
+          flowId={flow.id}
+          shareToken={shareToken}
+          onShareChange={(token) => {
+            setShareToken(token)
+            onShareChange?.(token)
+          }}
+          onClose={() => setShowShareDialog(false)}
+        />
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { LoginPage } from './features/auth/pages/LoginPage'
 import { RegisterPage } from './features/auth/pages/RegisterPage'
 import { FlowEditorPage } from './features/editor/pages/FlowEditorPage'
 import { Dashboard } from './features/dashboard/Dashboard'
+import { SharedFlowPage } from './features/shared/SharedFlowPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 import './App.css'
 
@@ -10,8 +11,8 @@ function Header() {
   const { user, loading, logout } = useAuth()
   const location = useLocation()
 
-  // Hide header on flow editor pages (full-screen editor)
-  if (location.pathname.match(/^\/flows\/[^/]+$/)) {
+  // Hide header on flow editor pages and shared view (full-screen)
+  if (location.pathname.match(/^\/flows\/[^/]+$/) || location.pathname.match(/^\/shared\/[^/]+$/)) {
     return null
   }
 
@@ -84,6 +85,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/shared/:token" element={<SharedFlowPage />} />
           </Routes>
         </main>
       </AuthProvider>
