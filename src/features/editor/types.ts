@@ -137,6 +137,8 @@ export interface TaskData {
   label: string
   lid: string
   rid: string
+  /** Stable node ID for API persistence. Generated on creation, preserved across saves. */
+  nodeId: string
 }
 
 export interface RowData {

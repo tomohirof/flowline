@@ -87,7 +87,6 @@ export function useFlow(flowId: string) {
     const payload = pendingPayloadRef.current
     if (!payload || !flowIdRef.current) return
 
-    pendingPayloadRef.current = null
     setSaveStatus('saving')
 
     try {
@@ -95,9 +94,12 @@ export function useFlow(flowId: string) {
         method: 'PUT',
         body: JSON.stringify(payload),
       })
+      // Clear payload only after successful save
+      pendingPayloadRef.current = null
       setFlow(data.flow)
       setSaveStatus('saved')
     } catch {
+      // Payload is preserved in pendingPayloadRef for retry
       setSaveStatus('error')
     }
   }, [])

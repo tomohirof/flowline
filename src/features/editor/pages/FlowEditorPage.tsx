@@ -1,8 +1,7 @@
 import { useParams } from 'react-router-dom'
-import { useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useFlow } from '../hooks/useFlow'
 import FlowEditor from '../FlowEditor'
-import type { FlowSavePayload } from '../types'
 
 export function FlowEditorPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,13 +18,6 @@ export function FlowEditorPage() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [saveNow])
-
-  const handleSave = useCallback(
-    (payload: FlowSavePayload) => {
-      updateFlow(payload)
-    },
-    [updateFlow],
-  )
 
   if (loading) {
     return (
@@ -65,5 +57,5 @@ export function FlowEditorPage() {
     return null
   }
 
-  return <FlowEditor flow={flow} onSave={handleSave} saveStatus={saveStatus} />
+  return <FlowEditor flow={flow} onSave={updateFlow} saveStatus={saveStatus} />
 }

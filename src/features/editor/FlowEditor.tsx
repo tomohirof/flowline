@@ -157,7 +157,7 @@ const THEMES: Record<ThemeId, Theme> = {
   },
 }
 
-const uid = (): string => Math.random().toString(36).slice(2, 10)
+const uid = (): string => crypto.randomUUID()
 
 // =============================================
 // Icons
@@ -384,7 +384,7 @@ function flowToInternalState(flow: Flow): {
     const ri = n.rowIndex
     if (ri >= 0 && ri < rows.length) {
       const key = `${n.laneId}_${rows[ri].id}`
-      tasks[key] = { label: n.label, lid: n.laneId, rid: rows[ri].id }
+      tasks[key] = { label: n.label, lid: n.laneId, rid: rows[ri].id, nodeId: n.id }
       if (n.note) {
         notes[key] = n.note
       }
@@ -433,14 +433,17 @@ function internalStateToPayload(
   const riMap: Record<string, number> = {}
   rows.forEach((r, i) => (riMap[r.id] = i))
 
+  // Build composite key -> stable nodeId map for arrow resolution
+  const keyToNodeId: Record<string, string> = {}
+
   // Build API nodes from task map
   const apiNodes = order
     .filter((k) => tasks[k])
     .map((k, orderIdx) => {
       const task = tasks[k]
-      const nodeId = k // use composite key as ID for simplicity
+      keyToNodeId[k] = task.nodeId
       return {
-        id: nodeId,
+        id: task.nodeId,
         laneId: task.lid,
         rowIndex: riMap[task.rid] ?? 0,
         label: task.label,
@@ -449,13 +452,20 @@ function internalStateToPayload(
       }
     })
 
-  // Build API arrows
-  const apiArrows = arrows.map((a) => ({
-    id: a.id,
-    fromNodeId: a.from,
-    toNodeId: a.to,
-    comment: a.comment || null,
-  }))
+  // Build API arrows using stable nodeIds
+  const apiArrows = arrows
+    .map((a) => {
+      const fromNodeId = keyToNodeId[a.from]
+      const toNodeId = keyToNodeId[a.to]
+      if (!fromNodeId || !toNodeId) return null
+      return {
+        id: a.id,
+        fromNodeId,
+        toNodeId,
+        comment: a.comment || null,
+      }
+    })
+    .filter((a): a is NonNullable<typeof a> => a !== null)
 
   return {
     title,
@@ -481,15 +491,14 @@ interface FlowEditorProps {
 // =============================================
 
 export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps) {
-  // Initialize state from flow data
-  const initialState = flowToInternalState(flow)
-
-  const [lanes, setLanes] = useState<InternalLane[]>(initialState.lanes)
-  const [rows, setRows] = useState<RowData[]>(initialState.rows)
-  const [tasks, setTasks] = useState<Record<string, TaskData>>(initialState.tasks)
-  const [order, setOrder] = useState<string[]>(initialState.order)
-  const [arrows, setArrows] = useState<InternalArrow[]>(initialState.arrows)
-  const [notes, setNotes] = useState<Record<string, string>>(initialState.notes)
+  // Initialize state from flow data (lazy initialization to avoid recomputing on every render)
+  const [initState] = useState(() => flowToInternalState(flow))
+  const [lanes, setLanes] = useState<InternalLane[]>(initState.lanes)
+  const [rows, setRows] = useState<RowData[]>(initState.rows)
+  const [tasks, setTasks] = useState<Record<string, TaskData>>(initState.tasks)
+  const [order, setOrder] = useState<string[]>(initState.order)
+  const [arrows, setArrows] = useState<InternalArrow[]>(initState.arrows)
+  const [notes, setNotes] = useState<Record<string, string>>(initState.notes)
 
   const [editing, setEditing] = useState<string | null>(null)
   const [editLane, setEditLane] = useState<string | null>(null)
@@ -498,7 +507,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
   const [selLane, setSelLane] = useState<string | null>(null)
   const [editNote, setEditNote] = useState<string | null>(null)
   const [showExport, setShowExport] = useState<boolean>(false)
-  const [title, setTitle] = useState<string>(initialState.title)
+  const [title, setTitle] = useState<string>(initState.title)
   const [editTitle, setEditTitle] = useState<boolean>(false)
   const [zoom, setZoom] = useState<number>(1)
   const [hovered, setHovered] = useState<string | null>(null)
@@ -507,7 +516,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
   const [dragging, setDragging] = useState<DragState | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [activeTool, setActiveTool] = useState<ToolId | string>('select')
-  const [themeId, setThemeId] = useState<ThemeId>(initialState.themeId)
+  const [themeId, setThemeId] = useState<ThemeId>(initState.themeId)
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -773,7 +782,7 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
       setTimeout(() => inputRef.current?.focus(), 40)
       return
     }
-    setTasks((p) => ({ ...p, [k]: { label: '作業', lid, rid } }))
+    setTasks((p) => ({ ...p, [k]: { label: '作業', lid, rid, nodeId: uid() } }))
     const no = [...order, k]
     setOrder(no)
     if (no.length >= 2 && tasks[no[no.length - 2]])
