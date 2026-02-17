@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import type { FlowListResponse, FlowSummary } from '../editor/types'
 import { FlowCard } from './FlowCard'
+import { DEFAULT_FLOW_TITLE, DEFAULT_FLOW_THEME_ID, createDefaultLanes } from './constants'
 
 export function Dashboard() {
   const [flows, setFlows] = useState<FlowSummary[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState<boolean>(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const loadFlows = useCallback(async () => {
@@ -36,14 +38,9 @@ export function Dashboard() {
       const data = await apiFetch<{ flow: { id: string } }>('/flows', {
         method: 'POST',
         body: JSON.stringify({
-          title: '無題のフロー',
-          themeId: 'cloud',
-          lanes: [
-            { id: crypto.randomUUID(), name: '企業', colorIndex: 0, position: 0 },
-            { id: crypto.randomUUID(), name: 'システム', colorIndex: 1, position: 1 },
-            { id: crypto.randomUUID(), name: '事務局', colorIndex: 2, position: 2 },
-            { id: crypto.randomUUID(), name: 'ユーザー', colorIndex: 3, position: 3 },
-          ],
+          title: DEFAULT_FLOW_TITLE,
+          themeId: DEFAULT_FLOW_THEME_ID,
+          lanes: createDefaultLanes(),
           nodes: [],
           arrows: [],
         }),
@@ -56,13 +53,17 @@ export function Dashboard() {
   }
 
   const handleDelete = async (id: string, title: string) => {
+    if (deletingId) return
     if (!window.confirm(`「${title}」を削除しますか？`)) return
 
+    setDeletingId(id)
     try {
       await apiFetch(`/flows/${id}`, { method: 'DELETE' })
       setFlows((prev) => prev.filter((f) => f.id !== id))
     } catch {
       setError('フローの削除に失敗しました')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -175,7 +176,12 @@ export function Dashboard() {
           }}
         >
           {flows.map((flow) => (
-            <FlowCard key={flow.id} flow={flow} onDelete={handleDelete} />
+            <FlowCard
+              key={flow.id}
+              flow={flow}
+              onDelete={handleDelete}
+              deleting={deletingId === flow.id}
+            />
           ))}
         </div>
       )}

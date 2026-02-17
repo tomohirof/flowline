@@ -21,10 +21,14 @@ describe('FlowCard', () => {
     updatedAt: '2026-01-15T10:00:00Z',
   }
 
-  function renderCard(flow: FlowSummary = baseFlow, onDelete = vi.fn()) {
+  function renderCard(
+    flow: FlowSummary = baseFlow,
+    onDelete = vi.fn(),
+    deleting = false,
+  ) {
     return render(
       <MemoryRouter>
-        <FlowCard flow={flow} onDelete={onDelete} />
+        <FlowCard flow={flow} onDelete={onDelete} deleting={deleting} />
       </MemoryRouter>,
     )
   }
@@ -105,5 +109,22 @@ describe('FlowCard', () => {
     await user.click(deleteButton)
 
     expect(onDelete).toHaveBeenCalledTimes(1)
+  })
+
+  // 削除中状態
+  it('should show "削除中..." and disable button when deleting', () => {
+    renderCard(baseFlow, vi.fn(), true)
+
+    const deleteButton = screen.getByTestId('delete-flow-flow-1')
+    expect(deleteButton).toBeDisabled()
+    expect(deleteButton).toHaveTextContent('削除中...')
+  })
+
+  it('should show "削除" and enable button when not deleting', () => {
+    renderCard(baseFlow, vi.fn(), false)
+
+    const deleteButton = screen.getByTestId('delete-flow-flow-1')
+    expect(deleteButton).not.toBeDisabled()
+    expect(deleteButton).toHaveTextContent('削除')
   })
 })

@@ -5,9 +5,10 @@ import { formatRelativeTime } from '../../utils/formatRelativeTime'
 interface FlowCardProps {
   flow: FlowSummary
   onDelete: (id: string, title: string) => void
+  deleting?: boolean
 }
 
-export function FlowCard({ flow, onDelete }: FlowCardProps) {
+export function FlowCard({ flow, onDelete, deleting = false }: FlowCardProps) {
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -92,26 +93,32 @@ export function FlowCard({ flow, onDelete }: FlowCardProps) {
         <button
           data-testid={`delete-flow-${flow.id}`}
           onClick={handleDelete}
+          disabled={deleting}
           style={{
             background: 'none',
             border: 'none',
-            color: '#CCC',
-            cursor: 'pointer',
+            color: deleting ? '#999' : '#CCC',
+            cursor: deleting ? 'not-allowed' : 'pointer',
             fontSize: 12,
             padding: '4px 8px',
             borderRadius: 4,
             transition: 'color 0.15s, background 0.15s',
+            opacity: deleting ? 0.6 : 1,
           }}
           onMouseEnter={(e) => {
-            ;(e.currentTarget as HTMLElement).style.color = '#E53935'
-            ;(e.currentTarget as HTMLElement).style.background = '#FFEBEE'
+            if (!deleting) {
+              ;(e.currentTarget as HTMLElement).style.color = '#E53935'
+              ;(e.currentTarget as HTMLElement).style.background = '#FFEBEE'
+            }
           }}
           onMouseLeave={(e) => {
-            ;(e.currentTarget as HTMLElement).style.color = '#CCC'
-            ;(e.currentTarget as HTMLElement).style.background = 'none'
+            if (!deleting) {
+              ;(e.currentTarget as HTMLElement).style.color = '#CCC'
+              ;(e.currentTarget as HTMLElement).style.background = 'none'
+            }
           }}
         >
-          削除
+          {deleting ? '削除中...' : '削除'}
         </button>
       </div>
     </div>
