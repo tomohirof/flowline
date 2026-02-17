@@ -9,5 +9,3 @@ database_name = "flowline-db"
 # wrangler d1 create flowline-db
 database_id = "placeholder"
 
-[vars]
-JWT_SECRET = "development-only-secret-change-in-production"
