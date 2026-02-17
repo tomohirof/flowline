@@ -21,5 +21,10 @@ export type AuthEnv = {
   Variables: { userId: string }
 }
 
+export type AuthEnv = {
+  Bindings: Bindings
+  Variables: { userId: string }
+}
+
 export { app }
 export type { Bindings }
