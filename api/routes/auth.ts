@@ -37,6 +37,9 @@ auth.post('/register', async (c) => {
   if (!body.password || body.password.length < 8) {
     return c.json({ error: 'パスワードは8文字以上で入力してください' }, 400)
   }
+  if (body.password.length > 72) {
+    return c.json({ error: 'パスワードは72文字以内で入力してください' }, 400)
+  }
   if (!body.name || body.name.trim().length === 0) {
     return c.json({ error: '名前を入力してください' }, 400)
   }
@@ -98,7 +101,8 @@ auth.post('/login', async (c) => {
 })
 
 auth.post('/logout', (c) => {
-  deleteCookie(c, 'auth_token', { path: '/' })
+  const opts = getCookieOptions(c)
+  deleteCookie(c, 'auth_token', { path: opts.path, secure: opts.secure, sameSite: opts.sameSite })
   return c.json({ message: 'ログアウトしました' })
 })
 

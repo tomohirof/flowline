@@ -105,6 +105,24 @@ describe('Auth API', () => {
       expect(body.error).toContain('8文字以上')
     })
 
+    it('should return 400 for password exceeding 72 characters', async () => {
+      const longPassword = 'a'.repeat(73)
+      const res = await postJson('/api/auth/register', {
+        email: 'test@example.com', password: longPassword, name: 'Test',
+      }, env)
+      expect(res.status).toBe(400)
+      const body = await res.json()
+      expect(body.error).toContain('72文字以内')
+    })
+
+    it('should accept password with exactly 72 characters', async () => {
+      const maxPassword = 'a'.repeat(72)
+      const res = await postJson('/api/auth/register', {
+        email: 'test@example.com', password: maxPassword, name: 'Test',
+      }, env)
+      expect(res.status).toBe(201)
+    })
+
     it('should return 400 for empty password', async () => {
       const res = await postJson('/api/auth/register', {
         email: 'test@example.com', password: '', name: 'Test',
