@@ -1,3 +1,4 @@
+-- D1ではforeign_keysはデフォルト有効だが、better-sqlite3テスト環境との互換性のため明示
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -24,7 +25,9 @@ CREATE TABLE IF NOT EXISTS lanes (
   flow_id TEXT NOT NULL REFERENCES flows(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   color_index INTEGER NOT NULL DEFAULT 0,
-  position INTEGER NOT NULL
+  position INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
 CREATE TABLE IF NOT EXISTS nodes (
@@ -34,7 +37,9 @@ CREATE TABLE IF NOT EXISTS nodes (
   row_index INTEGER NOT NULL,
   label TEXT NOT NULL DEFAULT '作業',
   note TEXT,
-  order_index INTEGER NOT NULL
+  order_index INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
 CREATE TABLE IF NOT EXISTS arrows (
@@ -42,7 +47,9 @@ CREATE TABLE IF NOT EXISTS arrows (
   flow_id TEXT NOT NULL REFERENCES flows(id) ON DELETE CASCADE,
   from_node_id TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
   to_node_id TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-  comment TEXT
+  comment TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_flows_user_id ON flows(user_id);
