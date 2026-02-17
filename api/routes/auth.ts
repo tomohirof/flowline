@@ -34,6 +34,8 @@ auth.post('/register', async (c) => {
   if (!body.email || !isValidEmail(body.email)) {
     return c.json({ error: 'メールアドレスの形式が正しくありません' }, 400)
   }
+  body.email = body.email.toLowerCase()
+
   if (!body.password || body.password.length < 8) {
     return c.json({ error: 'パスワードは8文字以上で入力してください' }, 400)
   }
@@ -78,6 +80,7 @@ auth.post('/login', async (c) => {
   if (!body.email || !body.password) {
     return c.json({ error: 'メールアドレスまたはパスワードが正しくありません' }, 401)
   }
+  body.email = body.email.toLowerCase()
 
   const user = await c.env.FLOWLINE_DB.prepare(
     'SELECT id, email, password_hash, name FROM users WHERE email = ?',
