@@ -13,11 +13,13 @@
 ### Task 1: マイグレーションSQL作成
 
 **Files:**
+
 - Create: `migrations/0001_initial.sql`
 
 **Step 1: マイグレーションファイル作成**
 
 Create `migrations/0001_initial.sql`:
+
 ```sql
 -- Enable foreign keys (D1/SQLite requires explicit enable)
 PRAGMA foreign_keys = ON;
@@ -95,11 +97,13 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 2: マイグレーションテスト
 
 **Files:**
+
 - Create: `tests/db/migration.test.ts`
 
 **Step 1: テスト作成**
 
 Create `tests/db/migration.test.ts`:
+
 ```typescript
 import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'fs'
@@ -117,40 +121,56 @@ describe('D1 Migration', () => {
   })
 
   it('should create users table', () => {
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").all()
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+      .all()
     expect(tables).toHaveLength(1)
   })
 
   it('should create flows table', () => {
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='flows'").all()
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='flows'")
+      .all()
     expect(tables).toHaveLength(1)
   })
 
   it('should create lanes table', () => {
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='lanes'").all()
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='lanes'")
+      .all()
     expect(tables).toHaveLength(1)
   })
 
   it('should create nodes table', () => {
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='nodes'").all()
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='nodes'")
+      .all()
     expect(tables).toHaveLength(1)
   })
 
   it('should create arrows table', () => {
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='arrows'").all()
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='arrows'")
+      .all()
     expect(tables).toHaveLength(1)
   })
 
   it('should enforce foreign key on flows.user_id', () => {
     expect(() => {
-      db.prepare("INSERT INTO flows (id, user_id, title) VALUES ('f1', 'nonexistent', 'test')").run()
+      db.prepare(
+        "INSERT INTO flows (id, user_id, title) VALUES ('f1', 'nonexistent', 'test')",
+      ).run()
     }).toThrow()
   })
 
   it('should cascade delete lanes when flow is deleted', () => {
-    db.prepare("INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'test@test.com', 'hash', 'Test')").run()
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'test@test.com', 'hash', 'Test')",
+    ).run()
     db.prepare("INSERT INTO flows (id, user_id) VALUES ('f1', 'u1')").run()
-    db.prepare("INSERT INTO lanes (id, flow_id, name, position) VALUES ('l1', 'f1', 'Lane1', 0)").run()
+    db.prepare(
+      "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l1', 'f1', 'Lane1', 0)",
+    ).run()
 
     db.prepare("DELETE FROM flows WHERE id = 'f1'").run()
 
@@ -162,10 +182,16 @@ describe('D1 Migration', () => {
   })
 
   it('should cascade delete nodes when lane is deleted', () => {
-    db.prepare("INSERT INTO users (id, email, password_hash, name) VALUES ('u2', 'test2@test.com', 'hash', 'Test2')").run()
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, name) VALUES ('u2', 'test2@test.com', 'hash', 'Test2')",
+    ).run()
     db.prepare("INSERT INTO flows (id, user_id) VALUES ('f2', 'u2')").run()
-    db.prepare("INSERT INTO lanes (id, flow_id, name, position) VALUES ('l2', 'f2', 'Lane2', 0)").run()
-    db.prepare("INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n1', 'f2', 'l2', 0, 0)").run()
+    db.prepare(
+      "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l2', 'f2', 'Lane2', 0)",
+    ).run()
+    db.prepare(
+      "INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n1', 'f2', 'l2', 0, 0)",
+    ).run()
 
     db.prepare("DELETE FROM lanes WHERE id = 'l2'").run()
 
@@ -177,12 +203,22 @@ describe('D1 Migration', () => {
   })
 
   it('should cascade delete arrows when node is deleted', () => {
-    db.prepare("INSERT INTO users (id, email, password_hash, name) VALUES ('u3', 'test3@test.com', 'hash', 'Test3')").run()
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, name) VALUES ('u3', 'test3@test.com', 'hash', 'Test3')",
+    ).run()
     db.prepare("INSERT INTO flows (id, user_id) VALUES ('f3', 'u3')").run()
-    db.prepare("INSERT INTO lanes (id, flow_id, name, position) VALUES ('l3', 'f3', 'Lane3', 0)").run()
-    db.prepare("INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n2', 'f3', 'l3', 0, 0)").run()
-    db.prepare("INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n3', 'f3', 'l3', 1, 1)").run()
-    db.prepare("INSERT INTO arrows (id, flow_id, from_node_id, to_node_id) VALUES ('a1', 'f3', 'n2', 'n3')").run()
+    db.prepare(
+      "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l3', 'f3', 'Lane3', 0)",
+    ).run()
+    db.prepare(
+      "INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n2', 'f3', 'l3', 0, 0)",
+    ).run()
+    db.prepare(
+      "INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n3', 'f3', 'l3', 1, 1)",
+    ).run()
+    db.prepare(
+      "INSERT INTO arrows (id, flow_id, from_node_id, to_node_id) VALUES ('a1', 'f3', 'n2', 'n3')",
+    ).run()
 
     db.prepare("DELETE FROM nodes WHERE id = 'n2'").run()
 
@@ -194,24 +230,34 @@ describe('D1 Migration', () => {
   })
 
   it('should enforce unique email', () => {
-    db.prepare("INSERT INTO users (id, email, password_hash, name) VALUES ('u4', 'dup@test.com', 'hash', 'Test')").run()
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, name) VALUES ('u4', 'dup@test.com', 'hash', 'Test')",
+    ).run()
     expect(() => {
-      db.prepare("INSERT INTO users (id, email, password_hash, name) VALUES ('u5', 'dup@test.com', 'hash', 'Test2')").run()
+      db.prepare(
+        "INSERT INTO users (id, email, password_hash, name) VALUES ('u5', 'dup@test.com', 'hash', 'Test2')",
+      ).run()
     }).toThrow()
     db.prepare("DELETE FROM users WHERE id = 'u4'").run()
   })
 
   it('should enforce unique share_token', () => {
-    db.prepare("INSERT INTO users (id, email, password_hash, name) VALUES ('u6', 'share@test.com', 'hash', 'Test')").run()
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, name) VALUES ('u6', 'share@test.com', 'hash', 'Test')",
+    ).run()
     db.prepare("INSERT INTO flows (id, user_id, share_token) VALUES ('f4', 'u6', 'token123')").run()
     expect(() => {
-      db.prepare("INSERT INTO flows (id, user_id, share_token) VALUES ('f5', 'u6', 'token123')").run()
+      db.prepare(
+        "INSERT INTO flows (id, user_id, share_token) VALUES ('f5', 'u6', 'token123')",
+      ).run()
     }).toThrow()
     db.prepare("DELETE FROM users WHERE id = 'u6'").run()
   })
 
   it('should allow null share_token', () => {
-    db.prepare("INSERT INTO users (id, email, password_hash, name) VALUES ('u7', 'null@test.com', 'hash', 'Test')").run()
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, name) VALUES ('u7', 'null@test.com', 'hash', 'Test')",
+    ).run()
     db.prepare("INSERT INTO flows (id, user_id) VALUES ('f6', 'u7')").run()
     db.prepare("INSERT INTO flows (id, user_id) VALUES ('f7', 'u7')").run()
     const flows = db.prepare("SELECT * FROM flows WHERE user_id = 'u7'").all()
@@ -232,6 +278,7 @@ npm install -D better-sqlite3 @types/better-sqlite3
 ```bash
 npm test
 ```
+
 Expected: 全テストPASS
 
 **Step 4: Commit**
