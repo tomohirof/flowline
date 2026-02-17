@@ -13,6 +13,7 @@
 ### Task 1: Vite + React + TypeScript プロジェクト作成
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `tsconfig.app.json`
@@ -26,6 +27,7 @@
 **Step 1: Viteでプロジェクト作成**
 
 Run:
+
 ```bash
 cd /Volumes/SSD4TB/DevCode/flowline
 npm create vite@latest . -- --template react-ts
@@ -36,6 +38,7 @@ npm create vite@latest . -- --template react-ts
 **Step 2: 依存パッケージインストール**
 
 Run:
+
 ```bash
 npm install
 ```
@@ -43,9 +46,11 @@ npm install
 **Step 3: 動作確認**
 
 Run:
+
 ```bash
 npm run dev
 ```
+
 Expected: Vite dev serverが起動し、ブラウザでReactのデフォルトページが表示される。Ctrl+Cで停止。
 
 **Step 4: Commit**
@@ -60,6 +65,7 @@ git commit -m "feat: initialize Vite + React + TypeScript project"
 ### Task 2: Hono + Cloudflare Pages Functions セットアップ
 
 **Files:**
+
 - Create: `functions/[[path]].ts`
 - Create: `api/app.ts`
 - Create: `wrangler.toml`
@@ -68,6 +74,7 @@ git commit -m "feat: initialize Vite + React + TypeScript project"
 **Step 1: Hono と wrangler をインストール**
 
 Run:
+
 ```bash
 npm install hono
 npm install -D wrangler @cloudflare/workers-types
@@ -76,6 +83,7 @@ npm install -D wrangler @cloudflare/workers-types
 **Step 2: wrangler.toml を作成**
 
 Create `wrangler.toml`:
+
 ```toml
 name = "flowline"
 compatibility_date = "2025-01-01"
@@ -90,6 +98,7 @@ database_id = "placeholder"
 **Step 3: APIアプリを作成**
 
 Create `api/app.ts`:
+
 ```typescript
 import { Hono } from 'hono'
 
@@ -110,6 +119,7 @@ export type { Bindings }
 **Step 4: Pages Functions catch-all を作成**
 
 Create `functions/[[path]].ts`:
+
 ```typescript
 import { handle } from 'hono/cloudflare-pages'
 import { app } from '../api/app'
@@ -125,6 +135,7 @@ export const onRequest = handle(app)
 **Step 6: package.json にスクリプト追加**
 
 `package.json` の `scripts` に以下を追加:
+
 ```json
 {
   "preview": "wrangler pages dev dist --d1 FLOWLINE_DB",
@@ -139,10 +150,12 @@ export const onRequest = handle(app)
 **Step 7: ビルドして動作確認**
 
 Run:
+
 ```bash
 npm run build
 npm run preview
 ```
+
 Expected: `http://localhost:8788` でSPAが表示される。`http://localhost:8788/api/health` で `{"status":"ok"}` が返る。Ctrl+Cで停止。
 
 **Step 8: Commit**
@@ -157,6 +170,7 @@ git commit -m "feat: add Hono API with Cloudflare Pages Functions"
 ### Task 3: ヘルスチェックAPIのテスト（TDD）
 
 **Files:**
+
 - Create: `vitest.config.ts`
 - Create: `tests/api/health.test.ts`
 - Modify: `package.json` (vitest追加)
@@ -164,6 +178,7 @@ git commit -m "feat: add Hono API with Cloudflare Pages Functions"
 **Step 1: Vitestインストール**
 
 Run:
+
 ```bash
 npm install -D vitest
 ```
@@ -171,6 +186,7 @@ npm install -D vitest
 **Step 2: vitest.config.ts を作成**
 
 Create `vitest.config.ts`:
+
 ```typescript
 import { defineConfig } from 'vitest/config'
 
@@ -186,6 +202,7 @@ export default defineConfig({
 **Step 3: 失敗するテストを書く**
 
 Create `tests/api/health.test.ts`:
+
 ```typescript
 import { describe, it, expect } from 'vitest'
 import { app } from '../../api/app'
@@ -209,9 +226,11 @@ describe('GET /api/health', () => {
 **Step 4: テスト実行して成功を確認**
 
 Run:
+
 ```bash
 npx vitest run
 ```
+
 Expected: 2つのテストがPASS（実装は既にTask 2で完了しているため）
 
 **Step 5: package.json のtestスクリプト更新**
@@ -219,9 +238,11 @@ Expected: 2つのテストがPASS（実装は既にTask 2で完了している�
 `package.json` の `scripts.test` を `"vitest run"` に変更。
 
 Run:
+
 ```bash
 npm test
 ```
+
 Expected: PASS
 
 **Step 6: Commit**
@@ -236,6 +257,7 @@ git commit -m "test: add health check API tests with Vitest"
 ### Task 4: ESLint + Prettier 設定
 
 **Files:**
+
 - Create: `eslint.config.js`
 - Create: `.prettierrc`
 - Modify: `package.json` (devDependencies + scripts)
@@ -243,6 +265,7 @@ git commit -m "test: add health check API tests with Vitest"
 **Step 1: ESLint + Prettier インストール**
 
 Run:
+
 ```bash
 npm install -D eslint @eslint/js typescript-eslint eslint-plugin-react-hooks eslint-plugin-react-refresh prettier eslint-config-prettier
 ```
@@ -250,6 +273,7 @@ npm install -D eslint @eslint/js typescript-eslint eslint-plugin-react-hooks esl
 **Step 2: eslint.config.js 作成**
 
 Create `eslint.config.js`:
+
 ```javascript
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
@@ -278,6 +302,7 @@ export default tseslint.config(
 **Step 3: .prettierrc 作成**
 
 Create `.prettierrc`:
+
 ```json
 {
   "semi": false,
@@ -300,10 +325,12 @@ Create `.prettierrc`:
 **Step 5: lint実行して修正**
 
 Run:
+
 ```bash
 npm run lint:fix
 npm run lint
 ```
+
 Expected: エラーなし
 
 **Step 6: Commit**
@@ -318,12 +345,14 @@ git commit -m "chore: add ESLint 9 + Prettier configuration"
 ### Task 5: 開発環境スクリプト統合
 
 **Files:**
+
 - Modify: `package.json` (devスクリプト変更)
 - Modify: `vite.config.ts` (proxy設定)
 
 **Step 1: concurrentlyインストール**
 
 Run:
+
 ```bash
 npm install -D concurrently
 ```
@@ -331,6 +360,7 @@ npm install -D concurrently
 **Step 2: vite.config.ts にプロキシ追加**
 
 `vite.config.ts` を更新。devモードで `/api` へのリクエストをwrangler dev serverにプロキシ:
+
 ```typescript
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -351,6 +381,7 @@ export default defineConfig({
 **Step 3: devスクリプトを更新**
 
 `package.json` の `scripts.dev` を以下に変更:
+
 ```json
 {
   "dev": "concurrently \"vite\" \"wrangler pages dev dist --d1 FLOWLINE_DB --port 8788\" --names frontend,api --prefix-colors blue,green",
@@ -362,10 +393,12 @@ export default defineConfig({
 **Step 4: 動作確認**
 
 Run:
+
 ```bash
 npm run build
 npm run dev
 ```
+
 Expected: フロントエンド（Vite）とAPI（wrangler）が同時起動する。ブラウザでSPAが表示され、`/api/health`にもアクセスできる。
 
 **Step 5: Commit**
@@ -380,6 +413,7 @@ git commit -m "chore: add concurrent dev server with API proxy"
 ### Task 6: ディレクトリ構成とプレースホルダー作成
 
 **Files:**
+
 - Create: `src/components/.gitkeep`
 - Create: `src/features/.gitkeep`
 - Create: `src/hooks/.gitkeep`
@@ -392,6 +426,7 @@ git commit -m "chore: add concurrent dev server with API proxy"
 **Step 1: ディレクトリ作成**
 
 Run:
+
 ```bash
 mkdir -p src/components src/features src/hooks src/lib src/types api/routes api/middleware migrations
 touch src/components/.gitkeep src/features/.gitkeep src/hooks/.gitkeep src/lib/.gitkeep src/types/.gitkeep api/routes/.gitkeep api/middleware/.gitkeep migrations/.gitkeep
@@ -409,11 +444,13 @@ git commit -m "chore: add directory structure placeholders"
 ### Task 7: GitHub Actions CI
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 **Step 1: CI設定ファイル作成**
 
 Create `.github/workflows/ci.yml`:
+
 ```yaml
 name: CI
 
@@ -451,25 +488,31 @@ git commit -m "ci: add GitHub Actions workflow for lint and test"
 **Step 1: 全テスト実行**
 
 Run:
+
 ```bash
 npm test
 ```
+
 Expected: 全テストPASS
 
 **Step 2: lint確認**
 
 Run:
+
 ```bash
 npm run lint
 ```
+
 Expected: エラーなし
 
 **Step 3: ビルド確認**
 
 Run:
+
 ```bash
 npm run build
 ```
+
 Expected: ビルド成功
 
 **Step 4: push**

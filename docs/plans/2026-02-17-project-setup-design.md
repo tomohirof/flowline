@@ -16,15 +16,15 @@
 
 ### 技術スタック
 
-| 領域 | 技術 |
-|------|------|
-| フロントエンド | Vite 6 + React 19 + TypeScript |
-| API | Hono v4 (Cloudflare Pages Functions) |
-| DB | Cloudflare D1 |
-| バリデーション | Zod |
-| テスト | Vitest (ユニット) + Playwright (E2E) |
-| Lint | ESLint 9 (flat config) + Prettier |
-| パッケージマネージャ | npm |
+| 領域                 | 技術                                 |
+| -------------------- | ------------------------------------ |
+| フロントエンド       | Vite 6 + React 19 + TypeScript       |
+| API                  | Hono v4 (Cloudflare Pages Functions) |
+| DB                   | Cloudflare D1                        |
+| バリデーション       | Zod                                  |
+| テスト               | Vitest (ユニット) + Playwright (E2E) |
+| Lint                 | ESLint 9 (flat config) + Prettier    |
+| パッケージマネージャ | npm                                  |
 
 ### 選定理由
 
@@ -69,8 +69,7 @@ import { app } from '../api/app'
 export const onRequest = handle(app)
 
 // api/app.ts
-const app = new Hono<{ Bindings: { FLOWLINE_DB: D1Database } }>()
-  .basePath('/api')
+const app = new Hono<{ Bindings: { FLOWLINE_DB: D1Database } }>().basePath('/api')
 app.get('/health', (c) => c.json({ status: 'ok' }))
 ```
 
@@ -78,14 +77,14 @@ app.get('/health', (c) => c.json({ status: 'ok' }))
 
 ### スクリプト
 
-| コマンド | 動作 |
-|----------|------|
-| `npm run dev` | フロントエンド + Pages Functions同時起動 |
-| `npm run build` | TypeScriptチェック + Viteビルド |
-| `npm test` | Vitest実行 |
-| `npm run lint` | ESLint + Prettier |
-| `npm run db:migrate` | D1マイグレーション適用（ローカル） |
-| `npm run deploy` | ビルド + Cloudflare Pagesデプロイ |
+| コマンド             | 動作                                     |
+| -------------------- | ---------------------------------------- |
+| `npm run dev`        | フロントエンド + Pages Functions同時起動 |
+| `npm run build`      | TypeScriptチェック + Viteビルド          |
+| `npm test`           | Vitest実行                               |
+| `npm run lint`       | ESLint + Prettier                        |
+| `npm run db:migrate` | D1マイグレーション適用（ローカル）       |
+| `npm run deploy`     | ビルド + Cloudflare Pagesデプロイ        |
 
 ### wrangler.toml
 
