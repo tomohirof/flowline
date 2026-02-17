@@ -13,13 +13,25 @@ export function createTestDb(): ReturnType<typeof Database> {
   return db
 }
 
+interface MockStatement {
+  _sql: string
+  _params: unknown[]
+  bind(...params: unknown[]): MockStatement
+  first<T>(colName?: string): Promise<T | null>
+  run(): Promise<{ success: boolean; meta: { changes: number } }>
+  all<T>(): Promise<{ results: T[]; success: boolean; meta: Record<string, unknown> }>
+}
+
 export function createMockD1(sqliteDb: ReturnType<typeof Database>) {
   return {
-    prepare(sql: string) {
+    prepare(sql: string): MockStatement {
       let boundParams: unknown[] = []
-      const statement = {
+      const statement: MockStatement = {
+        _sql: sql,
+        _params: boundParams,
         bind(...params: unknown[]) {
           boundParams = params
+          statement._params = params
           return statement
         },
         async first<T>(colName?: string): Promise<T | null> {
@@ -40,6 +52,25 @@ export function createMockD1(sqliteDb: ReturnType<typeof Database>) {
         },
       }
       return statement
+    },
+    async batch(preparedStatements: MockStatement[]) {
+      const results: unknown[] = []
+      const fn = sqliteDb.transaction(() => {
+        for (const stmt of preparedStatements) {
+          const s = sqliteDb.prepare(stmt._sql)
+          // SELECT文かどうかで処理を分ける
+          const sqlUpper = stmt._sql.trim().toUpperCase()
+          if (sqlUpper.startsWith('SELECT')) {
+            const rows = s.all(...stmt._params)
+            results.push({ results: rows, success: true, meta: {} })
+          } else {
+            const r = s.run(...stmt._params)
+            results.push({ success: true, meta: { changes: r.changes } })
+          }
+        }
+      })
+      fn()
+      return results
     },
   }
 }
