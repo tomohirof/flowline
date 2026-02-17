@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
+import { ShareDialog } from './components/ShareDialog'
 import type {
   Palette,
   Theme,
@@ -484,13 +485,14 @@ interface FlowEditorProps {
   flow: Flow
   onSave: (payload: FlowSavePayload) => void
   saveStatus: SaveStatus
+  onShareChange?: (token: string | null) => void
 }
 
 // =============================================
 // FlowEditor Component
 // =============================================
 
-export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps) {
+export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: FlowEditorProps) {
   // Initialize state from flow data (lazy initialization to avoid recomputing on every render)
   const [initState] = useState(() => flowToInternalState(flow))
   const [lanes, setLanes] = useState<InternalLane[]>(initState.lanes)
@@ -518,6 +520,8 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
   const [activeTool, setActiveTool] = useState<ToolId | string>('select')
   const [themeId, setThemeId] = useState<ThemeId>(initState.themeId)
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
+  const [showShareDialog, setShowShareDialog] = useState<boolean>(false)
+  const [shareToken, setShareToken] = useState<string | null>(flow.shareToken)
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
 
@@ -1285,6 +1289,29 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
             {title}
           </span>
         )}
+        <button
+          data-testid="share-button"
+          onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowShareDialog(true) }}
+          style={{
+            height: 26,
+            padding: '0 10px',
+            border: shareToken ? `1px solid ${T.accent}40` : `1px solid ${T.titleBarBorder}`,
+            borderRadius: 6,
+            background: shareToken ? `${T.accent}10` : 'transparent',
+            color: shareToken ? T.accent : T.titleSub,
+            cursor: 'pointer',
+            fontSize: 11,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            transition: 'all 0.15s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            marginLeft: 8,
+          }}
+        >
+          {shareToken ? '共有中' : '共有'}
+        </button>
         <div style={{ flex: 1 }} />
         {connectFrom && (
           <div
@@ -1848,6 +1875,19 @@ export default function FlowEditor({ flow, onSave, saveStatus }: FlowEditorProps
               : 'クリック:追加 · ドラッグ:移動 · ヘッダ:レーン選択'}
         </span>
       </div>
+
+      {/* Share Dialog */}
+      {showShareDialog && (
+        <ShareDialog
+          flowId={flow.id}
+          shareToken={shareToken}
+          onShareChange={(token) => {
+            setShareToken(token)
+            onShareChange?.(token)
+          }}
+          onClose={() => setShowShareDialog(false)}
+        />
+      )}
     </div>
   )
 }

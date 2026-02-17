@@ -325,6 +325,57 @@ flows.put('/:id', async (c) => {
 })
 
 // =============================================
+// POST /:id/share - Share flow (generate token)
+// =============================================
+
+flows.post('/:id/share', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const flowId = c.req.param('id')
+
+  const flow = await db.prepare('SELECT id, user_id, share_token FROM flows WHERE id = ?').bind(flowId).first<{ id: string; user_id: string; share_token: string | null }>()
+  if (!flow) {
+    return c.json({ error: 'フローが見つかりません' }, 404)
+  }
+  if (flow.user_id !== userId) {
+    return c.json({ error: 'アクセス権限がありません' }, 403)
+  }
+
+  // If already shared, return existing token
+  if (flow.share_token) {
+    return c.json({ shareToken: flow.share_token, shareUrl: `/shared/${flow.share_token}` })
+  }
+
+  // Generate new token
+  const shareToken = crypto.randomUUID()
+  await db.prepare('UPDATE flows SET share_token = ? WHERE id = ?').bind(shareToken, flowId).run()
+
+  return c.json({ shareToken, shareUrl: `/shared/${shareToken}` })
+})
+
+// =============================================
+// DELETE /:id/share - Unshare flow
+// =============================================
+
+flows.delete('/:id/share', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const flowId = c.req.param('id')
+
+  const ownership = await checkFlowOwnership(db, flowId, userId)
+  if (ownership.error === 'not_found') {
+    return c.json({ error: 'フローが見つかりません' }, 404)
+  }
+  if (ownership.error === 'forbidden') {
+    return c.json({ error: 'アクセス権限がありません' }, 403)
+  }
+
+  await db.prepare('UPDATE flows SET share_token = NULL WHERE id = ?').bind(flowId).run()
+
+  return c.json({ message: '共有を解除しました' })
+})
+
+// =============================================
 // DELETE /:id - Delete flow
 // =============================================
 

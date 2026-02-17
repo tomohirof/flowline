@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { auth } from './routes/auth'
 import { flows } from './routes/flows'
+import { shared } from './routes/shared'
 
 type Bindings = {
   FLOWLINE_DB: D1Database
@@ -15,11 +16,7 @@ app.get('/health', (c) => {
 
 app.route('/auth', auth)
 app.route('/flows', flows)
-
-export type AuthEnv = {
-  Bindings: Bindings
-  Variables: { userId: string }
-}
+app.route('/shared', shared)
 
 export type AuthEnv = {
   Bindings: Bindings
