@@ -262,13 +262,15 @@ describe('Share API', () => {
       expect(node.lane_id).toBeUndefined()
     })
 
-    it('should not include user info in response', async () => {
+    it('should not include user info or share token in response', async () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'Shared Flow', 'no-user-token')
 
       const res = await getRequest('/api/shared/no-user-token', env)
       const body = await res.json()
       expect(body.flow.userId).toBeUndefined()
       expect(body.flow.user_id).toBeUndefined()
+      expect(body.flow.shareToken).toBeUndefined()
+      expect(body.flow.share_token).toBeUndefined()
     })
 
     it('should return 404 for non-existent token', async () => {

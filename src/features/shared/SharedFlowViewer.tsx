@@ -1,137 +1,6 @@
-import { useState, useRef, useCallback } from 'react'
-import type { Flow, Node as FlowNode, Arrow } from '../editor/types'
-
-// =============================================
-// Constants (shared with FlowEditor - read-only subset)
-// =============================================
-
-interface Palette {
-  dot: string
-  tag: string
-  text: string
-  name: string
-}
-
-interface Theme {
-  name: string
-  bg: string
-  canvasBg: string
-  dotGrid: string
-  titleBar: string
-  titleBarBorder: string
-  titleColor: string
-  titleSub: string
-  laneBg: string
-  laneHeaderBg: string
-  laneBorder: string
-  laneAccentOpacity: number
-  nodeStroke: string
-  nodeFill: string
-  nodeShadow: string
-  arrowColor: string
-  commentPill: string
-  commentBorder: string
-  commentText: string
-  statusBg: string
-  statusBorder: string
-  statusText: string
-  accent: string
-  laneGap: number
-}
-
-type ThemeId = 'cloud' | 'midnight' | 'blueprint'
-
-const PALETTES: Palette[] = [
-  { dot: '#E8985A', tag: '#FFF4EB', text: '#B06828', name: 'Orange' },
-  { dot: '#5B8EC9', tag: '#EBF3FF', text: '#2D6AB0', name: 'Blue' },
-  { dot: '#9B6BC9', tag: '#F3EBFF', text: '#6B3BA0', name: 'Purple' },
-  { dot: '#5AC98A', tag: '#EBFFEF', text: '#2A7A4A', name: 'Green' },
-  { dot: '#C95A7B', tag: '#FFEBF0', text: '#A03050', name: 'Pink' },
-  { dot: '#5AB5C9', tag: '#EBFAFF', text: '#1A7A90', name: 'Cyan' },
-  { dot: '#C9A85A', tag: '#FFF8EB', text: '#8A6A20', name: 'Gold' },
-  { dot: '#7B5AC9', tag: '#EFEBFF', text: '#5030A0', name: 'Violet' },
-]
-
-const THEMES: Record<ThemeId, Theme> = {
-  cloud: {
-    name: 'Cloud',
-    bg: '#EAEAF2',
-    canvasBg: '#EAEAF2',
-    dotGrid: '#D6D6E0',
-    titleBar: '#fff',
-    titleBarBorder: '#E5E4E9',
-    titleColor: '#444',
-    titleSub: '#999',
-    laneBg: '#F5F5F8',
-    laneHeaderBg: '#FAFAFD',
-    laneBorder: '#E8E8EE',
-    laneAccentOpacity: 0.5,
-    nodeStroke: '#E8E7EE',
-    nodeFill: '#fff',
-    nodeShadow: '0 2px 8px rgba(80,80,120,0.10), 0 1px 3px rgba(80,80,120,0.06)',
-    arrowColor: '#C0BEC8',
-    commentPill: '#fff',
-    commentBorder: '#E8E7EE',
-    commentText: '#888',
-    statusBg: '#fff',
-    statusBorder: '#E5E4E9',
-    statusText: '#BBB',
-    accent: '#7C5CFC',
-    laneGap: 6,
-  },
-  midnight: {
-    name: 'Midnight',
-    bg: '#1A1A24',
-    canvasBg: '#1A1A24',
-    dotGrid: '#2A2A38',
-    titleBar: '#222230',
-    titleBarBorder: '#333344',
-    titleColor: '#D0D0E0',
-    titleSub: '#666680',
-    laneBg: '#22222E',
-    laneHeaderBg: '#2A2A38',
-    laneBorder: '#333344',
-    laneAccentOpacity: 0.6,
-    nodeStroke: '#3A3A4C',
-    nodeFill: '#2A2A38',
-    nodeShadow: '0 3px 12px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.2)',
-    arrowColor: '#555568',
-    commentPill: '#2A2A38',
-    commentBorder: '#3A3A4C',
-    commentText: '#888898',
-    statusBg: '#222230',
-    statusBorder: '#333344',
-    statusText: '#555568',
-    accent: '#A78BFA',
-    laneGap: 6,
-  },
-  blueprint: {
-    name: 'Blueprint',
-    bg: '#E8EDF4',
-    canvasBg: '#E8EDF4',
-    dotGrid: '#CDD4E0',
-    titleBar: '#fff',
-    titleBarBorder: '#D8DDE6',
-    titleColor: '#334155',
-    titleSub: '#8899AA',
-    laneBg: '#F0F3F8',
-    laneHeaderBg: '#F6F8FB',
-    laneBorder: '#D8DDE6',
-    laneAccentOpacity: 0.5,
-    nodeStroke: '#D0D8E4',
-    nodeFill: '#fff',
-    nodeShadow: '0 2px 10px rgba(50,70,100,0.10), 0 1px 3px rgba(50,70,100,0.06)',
-    arrowColor: '#AAB8CC',
-    commentPill: '#fff',
-    commentBorder: '#D0D8E4',
-    commentText: '#7788AA',
-    statusBg: '#fff',
-    statusBorder: '#D8DDE6',
-    statusText: '#99AABB',
-    accent: '#3B82F6',
-    laneGap: 6,
-  },
-}
+import { useState, useCallback } from 'react'
+import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
+import { PALETTES, THEMES } from '../editor/theme-constants'
 
 interface Point { x: number; y: number }
 
@@ -145,7 +14,6 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   const isDark = themeId === 'midnight'
 
   const [zoom, setZoom] = useState(1)
-  const svgRef = useRef<SVGSVGElement>(null)
 
   // Build internal representation
   const sortedLanes = [...flow.lanes].sort((a, b) => a.position - b.position)
@@ -327,7 +195,6 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         }}
       >
         <svg
-          ref={svgRef}
           width={totalW * zoom}
           height={(totalH + 30) * zoom}
           viewBox={`0 -30 ${totalW} ${totalH + 30}`}

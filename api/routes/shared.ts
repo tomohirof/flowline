@@ -1,89 +1,21 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../app'
+import {
+  type FlowRow,
+  type LaneRow,
+  type NodeRow,
+  type ArrowRow,
+  toLane,
+  toNode,
+  toArrow,
+} from '../lib/flow-transform'
 
-interface FlowRow {
-  id: string
-  user_id: string
-  title: string
-  theme_id: string
-  share_token: string | null
-  created_at: string
-  updated_at: string
-}
-
-interface LaneRow {
-  id: string
-  flow_id: string
-  name: string
-  color_index: number
-  position: number
-  created_at: string
-  updated_at: string
-}
-
-interface NodeRow {
-  id: string
-  flow_id: string
-  lane_id: string
-  row_index: number
-  label: string
-  note: string | null
-  order_index: number
-  created_at: string
-  updated_at: string
-}
-
-interface ArrowRow {
-  id: string
-  flow_id: string
-  from_node_id: string
-  to_node_id: string
-  comment: string | null
-  created_at: string
-  updated_at: string
-}
-
-function toFlowSummary(row: FlowRow) {
+// Public flow summary: excludes shareToken and userId for security
+function toPublicFlowSummary(row: FlowRow) {
   return {
     id: row.id,
     title: row.title,
     themeId: row.theme_id,
-    shareToken: row.share_token,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }
-}
-
-function toLane(row: LaneRow) {
-  return {
-    id: row.id,
-    name: row.name,
-    colorIndex: row.color_index,
-    position: row.position,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }
-}
-
-function toNode(row: NodeRow) {
-  return {
-    id: row.id,
-    laneId: row.lane_id,
-    rowIndex: row.row_index,
-    label: row.label,
-    note: row.note,
-    orderIndex: row.order_index,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }
-}
-
-function toArrow(row: ArrowRow) {
-  return {
-    id: row.id,
-    fromNodeId: row.from_node_id,
-    toNodeId: row.to_node_id,
-    comment: row.comment,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -119,7 +51,7 @@ shared.get('/:token', async (c) => {
 
   return c.json({
     flow: {
-      ...toFlowSummary(flow),
+      ...toPublicFlowSummary(flow),
       lanes,
       nodes,
       arrows,
