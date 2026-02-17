@@ -4,15 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"wrangler pages dev dist --d1 FLOWLINE_DB --port 8788\" --names frontend,api --prefix-colors blue,green",
+    "dev": "concurrently \"vite\" \"wrangler pages dev dist --port 8788\" --names frontend,api --prefix-colors blue,green",
     "dev:frontend": "vite",
-    "dev:api": "wrangler pages dev dist --d1 FLOWLINE_DB --port 8788",
+    "dev:api": "wrangler pages dev dist --port 8788",
     "build": "tsc -b && vite build",
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint --fix . && prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "wrangler pages dev dist --d1 FLOWLINE_DB",
+    "preview": "wrangler pages dev dist",
     "db:migrate": "wrangler d1 migrations apply FLOWLINE_DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply FLOWLINE_DB --remote",
     "deploy": "npm run build && wrangler pages deploy dist"

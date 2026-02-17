@@ -12,12 +12,15 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'Lax' as const,
-  path: '/',
-  maxAge: 7 * 24 * 60 * 60,
+function getCookieOptions(c: { req: { url: string } }) {
+  const isSecure = new URL(c.req.url).protocol === 'https:'
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: 'Lax' as const,
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60,
+  }
 }
 
 auth.post('/register', async (c) => {
@@ -56,7 +59,7 @@ auth.post('/register', async (c) => {
     .run()
 
   const token = await createToken(id, body.email, c.env.JWT_SECRET)
-  setCookie(c, 'auth_token', token, COOKIE_OPTIONS)
+  setCookie(c, 'auth_token', token, getCookieOptions(c))
 
   return c.json({ user: { id, email: body.email, name: body.name.trim() } }, 201)
 })
@@ -89,7 +92,7 @@ auth.post('/login', async (c) => {
   }
 
   const token = await createToken(user.id, user.email, c.env.JWT_SECRET)
-  setCookie(c, 'auth_token', token, COOKIE_OPTIONS)
+  setCookie(c, 'auth_token', token, getCookieOptions(c))
 
   return c.json({ user: { id: user.id, email: user.email, name: user.name } })
 })

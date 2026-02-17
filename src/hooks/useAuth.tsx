@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useContext, createContext, type ReactNode } from 'react'
 import { apiFetch } from '../lib/api'
 
 interface User {
@@ -7,7 +7,17 @@ interface User {
   name: string
 }
 
-export function useAuth() {
+interface AuthContextValue {
+  user: User | null
+  loading: boolean
+  login: (email: string, password: string) => Promise<User>
+  register: (email: string, password: string, name: string) => Promise<User>
+  logout: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -49,5 +59,17 @@ export function useAuth() {
     setUser(null)
   }
 
-  return { user, loading, login, register, logout }
+  return (
+    <AuthContext value={{ user, loading, login, register, logout }}>
+      {children}
+    </AuthContext>
+  )
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) {
+    throw new Error('useAuth must be used within AuthProvider')
+  }
+  return ctx
 }

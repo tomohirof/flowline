@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useAuth } from './useAuth'
+import { useAuth, AuthProvider } from './useAuth'
+import type { ReactNode } from 'react'
 
 // Mock the api module
 vi.mock('../lib/api', () => ({
@@ -19,6 +20,10 @@ import { apiFetch } from '../lib/api'
 
 const mockApiFetch = vi.mocked(apiFetch)
 
+function wrapper({ children }: { children: ReactNode }) {
+  return AuthProvider({ children })
+}
+
 describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -26,7 +31,7 @@ describe('useAuth', () => {
 
   it('should start with loading=true and user=null', () => {
     mockApiFetch.mockImplementation(() => new Promise(() => {})) // never resolves
-    const { result } = renderHook(() => useAuth())
+    const { result } = renderHook(() => useAuth(), { wrapper })
     expect(result.current.loading).toBe(true)
     expect(result.current.user).toBeNull()
   })
@@ -35,7 +40,7 @@ describe('useAuth', () => {
     const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
     mockApiFetch.mockResolvedValueOnce({ user: mockUser })
 
-    const { result } = renderHook(() => useAuth())
+    const { result } = renderHook(() => useAuth(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -47,7 +52,7 @@ describe('useAuth', () => {
   it('should set user to null when /auth/me fails', async () => {
     mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
 
-    const { result } = renderHook(() => useAuth())
+    const { result } = renderHook(() => useAuth(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -59,7 +64,7 @@ describe('useAuth', () => {
   it('should call /auth/me on mount', async () => {
     mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
 
-    renderHook(() => useAuth())
+    renderHook(() => useAuth(), { wrapper })
 
     await waitFor(() => {
       expect(mockApiFetch).toHaveBeenCalledWith('/auth/me')
@@ -73,7 +78,7 @@ describe('useAuth', () => {
     // Second call: login
     mockApiFetch.mockResolvedValueOnce({ user: mockUser })
 
-    const { result } = renderHook(() => useAuth())
+    const { result } = renderHook(() => useAuth(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -98,7 +103,7 @@ describe('useAuth', () => {
     // Second call: register
     mockApiFetch.mockResolvedValueOnce({ user: mockUser })
 
-    const { result } = renderHook(() => useAuth())
+    const { result } = renderHook(() => useAuth(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -123,7 +128,7 @@ describe('useAuth', () => {
     // Second call: logout
     mockApiFetch.mockResolvedValueOnce({})
 
-    const { result } = renderHook(() => useAuth())
+    const { result } = renderHook(() => useAuth(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.user).toEqual(mockUser)
@@ -143,7 +148,7 @@ describe('useAuth', () => {
     // Second call: login fails
     mockApiFetch.mockRejectedValueOnce(new Error('Invalid credentials'))
 
-    const { result } = renderHook(() => useAuth())
+    const { result } = renderHook(() => useAuth(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
