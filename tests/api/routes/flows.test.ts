@@ -411,16 +411,15 @@ describe('Flows API', () => {
     })
 
     it('should update updated_at timestamp', async () => {
-      const before = db.prepare('SELECT updated_at FROM flows WHERE id = ?').get('flow-1') as { updated_at: string }
-
-      // Wait a tiny bit so timestamp differs
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      // Set a known old timestamp
+      const oldTimestamp = '2020-01-01T00:00:00Z'
+      db.prepare('UPDATE flows SET updated_at = ? WHERE id = ?').run(oldTimestamp, 'flow-1')
 
       await putJson('/api/flows/flow-1', { title: 'Updated' }, env, cookie)
 
       const after = db.prepare('SELECT updated_at FROM flows WHERE id = ?').get('flow-1') as { updated_at: string }
-      // updatedAt should have changed (or at least be present)
       expect(after.updated_at).toBeDefined()
+      expect(after.updated_at).not.toBe(oldTimestamp)
     })
   })
 

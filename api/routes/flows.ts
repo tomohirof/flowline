@@ -105,14 +105,16 @@ function toArrow(row: ArrowRow) {
 // =============================================
 
 async function getFlowDetail(db: D1Database, flowId: string) {
-  const [lanesResult, nodesResult, arrowsResult] = await db.batch([
+  const [flowResult, lanesResult, nodesResult, arrowsResult] = await db.batch([
+    db.prepare('SELECT * FROM flows WHERE id = ?').bind(flowId),
     db.prepare('SELECT * FROM lanes WHERE flow_id = ? ORDER BY position ASC').bind(flowId),
     db.prepare('SELECT * FROM nodes WHERE flow_id = ? ORDER BY row_index ASC, order_index ASC').bind(flowId),
     db.prepare('SELECT * FROM arrows WHERE flow_id = ?').bind(flowId),
   ])
 
-  const flow = await db.prepare('SELECT * FROM flows WHERE id = ?').bind(flowId).first<FlowRow>()
-  if (!flow) return null
+  const flowRows = (flowResult as { results: FlowRow[] }).results ?? []
+  if (flowRows.length === 0) return null
+  const flow = flowRows[0]
 
   const lanes = ((lanesResult as { results: LaneRow[] }).results ?? []).map(toLane)
   const nodes = ((nodesResult as { results: NodeRow[] }).results ?? []).map(toNode)
