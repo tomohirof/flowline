@@ -11,12 +11,16 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal {
-  background: #1A1A24;
+  background: #1a1a24;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   width: 420px;
@@ -27,8 +31,14 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tabs {
@@ -46,7 +56,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #8A8698;
+  color: #8a8698;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -56,7 +66,7 @@
 
 .tabActive {
   background: rgba(124, 92, 252, 0.15);
-  color: #E8E6F0;
+  color: #e8e6f0;
 }
 
 .field {
@@ -69,7 +79,7 @@
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  color: #E8E6F0;
+  color: #e8e6f0;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
@@ -82,20 +92,22 @@
 }
 
 .input::placeholder {
-  color: #5A5768;
+  color: #5a5768;
 }
 
 .submitBtn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #7C5CFC, #5B8DEF);
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
   color: #fff;
   border: none;
   border-radius: 10px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   margin-top: 8px;
   font-family: inherit;
 }
@@ -117,7 +129,7 @@
   align-items: center;
   gap: 12px;
   margin: 24px 0;
-  color: #5A5768;
+  color: #5a5768;
   font-size: 12px;
 }
 
@@ -133,7 +145,7 @@
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  color: #E8E6F0;
+  color: #e8e6f0;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -151,7 +163,7 @@
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 13px;
-  color: #E06060;
+  color: #e06060;
   margin-bottom: 16px;
 }
 
@@ -161,7 +173,7 @@
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 13px;
-  color: #9B82FD;
+  color: #9b82fd;
   margin-bottom: 16px;
   text-align: center;
 }
@@ -170,7 +182,7 @@
   display: block;
   text-align: right;
   font-size: 13px;
-  color: #7C5CFC;
+  color: #7c5cfc;
   background: none;
   border: none;
   cursor: pointer;

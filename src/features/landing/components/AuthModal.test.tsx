@@ -87,8 +87,12 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={onClose} initialMode="login" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), { target: { value: 'a@b.com' } })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), { target: { value: 'password123' } })
+    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      target: { value: 'a@b.com' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      target: { value: 'password123' },
+    })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
@@ -107,8 +111,12 @@ describe('AuthModal', () => {
       </MemoryRouter>,
     )
     fireEvent.change(screen.getByPlaceholderText('お名前'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), { target: { value: 'a@b.com' } })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), { target: { value: 'password123' } })
+    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      target: { value: 'a@b.com' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      target: { value: 'password123' },
+    })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
@@ -125,8 +133,12 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), { target: { value: 'a@b.com' } })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), { target: { value: 'password123' } })
+    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      target: { value: 'a@b.com' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      target: { value: 'password123' },
+    })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {

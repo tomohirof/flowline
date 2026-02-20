@@ -18,14 +18,6 @@ vi.mock('./features/dashboard/Dashboard', () => ({
   Dashboard: () => <div data-testid="dashboard">Dashboard</div>,
 }))
 
-vi.mock('./features/auth/pages/LoginPage', () => ({
-  LoginPage: () => <div data-testid="login-page">Login</div>,
-}))
-
-vi.mock('./features/auth/pages/RegisterPage', () => ({
-  RegisterPage: () => <div data-testid="register-page">Register</div>,
-}))
-
 vi.mock('./features/editor/pages/FlowEditorPage', () => ({
   FlowEditorPage: () => <div data-testid="flow-editor">Editor</div>,
 }))

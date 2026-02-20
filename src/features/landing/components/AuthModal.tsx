@@ -81,16 +81,8 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
   if (!isOpen) return null
 
   return (
-    <div
-      className={styles.overlay}
-      data-testid="auth-modal-overlay"
-      onClick={onClose}
-    >
-      <div
-        className={styles.modal}
-        data-testid="auth-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className={styles.overlay} data-testid="auth-modal-overlay" onClick={onClose}>
+      <div className={styles.modal} data-testid="auth-modal" onClick={(e) => e.stopPropagation()}>
         <div className={styles.tabs}>
           <button
             className={`${styles.tab} ${mode === 'login' ? styles.tabActive : ''}`}
@@ -163,11 +155,7 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
             disabled={submitting}
             data-testid="auth-submit"
           >
-            {submitting
-              ? '処理中...'
-              : mode === 'login'
-                ? 'ログイン'
-                : 'アカウント作成'}
+            {submitting ? '処理中...' : mode === 'login' ? 'ログイン' : 'アカウント作成'}
           </button>
         </form>
 

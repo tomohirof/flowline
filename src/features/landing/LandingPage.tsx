@@ -17,7 +17,9 @@ export function LandingPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const authParam = searchParams.get('auth') as AuthMode | null
   const [modalOpen, setModalOpen] = useState(authParam === 'login' || authParam === 'register')
-  const [authMode, setAuthMode] = useState<AuthMode>(authParam === 'register' ? 'register' : 'login')
+  const [authMode, setAuthMode] = useState<AuthMode>(
+    authParam === 'register' ? 'register' : 'login',
+  )
 
   const openModal = useCallback((mode: AuthMode) => {
     setAuthMode(mode)
@@ -35,10 +37,7 @@ export function LandingPage() {
 
   return (
     <div className={`${landingStyles.landing} ${styles.page}`}>
-      <Navbar
-        onLoginClick={() => openModal('login')}
-        onSignupClick={() => openModal('register')}
-      />
+      <Navbar onLoginClick={() => openModal('login')} onSignupClick={() => openModal('register')} />
       <HeroSection onCtaClick={() => openModal('register')} />
       <ProductPreview />
       <FeaturesSection />
