@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import styles from './Navbar.module.css'
 
 interface NavbarProps {
@@ -13,7 +14,7 @@ export function Navbar({ onLoginClick, onSignupClick }: NavbarProps) {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
     }
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -28,10 +29,10 @@ export function Navbar({ onLoginClick, onSignupClick }: NavbarProps) {
       className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}
     >
       <div className={styles.inner}>
-        <a href="/" className={styles.logo}>
+        <Link to="/" className={styles.logo}>
           <span className={styles.logoIcon}>F</span>
           <span className={styles.logoText}>Flowline</span>
-        </a>
+        </Link>
 
         <div className={styles.navLinks}>
           <button className={styles.navLink} onClick={() => scrollTo('features')}>

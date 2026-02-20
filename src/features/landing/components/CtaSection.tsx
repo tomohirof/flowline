@@ -10,7 +10,7 @@ export function CtaSection({ onCtaClick }: CtaSectionProps) {
     <section className={styles.section}>
       <div className={landingStyles.container}>
         <h2 className={styles.heading}>業務フローの可視化を、今日から。</h2>
-        <p className={styles.sub}>登録不要・無料ですぐに始められます</p>
+        <p className={styles.sub}>アカウント登録で無料で始められます</p>
         <button className={landingStyles.btnPrimary} onClick={onCtaClick}>
           無料で始める →
         </button>

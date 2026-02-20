@@ -14,9 +14,9 @@ describe('CtaSection', () => {
     expect(screen.getByText('業務フローの可視化を、今日から。')).toBeInTheDocument()
   })
 
-  it('should render sub text "登録不要・無料ですぐに始められます"', () => {
+  it('should render sub text "アカウント登録で無料で始められます"', () => {
     render(<CtaSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText('登録不要・無料ですぐに始められます')).toBeInTheDocument()
+    expect(screen.getByText('アカウント登録で無料で始められます')).toBeInTheDocument()
   })
 
   it('should render CTA button "無料で始める →"', () => {

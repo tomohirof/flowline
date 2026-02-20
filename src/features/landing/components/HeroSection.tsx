@@ -8,9 +8,9 @@ interface HeroSectionProps {
 export function HeroSection({ onCtaClick }: HeroSectionProps) {
   return (
     <section data-testid="hero-section" className={styles.hero}>
-      <div className={styles.dotGrid} />
-      <div className={`${styles.orb} ${styles.orb1}`} />
-      <div className={`${styles.orb} ${styles.orb2}`} />
+      <div className={styles.dotGrid} aria-hidden="true" />
+      <div className={`${styles.orb} ${styles.orb1}`} aria-hidden="true" />
+      <div className={`${styles.orb} ${styles.orb2}`} aria-hidden="true" />
 
       <div className={styles.content}>
         <div className={styles.badge}>
