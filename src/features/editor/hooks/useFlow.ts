@@ -6,8 +6,8 @@ const DEBOUNCE_MS = 2000
 
 export function useFlow(flowId: string) {
   const [flow, setFlow] = useState<Flow | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(!!flowId)
+  const [error, setError] = useState<string | null>(flowId ? null : 'フローIDが指定されていません')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
 
   const pendingPayloadRef = useRef<FlowSavePayload | null>(null)
@@ -15,32 +15,36 @@ export function useFlow(flowId: string) {
   const flowIdRef = useRef<string>(flowId)
 
   // Track current flowId to avoid stale saves
-  flowIdRef.current = flowId
+  useEffect(() => {
+    flowIdRef.current = flowId
+  }, [flowId])
 
   // =============================================
-  // Load flow
+  // Reset state when flowId changes (render-time adjustment)
+  // =============================================
+
+  const [prevFlowId, setPrevFlowId] = useState(flowId)
+  if (prevFlowId !== flowId) {
+    setPrevFlowId(flowId)
+    setFlow(null)
+    setError(flowId ? null : 'フローIDが指定されていません')
+    setSaveStatus('saved')
+    setLoading(!!flowId)
+  }
+
+  // =============================================
+  // Load flow (and cleanup refs when flowId changes)
   // =============================================
 
   useEffect(() => {
-    // Reset state
-    setFlow(null)
-    setError(null)
-    setSaveStatus('saved')
+    // Cleanup refs on flowId change
     pendingPayloadRef.current = null
-
-    // Cancel any pending debounce
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
       debounceTimerRef.current = null
     }
 
-    if (!flowId) {
-      setLoading(false)
-      setError('フローIDが指定されていません')
-      return
-    }
-
-    setLoading(true)
+    if (!flowId) return
 
     let cancelled = false
 

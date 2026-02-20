@@ -27,10 +27,10 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   const totalW = LM + sortedLanes.length * LW + (sortedLanes.length - 1) * G + 28
   const totalH = TM + HH + rowCount * RH + 40
 
-  const laneX = (li: number) => LM + li * (LW + G)
+  const laneX = useCallback((li: number) => LM + li * (LW + G), [G])
   const ct = useCallback(
     (li: number, ri: number): Point => ({ x: laneX(li) + LW / 2, y: TM + HH + ri * RH + RH / 2 }),
-    [sortedLanes.length],
+    [laneX],
   )
 
   // Build lane index map

@@ -12,8 +12,6 @@ export function SharedFlowPage() {
 
   useEffect(() => {
     if (!token) {
-      setError('共有トークンが指定されていません')
-      setLoading(false)
       return
     }
 
@@ -41,6 +39,29 @@ export function SharedFlowPage() {
       cancelled = true
     }
   }, [token])
+
+  if (!token) {
+    return (
+      <div
+        data-testid="shared-flow-error"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
+          color: '#E06060',
+          gap: 12,
+        }}
+      >
+        <p style={{ fontSize: 16, fontWeight: 600 }}>共有トークンが指定されていません</p>
+        <a href="/" style={{ fontSize: 14, color: '#7C5CFC' }}>
+          Flowline トップへ
+        </a>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

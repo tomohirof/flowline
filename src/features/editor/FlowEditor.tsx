@@ -403,27 +403,29 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     prevSnapRef.current = snap
   }, [tasks, order, arrows, notes, lanes, rows, title, themeId, onSave, buildPayload])
 
-  // Re-initialize when flow prop changes (e.g., after reload)
-  const flowIdRef = useRef<string>(flow.id)
+  // Re-initialize when flow prop changes (render-time state adjustment)
+  const [prevFlowId, setPrevFlowId] = useState(flow.id)
+  if (flow.id !== prevFlowId) {
+    setPrevFlowId(flow.id)
+    const state = flowToInternalState(flow)
+    setLanes(state.lanes)
+    setRows(state.rows)
+    setTasks(state.tasks)
+    setOrder(state.order)
+    setArrows(state.arrows)
+    setNotes(state.notes)
+    setTitle(state.title)
+    setThemeId(state.themeId)
+    setSelTask(null)
+    setSelArrow(null)
+    setSelLane(null)
+    setEditing(null)
+  }
+
+  // Reset undo snapshot ref when flow changes
   useEffect(() => {
-    if (flow.id !== flowIdRef.current) {
-      flowIdRef.current = flow.id
-      const state = flowToInternalState(flow)
-      setLanes(state.lanes)
-      setRows(state.rows)
-      setTasks(state.tasks)
-      setOrder(state.order)
-      setArrows(state.arrows)
-      setNotes(state.notes)
-      setTitle(state.title)
-      setThemeId(state.themeId)
-      setSelTask(null)
-      setSelArrow(null)
-      setSelLane(null)
-      setEditing(null)
-      prevSnapRef.current = ''
-    }
-  }, [flow])
+    prevSnapRef.current = ''
+  }, [prevFlowId])
 
   // --- Undo / Redo ---
   const historyRef = useRef<string[]>([])
@@ -508,12 +510,29 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   lanes.forEach((l, i) => (liMap[l.id] = i))
   const riMap: Record<string, number> = {}
   rows.forEach((r, i) => (riMap[r.id] = i))
-  const laneX = (li: number): number => LM + li * (LW + G)
+  const laneX = useCallback((li: number): number => LM + li * (LW + G), [G])
   const ct = useCallback(
     (li: number, ri: number): Point => ({ x: laneX(li) + LW / 2, y: TM + HH + ri * RH + RH / 2 }),
-    [lanes.length, G],
+    [laneX],
   )
   const isDark = themeId === 'midnight'
+
+  const delTask = (k: string): void => {
+    setTasks((p) => {
+      const n = { ...p }
+      delete n[k]
+      return n
+    })
+    setNotes((p) => {
+      const n = { ...p }
+      delete n[k]
+      return n
+    })
+    setOrder((p) => p.filter((x) => x !== k))
+    setArrows((p) => p.filter((a) => a.from !== k && a.to !== k))
+    setEditing(null)
+    setSelTask(null)
+  }
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
@@ -692,22 +711,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setConnectFrom(k)
     setSelTask(null)
     setActiveTool('connect')
-  }
-  const delTask = (k: string): void => {
-    setTasks((p) => {
-      const n = { ...p }
-      delete n[k]
-      return n
-    })
-    setNotes((p) => {
-      const n = { ...p }
-      delete n[k]
-      return n
-    })
-    setOrder((p) => p.filter((x) => x !== k))
-    setArrows((p) => p.filter((a) => a.from !== k && a.to !== k))
-    setEditing(null)
-    setSelTask(null)
   }
   const addRow = (): void => setRows((p) => [...p, { id: uid() }])
   const rmRow = (): void => {
