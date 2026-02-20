@@ -456,7 +456,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     if (!el) return
     const ro = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect
-      setContainerSize({ width, height })
+      setContainerSize((prev) => {
+        if (prev.width === width && prev.height === height) return prev
+        return { width, height }
+      })
     })
     ro.observe(el)
     return () => ro.disconnect()
