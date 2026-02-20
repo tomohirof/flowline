@@ -1,0 +1,41 @@
+.section {
+  padding: 120px 0;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+  margin-top: 16px;
+}
+
+.step {
+  text-align: center;
+}
+
+.stepNumber {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 24px;
+}
+
+.stepTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.stepDesc {
+  font-size: 14px;
+  color: var(--text-sub);
+  line-height: 1.6;
+  margin: 0;
+}

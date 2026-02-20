@@ -1,0 +1,93 @@
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 120px 24px 80px;
+}
+
+.dotGrid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: gridDrift 8s linear infinite;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb1 {
+  width: 400px;
+  height: 400px;
+  background: var(--brand);
+  top: 10%;
+  left: 20%;
+}
+
+.orb2 {
+  width: 300px;
+  height: 300px;
+  background: var(--blue);
+  bottom: 20%;
+  right: 15%;
+  animation-delay: -3s;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 720px;
+  animation: fadeUp 0.8s ease-out;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 14px;
+  color: var(--text-sub);
+  margin-bottom: 32px;
+}
+
+.badgeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ecdc4;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.heading {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin: 0 0 24px;
+}
+
+.gradientText {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtext {
+  font-size: 18px;
+  color: var(--text-sub);
+  line-height: 1.7;
+  margin: 0 0 40px;
+}

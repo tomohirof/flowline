@@ -1,0 +1,17 @@
+.section {
+  padding: 120px 0;
+  text-align: center;
+}
+
+.heading {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+}
+
+.sub {
+  font-size: 16px;
+  color: var(--text-sub);
+  margin: 0 0 40px;
+}

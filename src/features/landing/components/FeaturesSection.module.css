@@ -1,0 +1,52 @@
+.section {
+  padding: 120px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-4px);
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(124, 92, 252, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.cardDesc {
+  font-size: 14px;
+  color: var(--text-sub);
+  line-height: 1.6;
+  margin: 0;
+}
