@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { ShareDialog } from './components/ShareDialog'
 import type {
+  Theme,
   ThemeId,
   TaskData,
   RowData,
