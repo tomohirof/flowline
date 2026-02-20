@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../../../lib/api'
+import {
+  DEFAULT_FLOW_TITLE,
+  DEFAULT_FLOW_THEME_ID,
+  createDefaultLanes,
+} from '../../dashboard/constants'
 import type { FlowListResponse, FlowSummary } from '../types'
 
 export function FlowListPage() {
@@ -34,14 +39,9 @@ export function FlowListPage() {
       const data = await apiFetch<{ flow: { id: string } }>('/flows', {
         method: 'POST',
         body: JSON.stringify({
-          title: '無題のフロー',
-          themeId: 'cloud',
-          lanes: [
-            { id: crypto.randomUUID(), name: '企業', colorIndex: 0, position: 0 },
-            { id: crypto.randomUUID(), name: 'システム', colorIndex: 1, position: 1 },
-            { id: crypto.randomUUID(), name: '事務局', colorIndex: 2, position: 2 },
-            { id: crypto.randomUUID(), name: 'ユーザー', colorIndex: 3, position: 3 },
-          ],
+          title: DEFAULT_FLOW_TITLE,
+          themeId: DEFAULT_FLOW_THEME_ID,
+          lanes: createDefaultLanes(),
           nodes: [],
           arrows: [],
         }),

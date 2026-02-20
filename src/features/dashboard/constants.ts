@@ -12,10 +12,10 @@ export interface DefaultLane {
 }
 
 export const DEFAULT_LANES: DefaultLane[] = [
-  { name: '企業', colorIndex: 0, position: 0 },
-  { name: 'システム', colorIndex: 1, position: 1 },
-  { name: '事務局', colorIndex: 2, position: 2 },
-  { name: 'ユーザー', colorIndex: 3, position: 3 },
+  { name: 'lane1', colorIndex: 0, position: 0 },
+  { name: 'lane2', colorIndex: 1, position: 1 },
+  { name: 'lane3', colorIndex: 2, position: 2 },
+  { name: 'lane4', colorIndex: 3, position: 3 },
 ]
 
 /**
