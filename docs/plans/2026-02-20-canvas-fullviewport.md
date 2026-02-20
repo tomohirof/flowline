@@ -1,7 +1,5 @@
 # キャンバスフルビューポート拡張 実装計画
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** フローエディタのSVGキャンバスをコンテナ全体に拡張し、Figmaのような全画面キャンバス体験を実現する
 
 **Architecture:** キャンバスコンテナDiv に ref + ResizeObserver を追加してコンテナサイズを取得。SVGの width/height をコンテナサイズとコンテンツサイズの大きい方に設定。viewBox も同様に拡張。コンテンツは左上寄せで配置。

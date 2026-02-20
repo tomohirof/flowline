@@ -2,9 +2,6 @@ name = "flowline"
 compatibility_date = "2025-01-01"
 pages_build_output_dir = "dist"
 
-[vars]
-JWT_SECRET = "dev-secret-change-in-production"
-
 [[d1_databases]]
 binding = "FLOWLINE_DB"
 database_name = "flowline-db"
