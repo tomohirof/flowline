@@ -4,6 +4,7 @@ import { RegisterPage } from './features/auth/pages/RegisterPage'
 import { FlowEditorPage } from './features/editor/pages/FlowEditorPage'
 import { Dashboard } from './features/dashboard/Dashboard'
 import { SharedFlowPage } from './features/shared/SharedFlowPage'
+import { LandingPage } from './features/landing/LandingPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 import './App.css'
 
@@ -11,8 +12,8 @@ function Header() {
   const { user, loading, logout } = useAuth()
   const location = useLocation()
 
-  // Hide header on flow editor pages and shared view (full-screen)
-  if (location.pathname.match(/^\/flows\/[^/]+$/) || location.pathname.match(/^\/shared\/[^/]+$/)) {
+  // Hide header on landing page, flow editor pages, and shared view (full-screen)
+  if (location.pathname === '/' || location.pathname.match(/^\/flows\/[^/]+$/) || location.pathname.match(/^\/shared\/[^/]+$/)) {
     return null
   }
 
@@ -48,8 +49,15 @@ function Header() {
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   if (loading) return <p>読み込み中...</p>
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/" replace />
   return <>{children}</>
+}
+
+function PublicHome() {
+  const { user, loading } = useAuth()
+  if (loading) return <p>読み込み中...</p>
+  if (user) return <Navigate to="/flows" replace />
+  return <LandingPage />
 }
 
 function App() {
@@ -61,14 +69,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Navigate to="/flows" replace />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/" element={<PublicHome />} />
             <Route
               path="/flows"
               element={
