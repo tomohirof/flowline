@@ -5,13 +5,13 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 120px 24px 80px;
+  padding: 100px 24px 80px;
 }
 
 .dotGrid {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
   background-size: 32px 32px;
   animation: gridDrift 8s linear infinite;
 }
@@ -20,7 +20,7 @@
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.3;
+  opacity: 0.15;
   animation: float 6s ease-in-out infinite;
 }
 
@@ -56,7 +56,7 @@
   padding: 8px 16px;
   border-radius: 100px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.03);
   font-size: 14px;
   color: var(--text-sub);
   margin-bottom: 32px;
