@@ -498,6 +498,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const LW = 178, RH = 84, HH = 46, TW = 144, TH = 52, LM = 28, TM = 24, G = T.laneGap
   const totalW = LM + lanes.length * LW + (lanes.length - 1) * G + 28
   const totalH = TM + HH + rows.length * RH + 40
+  const svgW = Math.max(containerSize.width, (totalW + LM) * zoom)
+  const svgH = Math.max(containerSize.height, (totalH + 30 + TM) * zoom)
   const ky = (lid: string, rid: string): string => `${lid}_${rid}`
   const liMap: Record<string, number> = {}
   lanes.forEach((l, i) => (liMap[l.id] = i))
@@ -1313,9 +1315,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         >
           <svg
             ref={svgRef}
-            width={totalW * zoom}
-            height={(totalH + 30) * zoom}
-            viewBox={`0 -30 ${totalW} ${totalH + 30}`}
+            width={svgW}
+            height={svgH}
+            viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
             style={{ overflow: 'visible' }}
             onMouseMove={onSvgMouseMove}
             onMouseUp={onSvgMouseUp}
