@@ -1307,7 +1307,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             ref={svgRef}
             width={svgW}
             height={svgH}
-            viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
+            viewBox={`0 -30 ${totalW + LM} ${totalH + 30 + TM}`}
             className={styles.svg}
             onMouseMove={onSvgMouseMove}
             onMouseUp={onSvgMouseUp}
