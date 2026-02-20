@@ -13,7 +13,11 @@ function Header() {
   const location = useLocation()
 
   // Hide header on landing page, flow editor pages, and shared view (full-screen)
-  if (location.pathname === '/' || location.pathname.match(/^\/flows\/[^/]+$/) || location.pathname.match(/^\/shared\/[^/]+$/)) {
+  if (
+    location.pathname === '/' ||
+    location.pathname.match(/^\/flows\/[^/]+$/) ||
+    location.pathname.match(/^\/shared\/[^/]+$/)
+  ) {
     return null
   }
 
