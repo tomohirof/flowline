@@ -1308,7 +1308,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           ref={canvasContainerRef}
           style={{
             flex: 1,
-            overflow: 'hidden',
+            overflow: 'auto',
             background: T.canvasBg,
             backgroundImage: `radial-gradient(circle,${T.dotGrid} 0.5px,transparent 0.5px)`,
             backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
