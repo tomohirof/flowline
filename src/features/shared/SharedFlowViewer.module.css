@@ -1,0 +1,135 @@
+.root {
+  font-family: 'DM Sans', 'Noto Sans JP', 'Helvetica Neue', sans-serif;
+  background: var(--theme-bg);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--theme-title-color);
+  overflow: hidden;
+}
+
+.titleBar {
+  height: 40px;
+  background: var(--theme-title-bar);
+  border-bottom: 1px solid var(--theme-title-bar-border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.logoIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.brandName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--theme-title-color);
+  letter-spacing: -0.02em;
+}
+
+.divider {
+  width: 1px;
+  height: 18px;
+  background: var(--theme-title-bar-border);
+  margin: 0 10px;
+}
+
+.flowTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--theme-title-sub);
+  padding: 2px 8px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.viewModeBadge {
+  font-size: 11px;
+  color: var(--theme-accent);
+  background: var(--theme-accent-alpha);
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+}
+
+.zoomBtn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--theme-title-bar-border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--theme-title-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoomText {
+  font-size: 10px;
+  color: var(--theme-status-text);
+  min-width: 32px;
+  text-align: center;
+}
+
+.canvas {
+  flex: 1;
+  overflow: auto;
+  background: var(--theme-canvas-bg);
+  background-image: radial-gradient(circle, var(--theme-dot-grid) 0.5px, transparent 0.5px);
+  padding: 40px;
+}
+
+.svg {
+  overflow: visible;
+}
+
+.footer {
+  height: 32px;
+  background: var(--theme-status-bg);
+  border-top: 1px solid var(--theme-status-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.footerIcon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.footerText {
+  font-size: 11px;
+  color: var(--theme-status-text);
+  font-weight: 500;
+}

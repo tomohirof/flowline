@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { ShareDialog } from './components/ShareDialog'
+import styles from './FlowEditor.module.css'
 import type {
   Theme,
   ThemeId,
@@ -183,45 +184,17 @@ const Ico = ({ children, size = 18 }: { children: ReactNode; size?: number }) =>
 // Right Panel Sub-Components
 // =============================================
 
-const PanelSection = ({
-  label,
-  children,
-  T,
-}: {
-  label?: string
-  children: ReactNode
-  T: Theme
-}) => (
-  <div style={{ padding: '12px 14px', borderBottom: `1px solid ${T.panelBorder}` }}>
-    {label && (
-      <div
-        style={{
-          fontSize: 9,
-          fontWeight: 700,
-          color: T.panelLabel,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          marginBottom: 8,
-        }}
-      >
-        {label}
-      </div>
-    )}
+const PanelSection = ({ label, children }: { label?: string; children: ReactNode; T: Theme }) => (
+  <div className={styles.panelSection}>
+    {label && <div className={styles.panelSectionLabel}>{label}</div>}
     {children}
   </div>
 )
 
-const PanelRow = ({ label, children, T }: { label: string; children?: ReactNode; T: Theme }) => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 6,
-    }}
-  >
-    <span style={{ fontSize: 11, color: T.panelLabel, fontWeight: 500 }}>{label}</span>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{children}</div>
+const PanelRow = ({ label, children }: { label: string; children?: ReactNode; T: Theme }) => (
+  <div className={styles.panelRow}>
+    <span className={styles.panelRowLabel}>{label}</span>
+    <div className={styles.panelRowChildren}>{children}</div>
   </div>
 )
 
@@ -229,7 +202,6 @@ const PanelInput = ({
   value,
   onChange,
   placeholder,
-  T,
 }: {
   value: string
   onChange: (v: string) => void
@@ -240,18 +212,7 @@ const PanelInput = ({
     value={value}
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
-    style={{
-      width: '100%',
-      height: 30,
-      fontSize: 12,
-      padding: '0 8px',
-      border: `1px solid ${T.inputBorder}`,
-      borderRadius: 6,
-      outline: 'none',
-      background: T.inputBg,
-      color: T.panelText,
-      fontFamily: 'inherit',
-    }}
+    className={styles.panelInput}
   />
 )
 
@@ -271,19 +232,11 @@ const PanelBtn = ({
 }) => (
   <button
     onClick={onClick}
+    className={`${styles.panelBtn} ${full ? styles.panelBtnFull : styles.panelBtnAuto}`}
     style={{
-      height: 28,
-      padding: full ? '0' : '0 10px',
-      width: full ? '100%' : 'auto',
       border: `1px solid ${color}30`,
-      borderRadius: 6,
       background: bg || `${color}10`,
       color,
-      cursor: 'pointer',
-      fontSize: 11,
-      fontWeight: 600,
-      fontFamily: 'inherit',
-      transition: 'all 0.1s',
     }}
   >
     {label}
@@ -998,18 +951,16 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           </PanelSection>
           <PanelSection label="情報" T={T}>
             <PanelRow label="レーン" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
-                {lane?.name}
-              </span>
+              <span className={styles.panelValueText}>{lane?.name}</span>
             </PanelRow>
             {oi !== -1 && (
               <PanelRow label="順番" T={T}>
-                <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{oi + 1}</span>
+                <span className={styles.panelValueText}>{oi + 1}</span>
               </PanelRow>
             )}
           </PanelSection>
           <PanelSection label="操作" T={T}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className={styles.panelActions}>
               <PanelBtn
                 label="→ 接続"
                 color={T.accent}
@@ -1031,14 +982,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         <>
           <PanelSection label="接続線" T={T}>
             <PanelRow label="From" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
-                {fromT?.label || '?'}
-              </span>
+              <span className={styles.panelValueText}>{fromT?.label || '?'}</span>
             </PanelRow>
             <PanelRow label="To" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
-                {toT?.label || '?'}
-              </span>
+              <span className={styles.panelValueText}>{toT?.label || '?'}</span>
             </PanelRow>
           </PanelSection>
           <PanelSection label="コメント" T={T}>
@@ -1052,7 +999,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             />
           </PanelSection>
           <PanelSection label="操作" T={T}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className={styles.panelActions}>
               <PanelBtn
                 label="⇄ 方向を逆転"
                 color={T.accent}
@@ -1093,22 +1040,18 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             />
           </PanelSection>
           <PanelSection label="カラー" T={T}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className={styles.panelActions}>
               {PALETTES.map((p, ci) => (
                 <div
                   key={ci}
                   onClick={() =>
                     setLanes((prev) => prev.map((l) => (l.id === selLane ? { ...l, ci } : l)))
                   }
+                  className={styles.colorSwatch}
                   style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 6,
                     background: p.dot,
-                    cursor: 'pointer',
                     border:
                       selLaneData.ci === ci ? `2px solid ${T.accent}` : '2px solid transparent',
-                    transition: 'all 0.1s',
                   }}
                 />
               ))}
@@ -1147,46 +1090,19 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     return (
       <>
         <PanelSection label="テーマ" T={T}>
-          <div style={{ position: 'relative' }}>
+          <div className={styles.themePickerWrapper}>
             <div
               onClick={() => setShowThemePicker((v) => !v)}
-              style={{
-                padding: '7px 10px',
-                borderRadius: 7,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: T.inputBg,
-                border: `1px solid ${T.inputBorder}`,
-                color: T.panelText,
-              }}
+              className={styles.themePickerTrigger}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 14 }}>{THEMES[themeId].emoji}</span>
+              <span className={styles.themePickerLabel}>
+                <span className={styles.themePickerEmoji}>{THEMES[themeId].emoji}</span>
                 {THEMES[themeId].name}
               </span>
-              <span style={{ fontSize: 10, color: T.panelLabel }}>
-                {showThemePicker ? '▲' : '▼'}
-              </span>
+              <span className={styles.themePickerArrow}>{showThemePicker ? '▲' : '▼'}</span>
             </div>
             {showThemePicker && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 38,
-                  left: 0,
-                  right: 0,
-                  background: T.panelBg,
-                  border: `1px solid ${T.panelBorder}`,
-                  borderRadius: 7,
-                  padding: 4,
-                  zIndex: 10,
-                  boxShadow: `0 4px 12px rgba(0,0,0,${isDark ? 0.4 : 0.1})`,
-                }}
-              >
+              <div className={styles.themePickerDropdown}>
                 {(Object.entries(THEMES) as [ThemeId, Theme][]).map(([id, th]) => (
                   <div
                     key={id}
@@ -1194,20 +1110,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       setThemeId(id)
                       setShowThemePicker(false)
                     }}
+                    className={styles.themePickerOption}
                     style={{
-                      padding: '7px 10px',
-                      borderRadius: 5,
-                      cursor: 'pointer',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
                       background: themeId === id ? T.sidebarActiveBg : 'transparent',
                       color: themeId === id ? T.accent : T.panelText,
                     }}
                   >
-                    <span style={{ fontSize: 14 }}>{th.emoji}</span>
+                    <span className={styles.themePickerEmoji}>{th.emoji}</span>
                     {th.name}
                   </div>
                 ))}
@@ -1217,22 +1126,16 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         </PanelSection>
         <PanelSection label="キャンバス" T={T}>
           <PanelRow label="レーン数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
-              {lanes.length}
-            </span>
+            <span className={styles.panelValueTextLarge}>{lanes.length}</span>
           </PanelRow>
           <PanelRow label="行数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{rows.length}</span>
+            <span className={styles.panelValueTextLarge}>{rows.length}</span>
           </PanelRow>
           <PanelRow label="ノード数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
-              {Object.keys(tasks).length}
-            </span>
+            <span className={styles.panelValueTextLarge}>{Object.keys(tasks).length}</span>
           </PanelRow>
           <PanelRow label="接続数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
-              {arrows.length}
-            </span>
+            <span className={styles.panelValueTextLarge}>{arrows.length}</span>
           </PanelRow>
         </PanelSection>
         <PanelSection label="エクスポート" T={T}>
@@ -1251,60 +1154,57 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   return (
     <div
       onClick={bgClick}
-      style={{
-        fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
-        background: T.bg,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        color: T.titleColor,
-        overflow: 'hidden',
-      }}
+      className={styles.root}
+      style={
+        {
+          '--theme-bg': T.bg,
+          '--theme-accent': T.accent,
+          '--theme-accent-40': `${T.accent}40`,
+          '--theme-accent-18': `${T.accent}18`,
+          '--theme-accent-10': `${T.accent}10`,
+          '--theme-title-color': T.titleColor,
+          '--theme-title-bar': T.titleBar,
+          '--theme-title-bar-border': T.titleBarBorder,
+          '--theme-title-sub': T.titleSub,
+          '--theme-canvas-bg': T.canvasBg,
+          '--theme-dot-grid': T.dotGrid,
+          '--theme-sidebar': T.sidebar,
+          '--theme-sidebar-border': T.sidebarBorder,
+          '--theme-sidebar-icon': T.sidebarIcon,
+          '--theme-sidebar-active': T.sidebarActive,
+          '--theme-sidebar-active-bg': T.sidebarActiveBg,
+          '--theme-panel-bg': T.panelBg,
+          '--theme-panel-border': T.panelBorder,
+          '--theme-panel-label': T.panelLabel,
+          '--theme-panel-text': T.panelText,
+          '--theme-input-bg': T.inputBg,
+          '--theme-input-border': T.inputBorder,
+          '--theme-status-bg': T.statusBg,
+          '--theme-status-border': T.statusBorder,
+          '--theme-status-text': T.statusText,
+          '--theme-picker-shadow': `0 4px 12px rgba(0,0,0,${isDark ? 0.4 : 0.1})`,
+          '--scrollbar-thumb': `rgba(${isDark ? '255,255,255' : '0,0,0'},0.08)`,
+          '--tooltip-bg': isDark ? '#555' : '#333',
+        } as React.CSSProperties
+      }
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-        *{box-sizing:border-box}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(${isDark ? '255,255,255' : '0,0,0'},0.08);border-radius:3px}
-        @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
-        @keyframes dragPulse{0%,100%{stroke-opacity:0.3}50%{stroke-opacity:0.7}}
-        .stool{position:relative}.stool .stip{display:none;position:absolute;left:46px;top:50%;transform:translateY(-50%);background:${isDark ? '#555' : '#333'};color:#fff;font-size:10px;padding:3px 8px;border-radius:4px;white-space:nowrap;pointer-events:none;z-index:10}.stool:hover .stip{display:block}
+        *{box-sizing:border-box}
       `}</style>
 
       {/* Title bar */}
-      <div
-        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-        style={{
-          height: 40,
-          background: T.titleBar,
-          borderBottom: `1px solid ${T.titleBarBorder}`,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 16px',
-          flexShrink: 0,
-        }}
-      >
+      <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className={styles.titleBar}>
         <div
+          className={styles.logoIcon}
           style={{
-            width: 22,
-            height: 22,
-            borderRadius: 5,
-            marginRight: 8,
             background: `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 10,
-            fontWeight: 700,
-            color: '#fff',
           }}
         >
           F
         </div>
-        <span
-          style={{ fontSize: 13, fontWeight: 700, color: T.titleColor, letterSpacing: '-0.02em' }}
-        >
-          Flowline
-        </span>
-        <div style={{ width: 1, height: 18, background: T.titleBarBorder, margin: '0 10px' }} />
+        <span className={styles.brandName}>Flowline</span>
+        <div className={styles.divider} />
         {editTitle ? (
           <input
             value={title}
@@ -1314,31 +1214,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               e.key === 'Enter' && setEditTitle(false)
             }
             autoFocus
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              background: T.inputBg,
-              border: `1px solid ${T.inputBorder}`,
-              borderRadius: 4,
-              padding: '2px 8px',
-              color: T.titleColor,
-              outline: 'none',
-              width: 180,
-              fontFamily: 'inherit',
-            }}
+            className={styles.titleInput}
           />
         ) : (
-          <span
-            onClick={() => setEditTitle(true)}
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: 'pointer',
-              padding: '2px 8px',
-              borderRadius: 4,
-              color: T.titleSub,
-            }}
-          >
+          <span onClick={() => setEditTitle(true)} className={styles.titleText}>
             {title}
           </span>
         )}
@@ -1348,62 +1227,21 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             e.stopPropagation()
             setShowShareDialog(true)
           }}
-          style={{
-            height: 26,
-            padding: '0 10px',
-            border: shareToken ? `1px solid ${T.accent}40` : `1px solid ${T.titleBarBorder}`,
-            borderRadius: 6,
-            background: shareToken ? `${T.accent}10` : 'transparent',
-            color: shareToken ? T.accent : T.titleSub,
-            cursor: 'pointer',
-            fontSize: 11,
-            fontWeight: 600,
-            fontFamily: 'inherit',
-            transition: 'all 0.15s',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            marginLeft: 8,
-          }}
+          className={`${styles.shareButton} ${shareToken ? styles.shareButtonActive : styles.shareButtonInactive}`}
         >
           {shareToken ? '共有中' : '共有'}
         </button>
-        <div style={{ flex: 1 }} />
+        <div className={styles.spacer} />
         {connectFrom && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '4px 12px',
-              borderRadius: 6,
-              background: T.sidebarActiveBg,
-              border: `1px solid ${T.accent}40`,
-              animation: 'pulse 1.5s ease infinite',
-            }}
-          >
-            <span style={{ fontSize: 11, color: T.accent, fontWeight: 500 }}>
-              {'→ 接続先をクリック'}
-            </span>
+          <div className={styles.connectBanner}>
+            <span className={styles.connectBannerText}>{'→ 接続先をクリック'}</span>
             <button
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation()
                 setConnectFrom(null)
                 setActiveTool('select')
               }}
-              style={{
-                width: 18,
-                height: 18,
-                border: 'none',
-                borderRadius: 3,
-                background: `${T.accent}18`,
-                color: T.accent,
-                cursor: 'pointer',
-                fontSize: 11,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className={styles.connectBannerClose}
             >
               {'×'}
             </button>
@@ -1411,53 +1249,31 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         )}
         <span
           data-testid="save-status"
+          className={styles.saveStatus}
           style={{
-            fontSize: 10,
             color:
               saveStatus === 'error'
                 ? '#E06060'
                 : saveStatus === 'unsaved'
                   ? T.accent
                   : T.statusText,
-            marginLeft: 12,
           }}
         >
           {saveStatusText[saveStatus]}
         </span>
-        <span style={{ fontSize: 10, color: T.statusText, marginLeft: 12 }}>
-          {Math.round(zoom * 100)}%
-        </span>
+        <span className={styles.zoomPercent}>{Math.round(zoom * 100)}%</span>
       </div>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className={styles.mainContent}>
         {/* Left Sidebar */}
-        <div
-          onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          style={{
-            width: 44,
-            background: T.sidebar,
-            borderRight: `1px solid ${T.sidebarBorder}`,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '8px 0',
-            gap: 2,
-            flexShrink: 0,
-          }}
-        >
+        <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className={styles.sidebar}>
           {sideTools.map((t, i) => {
-            if (t === 'sep')
-              return (
-                <div
-                  key={i}
-                  style={{ width: 24, height: 1, background: T.sidebarBorder, margin: '4px 0' }}
-                />
-              )
+            if (t === 'sep') return <div key={i} className={styles.sidebarSep} />
             const isA = t.id === activeTool || (t.id === 'export' && showExport)
             return (
               <div
                 key={t.id}
-                className="stool"
+                className={`${styles.toolButton} ${isA ? styles.toolButtonActive : styles.toolButtonInactive}`}
                 onClick={() => {
                   if (t.action) {
                     t.action()
@@ -1470,21 +1286,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     } else setActiveTool('connect')
                   } else setActiveTool(t.id)
                 }}
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 7,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  background: isA ? T.sidebarActiveBg : 'transparent',
-                  color: isA ? T.sidebarActive : T.sidebarIcon,
-                }}
               >
                 <Ico>{t.icon}</Ico>
-                <span className="stip">{t.tip}</span>
+                <span className={styles.toolTip}>{t.tip}</span>
               </div>
             )
           })}
@@ -1493,11 +1297,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         {/* Canvas */}
         <div
           ref={canvasContainerRef}
+          className={styles.canvas}
           style={{
-            flex: 1,
-            overflow: 'auto',
-            background: T.canvasBg,
-            backgroundImage: `radial-gradient(circle,${T.dotGrid} 0.5px,transparent 0.5px)`,
             backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
             cursor: connectFrom ? 'crosshair' : dragging ? 'grabbing' : 'default',
           }}
@@ -1507,7 +1308,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             width={svgW}
             height={svgH}
             viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
-            style={{ overflow: 'visible' }}
+            className={styles.svg}
             onMouseMove={onSvgMouseMove}
             onMouseUp={onSvgMouseUp}
             onMouseLeave={() => {
@@ -1596,18 +1397,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
                           e.key === 'Enter' && setEditLane(null)
                         }
-                        style={{
-                          width: '100%',
-                          background: T.inputBg,
-                          border: `1px solid ${T.inputBorder}`,
-                          borderRadius: 4,
-                          color: T.titleColor,
-                          fontSize: 12,
-                          fontWeight: 600,
-                          padding: '2px 6px',
-                          outline: 'none',
-                          fontFamily: 'inherit',
-                        }}
+                        className={styles.laneNameInput}
                       />
                     </foreignObject>
                   ) : (
@@ -1832,7 +1622,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         stroke={T.accent}
                         strokeWidth={1.5}
                         strokeDasharray="4,3"
-                        style={{ animation: 'dragPulse 1s ease infinite', pointerEvents: 'none' }}
+                        className={styles.dragPulseAnim}
                       />
                     )}
                     {isHov && !connectFrom && !dragging && (
@@ -2006,18 +1796,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                             if (e.key === 'Enter') setEditing(null)
                           }}
                           onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            border: 'none',
-                            outline: 'none',
-                            textAlign: 'center',
-                            fontSize: 11.5,
-                            background: 'transparent',
-                            color: T.titleColor,
-                            fontWeight: 500,
-                            fontFamily: 'inherit',
-                          }}
+                          className={styles.nodeEditInput}
                         />
                       </foreignObject>
                     ) : (
@@ -2064,17 +1843,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                                 e.key === 'Enter' && setEditNote(null)
                               }
                               onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                border: 'none',
-                                outline: 'none',
-                                background: 'transparent',
-                                fontSize: 8,
-                                color: '#8D6E63',
-                                textAlign: 'center',
-                                fontFamily: 'inherit',
-                              }}
+                              className={styles.noteEditInput}
                             />
                           </foreignObject>
                         ) : (
@@ -2217,28 +1986,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         </div>
 
         {/* Right Panel */}
-        <div
-          onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          style={{
-            width: 220,
-            background: T.panelBg,
-            borderLeft: `1px solid ${T.panelBorder}`,
-            display: 'flex',
-            flexDirection: 'column',
-            flexShrink: 0,
-            overflowY: 'auto',
-          }}
-        >
-          <div style={{ padding: '10px 14px', borderBottom: `1px solid ${T.panelBorder}` }}>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: T.panelLabel,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
+        <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className={styles.rightPanel}>
+          <div className={styles.rightPanelHeader}>
+            <span className={styles.rightPanelTitle}>
               {selTask ? 'ノード' : selArrow ? '接続線' : selLane ? 'レーン' : 'プロパティ'}
             </span>
           </div>
@@ -2247,26 +1997,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       </div>
 
       {/* Status */}
-      <div
-        style={{
-          height: 24,
-          background: T.statusBg,
-          borderTop: `1px solid ${T.statusBorder}`,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 14px',
-          gap: 16,
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontSize: 10, color: T.statusText }}>
+      <div className={styles.statusBar}>
+        <span className={styles.statusText}>
           {Object.keys(tasks).length} tasks {'·'} {arrows.length} connections
         </span>
-        <span style={{ fontSize: 10, color: T.statusText, opacity: 0.5 }}>
-          {'⌘Z:戻す · ⌘⇧Z:やり直す'}
-        </span>
+        <span className={styles.statusTextFaded}>{'⌘Z:戻す · ⌘⇧Z:やり直す'}</span>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 10, color: T.statusText, opacity: 0.6 }}>
+        <span className={styles.statusTextHint}>
           {connectFrom
             ? '接続先クリック · Esc解除'
             : dragging

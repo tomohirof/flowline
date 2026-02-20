@@ -1,0 +1,558 @@
+/* =============================================
+   FlowEditor CSS Module
+   Theme values use CSS custom properties (--theme-*)
+   set on .root via inline style
+   ============================================= */
+
+/* Global styles injected via <style> tag replaced by module-scoped rules */
+
+/* =============================================
+   Root Container
+   ============================================= */
+
+.root {
+  font-family: 'DM Sans', 'Noto Sans JP', 'Helvetica Neue', sans-serif;
+  background: var(--theme-bg);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--theme-title-color);
+  overflow: hidden;
+}
+
+/* Scrollbar styles */
+.root *::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.root *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.root *::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes dragPulse {
+  0%,
+  100% {
+    stroke-opacity: 0.3;
+  }
+  50% {
+    stroke-opacity: 0.7;
+  }
+}
+
+/* =============================================
+   Title Bar
+   ============================================= */
+
+.titleBar {
+  height: 40px;
+  background: var(--theme-title-bar);
+  border-bottom: 1px solid var(--theme-title-bar-border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.logoIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.brandName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--theme-title-color);
+  letter-spacing: -0.02em;
+}
+
+.divider {
+  width: 1px;
+  height: 18px;
+  background: var(--theme-title-bar-border);
+  margin: 0 10px;
+}
+
+.titleInput {
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--theme-input-bg);
+  border: 1px solid var(--theme-input-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: var(--theme-title-color);
+  outline: none;
+  width: 180px;
+  font-family: inherit;
+}
+
+.titleText {
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--theme-title-sub);
+}
+
+.shareButton {
+  height: 26px;
+  padding: 0 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  border-radius: 6px;
+}
+
+.shareButtonActive {
+  border: 1px solid var(--theme-accent-40);
+  background: var(--theme-accent-10);
+  color: var(--theme-accent);
+}
+
+.shareButtonInactive {
+  border: 1px solid var(--theme-title-bar-border);
+  background: transparent;
+  color: var(--theme-title-sub);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.connectBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: var(--theme-sidebar-active-bg);
+  border: 1px solid var(--theme-accent-40);
+  animation: pulse 1.5s ease infinite;
+}
+
+.connectBannerText {
+  font-size: 11px;
+  color: var(--theme-accent);
+  font-weight: 500;
+}
+
+.connectBannerClose {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 3px;
+  background: var(--theme-accent-18);
+  color: var(--theme-accent);
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.saveStatus {
+  font-size: 10px;
+  margin-left: 12px;
+}
+
+.zoomPercent {
+  font-size: 10px;
+  color: var(--theme-status-text);
+  margin-left: 12px;
+}
+
+/* =============================================
+   Main Content Area
+   ============================================= */
+
+.mainContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* =============================================
+   Left Sidebar (Tool Palette)
+   ============================================= */
+
+.sidebar {
+  width: 44px;
+  background: var(--theme-sidebar);
+  border-right: 1px solid var(--theme-sidebar-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.sidebarSep {
+  width: 24px;
+  height: 1px;
+  background: var(--theme-sidebar-border);
+  margin: 4px 0;
+}
+
+.toolButton {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.toolButton .toolTip {
+  display: none;
+  position: absolute;
+  left: 46px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--tooltip-bg);
+  color: #fff;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.toolButton:hover .toolTip {
+  display: block;
+}
+
+.toolButtonActive {
+  background: var(--theme-sidebar-active-bg);
+  color: var(--theme-sidebar-active);
+}
+
+.toolButtonInactive {
+  background: transparent;
+  color: var(--theme-sidebar-icon);
+}
+
+/* =============================================
+   Canvas Area
+   ============================================= */
+
+.canvas {
+  flex: 1;
+  overflow: auto;
+  background: var(--theme-canvas-bg);
+  background-image: radial-gradient(circle, var(--theme-dot-grid) 0.5px, transparent 0.5px);
+}
+
+.svg {
+  overflow: visible;
+}
+
+/* =============================================
+   Right Panel
+   ============================================= */
+
+.rightPanel {
+  width: 220px;
+  background: var(--theme-panel-bg);
+  border-left: 1px solid var(--theme-panel-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.rightPanelHeader {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--theme-panel-border);
+}
+
+.rightPanelTitle {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--theme-panel-label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* =============================================
+   Panel Sub-Components
+   ============================================= */
+
+.panelSection {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--theme-panel-border);
+}
+
+.panelSectionLabel {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--theme-panel-label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.panelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.panelRowLabel {
+  font-size: 11px;
+  color: var(--theme-panel-label);
+  font-weight: 500;
+}
+
+.panelRowChildren {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.panelInput {
+  width: 100%;
+  height: 30px;
+  font-size: 12px;
+  padding: 0 8px;
+  border: 1px solid var(--theme-input-border);
+  border-radius: 6px;
+  outline: none;
+  background: var(--theme-input-bg);
+  color: var(--theme-panel-text);
+  font-family: inherit;
+}
+
+.panelBtn {
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.1s;
+}
+
+.panelBtnFull {
+  width: 100%;
+  padding: 0;
+}
+
+.panelBtnAuto {
+  width: auto;
+  padding: 0 10px;
+}
+
+.panelValueText {
+  font-size: 11px;
+  color: var(--theme-panel-text);
+  font-weight: 500;
+}
+
+.panelValueTextLarge {
+  font-size: 12px;
+  color: var(--theme-panel-text);
+  font-weight: 600;
+}
+
+.panelActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* =============================================
+   Color Palette Swatches
+   ============================================= */
+
+.colorSwatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+/* =============================================
+   Theme Picker
+   ============================================= */
+
+.themePickerWrapper {
+  position: relative;
+}
+
+.themePickerTrigger {
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--theme-input-bg);
+  border: 1px solid var(--theme-input-border);
+  color: var(--theme-panel-text);
+}
+
+.themePickerLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.themePickerEmoji {
+  font-size: 14px;
+}
+
+.themePickerArrow {
+  font-size: 10px;
+  color: var(--theme-panel-label);
+}
+
+.themePickerDropdown {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  right: 0;
+  background: var(--theme-panel-bg);
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 7px;
+  padding: 4px;
+  z-index: 10;
+  box-shadow: var(--theme-picker-shadow);
+}
+
+.themePickerOption {
+  padding: 7px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* =============================================
+   SVG Inline Inputs
+   ============================================= */
+
+.laneNameInput {
+  width: 100%;
+  background: var(--theme-input-bg);
+  border: 1px solid var(--theme-input-border);
+  border-radius: 4px;
+  color: var(--theme-title-color);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  outline: none;
+  font-family: inherit;
+}
+
+.nodeEditInput {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  text-align: center;
+  font-size: 11.5px;
+  background: transparent;
+  color: var(--theme-title-color);
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.noteEditInput {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 8px;
+  color: #8d6e63;
+  text-align: center;
+  font-family: inherit;
+}
+
+/* =============================================
+   Status Bar
+   ============================================= */
+
+.statusBar {
+  height: 24px;
+  background: var(--theme-status-bg);
+  border-top: 1px solid var(--theme-status-border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.statusText {
+  font-size: 10px;
+  color: var(--theme-status-text);
+}
+
+.statusTextFaded {
+  font-size: 10px;
+  color: var(--theme-status-text);
+  opacity: 0.5;
+}
+
+.statusTextHint {
+  font-size: 10px;
+  color: var(--theme-status-text);
+  opacity: 0.6;
+}
+
+/* =============================================
+   Export panel (Mermaid overlay) - shares styles
+   ============================================= */
+
+/* =============================================
+   Animations for SVG elements
+   ============================================= */
+
+.dragPulseAnim {
+  animation: dragPulse 1s ease infinite;
+  pointer-events: none;
+}

@@ -4,6 +4,7 @@ import { apiFetch } from '../../lib/api'
 import type { FlowListResponse, FlowSummary } from '../editor/types'
 import { FlowCard } from './FlowCard'
 import { DEFAULT_FLOW_TITLE, DEFAULT_FLOW_THEME_ID, createDefaultLanes } from './constants'
+import styles from './Dashboard.module.css'
 
 export function Dashboard() {
   const [flows, setFlows] = useState<FlowSummary[]>([])
@@ -68,43 +69,15 @@ export function Dashboard() {
   }
 
   return (
-    <div
-      data-testid="dashboard"
-      style={{
-        maxWidth: 960,
-        margin: '0 auto',
-        padding: '32px 24px',
-        fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
-      }}
-    >
+    <div data-testid="dashboard" className={styles.container}>
       {/* ヘッダー */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 28,
-        }}
-      >
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#333' }}>マイフロー</h1>
+      <div className={styles.header}>
+        <h1 className={styles.title}>マイフロー</h1>
         <button
           data-testid="create-flow-button"
           onClick={handleCreate}
           disabled={creating}
-          style={{
-            height: 40,
-            padding: '0 20px',
-            background: '#7C5CFC',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: creating ? 'not-allowed' : 'pointer',
-            opacity: creating ? 0.6 : 1,
-            fontFamily: 'inherit',
-            transition: 'opacity 0.15s',
-          }}
+          className={`${styles.createBtn} ${creating ? styles.createBtnDisabled : ''}`}
         >
           {creating ? '作成中...' : '+ 新規作成'}
         </button>
@@ -112,69 +85,24 @@ export function Dashboard() {
 
       {/* エラー表示 */}
       {error && (
-        <div
-          data-testid="dashboard-error"
-          style={{
-            padding: '12px 16px',
-            background: '#FFEBEE',
-            color: '#C62828',
-            borderRadius: 8,
-            marginBottom: 20,
-            fontSize: 13,
-          }}
-        >
+        <div data-testid="dashboard-error" className={styles.error}>
           {error}
         </div>
       )}
 
       {/* コンテンツ */}
       {loading ? (
-        <div
-          data-testid="dashboard-loading"
-          style={{ color: '#999', textAlign: 'center', padding: 60 }}
-        >
-          <p style={{ fontSize: 14 }}>読み込み中...</p>
+        <div data-testid="dashboard-loading" className={styles.loading}>
+          <p className={styles.loadingText}>読み込み中...</p>
         </div>
       ) : flows.length === 0 ? (
-        <div
-          data-testid="dashboard-empty"
-          style={{
-            textAlign: 'center',
-            padding: '80px 24px',
-            color: '#999',
-          }}
-        >
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              margin: '0 auto 16px',
-              background: '#F5F3FF',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 28,
-            }}
-          >
-            +
-          </div>
-          <p style={{ fontSize: 16, marginBottom: 8, color: '#666' }}>
-            フローがまだありません。新規作成してみましょう！
-          </p>
-          <p style={{ fontSize: 13, color: '#AAA' }}>
-            「+ 新規作成」ボタンで最初のフローを作成できます
-          </p>
+        <div data-testid="dashboard-empty" className={styles.empty}>
+          <div className={styles.emptyIcon}>+</div>
+          <p className={styles.emptyTitle}>フローがまだありません。新規作成してみましょう！</p>
+          <p className={styles.emptySubtitle}>「+ 新規作成」ボタンで最初のフローを作成できます</p>
         </div>
       ) : (
-        <div
-          data-testid="dashboard-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: 16,
-          }}
-        >
+        <div data-testid="dashboard-grid" className={styles.grid}>
           {flows.map((flow) => (
             <FlowCard
               key={flow.id}

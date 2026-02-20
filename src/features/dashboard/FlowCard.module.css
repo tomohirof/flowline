@@ -1,0 +1,84 @@
+.card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e8e8ee;
+  overflow: hidden;
+  transition:
+    box-shadow 0.15s,
+    border-color 0.15s;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  border-color: #7c5cfc;
+  box-shadow: 0 4px 12px rgba(124, 92, 252, 0.1);
+}
+
+.link {
+  text-decoration: none;
+  color: inherit;
+  padding: 20px 18px 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.updatedAt {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.shareBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #7c5cfc;
+  background: #f0ecff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 12px 12px;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition:
+    color 0.15s,
+    background 0.15s;
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  color: #e53935;
+  background: #ffebee;
+}
+
+.deleteBtnDisabled {
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}

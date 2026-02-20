@@ -88,14 +88,26 @@ describe('App routing', () => {
   })
 
   it('/login にアクセスすると LP が表示される', () => {
-    mockUseAuth.mockReturnValue({ user: null, loading: false, login: vi.fn(), register: vi.fn(), logout: vi.fn() })
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    })
     testInitialEntries = ['/login']
     render(<App />)
     expect(screen.getByTestId('landing-page')).toBeInTheDocument()
   })
 
   it('/register にアクセスすると LP が表示される', () => {
-    mockUseAuth.mockReturnValue({ user: null, loading: false, login: vi.fn(), register: vi.fn(), logout: vi.fn() })
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    })
     testInitialEntries = ['/register']
     render(<App />)
     expect(screen.getByTestId('landing-page')).toBeInTheDocument()

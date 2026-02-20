@@ -1,0 +1,35 @@
+.centerScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: 'DM Sans', 'Noto Sans JP', 'Helvetica Neue', sans-serif;
+}
+
+.centerScreenColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: 'DM Sans', 'Noto Sans JP', 'Helvetica Neue', sans-serif;
+  gap: 12px;
+}
+
+.loading {
+  color: #999;
+}
+
+.error {
+  color: #e06060;
+}
+
+.errorMessage {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.topLink {
+  font-size: 14px;
+  color: #7c5cfc;
+}

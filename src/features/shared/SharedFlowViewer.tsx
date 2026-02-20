@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { PALETTES, THEMES } from '../editor/theme-constants'
+import styles from './SharedFlowViewer.module.css'
 
 interface Point {
   x: number
@@ -108,18 +109,28 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       (x): x is { arrow: Arrow; path: { d: string; mx: number; my: number } } => x.path !== null,
     )
 
+  const logoGradient = `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`
+
   return (
     <div
+      className={styles.root}
       data-testid="shared-flow-view"
-      style={{
-        fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
-        background: T.bg,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        color: T.titleColor,
-        overflow: 'hidden',
-      }}
+      style={
+        {
+          '--theme-bg': T.bg,
+          '--theme-accent': T.accent,
+          '--theme-accent-alpha': `${T.accent}15`,
+          '--theme-title-color': T.titleColor,
+          '--theme-title-bar': T.titleBar,
+          '--theme-title-bar-border': T.titleBarBorder,
+          '--theme-title-sub': T.titleSub,
+          '--theme-canvas-bg': T.canvasBg,
+          '--theme-dot-grid': T.dotGrid,
+          '--theme-status-bg': T.statusBg,
+          '--theme-status-border': T.statusBorder,
+          '--theme-status-text': T.statusText,
+        } as React.CSSProperties
+      }
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -127,115 +138,33 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       `}</style>
 
       {/* Title bar */}
-      <div
-        style={{
-          height: 40,
-          background: T.titleBar,
-          borderBottom: `1px solid ${T.titleBarBorder}`,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 16px',
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 5,
-            marginRight: 8,
-            background: `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 10,
-            fontWeight: 700,
-            color: '#fff',
-          }}
-        >
+      <div className={styles.titleBar}>
+        <div className={styles.logoIcon} style={{ background: logoGradient }}>
           F
         </div>
-        <span
-          style={{ fontSize: 13, fontWeight: 700, color: T.titleColor, letterSpacing: '-0.02em' }}
-        >
-          Flowline
-        </span>
-        <div style={{ width: 1, height: 18, background: T.titleBarBorder, margin: '0 10px' }} />
-        <span style={{ fontSize: 12, fontWeight: 500, color: T.titleSub, padding: '2px 8px' }}>
-          {flow.title}
-        </span>
-        <div style={{ flex: 1 }} />
-        <span
-          style={{
-            fontSize: 11,
-            color: T.accent,
-            background: `${T.accent}15`,
-            padding: '3px 10px',
-            borderRadius: 4,
-            fontWeight: 500,
-          }}
-        >
-          閲覧モード
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 12 }}>
-          <button
-            onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
-            style={{
-              width: 24,
-              height: 24,
-              border: `1px solid ${T.titleBarBorder}`,
-              borderRadius: 4,
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 14,
-              color: T.titleSub,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+        <span className={styles.brandName}>Flowline</span>
+        <div className={styles.divider} />
+        <span className={styles.flowTitle}>{flow.title}</span>
+        <div className={styles.spacer} />
+        <span className={styles.viewModeBadge}>閲覧モード</span>
+        <div className={styles.zoomControls}>
+          <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.min(2, z + 0.1))}>
             +
           </button>
-          <span style={{ fontSize: 10, color: T.statusText, minWidth: 32, textAlign: 'center' }}>
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}
-            style={{
-              width: 24,
-              height: 24,
-              border: `1px solid ${T.titleBarBorder}`,
-              borderRadius: 4,
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 14,
-              color: T.titleSub,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+          <span className={styles.zoomText}>{Math.round(zoom * 100)}%</span>
+          <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}>
             -
           </button>
         </div>
       </div>
 
       {/* Canvas */}
-      <div
-        style={{
-          flex: 1,
-          overflow: 'auto',
-          background: T.canvasBg,
-          backgroundImage: `radial-gradient(circle,${T.dotGrid} 0.5px,transparent 0.5px)`,
-          backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
-          padding: 40,
-        }}
-      >
+      <div className={styles.canvas} style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}>
         <svg
+          className={styles.svg}
           width={totalW * zoom}
           height={(totalH + 30) * zoom}
           viewBox={`0 -30 ${totalW} ${totalH + 30}`}
-          style={{ overflow: 'visible' }}
         >
           {/* Lanes */}
           {sortedLanes.map((lane, li) => {
@@ -451,36 +380,11 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       </div>
 
       {/* Footer */}
-      <div
-        data-testid="shared-flow-footer"
-        style={{
-          height: 32,
-          background: T.statusBg,
-          borderTop: `1px solid ${T.statusBorder}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            width: 16,
-            height: 16,
-            borderRadius: 4,
-            background: `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 7,
-            fontWeight: 700,
-            color: '#fff',
-          }}
-        >
+      <div className={styles.footer} data-testid="shared-flow-footer">
+        <div className={styles.footerIcon} style={{ background: logoGradient }}>
           F
         </div>
-        <span style={{ fontSize: 11, color: T.statusText, fontWeight: 500 }}>Flowlineで作成</span>
+        <span className={styles.footerText}>Flowlineで作成</span>
       </div>
     </div>
   )
