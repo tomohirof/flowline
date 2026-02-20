@@ -13,6 +13,7 @@
 ### Task 1: zodインストールとバリデーションスキーマ作成
 
 **Files:**
+
 - Create: `api/lib/validators.ts`
 - Modify: `package.json` (zod追加)
 
@@ -23,6 +24,7 @@ Run: `npm install zod`
 **Step 2: バリデーションスキーマを作成**
 
 `api/lib/validators.ts`:
+
 ```typescript
 import { z } from 'zod'
 
@@ -81,12 +83,14 @@ git commit -m "chore: add zod and create flow validation schemas"
 ### Task 2: mock-d1にbatchメソッド追加
 
 **Files:**
+
 - Modify: `tests/helpers/mock-d1.ts`
 - Test: `tests/helpers/mock-d1.test.ts`（既存テストが通ればOK）
 
 **Step 1: mock-d1にbatchメソッドを追加**
 
 `tests/helpers/mock-d1.ts`のcreateMockD1の返り値に追加:
+
 ```typescript
 async batch(statements: Array<{ bind: (...params: unknown[]) => { run: () => Promise<unknown>; first: <T>() => Promise<T | null>; all: <T>() => Promise<{ results: T[] }> } }>) {
   // D1のbatch()はトランザクション内で複数statementを実行する
@@ -107,6 +111,7 @@ async batch(statements: Array<{ bind: (...params: unknown[]) => { run: () => Pro
 実際のD1 batch APIを正確に模倣する必要がある。D1の`batch()`は`prepare().bind()`済みのstatementの配列を受け取り、各statementの結果を配列で返す。mock-d1の実装を以下のようにする:
 
 `tests/helpers/mock-d1.ts`のcreateMockD1に`batch`メソッドを追加:
+
 ```typescript
 async batch(preparedStatements: unknown[]) {
   const results: unknown[] = []
@@ -163,6 +168,7 @@ git commit -m "feat: add batch() method to mock-d1 for transaction support"
 ### Task 3: フロー一覧取得 GET /api/flows（TDD）
 
 **Files:**
+
 - Create: `api/routes/flows.ts`
 - Modify: `api/app.ts`（ルートマウント）
 - Create: `tests/api/routes/flows.test.ts`
@@ -170,6 +176,7 @@ git commit -m "feat: add batch() method to mock-d1 for transaction support"
 **Step 1: テストファイル作成（失敗するテスト）**
 
 `tests/api/routes/flows.test.ts`:
+
 ```typescript
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
@@ -189,13 +196,21 @@ async function authCookie(userId: string, email: string): Promise<string> {
 }
 
 function registerUser(db: ReturnType<typeof Database>, id: string, email: string) {
-  db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)')
-    .run(id, email, 'hash', 'Test User')
+  db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(
+    id,
+    email,
+    'hash',
+    'Test User',
+  )
 }
 
 function insertFlow(db: ReturnType<typeof Database>, id: string, userId: string, title: string) {
-  db.prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)')
-    .run(id, userId, title, 'cloud')
+  db.prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)').run(
+    id,
+    userId,
+    title,
+    'cloud',
+  )
 }
 
 describe('Flow API', () => {
@@ -216,9 +231,13 @@ describe('Flow API', () => {
       registerUser(db, 'user1', 'test@example.com')
       const cookie = await authCookie('user1', 'test@example.com')
 
-      const res = await app.request('/api/flows', {
-        headers: { Cookie: cookie },
-      }, env)
+      const res = await app.request(
+        '/api/flows',
+        {
+          headers: { Cookie: cookie },
+        },
+        env,
+      )
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -232,9 +251,13 @@ describe('Flow API', () => {
       insertFlow(db, 'flow2', 'user2', 'Other Flow')
 
       const cookie = await authCookie('user1', 'user1@example.com')
-      const res = await app.request('/api/flows', {
-        headers: { Cookie: cookie },
-      }, env)
+      const res = await app.request(
+        '/api/flows',
+        {
+          headers: { Cookie: cookie },
+        },
+        env,
+      )
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -258,6 +281,7 @@ Expected: FAIL（ルートが存在しない）
 **Step 3: 最小限の実装**
 
 `api/routes/flows.ts`:
+
 ```typescript
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth'
@@ -270,23 +294,28 @@ flows.use('*', authMiddleware)
 flows.get('/', async (c) => {
   const userId = c.get('userId')
   const { results } = await c.env.FLOWLINE_DB.prepare(
-    'SELECT id, title, theme_id, share_token, created_at, updated_at FROM flows WHERE user_id = ? ORDER BY updated_at DESC'
-  ).bind(userId).all()
+    'SELECT id, title, theme_id, share_token, created_at, updated_at FROM flows WHERE user_id = ? ORDER BY updated_at DESC',
+  )
+    .bind(userId)
+    .all()
 
-  return c.json({ flows: results.map((f: Record<string, unknown>) => ({
-    id: f.id,
-    title: f.title,
-    themeId: f.theme_id,
-    shareToken: f.share_token,
-    createdAt: f.created_at,
-    updatedAt: f.updated_at,
-  })) })
+  return c.json({
+    flows: results.map((f: Record<string, unknown>) => ({
+      id: f.id,
+      title: f.title,
+      themeId: f.theme_id,
+      shareToken: f.share_token,
+      createdAt: f.created_at,
+      updatedAt: f.updated_at,
+    })),
+  })
 })
 
 export { flows }
 ```
 
 `api/app.ts`に追加:
+
 ```typescript
 import { flows } from './routes/flows'
 // ... 既存コードの後に
@@ -310,23 +339,29 @@ git commit -m "feat: add GET /api/flows endpoint for listing user flows"
 ### Task 4: フロー作成 POST /api/flows（TDD）
 
 **Files:**
+
 - Modify: `api/routes/flows.ts`
 - Modify: `tests/api/routes/flows.test.ts`
 
 **Step 1: テスト追加（失敗するテスト）**
 
 `tests/api/routes/flows.test.ts`のdescribeブロック内に追加:
+
 ```typescript
 describe('POST /api/flows', () => {
   it('should create a flow with title only', async () => {
     registerUser(db, 'user1', 'test@example.com')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({ title: '業務フロー' }),
-    }, env)
+    const res = await app.request(
+      '/api/flows',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ title: '業務フロー' }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(201)
     const body = await res.json()
@@ -341,20 +376,31 @@ describe('POST /api/flows', () => {
     registerUser(db, 'user1', 'test@example.com')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({
-        title: '業務フロー',
-        themeId: 'modern',
-        lanes: [{ id: 'lane1', name: '企業', colorIndex: 0, position: 0 }],
-        nodes: [
-          { id: 'node1', laneId: 'lane1', rowIndex: 0, label: '申請', note: null, orderIndex: 0 },
-          { id: 'node2', laneId: 'lane1', rowIndex: 1, label: '承認', note: 'メモ', orderIndex: 1 },
-        ],
-        arrows: [{ id: 'arr1', fromNodeId: 'node1', toNodeId: 'node2', comment: '' }],
-      }),
-    }, env)
+    const res = await app.request(
+      '/api/flows',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({
+          title: '業務フロー',
+          themeId: 'modern',
+          lanes: [{ id: 'lane1', name: '企業', colorIndex: 0, position: 0 }],
+          nodes: [
+            { id: 'node1', laneId: 'lane1', rowIndex: 0, label: '申請', note: null, orderIndex: 0 },
+            {
+              id: 'node2',
+              laneId: 'lane1',
+              rowIndex: 1,
+              label: '承認',
+              note: 'メモ',
+              orderIndex: 1,
+            },
+          ],
+          arrows: [{ id: 'arr1', fromNodeId: 'node1', toNodeId: 'node2', comment: '' }],
+        }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(201)
     const body = await res.json()
@@ -369,11 +415,15 @@ describe('POST /api/flows', () => {
     registerUser(db, 'user1', 'test@example.com')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({}),
-    }, env)
+    const res = await app.request(
+      '/api/flows',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({}),
+      },
+      env,
+    )
 
     expect(res.status).toBe(201)
     const body = await res.json()
@@ -385,11 +435,15 @@ describe('POST /api/flows', () => {
     registerUser(db, 'user1', 'test@example.com')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({ title: '' }),
-    }, env)
+    const res = await app.request(
+      '/api/flows',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ title: '' }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(400)
   })
@@ -398,21 +452,29 @@ describe('POST /api/flows', () => {
     registerUser(db, 'user1', 'test@example.com')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: 'not json',
-    }, env)
+    const res = await app.request(
+      '/api/flows',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: 'not json',
+      },
+      env,
+    )
 
     expect(res.status).toBe(400)
   })
 
   it('should return 401 without auth', async () => {
-    const res = await app.request('/api/flows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: 'test' }),
-    }, env)
+    const res = await app.request(
+      '/api/flows',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'test' }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(401)
   })
@@ -427,6 +489,7 @@ Expected: POST関連テストがFAIL
 **Step 3: 実装**
 
 `api/routes/flows.ts`に追加:
+
 ```typescript
 import { generateId } from '../lib/id'
 import { createFlowSchema } from '../lib/validators'
@@ -453,8 +516,10 @@ flows.post('/', async (c) => {
 
   // flowを挿入
   await c.env.FLOWLINE_DB.prepare(
-    'INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)'
-  ).bind(flowId, userId, title, themeId).run()
+    'INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)',
+  )
+    .bind(flowId, userId, title, themeId)
+    .run()
 
   // lanes/nodes/arrowsをバッチ挿入
   const statements = []
@@ -462,24 +527,32 @@ flows.post('/', async (c) => {
   for (const lane of input.lanes) {
     statements.push(
       c.env.FLOWLINE_DB.prepare(
-        'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)'
-      ).bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position)
+        'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+      ).bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
     )
   }
 
   for (const node of input.nodes) {
     statements.push(
       c.env.FLOWLINE_DB.prepare(
-        'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).bind(node.id, flowId, node.laneId, node.rowIndex, node.label, node.note ?? null, node.orderIndex)
+        'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ).bind(
+        node.id,
+        flowId,
+        node.laneId,
+        node.rowIndex,
+        node.label,
+        node.note ?? null,
+        node.orderIndex,
+      ),
     )
   }
 
   for (const arrow of input.arrows) {
     statements.push(
       c.env.FLOWLINE_DB.prepare(
-        'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)'
-      ).bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null)
+        'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)',
+      ).bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null),
     )
   }
 
@@ -493,25 +566,38 @@ flows.post('/', async (c) => {
 ```
 
 `getFlowDetail`ヘルパー関数を同ファイルに追加:
+
 ```typescript
 async function getFlowDetail(db: D1Database, flowId: string) {
-  const flow = await db.prepare(
-    'SELECT id, user_id, title, theme_id, share_token, created_at, updated_at FROM flows WHERE id = ?'
-  ).bind(flowId).first<Record<string, unknown>>()
+  const flow = await db
+    .prepare(
+      'SELECT id, user_id, title, theme_id, share_token, created_at, updated_at FROM flows WHERE id = ?',
+    )
+    .bind(flowId)
+    .first<Record<string, unknown>>()
 
   if (!flow) return null
 
-  const { results: lanes } = await db.prepare(
-    'SELECT id, name, color_index, position, created_at, updated_at FROM lanes WHERE flow_id = ? ORDER BY position'
-  ).bind(flowId).all()
+  const { results: lanes } = await db
+    .prepare(
+      'SELECT id, name, color_index, position, created_at, updated_at FROM lanes WHERE flow_id = ? ORDER BY position',
+    )
+    .bind(flowId)
+    .all()
 
-  const { results: nodes } = await db.prepare(
-    'SELECT id, lane_id, row_index, label, note, order_index, created_at, updated_at FROM nodes WHERE flow_id = ? ORDER BY order_index'
-  ).bind(flowId).all()
+  const { results: nodes } = await db
+    .prepare(
+      'SELECT id, lane_id, row_index, label, note, order_index, created_at, updated_at FROM nodes WHERE flow_id = ? ORDER BY order_index',
+    )
+    .bind(flowId)
+    .all()
 
-  const { results: arrows } = await db.prepare(
-    'SELECT id, from_node_id, to_node_id, comment, created_at, updated_at FROM arrows WHERE flow_id = ?'
-  ).bind(flowId).all()
+  const { results: arrows } = await db
+    .prepare(
+      'SELECT id, from_node_id, to_node_id, comment, created_at, updated_at FROM arrows WHERE flow_id = ?',
+    )
+    .bind(flowId)
+    .all()
 
   return {
     id: flow.id,
@@ -520,17 +606,31 @@ async function getFlowDetail(db: D1Database, flowId: string) {
     shareToken: flow.share_token,
     createdAt: flow.created_at,
     updatedAt: flow.updated_at,
-    lanes: (lanes as Record<string, unknown>[]).map(l => ({
-      id: l.id, name: l.name, colorIndex: l.color_index, position: l.position,
-      createdAt: l.created_at, updatedAt: l.updated_at,
+    lanes: (lanes as Record<string, unknown>[]).map((l) => ({
+      id: l.id,
+      name: l.name,
+      colorIndex: l.color_index,
+      position: l.position,
+      createdAt: l.created_at,
+      updatedAt: l.updated_at,
     })),
-    nodes: (nodes as Record<string, unknown>[]).map(n => ({
-      id: n.id, laneId: n.lane_id, rowIndex: n.row_index, label: n.label,
-      note: n.note, orderIndex: n.order_index, createdAt: n.created_at, updatedAt: n.updated_at,
+    nodes: (nodes as Record<string, unknown>[]).map((n) => ({
+      id: n.id,
+      laneId: n.lane_id,
+      rowIndex: n.row_index,
+      label: n.label,
+      note: n.note,
+      orderIndex: n.order_index,
+      createdAt: n.created_at,
+      updatedAt: n.updated_at,
     })),
-    arrows: (arrows as Record<string, unknown>[]).map(a => ({
-      id: a.id, fromNodeId: a.from_node_id, toNodeId: a.to_node_id,
-      comment: a.comment, createdAt: a.created_at, updatedAt: a.updated_at,
+    arrows: (arrows as Record<string, unknown>[]).map((a) => ({
+      id: a.id,
+      fromNodeId: a.from_node_id,
+      toNodeId: a.to_node_id,
+      comment: a.comment,
+      createdAt: a.created_at,
+      updatedAt: a.updated_at,
     })),
   }
 }
@@ -555,6 +655,7 @@ git commit -m "feat: add POST /api/flows endpoint for creating flows"
 ### Task 5: フロー詳細取得 GET /api/flows/:id（TDD）
 
 **Files:**
+
 - Modify: `api/routes/flows.ts`
 - Modify: `tests/api/routes/flows.test.ts`
 
@@ -565,15 +666,21 @@ describe('GET /api/flows/:id', () => {
   it('should return flow with lanes, nodes, and arrows', async () => {
     registerUser(db, 'user1', 'test@example.com')
     insertFlow(db, 'flow1', 'user1', '業務フロー')
-    db.prepare('INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)')
-      .run('lane1', 'flow1', '企業', 0, 0)
-    db.prepare('INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run('node1', 'flow1', 'lane1', 0, '申請', null, 0)
+    db.prepare(
+      'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+    ).run('lane1', 'flow1', '企業', 0, 0)
+    db.prepare(
+      'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ).run('node1', 'flow1', 'lane1', 0, '申請', null, 0)
 
     const cookie = await authCookie('user1', 'test@example.com')
-    const res = await app.request('/api/flows/flow1', {
-      headers: { Cookie: cookie },
-    }, env)
+    const res = await app.request(
+      '/api/flows/flow1',
+      {
+        headers: { Cookie: cookie },
+      },
+      env,
+    )
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -587,9 +694,13 @@ describe('GET /api/flows/:id', () => {
     registerUser(db, 'user1', 'test@example.com')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows/nonexistent', {
-      headers: { Cookie: cookie },
-    }, env)
+    const res = await app.request(
+      '/api/flows/nonexistent',
+      {
+        headers: { Cookie: cookie },
+      },
+      env,
+    )
 
     expect(res.status).toBe(404)
   })
@@ -600,9 +711,13 @@ describe('GET /api/flows/:id', () => {
     insertFlow(db, 'flow1', 'user2', 'Other Flow')
 
     const cookie = await authCookie('user1', 'user1@example.com')
-    const res = await app.request('/api/flows/flow1', {
-      headers: { Cookie: cookie },
-    }, env)
+    const res = await app.request(
+      '/api/flows/flow1',
+      {
+        headers: { Cookie: cookie },
+      },
+      env,
+    )
 
     expect(res.status).toBe(403)
   })
@@ -623,9 +738,9 @@ flows.get('/:id', async (c) => {
   const userId = c.get('userId')
   const flowId = c.req.param('id')
 
-  const flow = await c.env.FLOWLINE_DB.prepare(
-    'SELECT id, user_id FROM flows WHERE id = ?'
-  ).bind(flowId).first<{ id: string; user_id: string }>()
+  const flow = await c.env.FLOWLINE_DB.prepare('SELECT id, user_id FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ id: string; user_id: string }>()
 
   if (!flow) {
     return c.json({ error: 'フローが見つかりません' }, 404)
@@ -653,6 +768,7 @@ git commit -m "feat: add GET /api/flows/:id endpoint for flow detail"
 ### Task 6: フロー更新 PUT /api/flows/:id（TDD）
 
 **Files:**
+
 - Modify: `api/routes/flows.ts`
 - Modify: `tests/api/routes/flows.test.ts`
 
@@ -665,11 +781,15 @@ describe('PUT /api/flows/:id', () => {
     insertFlow(db, 'flow1', 'user1', '旧タイトル')
 
     const cookie = await authCookie('user1', 'test@example.com')
-    const res = await app.request('/api/flows/flow1', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({ title: '新タイトル', themeId: 'modern' }),
-    }, env)
+    const res = await app.request(
+      '/api/flows/flow1',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ title: '新タイトル', themeId: 'modern' }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -680,18 +800,23 @@ describe('PUT /api/flows/:id', () => {
   it('should replace lanes, nodes, and arrows on update', async () => {
     registerUser(db, 'user1', 'test@example.com')
     insertFlow(db, 'flow1', 'user1', 'フロー')
-    db.prepare('INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)')
-      .run('old-lane', 'flow1', '古いレーン', 0, 0)
+    db.prepare(
+      'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+    ).run('old-lane', 'flow1', '古いレーン', 0, 0)
 
     const cookie = await authCookie('user1', 'test@example.com')
-    const res = await app.request('/api/flows/flow1', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({
-        title: 'フロー',
-        lanes: [{ id: 'new-lane', name: '新しいレーン', colorIndex: 1, position: 0 }],
-      }),
-    }, env)
+    const res = await app.request(
+      '/api/flows/flow1',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({
+          title: 'フロー',
+          lanes: [{ id: 'new-lane', name: '新しいレーン', colorIndex: 1, position: 0 }],
+        }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -708,11 +833,15 @@ describe('PUT /api/flows/:id', () => {
     registerUser(db, 'user1', 'test@example.com')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows/nonexistent', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({ title: 'test' }),
-    }, env)
+    const res = await app.request(
+      '/api/flows/nonexistent',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ title: 'test' }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(404)
   })
@@ -723,11 +852,15 @@ describe('PUT /api/flows/:id', () => {
     insertFlow(db, 'flow1', 'user2', 'Other')
 
     const cookie = await authCookie('user1', 'user1@example.com')
-    const res = await app.request('/api/flows/flow1', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({ title: 'hijack' }),
-    }, env)
+    const res = await app.request(
+      '/api/flows/flow1',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ title: 'hijack' }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(403)
   })
@@ -737,11 +870,15 @@ describe('PUT /api/flows/:id', () => {
     insertFlow(db, 'flow1', 'user1', 'フロー')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows/flow1', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({ title: '' }),
-    }, env)
+    const res = await app.request(
+      '/api/flows/flow1',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ title: '' }),
+      },
+      env,
+    )
 
     expect(res.status).toBe(400)
   })
@@ -757,9 +894,9 @@ flows.put('/:id', async (c) => {
   const userId = c.get('userId')
   const flowId = c.req.param('id')
 
-  const flow = await c.env.FLOWLINE_DB.prepare(
-    'SELECT id, user_id FROM flows WHERE id = ?'
-  ).bind(flowId).first<{ id: string; user_id: string }>()
+  const flow = await c.env.FLOWLINE_DB.prepare('SELECT id, user_id FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ id: string; user_id: string }>()
 
   if (!flow) {
     return c.json({ error: 'フローが見つかりません' }, 404)
@@ -787,22 +924,16 @@ flows.put('/:id', async (c) => {
   const statements = []
 
   // 子テーブルを削除（arrowsはnodes依存なので先に削除）
-  statements.push(
-    c.env.FLOWLINE_DB.prepare('DELETE FROM arrows WHERE flow_id = ?').bind(flowId)
-  )
-  statements.push(
-    c.env.FLOWLINE_DB.prepare('DELETE FROM nodes WHERE flow_id = ?').bind(flowId)
-  )
-  statements.push(
-    c.env.FLOWLINE_DB.prepare('DELETE FROM lanes WHERE flow_id = ?').bind(flowId)
-  )
+  statements.push(c.env.FLOWLINE_DB.prepare('DELETE FROM arrows WHERE flow_id = ?').bind(flowId))
+  statements.push(c.env.FLOWLINE_DB.prepare('DELETE FROM nodes WHERE flow_id = ?').bind(flowId))
+  statements.push(c.env.FLOWLINE_DB.prepare('DELETE FROM lanes WHERE flow_id = ?').bind(flowId))
 
   // flow本体を更新
   if (input.title || input.themeId) {
     statements.push(
       c.env.FLOWLINE_DB.prepare(
-        'UPDATE flows SET title = COALESCE(?, title), theme_id = COALESCE(?, theme_id), updated_at = ? WHERE id = ?'
-      ).bind(input.title ?? null, input.themeId ?? null, now, flowId)
+        'UPDATE flows SET title = COALESCE(?, title), theme_id = COALESCE(?, theme_id), updated_at = ? WHERE id = ?',
+      ).bind(input.title ?? null, input.themeId ?? null, now, flowId),
     )
   }
 
@@ -810,24 +941,32 @@ flows.put('/:id', async (c) => {
   for (const lane of input.lanes) {
     statements.push(
       c.env.FLOWLINE_DB.prepare(
-        'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)'
-      ).bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position)
+        'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+      ).bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
     )
   }
 
   for (const node of input.nodes) {
     statements.push(
       c.env.FLOWLINE_DB.prepare(
-        'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      ).bind(node.id, flowId, node.laneId, node.rowIndex, node.label, node.note ?? null, node.orderIndex)
+        'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ).bind(
+        node.id,
+        flowId,
+        node.laneId,
+        node.rowIndex,
+        node.label,
+        node.note ?? null,
+        node.orderIndex,
+      ),
     )
   }
 
   for (const arrow of input.arrows) {
     statements.push(
       c.env.FLOWLINE_DB.prepare(
-        'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)'
-      ).bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null)
+        'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)',
+      ).bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null),
     )
   }
 
@@ -851,6 +990,7 @@ git commit -m "feat: add PUT /api/flows/:id endpoint for updating flows"
 ### Task 7: フロー削除 DELETE /api/flows/:id（TDD）
 
 **Files:**
+
 - Modify: `api/routes/flows.ts`
 - Modify: `tests/api/routes/flows.test.ts`
 
@@ -861,16 +1001,22 @@ describe('DELETE /api/flows/:id', () => {
   it('should delete flow and cascade to lanes/nodes/arrows', async () => {
     registerUser(db, 'user1', 'test@example.com')
     insertFlow(db, 'flow1', 'user1', 'フロー')
-    db.prepare('INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)')
-      .run('lane1', 'flow1', 'レーン', 0, 0)
-    db.prepare('INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run('node1', 'flow1', 'lane1', 0, 'ノード', null, 0)
+    db.prepare(
+      'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+    ).run('lane1', 'flow1', 'レーン', 0, 0)
+    db.prepare(
+      'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ).run('node1', 'flow1', 'lane1', 0, 'ノード', null, 0)
 
     const cookie = await authCookie('user1', 'test@example.com')
-    const res = await app.request('/api/flows/flow1', {
-      method: 'DELETE',
-      headers: { Cookie: cookie },
-    }, env)
+    const res = await app.request(
+      '/api/flows/flow1',
+      {
+        method: 'DELETE',
+        headers: { Cookie: cookie },
+      },
+      env,
+    )
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -889,10 +1035,14 @@ describe('DELETE /api/flows/:id', () => {
     registerUser(db, 'user1', 'test@example.com')
     const cookie = await authCookie('user1', 'test@example.com')
 
-    const res = await app.request('/api/flows/nonexistent', {
-      method: 'DELETE',
-      headers: { Cookie: cookie },
-    }, env)
+    const res = await app.request(
+      '/api/flows/nonexistent',
+      {
+        method: 'DELETE',
+        headers: { Cookie: cookie },
+      },
+      env,
+    )
 
     expect(res.status).toBe(404)
   })
@@ -903,10 +1053,14 @@ describe('DELETE /api/flows/:id', () => {
     insertFlow(db, 'flow1', 'user2', 'Other Flow')
 
     const cookie = await authCookie('user1', 'user1@example.com')
-    const res = await app.request('/api/flows/flow1', {
-      method: 'DELETE',
-      headers: { Cookie: cookie },
-    }, env)
+    const res = await app.request(
+      '/api/flows/flow1',
+      {
+        method: 'DELETE',
+        headers: { Cookie: cookie },
+      },
+      env,
+    )
 
     expect(res.status).toBe(403)
   })
@@ -922,9 +1076,9 @@ flows.delete('/:id', async (c) => {
   const userId = c.get('userId')
   const flowId = c.req.param('id')
 
-  const flow = await c.env.FLOWLINE_DB.prepare(
-    'SELECT id, user_id FROM flows WHERE id = ?'
-  ).bind(flowId).first<{ id: string; user_id: string }>()
+  const flow = await c.env.FLOWLINE_DB.prepare('SELECT id, user_id FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ id: string; user_id: string }>()
 
   if (!flow) {
     return c.json({ error: 'フローが見つかりません' }, 404)
@@ -933,8 +1087,7 @@ flows.delete('/:id', async (c) => {
     return c.json({ error: 'このフローへのアクセス権がありません' }, 403)
   }
 
-  await c.env.FLOWLINE_DB.prepare('DELETE FROM flows WHERE id = ?')
-    .bind(flowId).run()
+  await c.env.FLOWLINE_DB.prepare('DELETE FROM flows WHERE id = ?').bind(flowId).run()
 
   return c.json({ message: 'フローを削除しました' })
 })
@@ -965,6 +1118,7 @@ npm run dev
 ```
 
 curlまたはブラウザで:
+
 - ログイン → Cookieを取得
 - POST /api/flows でフロー作成
 - GET /api/flows で一覧取得

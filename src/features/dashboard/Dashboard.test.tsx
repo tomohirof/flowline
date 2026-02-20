@@ -128,9 +128,7 @@ describe('Dashboard', () => {
       expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument()
     })
 
-    expect(
-      screen.getByText('フローがまだありません。新規作成してみましょう！'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('フローがまだありません。新規作成してみましょう！')).toBeInTheDocument()
   })
 
   // === 新規作成ボタン ===

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { ShareDialog } from './components/ShareDialog'
 import type {
+  Theme,
   ThemeId,
   TaskData,
   RowData,
@@ -68,29 +69,106 @@ const I: Record<string, ReactNode> = {
   zoomIn: (
     <>
       <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" fill="none" />
-      <line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="16" y1="16" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line
+        x1="8"
+        y1="11"
+        x2="14"
+        y2="11"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="11"
+        y1="8"
+        x2="11"
+        y2="14"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="16"
+        y1="16"
+        x2="20"
+        y2="20"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </>
   ),
   zoomOut: (
     <>
       <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" fill="none" />
-      <line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <line x1="16" y1="16" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line
+        x1="8"
+        y1="11"
+        x2="14"
+        y2="11"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="16"
+        y1="16"
+        x2="20"
+        y2="20"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </>
   ),
   addRow: (
     <>
-      <rect x="3" y="3" width="18" height="6" rx="1.5" stroke="currentColor" strokeWidth="2" fill="none" />
-      <rect x="3" y="13" width="18" height="6" rx="1.5" stroke="currentColor" strokeWidth="2" fill="none" />
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="6"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+      />
+      <rect
+        x="3"
+        y="13"
+        width="18"
+        height="6"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+      />
       <path d="M9 22h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </>
   ),
   rmRow: (
     <>
-      <rect x="3" y="3" width="18" height="6" rx="1.5" stroke="currentColor" strokeWidth="2" fill="none" />
-      <rect x="3" y="13" width="18" height="6" rx="1.5" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="3,2" />
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="6"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+      />
+      <rect
+        x="3"
+        y="13"
+        width="18"
+        height="6"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+        strokeDasharray="3,2"
+      />
     </>
   ),
 }
@@ -105,7 +183,15 @@ const Ico = ({ children, size = 18 }: { children: ReactNode; size?: number }) =>
 // Right Panel Sub-Components
 // =============================================
 
-const PanelSection = ({ label, children, T }: { label?: string; children: ReactNode; T: Theme }) => (
+const PanelSection = ({
+  label,
+  children,
+  T,
+}: {
+  label?: string
+  children: ReactNode
+  T: Theme
+}) => (
   <div style={{ padding: '12px 14px', borderBottom: `1px solid ${T.panelBorder}` }}>
     {label && (
       <div
@@ -385,6 +471,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [shareToken, setShareToken] = useState<string | null>(flow.shareToken)
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const canvasContainerRef = useRef<HTMLDivElement>(null)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
   // --- Notify parent of changes ---
   const prevSnapRef = useRef<string>('')
@@ -401,42 +489,47 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     prevSnapRef.current = snap
   }, [tasks, order, arrows, notes, lanes, rows, title, themeId, onSave, buildPayload])
 
-  // Re-initialize when flow prop changes (e.g., after reload)
-  const flowIdRef = useRef<string>(flow.id)
+  // Re-initialize when flow prop changes (render-time state adjustment)
+  const [prevFlowId, setPrevFlowId] = useState(flow.id)
+  if (flow.id !== prevFlowId) {
+    setPrevFlowId(flow.id)
+    const state = flowToInternalState(flow)
+    setLanes(state.lanes)
+    setRows(state.rows)
+    setTasks(state.tasks)
+    setOrder(state.order)
+    setArrows(state.arrows)
+    setNotes(state.notes)
+    setTitle(state.title)
+    setThemeId(state.themeId)
+    setSelTask(null)
+    setSelArrow(null)
+    setSelLane(null)
+    setEditing(null)
+  }
+
+  // Reset undo snapshot ref when flow changes
   useEffect(() => {
-    if (flow.id !== flowIdRef.current) {
-      flowIdRef.current = flow.id
-      const state = flowToInternalState(flow)
-      setLanes(state.lanes)
-      setRows(state.rows)
-      setTasks(state.tasks)
-      setOrder(state.order)
-      setArrows(state.arrows)
-      setNotes(state.notes)
-      setTitle(state.title)
-      setThemeId(state.themeId)
-      setSelTask(null)
-      setSelArrow(null)
-      setSelLane(null)
-      setEditing(null)
-      prevSnapRef.current = ''
-    }
-  }, [flow])
+    prevSnapRef.current = ''
+  }, [prevFlowId])
 
   // --- Undo / Redo ---
   const historyRef = useRef<string[]>([])
   const futureRef = useRef<string[]>([])
   const skipSnap = useRef<boolean>(false)
 
-  const snap = useCallback((): string =>
-    JSON.stringify({
-      tasks,
-      order,
-      arrows,
-      notes,
-      lanes: lanes.map((l) => ({ ...l })),
-      rows: rows.map((r) => ({ ...r })),
-    }), [tasks, order, arrows, notes, lanes, rows])
+  const snap = useCallback(
+    (): string =>
+      JSON.stringify({
+        tasks,
+        order,
+        arrows,
+        notes,
+        lanes: lanes.map((l) => ({ ...l })),
+        rows: rows.map((r) => ({ ...r })),
+      }),
+    [tasks, order, arrows, notes, lanes, rows],
+  )
 
   // Save snapshot before each meaningful change
   const undoPrevSnap = useRef<string | null>(null)
@@ -448,6 +541,20 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
     undoPrevSnap.current = s
   }, [snap])
+
+  useEffect(() => {
+    const el = canvasContainerRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect
+      setContainerSize((prev) => {
+        if (prev.width === width && prev.height === height) return prev
+        return { width, height }
+      })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const applySnap = (s: string): void => {
     const d: EditorSnapshot = JSON.parse(s)
@@ -482,20 +589,46 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   }, [snap])
 
   const T = THEMES[themeId]
-  const LW = 178, RH = 84, HH = 46, TW = 144, TH = 52, LM = 28, TM = 24, G = T.laneGap
+  const LW = 178,
+    RH = 84,
+    HH = 46,
+    TW = 144,
+    TH = 52,
+    LM = 28,
+    TM = 24,
+    G = T.laneGap
   const totalW = LM + lanes.length * LW + (lanes.length - 1) * G + 28
   const totalH = TM + HH + rows.length * RH + 40
+  const svgW = Math.max(containerSize.width, (totalW + LM) * zoom)
+  const svgH = Math.max(containerSize.height, (totalH + 30 + TM) * zoom)
   const ky = (lid: string, rid: string): string => `${lid}_${rid}`
   const liMap: Record<string, number> = {}
   lanes.forEach((l, i) => (liMap[l.id] = i))
   const riMap: Record<string, number> = {}
   rows.forEach((r, i) => (riMap[r.id] = i))
-  const laneX = (li: number): number => LM + li * (LW + G)
+  const laneX = useCallback((li: number): number => LM + li * (LW + G), [G])
   const ct = useCallback(
     (li: number, ri: number): Point => ({ x: laneX(li) + LW / 2, y: TM + HH + ri * RH + RH / 2 }),
-    [lanes.length, G],
+    [laneX],
   )
   const isDark = themeId === 'midnight'
+
+  const delTask = (k: string): void => {
+    setTasks((p) => {
+      const n = { ...p }
+      delete n[k]
+      return n
+    })
+    setNotes((p) => {
+      const n = { ...p }
+      delete n[k]
+      return n
+    })
+    setOrder((p) => p.filter((x) => x !== k))
+    setArrows((p) => p.filter((a) => a.from !== k && a.to !== k))
+    setEditing(null)
+    setSelTask(null)
+  }
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
@@ -565,7 +698,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const cellFromPos = (sx: number, sy: number): CellInfo | null => {
     for (let li = 0; li < lanes.length; li++)
       for (let ri = 0; ri < rows.length; ri++) {
-        const cx = laneX(li), cy = TM + HH + ri * RH
+        const cx = laneX(li),
+          cy = TM + HH + ri * RH
         if (sx >= cx && sx < cx + LW && sy >= cy && sy < cy + RH)
           return { lid: lanes[li].id, rid: rows[ri].id, li, ri, key: ky(lanes[li].id, rows[ri].id) }
       }
@@ -607,7 +741,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setDragging(null)
     setDragOver(null)
   }
-  const moveTask = (fk: string, to: { lid: string; rid: string; key: string; li: number; ri: number }): void => {
+  const moveTask = (
+    fk: string,
+    to: { lid: string; rid: string; key: string; li: number; ri: number },
+  ): void => {
     const task = tasks[fk]
     if (!task) return
     const nk = to.key
@@ -675,22 +812,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelTask(null)
     setActiveTool('connect')
   }
-  const delTask = (k: string): void => {
-    setTasks((p) => {
-      const n = { ...p }
-      delete n[k]
-      return n
-    })
-    setNotes((p) => {
-      const n = { ...p }
-      delete n[k]
-      return n
-    })
-    setOrder((p) => p.filter((x) => x !== k))
-    setArrows((p) => p.filter((a) => a.from !== k && a.to !== k))
-    setEditing(null)
-    setSelTask(null)
-  }
   const addRow = (): void => setRows((p) => [...p, { id: uid() }])
   const rmRow = (): void => {
     if (rows.length <= 1) return
@@ -724,19 +845,29 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   }
 
   const edgePt = (c: Point, o: Point, hw: number, hh: number): Point => {
-    const dx = o.x - c.x, dy = o.y - c.y
+    const dx = o.x - c.x,
+      dy = o.y - c.y
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y + hh }
     if (Math.abs(dy) / hh > Math.abs(dx) / hw) return { x: c.x, y: c.y + (dy > 0 ? hh : -hh) }
     return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
   }
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
-    const ft = tasks[arrow.from], tt = tasks[arrow.to]
+    const ft = tasks[arrow.from],
+      tt = tasks[arrow.to]
     if (!ft || !tt) return null
-    const fli = liMap[ft.lid], fri = riMap[ft.rid], tli = liMap[tt.lid], tri = riMap[tt.rid]
+    const fli = liMap[ft.lid],
+      fri = riMap[ft.rid],
+      tli = liMap[tt.lid],
+      tri = riMap[tt.rid]
     if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
-    const f = ct(fli, fri), t = ct(tli, tri), hw = TW / 2, hh = TH / 2
-    const s = edgePt(f, t, hw, hh), e = edgePt(t, f, hw, hh)
-    const dx = e.x - s.x, dy = e.y - s.y
+    const f = ct(fli, fri),
+      t = ct(tli, tri),
+      hw = TW / 2,
+      hh = TH / 2
+    const s = edgePt(f, t, hw, hh),
+      e = edgePt(t, f, hw, hh)
+    const dx = e.x - s.x,
+      dy = e.y - s.y
     let d: string
     if (Math.abs(dx) < 2 || Math.abs(dy) < 2) {
       d = `M${s.x},${s.y} L${e.x},${e.y}`
@@ -765,15 +896,20 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     })
     m += '\n'
     arrows.forEach((a) => {
-      const ft = tasks[a.from], tt = tasks[a.to]
+      const ft = tasks[a.from],
+        tt = tasks[a.to]
       if (!ft || !tt) return
-      const fl = lanes.find((l) => l.id === ft.lid), tl = lanes.find((l) => l.id === tt.lid)
+      const fl = lanes.find((l) => l.id === ft.lid),
+        tl = lanes.find((l) => l.id === tt.lid)
       if (!fl || !tl) return
       if (fl.id === tl.id) m += `    Note over ${fl.name}: ${ft.label}\n`
       else m += `    ${fl.name}->>${tl.name}: ${a.comment || ft.label}\n`
     })
     const used = new Set<string>()
-    arrows.forEach((a) => { used.add(a.from); used.add(a.to) })
+    arrows.forEach((a) => {
+      used.add(a.from)
+      used.add(a.to)
+    })
     order.forEach((k) => {
       if (!used.has(k) && tasks[k]) {
         const l = lanes.find((x) => x.id === tasks[k].lid)
@@ -793,7 +929,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       setActiveTool('select')
     }
   }
-  const arrowPaths = arrows.map((a) => ({ arrow: a, path: aPath(a) })).filter((x): x is { arrow: InternalArrow; path: ArrowPathResult } => x.path !== null)
+  const arrowPaths = arrows
+    .map((a) => ({ arrow: a, path: aPath(a) }))
+    .filter((x): x is { arrow: InternalArrow; path: ArrowPathResult } => x.path !== null)
 
   // --- Determine right panel content ---
   const selTaskData = selTask ? tasks[selTask] : null
@@ -807,8 +945,18 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     { id: 'addRow', icon: I.addRow, tip: '行追加', action: addRow },
     { id: 'rmRow', icon: I.rmRow, tip: '行削除', action: rmRow },
     'sep',
-    { id: 'zoomIn', icon: I.zoomIn, tip: '拡大', action: () => setZoom((z) => Math.min(2, z + 0.1)) },
-    { id: 'zoomOut', icon: I.zoomOut, tip: '縮小', action: () => setZoom((z) => Math.max(0.4, z - 0.1)) },
+    {
+      id: 'zoomIn',
+      icon: I.zoomIn,
+      tip: '拡大',
+      action: () => setZoom((z) => Math.min(2, z + 0.1)),
+    },
+    {
+      id: 'zoomOut',
+      icon: I.zoomOut,
+      tip: '縮小',
+      action: () => setZoom((z) => Math.max(0.4, z - 0.1)),
+    },
     'sep',
     { id: 'export', icon: I.export, tip: 'Export', action: () => setShowExport((v) => !v) },
   ]
@@ -850,7 +998,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           </PanelSection>
           <PanelSection label="情報" T={T}>
             <PanelRow label="レーン" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{lane?.name}</span>
+              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
+                {lane?.name}
+              </span>
             </PanelRow>
             {oi !== -1 && (
               <PanelRow label="順番" T={T}>
@@ -860,7 +1010,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           </PanelSection>
           <PanelSection label="操作" T={T}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <PanelBtn label="→ 接続" color={T.accent} onClick={() => startConnect(selTask)} T={T} />
+              <PanelBtn
+                label="→ 接続"
+                color={T.accent}
+                onClick={() => startConnect(selTask)}
+                T={T}
+              />
               <PanelBtn label="削除" color="#E06060" onClick={() => delTask(selTask)} T={T} />
             </div>
           </PanelSection>
@@ -870,15 +1025,20 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
 
     // Arrow selected
     if (selArrow && selArrowData) {
-      const fromT = tasks[selArrowData.from], toT = tasks[selArrowData.to]
+      const fromT = tasks[selArrowData.from],
+        toT = tasks[selArrowData.to]
       return (
         <>
           <PanelSection label="接続線" T={T}>
             <PanelRow label="From" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{fromT?.label || '?'}</span>
+              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
+                {fromT?.label || '?'}
+              </span>
             </PanelRow>
             <PanelRow label="To" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{toT?.label || '?'}</span>
+              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
+                {toT?.label || '?'}
+              </span>
             </PanelRow>
           </PanelSection>
           <PanelSection label="コメント" T={T}>
@@ -946,7 +1106,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     borderRadius: 6,
                     background: p.dot,
                     cursor: 'pointer',
-                    border: selLaneData.ci === ci ? `2px solid ${T.accent}` : '2px solid transparent',
+                    border:
+                      selLaneData.ci === ci ? `2px solid ${T.accent}` : '2px solid transparent',
                     transition: 'all 0.1s',
                   }}
                 />
@@ -955,12 +1116,28 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           </PanelSection>
           <PanelSection label="順番" T={T}>
             <div style={{ display: 'flex', gap: 6 }}>
-              <PanelBtn label="← 左へ" color={T.accent} onClick={() => moveLane(selLane, -1)} T={T} />
-              <PanelBtn label="右へ →" color={T.accent} onClick={() => moveLane(selLane, 1)} T={T} />
+              <PanelBtn
+                label="← 左へ"
+                color={T.accent}
+                onClick={() => moveLane(selLane, -1)}
+                T={T}
+              />
+              <PanelBtn
+                label="右へ →"
+                color={T.accent}
+                onClick={() => moveLane(selLane, 1)}
+                T={T}
+              />
             </div>
           </PanelSection>
           <PanelSection label="操作" T={T}>
-            <PanelBtn label="レーンを削除" color="#E06060" onClick={() => rmLane(selLane)} T={T} full />
+            <PanelBtn
+              label="レーンを削除"
+              color="#E06060"
+              onClick={() => rmLane(selLane)}
+              T={T}
+              full
+            />
           </PanelSection>
         </>
       )
@@ -991,7 +1168,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                 <span style={{ fontSize: 14 }}>{THEMES[themeId].emoji}</span>
                 {THEMES[themeId].name}
               </span>
-              <span style={{ fontSize: 10, color: T.panelLabel }}>{showThemePicker ? '▲' : '▼'}</span>
+              <span style={{ fontSize: 10, color: T.panelLabel }}>
+                {showThemePicker ? '▲' : '▼'}
+              </span>
             </div>
             {showThemePicker && (
               <div
@@ -1011,7 +1190,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                 {(Object.entries(THEMES) as [ThemeId, Theme][]).map(([id, th]) => (
                   <div
                     key={id}
-                    onClick={() => { setThemeId(id); setShowThemePicker(false) }}
+                    onClick={() => {
+                      setThemeId(id)
+                      setShowThemePicker(false)
+                    }}
                     style={{
                       padding: '7px 10px',
                       borderRadius: 5,
@@ -1035,16 +1217,22 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         </PanelSection>
         <PanelSection label="キャンバス" T={T}>
           <PanelRow label="レーン数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{lanes.length}</span>
+            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
+              {lanes.length}
+            </span>
           </PanelRow>
           <PanelRow label="行数" T={T}>
             <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{rows.length}</span>
           </PanelRow>
           <PanelRow label="ノード数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{Object.keys(tasks).length}</span>
+            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
+              {Object.keys(tasks).length}
+            </span>
           </PanelRow>
           <PanelRow label="接続数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{arrows.length}</span>
+            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
+              {arrows.length}
+            </span>
           </PanelRow>
         </PanelSection>
         <PanelSection label="エクスポート" T={T}>
@@ -1111,7 +1299,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         >
           F
         </div>
-        <span style={{ fontSize: 13, fontWeight: 700, color: T.titleColor, letterSpacing: '-0.02em' }}>
+        <span
+          style={{ fontSize: 13, fontWeight: 700, color: T.titleColor, letterSpacing: '-0.02em' }}
+        >
           Flowline
         </span>
         <div style={{ width: 1, height: 18, background: T.titleBarBorder, margin: '0 10px' }} />
@@ -1120,7 +1310,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             value={title}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
             onBlur={() => setEditTitle(false)}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && setEditTitle(false)}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+              e.key === 'Enter' && setEditTitle(false)
+            }
             autoFocus
             style={{
               fontSize: 12,
@@ -1152,7 +1344,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         )}
         <button
           data-testid="share-button"
-          onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowShareDialog(true) }}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation()
+            setShowShareDialog(true)
+          }}
           style={{
             height: 26,
             padding: '0 10px',
@@ -1218,7 +1413,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           data-testid="save-status"
           style={{
             fontSize: 10,
-            color: saveStatus === 'error' ? '#E06060' : saveStatus === 'unsaved' ? T.accent : T.statusText,
+            color:
+              saveStatus === 'error'
+                ? '#E06060'
+                : saveStatus === 'unsaved'
+                  ? T.accent
+                  : T.statusText,
             marginLeft: 12,
           }}
         >
@@ -1259,10 +1459,15 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                 key={t.id}
                 className="stool"
                 onClick={() => {
-                  if (t.action) { t.action(); return }
+                  if (t.action) {
+                    t.action()
+                    return
+                  }
                   if (t.id === 'connect') {
-                    if (activeTool === 'connect') { setActiveTool('select'); setConnectFrom(null) }
-                    else setActiveTool('connect')
+                    if (activeTool === 'connect') {
+                      setActiveTool('select')
+                      setConnectFrom(null)
+                    } else setActiveTool('connect')
                   } else setActiveTool(t.id)
                 }}
                 style={{
@@ -1287,43 +1492,82 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
 
         {/* Canvas */}
         <div
+          ref={canvasContainerRef}
           style={{
             flex: 1,
             overflow: 'auto',
             background: T.canvasBg,
             backgroundImage: `radial-gradient(circle,${T.dotGrid} 0.5px,transparent 0.5px)`,
             backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
-            padding: 40,
             cursor: connectFrom ? 'crosshair' : dragging ? 'grabbing' : 'default',
           }}
         >
           <svg
             ref={svgRef}
-            width={totalW * zoom}
-            height={(totalH + 30) * zoom}
-            viewBox={`0 -30 ${totalW} ${totalH + 30}`}
+            width={svgW}
+            height={svgH}
+            viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
             style={{ overflow: 'visible' }}
             onMouseMove={onSvgMouseMove}
             onMouseUp={onSvgMouseUp}
             onMouseLeave={() => {
-              if (dragging) { setDragging(null); setDragOver(null) }
+              if (dragging) {
+                setDragging(null)
+                setDragOver(null)
+              }
             }}
           >
             {/* Lanes */}
             {lanes.map((lane, li) => {
-              const p = PALETTES[lane.ci], x = laneX(li), isSel = selLane === lane.id, fullH = HH + rows.length * RH
+              const p = PALETTES[lane.ci],
+                x = laneX(li),
+                isSel = selLane === lane.id,
+                fullH = HH + rows.length * RH
               return (
                 <g key={`lane-${lane.id}`}>
-                  <rect x={x} y={TM} width={LW} height={fullH} rx={10} fill={T.laneBg} stroke={T.laneBorder} strokeWidth={0.5} />
+                  <rect
+                    x={x}
+                    y={TM}
+                    width={LW}
+                    height={fullH}
+                    rx={10}
+                    fill={T.laneBg}
+                    stroke={T.laneBorder}
+                    strokeWidth={0.5}
+                  />
                   {isSel && (
-                    <rect x={x + 1} y={TM + 1} width={LW - 2} height={fullH - 2} rx={9} fill="none" stroke={T.accent} strokeWidth={1.5} strokeDasharray="5,3" opacity={0.5} />
+                    <rect
+                      x={x + 1}
+                      y={TM + 1}
+                      width={LW - 2}
+                      height={fullH - 2}
+                      rx={9}
+                      fill="none"
+                      stroke={T.accent}
+                      strokeWidth={1.5}
+                      strokeDasharray="5,3"
+                      opacity={0.5}
+                    />
                   )}
                   <rect x={x} y={TM} width={LW} height={HH} rx={10} fill={T.laneHeaderBg} />
                   <rect x={x} y={TM + HH - 10} width={LW} height={10} fill={T.laneHeaderBg} />
-                  <rect x={x + 16} y={TM + HH - 2.5} width={LW - 32} height={2} rx={1} fill={p.dot} opacity={T.laneAccentOpacity} />
+                  <rect
+                    x={x + 16}
+                    y={TM + HH - 2.5}
+                    width={LW - 32}
+                    height={2}
+                    rx={1}
+                    fill={p.dot}
+                    opacity={T.laneAccentOpacity}
+                  />
                   <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
                   <rect
-                    x={x} y={TM} width={LW} height={HH} fill="transparent" style={{ cursor: 'pointer' }}
+                    x={x}
+                    y={TM}
+                    width={LW}
+                    height={HH}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation()
                       setSelLane(selLane === lane.id ? null : lane.id)
@@ -1344,10 +1588,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         value={lane.name}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const v = e.target.value
-                          setLanes((p2) => p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)))
+                          setLanes((p2) =>
+                            p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)),
+                          )
                         }}
                         onBlur={() => setEditLane(null)}
-                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && setEditLane(null)}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                          e.key === 'Enter' && setEditLane(null)
+                        }
                         style={{
                           width: '100%',
                           background: T.inputBg,
@@ -1364,8 +1612,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     </foreignObject>
                   ) : (
                     <text
-                      x={x + 32} y={TM + HH / 2 + 1} dominantBaseline="central"
-                      fill={T.titleColor} fontSize={12.5} fontWeight={600}
+                      x={x + 32}
+                      y={TM + HH / 2 + 1}
+                      dominantBaseline="central"
+                      fill={T.titleColor}
+                      fontSize={12.5}
+                      fontWeight={600}
                       style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                     >
                       {lane.name}
@@ -1373,7 +1625,15 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   )}
                   {rows.map((_, ri) =>
                     ri === 0 ? null : (
-                      <line key={ri} x1={x + 8} y1={TM + HH + ri * RH} x2={x + LW - 8} y2={TM + HH + ri * RH} stroke={T.laneBorder} strokeWidth={0.3} />
+                      <line
+                        key={ri}
+                        x1={x + 8}
+                        y1={TM + HH + ri * RH}
+                        x2={x + LW - 8}
+                        y2={TM + HH + ri * RH}
+                        stroke={T.laneBorder}
+                        strokeWidth={0.3}
+                      />
                     ),
                   )}
                 </g>
@@ -1385,19 +1645,71 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               (() => {
                 const li = lanes.findIndex((l) => l.id === selLane)
                 if (li === -1) return null
-                const x = laneX(li), cx = x + LW / 2, cy = TM - 14
+                const x = laneX(li),
+                  cx = x + LW / 2,
+                  cy = TM - 14
                 return (
                   <g>
                     {li > 0 && (
-                      <g onClick={(e: React.MouseEvent) => { e.stopPropagation(); moveLane(selLane, -1) }} style={{ cursor: 'pointer' }}>
-                        <rect x={cx - 44} y={cy - 11} width={30} height={22} rx={6} fill={T.sidebar} stroke={T.laneBorder} strokeWidth={0.5} />
-                        <text x={cx - 29} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={13} fill={T.sidebarIcon} fontWeight={600}>{'←'}</text>
+                      <g
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          moveLane(selLane, -1)
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <rect
+                          x={cx - 44}
+                          y={cy - 11}
+                          width={30}
+                          height={22}
+                          rx={6}
+                          fill={T.sidebar}
+                          stroke={T.laneBorder}
+                          strokeWidth={0.5}
+                        />
+                        <text
+                          x={cx - 29}
+                          y={cy}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={13}
+                          fill={T.sidebarIcon}
+                          fontWeight={600}
+                        >
+                          {'←'}
+                        </text>
                       </g>
                     )}
                     {li < lanes.length - 1 && (
-                      <g onClick={(e: React.MouseEvent) => { e.stopPropagation(); moveLane(selLane, 1) }} style={{ cursor: 'pointer' }}>
-                        <rect x={cx + 14} y={cy - 11} width={30} height={22} rx={6} fill={T.sidebar} stroke={T.laneBorder} strokeWidth={0.5} />
-                        <text x={cx + 29} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={13} fill={T.sidebarIcon} fontWeight={600}>{'→'}</text>
+                      <g
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          moveLane(selLane, 1)
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <rect
+                          x={cx + 14}
+                          y={cy - 11}
+                          width={30}
+                          height={22}
+                          rx={6}
+                          fill={T.sidebar}
+                          stroke={T.laneBorder}
+                          strokeWidth={0.5}
+                        />
+                        <text
+                          x={cx + 29}
+                          y={cy}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={13}
+                          fill={T.sidebarIcon}
+                          fontWeight={600}
+                        >
+                          {'→'}
+                        </text>
                       </g>
                     )}
                   </g>
@@ -1406,25 +1718,61 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
 
             {/* Gap "+" */}
             {Array.from({ length: lanes.length + 1 }, (_, gi) => {
-              const gx = gi === 0 ? LM - G / 2 : gi === lanes.length ? laneX(gi - 1) + LW + G / 2 : laneX(gi) - G / 2
+              const gx =
+                gi === 0
+                  ? LM - G / 2
+                  : gi === lanes.length
+                    ? laneX(gi - 1) + LW + G / 2
+                    : laneX(gi) - G / 2
               const gy = TM + HH / 2 + (rows.length * RH) / 2
               const isHov = hoveredLaneGap === gi
-              const hitX = gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
+              const hitX =
+                gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
               return (
                 <g key={`gap-${gi}`}>
                   <rect
-                    x={hitX} y={TM} width={gi === 0 || gi === lanes.length ? 14 : G}
-                    height={HH + rows.length * RH} fill="transparent" style={{ cursor: 'pointer' }}
+                    x={hitX}
+                    y={TM}
+                    width={gi === 0 || gi === lanes.length ? 14 : G}
+                    height={HH + rows.length * RH}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
                     onMouseEnter={() => setHoveredLaneGap(gi)}
                     onMouseLeave={() => setHoveredLaneGap(null)}
-                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); insertLaneAt(gi) }}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      insertLaneAt(gi)
+                    }}
                   />
                   {isHov && (
                     <g style={{ pointerEvents: 'none' }}>
-                      <line x1={gx} y1={TM + HH} x2={gx} y2={TM + HH + rows.length * RH} stroke={T.accent} strokeWidth={1.5} strokeDasharray="4,3" opacity={0.3} />
+                      <line
+                        x1={gx}
+                        y1={TM + HH}
+                        x2={gx}
+                        y2={TM + HH + rows.length * RH}
+                        stroke={T.accent}
+                        strokeWidth={1.5}
+                        strokeDasharray="4,3"
+                        opacity={0.3}
+                      />
                       <circle cx={gx} cy={gy} r={10} fill={T.accent} />
-                      <line x1={gx - 4} y1={gy} x2={gx + 4} y2={gy} stroke="#fff" strokeWidth={1.5} />
-                      <line x1={gx} y1={gy - 4} x2={gx} y2={gy + 4} stroke="#fff" strokeWidth={1.5} />
+                      <line
+                        x1={gx - 4}
+                        y1={gy}
+                        x2={gx + 4}
+                        y2={gy}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                      <line
+                        x1={gx}
+                        y1={gy - 4}
+                        x2={gx}
+                        y2={gy + 4}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
                     </g>
                   )}
                 </g>
@@ -1432,7 +1780,16 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             })}
 
             {rows.map((_, ri) => (
-              <text key={ri} x={LM - 14} y={TM + HH + ri * RH + RH / 2} textAnchor="middle" dominantBaseline="central" fontSize={9} fill={T.statusText} fontWeight={500}>
+              <text
+                key={ri}
+                x={LM - 14}
+                y={TM + HH + ri * RH + RH / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={9}
+                fill={T.statusText}
+                fontWeight={500}
+              >
                 {ri + 1}
               </text>
             ))}
@@ -1442,28 +1799,74 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               rows.map((row, ri) => {
                 const k = ky(lane.id, row.id)
                 if (tasks[k]) return null
-                const c = ct(li, ri), p = PALETTES[lane.ci], isHov = hovered === k, isDT = dragOver === k
+                const c = ct(li, ri),
+                  p = PALETTES[lane.ci],
+                  isHov = hovered === k,
+                  isDT = dragOver === k
                 return (
                   <g key={`ec-${k}`}>
                     <rect
-                      x={laneX(li)} y={TM + HH + ri * RH} width={LW} height={RH} fill="transparent"
-                      style={{ cursor: connectFrom ? 'default' : dragging ? 'default' : 'crosshair' }}
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); if (!dragging) cellClick(lane.id, row.id, li, ri) }}
+                      x={laneX(li)}
+                      y={TM + HH + ri * RH}
+                      width={LW}
+                      height={RH}
+                      fill="transparent"
+                      style={{
+                        cursor: connectFrom ? 'default' : dragging ? 'default' : 'crosshair',
+                      }}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        if (!dragging) cellClick(lane.id, row.id, li, ri)
+                      }}
                       onMouseEnter={() => setHovered(k)}
                       onMouseLeave={() => setHovered(null)}
                     />
                     {isDT && (
                       <rect
-                        x={laneX(li) + 4} y={TM + HH + ri * RH + 4} width={LW - 8} height={RH - 8}
-                        rx={8} fill={`${T.accent}0A`} stroke={T.accent} strokeWidth={1.5} strokeDasharray="4,3"
+                        x={laneX(li) + 4}
+                        y={TM + HH + ri * RH + 4}
+                        width={LW - 8}
+                        height={RH - 8}
+                        rx={8}
+                        fill={`${T.accent}0A`}
+                        stroke={T.accent}
+                        strokeWidth={1.5}
+                        strokeDasharray="4,3"
                         style={{ animation: 'dragPulse 1s ease infinite', pointerEvents: 'none' }}
                       />
                     )}
                     {isHov && !connectFrom && !dragging && (
                       <g style={{ pointerEvents: 'none' }}>
-                        <rect x={c.x - TW / 2} y={c.y - TH / 2} width={TW} height={TH} rx={8} fill="none" stroke={p.dot} strokeWidth={0.8} strokeDasharray="3,3" opacity={0.25} />
-                        <line x1={c.x - 5} y1={c.y} x2={c.x + 5} y2={c.y} stroke={p.dot} strokeWidth={1} opacity={0.3} />
-                        <line x1={c.x} y1={c.y - 5} x2={c.x} y2={c.y + 5} stroke={p.dot} strokeWidth={1} opacity={0.3} />
+                        <rect
+                          x={c.x - TW / 2}
+                          y={c.y - TH / 2}
+                          width={TW}
+                          height={TH}
+                          rx={8}
+                          fill="none"
+                          stroke={p.dot}
+                          strokeWidth={0.8}
+                          strokeDasharray="3,3"
+                          opacity={0.25}
+                        />
+                        <line
+                          x1={c.x - 5}
+                          y1={c.y}
+                          x2={c.x + 5}
+                          y2={c.y}
+                          stroke={p.dot}
+                          strokeWidth={1}
+                          opacity={0.3}
+                        />
+                        <line
+                          x1={c.x}
+                          y1={c.y - 5}
+                          x2={c.x}
+                          y2={c.y + 5}
+                          stroke={p.dot}
+                          strokeWidth={1}
+                          opacity={0.3}
+                        />
                       </g>
                     )}
                   </g>
@@ -1474,26 +1877,51 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             {/* Nodes */}
             {lanes.map((lane, li) =>
               rows.map((row, ri) => {
-                const k = ky(lane.id, row.id), task = tasks[k], note = notes[k]
+                const k = ky(lane.id, row.id),
+                  task = tasks[k],
+                  note = notes[k]
                 if (!task) return null
-                const c = ct(li, ri), p = PALETTES[lane.ci]
-                const isSel = selTask === k, isLast = order.length > 0 && order[order.length - 1] === k
-                const oi = order.indexOf(k), isConnSrc = connectFrom === k, isConnTgt = connectFrom !== null && connectFrom !== k
-                const isDT = dragging?.key === k, isHov = hovered === k
+                const c = ct(li, ri),
+                  p = PALETTES[lane.ci]
+                const isSel = selTask === k,
+                  isLast = order.length > 0 && order[order.length - 1] === k
+                const oi = order.indexOf(k),
+                  isConnSrc = connectFrom === k,
+                  isConnTgt = connectFrom !== null && connectFrom !== k
+                const isDT = dragging?.key === k,
+                  isHov = hovered === k
                 const tagW = lane.name.length * 7 + 14
                 return (
                   <g key={`t-${k}`} opacity={isDT ? 0.3 : 1}>
                     <rect
-                      x={laneX(li)} y={TM + HH + ri * RH} width={LW} height={RH} fill="transparent"
+                      x={laneX(li)}
+                      y={TM + HH + ri * RH}
+                      width={LW}
+                      height={RH}
+                      fill="transparent"
                       style={{ cursor: connectFrom ? 'pointer' : 'grab' }}
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); if (!dragging) cellClick(lane.id, row.id, li, ri) }}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        if (!dragging) cellClick(lane.id, row.id, li, ri)
+                      }}
                       onMouseEnter={() => setHovered(k)}
                       onMouseLeave={() => setHovered(null)}
                     />
                     <rect
-                      x={c.x - TW / 2} y={c.y - TH / 2} width={TW} height={TH}
+                      x={c.x - TW / 2}
+                      y={c.y - TH / 2}
+                      width={TW}
+                      height={TH}
                       fill={isConnTgt && isHov ? `${T.accent}0A` : T.nodeFill}
-                      stroke={isConnSrc ? T.accent : isSel ? T.nodeSelStroke : isConnTgt && isHov ? T.accent : T.nodeStroke}
+                      stroke={
+                        isConnSrc
+                          ? T.accent
+                          : isSel
+                            ? T.nodeSelStroke
+                            : isConnTgt && isHov
+                              ? T.accent
+                              : T.nodeStroke
+                      }
                       strokeWidth={isConnSrc || isSel ? 2 : 0.5}
                       strokeDasharray={isConnSrc ? '4,3' : 'none'}
                       rx={10}
@@ -1512,10 +1940,22 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         if (!connectFrom && !editing) onDragStart(k, e)
                       }}
                     />
-                    <rect x={c.x - TW / 2 + 6} y={c.y - TH / 2 + 5} width={tagW} height={15} rx={3} fill={p.tag} style={{ pointerEvents: 'none' }} />
+                    <rect
+                      x={c.x - TW / 2 + 6}
+                      y={c.y - TH / 2 + 5}
+                      width={tagW}
+                      height={15}
+                      rx={3}
+                      fill={p.tag}
+                      style={{ pointerEvents: 'none' }}
+                    />
                     <text
-                      x={c.x - TW / 2 + 13} y={c.y - TH / 2 + 12.5} dominantBaseline="central"
-                      fontSize={8} fill={p.text} fontWeight={600}
+                      x={c.x - TW / 2 + 13}
+                      y={c.y - TH / 2 + 12.5}
+                      dominantBaseline="central"
+                      fontSize={8}
+                      fill={p.text}
+                      fontWeight={600}
                       style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                     >
                       {lane.name}
@@ -1525,14 +1965,34 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     )}
                     {oi !== -1 && !connectFrom && !dragging && (
                       <g>
-                        <rect x={c.x + TW / 2 - 18} y={c.y + TH / 2 - 16} width={18} height={16} rx={5} fill={p.tag} />
-                        <text x={c.x + TW / 2 - 9} y={c.y + TH / 2 - 7} textAnchor="middle" dominantBaseline="central" fill={p.text} fontSize={8.5} fontWeight={700}>
+                        <rect
+                          x={c.x + TW / 2 - 18}
+                          y={c.y + TH / 2 - 16}
+                          width={18}
+                          height={16}
+                          rx={5}
+                          fill={p.tag}
+                        />
+                        <text
+                          x={c.x + TW / 2 - 9}
+                          y={c.y + TH / 2 - 7}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fill={p.text}
+                          fontSize={8.5}
+                          fontWeight={700}
+                        >
                           {oi + 1}
                         </text>
                       </g>
                     )}
                     {editing === k ? (
-                      <foreignObject x={c.x - TW / 2 + 8} y={c.y - TH / 2 + 18} width={TW - 16} height={TH - 22}>
+                      <foreignObject
+                        x={c.x - TW / 2 + 8}
+                        y={c.y - TH / 2 + 18}
+                        width={TW - 16}
+                        height={TH - 22}
+                      >
                         <input
                           ref={inputRef}
                           value={task.label === '作業' ? '' : task.label}
@@ -1542,7 +2002,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                             setTasks((p2) => ({ ...p2, [k]: { ...p2[k], label: v || '作業' } }))
                           }}
                           onBlur={() => setEditing(null)}
-                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') setEditing(null) }}
+                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                            if (e.key === 'Enter') setEditing(null)
+                          }}
                           onClick={(e: React.MouseEvent) => e.stopPropagation()}
                           style={{
                             width: '100%',
@@ -1560,8 +2022,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       </foreignObject>
                     ) : (
                       <text
-                        x={c.x} y={c.y + 6} textAnchor="middle" dominantBaseline="central"
-                        fontSize={11.5} fontWeight={500}
+                        x={c.x}
+                        y={c.y + 6}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={11.5}
+                        fontWeight={500}
                         fill={task.label === '作業' ? T.statusText : T.titleColor}
                         style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                       >
@@ -1570,15 +2036,33 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     )}
                     {note && !connectFrom && !dragging && (
                       <g>
-                        <rect x={c.x - TW / 2 + 6} y={c.y + TH / 2 + 4} width={TW - 12} height={16} rx={4} fill="#FFFDE7" stroke="#F0E6A0" strokeWidth={0.5} />
+                        <rect
+                          x={c.x - TW / 2 + 6}
+                          y={c.y + TH / 2 + 4}
+                          width={TW - 12}
+                          height={16}
+                          rx={4}
+                          fill="#FFFDE7"
+                          stroke="#F0E6A0"
+                          strokeWidth={0.5}
+                        />
                         {editNote === k ? (
-                          <foreignObject x={c.x - TW / 2 + 8} y={c.y + TH / 2 + 4} width={TW - 16} height={16}>
+                          <foreignObject
+                            x={c.x - TW / 2 + 8}
+                            y={c.y + TH / 2 + 4}
+                            width={TW - 16}
+                            height={16}
+                          >
                             <input
                               ref={inputRef}
                               value={note}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNotes((p2) => ({ ...p2, [k]: e.target.value }))}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setNotes((p2) => ({ ...p2, [k]: e.target.value }))
+                              }
                               onBlur={() => setEditNote(null)}
-                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && setEditNote(null)}
+                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                                e.key === 'Enter' && setEditNote(null)
+                              }
                               onClick={(e: React.MouseEvent) => e.stopPropagation()}
                               style={{
                                 width: '100%',
@@ -1595,8 +2079,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                           </foreignObject>
                         ) : (
                           <text
-                            x={c.x} y={c.y + TH / 2 + 13} textAnchor="middle" dominantBaseline="central"
-                            fontSize={8} fill="#8D6E63" style={{ cursor: 'pointer' }}
+                            x={c.x}
+                            y={c.y + TH / 2 + 13}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fontSize={8}
+                            fill="#8D6E63"
+                            style={{ cursor: 'pointer' }}
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation()
                               const nk = k
@@ -1622,13 +2111,25 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               return (
                 <g key={`av-${arrow.id}`}>
                   <defs>
-                    <marker id={`m-${arrow.id}`} markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
-                      <polygon points="0 0.5, 8 3.5, 0 6.5" fill={isSel ? T.accent : T.arrowColor} />
+                    <marker
+                      id={`m-${arrow.id}`}
+                      markerWidth="8"
+                      markerHeight="7"
+                      refX="7"
+                      refY="3.5"
+                      orient="auto"
+                    >
+                      <polygon
+                        points="0 0.5, 8 3.5, 0 6.5"
+                        fill={isSel ? T.accent : T.arrowColor}
+                      />
                     </marker>
                   </defs>
                   <path
-                    d={d} stroke={isSel ? T.arrowSel : T.arrowColor}
-                    strokeWidth={isSel ? 2 : 1.2} fill="none"
+                    d={d}
+                    stroke={isSel ? T.arrowSel : T.arrowColor}
+                    strokeWidth={isSel ? 2 : 1.2}
+                    fill="none"
                     markerEnd={`url(#m-${arrow.id})`}
                     style={{ pointerEvents: 'none' }}
                   />
@@ -1638,11 +2139,24 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         x={mx - Math.max(arrow.comment.length * 3.2, 12) - 10}
                         y={my - 19}
                         width={Math.max(arrow.comment.length * 6.4 + 20, 44)}
-                        height={20} rx={10}
-                        fill={T.commentPill} stroke={T.commentBorder} strokeWidth={0.5}
+                        height={20}
+                        rx={10}
+                        fill={T.commentPill}
+                        stroke={T.commentBorder}
+                        strokeWidth={0.5}
                       />
-                      <text x={mx} y={my - 8} textAnchor="middle" dominantBaseline="central" fontSize={9} fill={T.commentText} fontWeight={500}>
-                        {arrow.comment.length > 18 ? arrow.comment.slice(0, 18) + '…' : arrow.comment}
+                      <text
+                        x={mx}
+                        y={my - 8}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={9}
+                        fill={T.commentText}
+                        fontWeight={500}
+                      >
+                        {arrow.comment.length > 18
+                          ? arrow.comment.slice(0, 18) + '…'
+                          : arrow.comment}
                       </text>
                     </g>
                   )}
@@ -1651,9 +2165,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             })}
             {arrowPaths.map(({ arrow, path }) => (
               <path
-                key={`ah-${arrow.id}`} d={path.d}
-                stroke="rgba(0,0,0,0)" strokeWidth={20} fill="none"
-                pointerEvents="stroke" style={{ cursor: 'pointer' }}
+                key={`ah-${arrow.id}`}
+                d={path.d}
+                stroke="rgba(0,0,0,0)"
+                strokeWidth={20}
+                fill="none"
+                pointerEvents="stroke"
+                style={{ cursor: 'pointer' }}
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation()
                   setSelArrow(selArrow === arrow.id ? null : arrow.id)
@@ -1664,15 +2182,35 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             ))}
 
             {/* Selection handles */}
-            {selTask && tasks[selTask] && !connectFrom && !dragging &&
+            {selTask &&
+              tasks[selTask] &&
+              !connectFrom &&
+              !dragging &&
               (() => {
-                const t = tasks[selTask], li = liMap[t.lid], ri = riMap[t.rid]
+                const t = tasks[selTask],
+                  li = liMap[t.lid],
+                  ri = riMap[t.rid]
                 if (li === undefined || ri === undefined) return null
                 const c = ct(li, ri)
                 return (
-                  [[c.x - TW / 2, c.y], [c.x + TW / 2, c.y], [c.x, c.y - TH / 2], [c.x, c.y + TH / 2]] as [number, number][]
+                  [
+                    [c.x - TW / 2, c.y],
+                    [c.x + TW / 2, c.y],
+                    [c.x, c.y - TH / 2],
+                    [c.x, c.y + TH / 2],
+                  ] as [number, number][]
                 ).map(([hx, hy], i) => (
-                  <rect key={i} x={hx - 3} y={hy - 3} width={6} height={6} fill={T.nodeFill} stroke={T.accent} strokeWidth={1.2} rx={1.5} />
+                  <rect
+                    key={i}
+                    x={hx - 3}
+                    y={hy - 3}
+                    width={6}
+                    height={6}
+                    fill={T.nodeFill}
+                    stroke={T.accent}
+                    strokeWidth={1.2}
+                    rx={1.5}
+                  />
                 ))
               })()}
           </svg>

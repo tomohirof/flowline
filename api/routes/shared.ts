@@ -32,7 +32,10 @@ shared.get('/:token', async (c) => {
   const db = c.env.FLOWLINE_DB
 
   // Find flow by share_token
-  const flow = await db.prepare('SELECT * FROM flows WHERE share_token = ?').bind(token).first<FlowRow>()
+  const flow = await db
+    .prepare('SELECT * FROM flows WHERE share_token = ?')
+    .bind(token)
+    .first<FlowRow>()
   if (!flow) {
     return c.json({ error: '共有フローが見つかりません' }, 404)
   }
@@ -41,7 +44,9 @@ shared.get('/:token', async (c) => {
 
   const [lanesResult, nodesResult, arrowsResult] = await db.batch([
     db.prepare('SELECT * FROM lanes WHERE flow_id = ? ORDER BY position ASC').bind(flowId),
-    db.prepare('SELECT * FROM nodes WHERE flow_id = ? ORDER BY row_index ASC, order_index ASC').bind(flowId),
+    db
+      .prepare('SELECT * FROM nodes WHERE flow_id = ? ORDER BY row_index ASC, order_index ASC')
+      .bind(flowId),
     db.prepare('SELECT * FROM arrows WHERE flow_id = ?').bind(flowId),
   ])
 

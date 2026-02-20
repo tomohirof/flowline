@@ -16,43 +16,90 @@ async function authCookie(userId: string, email: string): Promise<string> {
 }
 
 function registerUser(db: ReturnType<typeof Database>, id: string, email: string) {
-  db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(id, email, 'hash', 'Test User')
+  db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(
+    id,
+    email,
+    'hash',
+    'Test User',
+  )
 }
 
 function insertFlow(db: ReturnType<typeof Database>, id: string, userId: string, title: string) {
-  db.prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)').run(id, userId, title, 'cloud')
+  db.prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)').run(
+    id,
+    userId,
+    title,
+    'cloud',
+  )
 }
 
-function insertLane(db: ReturnType<typeof Database>, id: string, flowId: string, name: string, colorIndex: number, position: number) {
-  db.prepare('INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)').run(id, flowId, name, colorIndex, position)
+function insertLane(
+  db: ReturnType<typeof Database>,
+  id: string,
+  flowId: string,
+  name: string,
+  colorIndex: number,
+  position: number,
+) {
+  db.prepare(
+    'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, flowId, name, colorIndex, position)
 }
 
-function insertNode(db: ReturnType<typeof Database>, id: string, flowId: string, laneId: string, rowIndex: number, label: string, note: string | null, orderIndex: number) {
-  db.prepare('INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)').run(id, flowId, laneId, rowIndex, label, note, orderIndex)
+function insertNode(
+  db: ReturnType<typeof Database>,
+  id: string,
+  flowId: string,
+  laneId: string,
+  rowIndex: number,
+  label: string,
+  note: string | null,
+  orderIndex: number,
+) {
+  db.prepare(
+    'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  ).run(id, flowId, laneId, rowIndex, label, note, orderIndex)
 }
 
-function insertArrow(db: ReturnType<typeof Database>, id: string, flowId: string, fromNodeId: string, toNodeId: string, comment: string | null) {
-  db.prepare('INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)').run(id, flowId, fromNodeId, toNodeId, comment)
+function insertArrow(
+  db: ReturnType<typeof Database>,
+  id: string,
+  flowId: string,
+  fromNodeId: string,
+  toNodeId: string,
+  comment: string | null,
+) {
+  db.prepare(
+    'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, flowId, fromNodeId, toNodeId, comment)
 }
 
 function postJson(path: string, body: unknown, env: object, cookie?: string) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (cookie) headers['Cookie'] = cookie
-  return app.request(path, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  }, env)
+  return app.request(
+    path,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    },
+    env,
+  )
 }
 
 function putJson(path: string, body: unknown, env: object, cookie?: string) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (cookie) headers['Cookie'] = cookie
-  return app.request(path, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify(body),
-  }, env)
+  return app.request(
+    path,
+    {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body),
+    },
+    env,
+  )
 }
 
 function getWithCookie(path: string, env: object, cookie?: string) {
@@ -117,8 +164,12 @@ describe('Flows API', () => {
 
     it('should return flows ordered by updatedAt desc', async () => {
       // Insert with explicit timestamps
-      db.prepare('INSERT INTO flows (id, user_id, title, theme_id, updated_at) VALUES (?, ?, ?, ?, ?)').run('flow-old', USER_ID, 'Old Flow', 'cloud', '2024-01-01T00:00:00Z')
-      db.prepare('INSERT INTO flows (id, user_id, title, theme_id, updated_at) VALUES (?, ?, ?, ?, ?)').run('flow-new', USER_ID, 'New Flow', 'cloud', '2025-01-01T00:00:00Z')
+      db.prepare(
+        'INSERT INTO flows (id, user_id, title, theme_id, updated_at) VALUES (?, ?, ?, ?, ?)',
+      ).run('flow-old', USER_ID, 'Old Flow', 'cloud', '2024-01-01T00:00:00Z')
+      db.prepare(
+        'INSERT INTO flows (id, user_id, title, theme_id, updated_at) VALUES (?, ?, ?, ?, ?)',
+      ).run('flow-new', USER_ID, 'New Flow', 'cloud', '2025-01-01T00:00:00Z')
 
       const res = await getWithCookie('/api/flows', env, cookie)
       const body = await res.json()
@@ -175,12 +226,24 @@ describe('Flows API', () => {
           { id: 'lane-2', name: 'Lane 2', colorIndex: 1, position: 1 },
         ],
         nodes: [
-          { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'Task 1', note: 'Note 1', orderIndex: 0 },
-          { id: 'node-2', laneId: 'lane-2', rowIndex: 0, label: 'Task 2', note: null, orderIndex: 0 },
+          {
+            id: 'node-1',
+            laneId: 'lane-1',
+            rowIndex: 0,
+            label: 'Task 1',
+            note: 'Note 1',
+            orderIndex: 0,
+          },
+          {
+            id: 'node-2',
+            laneId: 'lane-2',
+            rowIndex: 0,
+            label: 'Task 2',
+            note: null,
+            orderIndex: 0,
+          },
         ],
-        arrows: [
-          { id: 'arrow-1', fromNodeId: 'node-1', toNodeId: 'node-2', comment: 'Next step' },
-        ],
+        arrows: [{ id: 'arrow-1', fromNodeId: 'node-1', toNodeId: 'node-2', comment: 'Next step' }],
       }
 
       const res = await postJson('/api/flows', payload, env, cookie)
@@ -208,14 +271,18 @@ describe('Flows API', () => {
     })
 
     it('should return 400 for malformed JSON', async () => {
-      const res = await app.request('/api/flows', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': cookie,
+      const res = await app.request(
+        '/api/flows',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookie,
+          },
+          body: 'not-json',
         },
-        body: 'not-json',
-      }, env)
+        env,
+      )
       expect(res.status).toBe(400)
     })
 
@@ -226,7 +293,10 @@ describe('Flows API', () => {
 
     it('should persist flow in database', async () => {
       await postJson('/api/flows', { title: 'Persisted Flow' }, env, cookie)
-      const row = db.prepare('SELECT * FROM flows WHERE title = ?').get('Persisted Flow') as { id: string; user_id: string }
+      const row = db.prepare('SELECT * FROM flows WHERE title = ?').get('Persisted Flow') as {
+        id: string
+        user_id: string
+      }
       expect(row).toBeDefined()
       expect(row.user_id).toBe(USER_ID)
     })
@@ -235,7 +305,9 @@ describe('Flows API', () => {
       const payload = {
         title: 'DB Flow',
         lanes: [{ id: 'lane-1', name: 'Lane', colorIndex: 0, position: 0 }],
-        nodes: [{ id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'Task', note: null, orderIndex: 0 }],
+        nodes: [
+          { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'Task', note: null, orderIndex: 0 },
+        ],
         arrows: [],
       }
 
@@ -334,10 +406,15 @@ describe('Flows API', () => {
     })
 
     it('should update title and theme', async () => {
-      const res = await putJson('/api/flows/flow-1', {
-        title: 'Updated Title',
-        themeId: 'sunset',
-      }, env, cookie)
+      const res = await putJson(
+        '/api/flows/flow-1',
+        {
+          title: 'Updated Title',
+          themeId: 'sunset',
+        },
+        env,
+        cookie,
+      )
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.flow.title).toBe('Updated Title')
@@ -352,7 +429,14 @@ describe('Flows API', () => {
           { id: 'lane-new-2', name: 'New Lane 2', colorIndex: 1, position: 1 },
         ],
         nodes: [
-          { id: 'node-new-1', laneId: 'lane-new-1', rowIndex: 0, label: 'New Task 1', note: null, orderIndex: 0 },
+          {
+            id: 'node-new-1',
+            laneId: 'lane-new-1',
+            rowIndex: 0,
+            label: 'New Task 1',
+            note: null,
+            orderIndex: 0,
+          },
         ],
         arrows: [],
       }
@@ -394,14 +478,18 @@ describe('Flows API', () => {
     })
 
     it('should return 400 for malformed JSON', async () => {
-      const res = await app.request('/api/flows/flow-1', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': cookie,
+      const res = await app.request(
+        '/api/flows/flow-1',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookie,
+          },
+          body: 'not-json',
         },
-        body: 'not-json',
-      }, env)
+        env,
+      )
       expect(res.status).toBe(400)
     })
 
@@ -417,7 +505,9 @@ describe('Flows API', () => {
 
       await putJson('/api/flows/flow-1', { title: 'Updated' }, env, cookie)
 
-      const after = db.prepare('SELECT updated_at FROM flows WHERE id = ?').get('flow-1') as { updated_at: string }
+      const after = db.prepare('SELECT updated_at FROM flows WHERE id = ?').get('flow-1') as {
+        updated_at: string
+      }
       expect(after.updated_at).toBeDefined()
       expect(after.updated_at).not.toBe(oldTimestamp)
     })

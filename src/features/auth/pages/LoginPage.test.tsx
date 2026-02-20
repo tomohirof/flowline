@@ -81,7 +81,9 @@ describe('LoginPage', () => {
   it('should display ApiError message on login failure', async () => {
     const user = userEvent.setup()
     const { ApiError } = await import('../../../lib/api')
-    mockLogin.mockRejectedValueOnce(new ApiError(401, 'メールアドレスまたはパスワードが正しくありません'))
+    mockLogin.mockRejectedValueOnce(
+      new ApiError(401, 'メールアドレスまたはパスワードが正しくありません'),
+    )
 
     render(
       <MemoryRouter>

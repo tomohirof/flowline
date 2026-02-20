@@ -117,7 +117,11 @@ describe('useAuth', () => {
     expect(result.current.user).toEqual(mockUser)
     expect(mockApiFetch).toHaveBeenCalledWith('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email: 'test@example.com', password: 'password123', name: 'New User' }),
+      body: JSON.stringify({
+        email: 'test@example.com',
+        password: 'password123',
+        name: 'New User',
+      }),
     })
   })
 

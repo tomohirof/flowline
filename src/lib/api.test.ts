@@ -20,18 +20,18 @@ describe('apiFetch', () => {
   })
 
   it('should prepend /api to the path', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }))
 
     await apiFetch('/auth/me')
     expect(fetchSpy).toHaveBeenCalledWith('/api/auth/me', expect.any(Object))
   })
 
   it('should set Content-Type header to application/json', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }))
 
     await apiFetch('/auth/me')
     const calledOptions = fetchSpy.mock.calls[0][1] as RequestInit
@@ -41,9 +41,9 @@ describe('apiFetch', () => {
   })
 
   it('should pass additional options to fetch', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }))
 
     await apiFetch('/auth/login', {
       method: 'POST',
@@ -91,9 +91,9 @@ describe('apiFetch', () => {
   })
 
   it('should merge custom headers with default Content-Type', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }))
 
     await apiFetch('/auth/me', {
       headers: { Authorization: 'Bearer token123' },

@@ -112,9 +112,7 @@ auth.post('/logout', (c) => {
 auth.get('/me', authMiddleware, async (c) => {
   const userId = c.get('userId')
 
-  const user = await c.env.FLOWLINE_DB.prepare(
-    'SELECT id, email, name FROM users WHERE id = ?',
-  )
+  const user = await c.env.FLOWLINE_DB.prepare('SELECT id, email, name FROM users WHERE id = ?')
     .bind(userId)
     .first<{ id: string; email: string; name: string }>()
 

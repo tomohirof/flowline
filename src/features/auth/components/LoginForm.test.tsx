@@ -57,9 +57,10 @@ describe('LoginForm', () => {
     const user = userEvent.setup()
     let resolveSubmit: () => void
     const onSubmit = vi.fn().mockImplementation(
-      () => new Promise<void>((resolve) => {
-        resolveSubmit = resolve
-      }),
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSubmit = resolve
+        }),
     )
 
     render(<LoginForm onSubmit={onSubmit} error={null} />)
