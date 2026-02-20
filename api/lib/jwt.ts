@@ -9,22 +9,12 @@ export interface JwtPayload {
   exp: number
 }
 
-export async function createToken(
-  userId: string,
-  email: string,
-  secret: string,
-): Promise<string> {
+export async function createToken(userId: string, email: string, secret: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
-  return sign(
-    { sub: userId, email, iat: now, exp: now + EXPIRATION_SECONDS },
-    secret,
-  )
+  return sign({ sub: userId, email, iat: now, exp: now + EXPIRATION_SECONDS }, secret)
 }
 
-export async function verifyToken(
-  token: string,
-  secret: string,
-): Promise<JwtPayload> {
+export async function verifyToken(token: string, secret: string): Promise<JwtPayload> {
   const payload = await verify(token, secret, 'HS256')
   return payload as unknown as JwtPayload
 }

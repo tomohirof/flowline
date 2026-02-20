@@ -28,9 +28,7 @@ const mockSharedFlow: Flow = {
   shareToken: 'test-token-123',
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
-  lanes: [
-    { id: 'lane-1', name: 'Lane 1', colorIndex: 0, position: 0 },
-  ],
+  lanes: [{ id: 'lane-1', name: 'Lane 1', colorIndex: 0, position: 0 }],
   nodes: [
     { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'Task 1', note: null, orderIndex: 0 },
   ],

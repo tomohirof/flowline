@@ -82,7 +82,9 @@ describe('RegisterPage', () => {
   it('should display ApiError message on register failure', async () => {
     const user = userEvent.setup()
     const { ApiError } = await import('../../../lib/api')
-    mockRegister.mockRejectedValueOnce(new ApiError(409, 'このメールアドレスは既に登録されています'))
+    mockRegister.mockRejectedValueOnce(
+      new ApiError(409, 'このメールアドレスは既に登録されています'),
+    )
 
     render(
       <MemoryRouter>

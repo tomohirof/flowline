@@ -21,11 +21,7 @@ describe('FlowCard', () => {
     updatedAt: '2026-01-15T10:00:00Z',
   }
 
-  function renderCard(
-    flow: FlowSummary = baseFlow,
-    onDelete = vi.fn(),
-    deleting = false,
-  ) {
+  function renderCard(flow: FlowSummary = baseFlow, onDelete = vi.fn(), deleting = false) {
     return render(
       <MemoryRouter>
         <FlowCard flow={flow} onDelete={onDelete} deleting={deleting} />

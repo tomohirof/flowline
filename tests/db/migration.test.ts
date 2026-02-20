@@ -166,9 +166,10 @@ describe('D1 Migration', () => {
       created_at: string
       updated_at: string
     }
-    const arrow = db.prepare(
-      "SELECT created_at, updated_at FROM arrows WHERE id = 'a1'",
-    ).get() as { created_at: string; updated_at: string }
+    const arrow = db.prepare("SELECT created_at, updated_at FROM arrows WHERE id = 'a1'").get() as {
+      created_at: string
+      updated_at: string
+    }
 
     for (const record of [user, flow, lane, node, arrow]) {
       expect(record.created_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/)

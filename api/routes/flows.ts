@@ -26,7 +26,9 @@ async function getFlowDetail(db: D1Database, flowId: string) {
   const [flowResult, lanesResult, nodesResult, arrowsResult] = await db.batch([
     db.prepare('SELECT * FROM flows WHERE id = ?').bind(flowId),
     db.prepare('SELECT * FROM lanes WHERE flow_id = ? ORDER BY position ASC').bind(flowId),
-    db.prepare('SELECT * FROM nodes WHERE flow_id = ? ORDER BY row_index ASC, order_index ASC').bind(flowId),
+    db
+      .prepare('SELECT * FROM nodes WHERE flow_id = ? ORDER BY row_index ASC, order_index ASC')
+      .bind(flowId),
     db.prepare('SELECT * FROM arrows WHERE flow_id = ?').bind(flowId),
   ])
 
@@ -51,7 +53,10 @@ async function getFlowDetail(db: D1Database, flowId: string) {
 // =============================================
 
 async function checkFlowOwnership(db: D1Database, flowId: string, userId: string) {
-  const flow = await db.prepare('SELECT id, user_id FROM flows WHERE id = ?').bind(flowId).first<{ id: string; user_id: string }>()
+  const flow = await db
+    .prepare('SELECT id, user_id FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ id: string; user_id: string }>()
   if (!flow) return { error: 'not_found' as const }
   if (flow.user_id !== userId) return { error: 'forbidden' as const }
   return { error: null }
@@ -65,9 +70,10 @@ flows.get('/', async (c) => {
   const userId = c.get('userId')
   const db = c.env.FLOWLINE_DB
 
-  const result = await db.prepare(
-    'SELECT * FROM flows WHERE user_id = ? ORDER BY updated_at DESC',
-  ).bind(userId).all<FlowRow>()
+  const result = await db
+    .prepare('SELECT * FROM flows WHERE user_id = ? ORDER BY updated_at DESC')
+    .bind(userId)
+    .all<FlowRow>()
 
   const flowList = (result.results ?? []).map(toFlowSummary)
 
@@ -104,27 +110,49 @@ flows.post('/', async (c) => {
 
   // INSERT flow
   statements.push(
-    db.prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)').bind(flowId, userId, flowTitle, flowThemeId),
+    db
+      .prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)')
+      .bind(flowId, userId, flowTitle, flowThemeId),
   )
 
   // INSERT lanes
   for (const lane of lanes) {
     statements.push(
-      db.prepare('INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)').bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
+      db
+        .prepare(
+          'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+        )
+        .bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
     )
   }
 
   // INSERT nodes
   for (const node of nodes) {
     statements.push(
-      db.prepare('INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(node.id, flowId, node.laneId, node.rowIndex, node.label, node.note ?? null, node.orderIndex),
+      db
+        .prepare(
+          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        )
+        .bind(
+          node.id,
+          flowId,
+          node.laneId,
+          node.rowIndex,
+          node.label,
+          node.note ?? null,
+          node.orderIndex,
+        ),
     )
   }
 
   // INSERT arrows
   for (const arrow of arrows) {
     statements.push(
-      db.prepare('INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)').bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null),
+      db
+        .prepare(
+          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)',
+        )
+        .bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null),
     )
   }
 
@@ -218,21 +246,41 @@ flows.put('/:id', async (c) => {
   // INSERT new lanes
   for (const lane of lanes) {
     statements.push(
-      db.prepare('INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)').bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
+      db
+        .prepare(
+          'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+        )
+        .bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
     )
   }
 
   // INSERT new nodes
   for (const node of nodes) {
     statements.push(
-      db.prepare('INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(node.id, flowId, node.laneId, node.rowIndex, node.label, node.note ?? null, node.orderIndex),
+      db
+        .prepare(
+          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        )
+        .bind(
+          node.id,
+          flowId,
+          node.laneId,
+          node.rowIndex,
+          node.label,
+          node.note ?? null,
+          node.orderIndex,
+        ),
     )
   }
 
   // INSERT new arrows
   for (const arrow of arrows) {
     statements.push(
-      db.prepare('INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)').bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null),
+      db
+        .prepare(
+          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)',
+        )
+        .bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null),
     )
   }
 
@@ -251,7 +299,10 @@ flows.post('/:id/share', async (c) => {
   const db = c.env.FLOWLINE_DB
   const flowId = c.req.param('id')
 
-  const flow = await db.prepare('SELECT id, user_id, share_token FROM flows WHERE id = ?').bind(flowId).first<{ id: string; user_id: string; share_token: string | null }>()
+  const flow = await db
+    .prepare('SELECT id, user_id, share_token FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ id: string; user_id: string; share_token: string | null }>()
   if (!flow) {
     return c.json({ error: 'フローが見つかりません' }, 404)
   }

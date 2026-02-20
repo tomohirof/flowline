@@ -89,10 +89,15 @@ export function ShareDialog({ flowId, shareToken, onShareChange, onClose }: Shar
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#333' }}>
-            共有設定
-          </h3>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 20,
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#333' }}>共有設定</h3>
           <button
             data-testid="share-dialog-close"
             onClick={onClose}
@@ -110,10 +115,15 @@ export function ShareDialog({ flowId, shareToken, onShareChange, onClose }: Shar
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <span style={{ fontSize: 14, color: '#555' }}>
-            URLで共有
-          </span>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+          }}
+        >
+          <span style={{ fontSize: 14, color: '#555' }}>URLで共有</span>
           <button
             data-testid="share-toggle"
             onClick={handleToggle}

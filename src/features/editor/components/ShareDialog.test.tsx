@@ -187,9 +187,7 @@ describe('ShareDialog', () => {
     await user.click(screen.getByTestId('copy-share-url'))
 
     await waitFor(() => {
-      expect(writeTextSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/shared/copy-token'),
-      )
+      expect(writeTextSpy).toHaveBeenCalledWith(expect.stringContaining('/shared/copy-token'))
     })
   })
 

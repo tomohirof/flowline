@@ -2,7 +2,10 @@ import { useState, useCallback } from 'react'
 import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 
-interface Point { x: number; y: number }
+interface Point {
+  x: number
+  y: number
+}
 
 interface SharedFlowViewerProps {
   flow: Flow
@@ -23,7 +26,14 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   const maxRowIndex = Math.max(6, ...flow.nodes.map((n) => n.rowIndex))
   const rowCount = maxRowIndex + 1
 
-  const LW = 178, RH = 84, HH = 46, TW = 144, TH = 52, LM = 28, TM = 24, G = T.laneGap
+  const LW = 178,
+    RH = 84,
+    HH = 46,
+    TW = 144,
+    TH = 52,
+    LM = 28,
+    TM = 24,
+    G = T.laneGap
   const totalW = LM + sortedLanes.length * LW + (sortedLanes.length - 1) * G + 28
   const totalH = TM + HH + rowCount * RH + 40
 
@@ -35,15 +45,20 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
   // Build lane index map
   const laneIdToIndex: Record<string, number> = {}
-  sortedLanes.forEach((l, i) => { laneIdToIndex[l.id] = i })
+  sortedLanes.forEach((l, i) => {
+    laneIdToIndex[l.id] = i
+  })
 
   // Build node lookup
   const nodeById: Record<string, FlowNode> = {}
-  flow.nodes.forEach((n) => { nodeById[n.id] = n })
+  flow.nodes.forEach((n) => {
+    nodeById[n.id] = n
+  })
 
   // Arrow path calculation
   const edgePt = (c: Point, o: Point, hw: number, hh: number): Point => {
-    const dx = o.x - c.x, dy = o.y - c.y
+    const dx = o.x - c.x,
+      dy = o.y - c.y
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y + hh }
     if (Math.abs(dy) / hh > Math.abs(dx) / hw) return { x: c.x, y: c.y + (dy > 0 ? hh : -hh) }
     return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
@@ -60,10 +75,12 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
     const f = ct(fli, fromNode.rowIndex)
     const t = ct(tli, toNode.rowIndex)
-    const hw = TW / 2, hh = TH / 2
+    const hw = TW / 2,
+      hh = TH / 2
     const s = edgePt(f, t, hw, hh)
     const e = edgePt(t, f, hw, hh)
-    const dx = e.x - s.x, dy = e.y - s.y
+    const dx = e.x - s.x,
+      dy = e.y - s.y
     let d: string
     if (Math.abs(dx) < 2 || Math.abs(dy) < 2) {
       d = `M${s.x},${s.y} L${e.x},${e.y}`
@@ -87,7 +104,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
   const arrowPaths = flow.arrows
     .map((a) => ({ arrow: a, path: computeArrowPath(a) }))
-    .filter((x): x is { arrow: Arrow; path: { d: string; mx: number; my: number } } => x.path !== null)
+    .filter(
+      (x): x is { arrow: Arrow; path: { d: string; mx: number; my: number } } => x.path !== null,
+    )
 
   return (
     <div
@@ -136,7 +155,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         >
           F
         </div>
-        <span style={{ fontSize: 13, fontWeight: 700, color: T.titleColor, letterSpacing: '-0.02em' }}>
+        <span
+          style={{ fontSize: 13, fontWeight: 700, color: T.titleColor, letterSpacing: '-0.02em' }}
+        >
           Flowline
         </span>
         <div style={{ width: 1, height: 18, background: T.titleBarBorder, margin: '0 10px' }} />
@@ -160,9 +181,17 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           <button
             onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
             style={{
-              width: 24, height: 24, border: `1px solid ${T.titleBarBorder}`, borderRadius: 4,
-              background: 'transparent', cursor: 'pointer', fontSize: 14, color: T.titleSub,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 24,
+              height: 24,
+              border: `1px solid ${T.titleBarBorder}`,
+              borderRadius: 4,
+              background: 'transparent',
+              cursor: 'pointer',
+              fontSize: 14,
+              color: T.titleSub,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             +
@@ -173,9 +202,17 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           <button
             onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}
             style={{
-              width: 24, height: 24, border: `1px solid ${T.titleBarBorder}`, borderRadius: 4,
-              background: 'transparent', cursor: 'pointer', fontSize: 14, color: T.titleSub,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 24,
+              height: 24,
+              border: `1px solid ${T.titleBarBorder}`,
+              borderRadius: 4,
+              background: 'transparent',
+              cursor: 'pointer',
+              fontSize: 14,
+              color: T.titleSub,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             -
@@ -207,21 +244,50 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             const fullH = HH + rowCount * RH
             return (
               <g key={`lane-${lane.id}`}>
-                <rect x={x} y={TM} width={LW} height={fullH} rx={10} fill={T.laneBg} stroke={T.laneBorder} strokeWidth={0.5} />
+                <rect
+                  x={x}
+                  y={TM}
+                  width={LW}
+                  height={fullH}
+                  rx={10}
+                  fill={T.laneBg}
+                  stroke={T.laneBorder}
+                  strokeWidth={0.5}
+                />
                 <rect x={x} y={TM} width={LW} height={HH} rx={10} fill={T.laneHeaderBg} />
                 <rect x={x} y={TM + HH - 10} width={LW} height={10} fill={T.laneHeaderBg} />
-                <rect x={x + 16} y={TM + HH - 2.5} width={LW - 32} height={2} rx={1} fill={p.dot} opacity={T.laneAccentOpacity} />
+                <rect
+                  x={x + 16}
+                  y={TM + HH - 2.5}
+                  width={LW - 32}
+                  height={2}
+                  rx={1}
+                  fill={p.dot}
+                  opacity={T.laneAccentOpacity}
+                />
                 <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
                 <text
-                  x={x + 32} y={TM + HH / 2 + 1} dominantBaseline="central"
-                  fill={T.titleColor} fontSize={12.5} fontWeight={600}
+                  x={x + 32}
+                  y={TM + HH / 2 + 1}
+                  dominantBaseline="central"
+                  fill={T.titleColor}
+                  fontSize={12.5}
+                  fontWeight={600}
                   style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                 >
                   {lane.name}
                 </text>
                 {Array.from({ length: rowCount }, (_, ri) =>
                   ri === 0 ? null : (
-                    <line key={ri} x1={x + 8} y1={TM + HH + ri * RH} x2={x + LW - 8} y2={TM + HH + ri * RH} stroke={T.laneBorder} strokeWidth={0.3} />
+                    <line
+                      key={ri}
+                      x1={x + 8}
+                      y1={TM + HH + ri * RH}
+                      x2={x + LW - 8}
+                      y2={TM + HH + ri * RH}
+                      stroke={T.laneBorder}
+                      strokeWidth={0.3}
+                    />
                   ),
                 )}
               </g>
@@ -230,7 +296,16 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
           {/* Row numbers */}
           {Array.from({ length: rowCount }, (_, ri) => (
-            <text key={ri} x={LM - 14} y={TM + HH + ri * RH + RH / 2} textAnchor="middle" dominantBaseline="central" fontSize={9} fill={T.statusText} fontWeight={500}>
+            <text
+              key={ri}
+              x={LM - 14}
+              y={TM + HH + ri * RH + RH / 2}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={9}
+              fill={T.statusText}
+              fontWeight={500}
+            >
               {ri + 1}
             </text>
           ))}
@@ -246,23 +321,45 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             return (
               <g key={`node-${node.id}`}>
                 <rect
-                  x={c.x - TW / 2} y={c.y - TH / 2} width={TW} height={TH}
-                  fill={T.nodeFill} stroke={T.nodeStroke} strokeWidth={0.5} rx={10}
+                  x={c.x - TW / 2}
+                  y={c.y - TH / 2}
+                  width={TW}
+                  height={TH}
+                  fill={T.nodeFill}
+                  stroke={T.nodeStroke}
+                  strokeWidth={0.5}
+                  rx={10}
                   style={{
                     filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
                   }}
                 />
-                <rect x={c.x - TW / 2 + 6} y={c.y - TH / 2 + 5} width={tagW} height={15} rx={3} fill={p.tag} style={{ pointerEvents: 'none' }} />
+                <rect
+                  x={c.x - TW / 2 + 6}
+                  y={c.y - TH / 2 + 5}
+                  width={tagW}
+                  height={15}
+                  rx={3}
+                  fill={p.tag}
+                  style={{ pointerEvents: 'none' }}
+                />
                 <text
-                  x={c.x - TW / 2 + 13} y={c.y - TH / 2 + 12.5} dominantBaseline="central"
-                  fontSize={8} fill={p.text} fontWeight={600}
+                  x={c.x - TW / 2 + 13}
+                  y={c.y - TH / 2 + 12.5}
+                  dominantBaseline="central"
+                  fontSize={8}
+                  fill={p.text}
+                  fontWeight={600}
                   style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                 >
                   {lane.name}
                 </text>
                 <text
-                  x={c.x} y={c.y + 6} textAnchor="middle" dominantBaseline="central"
-                  fontSize={11.5} fontWeight={500}
+                  x={c.x}
+                  y={c.y + 6}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={11.5}
+                  fontWeight={500}
                   fill={node.label === '作業' ? T.statusText : T.titleColor}
                   style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                 >
@@ -270,10 +367,23 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                 </text>
                 {node.note && (
                   <g>
-                    <rect x={c.x - TW / 2 + 6} y={c.y + TH / 2 + 4} width={TW - 12} height={16} rx={4} fill="#FFFDE7" stroke="#F0E6A0" strokeWidth={0.5} />
+                    <rect
+                      x={c.x - TW / 2 + 6}
+                      y={c.y + TH / 2 + 4}
+                      width={TW - 12}
+                      height={16}
+                      rx={4}
+                      fill="#FFFDE7"
+                      stroke="#F0E6A0"
+                      strokeWidth={0.5}
+                    />
                     <text
-                      x={c.x} y={c.y + TH / 2 + 13} textAnchor="middle" dominantBaseline="central"
-                      fontSize={8} fill="#8D6E63"
+                      x={c.x}
+                      y={c.y + TH / 2 + 13}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize={8}
+                      fill="#8D6E63"
                     >
                       {node.note.length > 14 ? node.note.slice(0, 14) + '...' : node.note}
                     </text>
@@ -289,13 +399,22 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             return (
               <g key={`arrow-${arrow.id}`}>
                 <defs>
-                  <marker id={`sm-${arrow.id}`} markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">
+                  <marker
+                    id={`sm-${arrow.id}`}
+                    markerWidth="8"
+                    markerHeight="7"
+                    refX="7"
+                    refY="3.5"
+                    orient="auto"
+                  >
                     <polygon points="0 0.5, 8 3.5, 0 6.5" fill={T.arrowColor} />
                   </marker>
                 </defs>
                 <path
-                  d={d} stroke={T.arrowColor}
-                  strokeWidth={1.2} fill="none"
+                  d={d}
+                  stroke={T.arrowColor}
+                  strokeWidth={1.2}
+                  fill="none"
                   markerEnd={`url(#sm-${arrow.id})`}
                 />
                 {arrow.comment && (
@@ -304,11 +423,24 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                       x={mx - Math.max((arrow.comment?.length ?? 0) * 3.2, 12) - 10}
                       y={my - 19}
                       width={Math.max((arrow.comment?.length ?? 0) * 6.4 + 20, 44)}
-                      height={20} rx={10}
-                      fill={T.commentPill} stroke={T.commentBorder} strokeWidth={0.5}
+                      height={20}
+                      rx={10}
+                      fill={T.commentPill}
+                      stroke={T.commentBorder}
+                      strokeWidth={0.5}
                     />
-                    <text x={mx} y={my - 8} textAnchor="middle" dominantBaseline="central" fontSize={9} fill={T.commentText} fontWeight={500}>
-                      {arrow.comment.length > 18 ? arrow.comment.slice(0, 18) + '...' : arrow.comment}
+                    <text
+                      x={mx}
+                      y={my - 8}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize={9}
+                      fill={T.commentText}
+                      fontWeight={500}
+                    >
+                      {arrow.comment.length > 18
+                        ? arrow.comment.slice(0, 18) + '...'
+                        : arrow.comment}
                     </text>
                   </g>
                 )}
@@ -348,9 +480,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         >
           F
         </div>
-        <span style={{ fontSize: 11, color: T.statusText, fontWeight: 500 }}>
-          Flowlineで作成
-        </span>
+        <span style={{ fontSize: 11, color: T.statusText, fontWeight: 500 }}>Flowlineで作成</span>
       </div>
     </div>
   )

@@ -16,36 +16,87 @@ async function authCookie(userId: string, email: string): Promise<string> {
 }
 
 function registerUser(db: ReturnType<typeof Database>, id: string, email: string) {
-  db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(id, email, 'hash', 'Test User')
+  db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(
+    id,
+    email,
+    'hash',
+    'Test User',
+  )
 }
 
 function insertFlow(db: ReturnType<typeof Database>, id: string, userId: string, title: string) {
-  db.prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)').run(id, userId, title, 'cloud')
+  db.prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)').run(
+    id,
+    userId,
+    title,
+    'cloud',
+  )
 }
 
-function insertFlowWithShareToken(db: ReturnType<typeof Database>, id: string, userId: string, title: string, shareToken: string) {
-  db.prepare('INSERT INTO flows (id, user_id, title, theme_id, share_token) VALUES (?, ?, ?, ?, ?)').run(id, userId, title, 'cloud', shareToken)
+function insertFlowWithShareToken(
+  db: ReturnType<typeof Database>,
+  id: string,
+  userId: string,
+  title: string,
+  shareToken: string,
+) {
+  db.prepare(
+    'INSERT INTO flows (id, user_id, title, theme_id, share_token) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, userId, title, 'cloud', shareToken)
 }
 
-function insertLane(db: ReturnType<typeof Database>, id: string, flowId: string, name: string, colorIndex: number, position: number) {
-  db.prepare('INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)').run(id, flowId, name, colorIndex, position)
+function insertLane(
+  db: ReturnType<typeof Database>,
+  id: string,
+  flowId: string,
+  name: string,
+  colorIndex: number,
+  position: number,
+) {
+  db.prepare(
+    'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, flowId, name, colorIndex, position)
 }
 
-function insertNode(db: ReturnType<typeof Database>, id: string, flowId: string, laneId: string, rowIndex: number, label: string, note: string | null, orderIndex: number) {
-  db.prepare('INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)').run(id, flowId, laneId, rowIndex, label, note, orderIndex)
+function insertNode(
+  db: ReturnType<typeof Database>,
+  id: string,
+  flowId: string,
+  laneId: string,
+  rowIndex: number,
+  label: string,
+  note: string | null,
+  orderIndex: number,
+) {
+  db.prepare(
+    'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  ).run(id, flowId, laneId, rowIndex, label, note, orderIndex)
 }
 
-function insertArrow(db: ReturnType<typeof Database>, id: string, flowId: string, fromNodeId: string, toNodeId: string, comment: string | null) {
-  db.prepare('INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)').run(id, flowId, fromNodeId, toNodeId, comment)
+function insertArrow(
+  db: ReturnType<typeof Database>,
+  id: string,
+  flowId: string,
+  fromNodeId: string,
+  toNodeId: string,
+  comment: string | null,
+) {
+  db.prepare(
+    'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, flowId, fromNodeId, toNodeId, comment)
 }
 
 function postWithCookie(path: string, env: object, cookie?: string) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (cookie) headers['Cookie'] = cookie
-  return app.request(path, {
-    method: 'POST',
-    headers,
-  }, env)
+  return app.request(
+    path,
+    {
+      method: 'POST',
+      headers,
+    },
+    env,
+  )
 }
 
 function deleteWithCookie(path: string, env: object, cookie?: string) {
@@ -102,7 +153,9 @@ describe('Share API', () => {
       const res = await postWithCookie('/api/flows/flow-1/share', env, cookie)
       const body = await res.json()
 
-      const row = db.prepare('SELECT share_token FROM flows WHERE id = ?').get('flow-1') as { share_token: string }
+      const row = db.prepare('SELECT share_token FROM flows WHERE id = ?').get('flow-1') as {
+        share_token: string
+      }
       expect(row.share_token).toBe(body.shareToken)
     })
 
@@ -167,7 +220,9 @@ describe('Share API', () => {
 
       await deleteWithCookie('/api/flows/flow-1/share', env, cookie)
 
-      const row = db.prepare('SELECT share_token FROM flows WHERE id = ?').get('flow-1') as { share_token: string | null }
+      const row = db.prepare('SELECT share_token FROM flows WHERE id = ?').get('flow-1') as {
+        share_token: string | null
+      }
       expect(row.share_token).toBeNull()
     })
 

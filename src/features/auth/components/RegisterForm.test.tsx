@@ -60,9 +60,10 @@ describe('RegisterForm', () => {
     const user = userEvent.setup()
     let resolveSubmit: () => void
     const onSubmit = vi.fn().mockImplementation(
-      () => new Promise<void>((resolve) => {
-        resolveSubmit = resolve
-      }),
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSubmit = resolve
+        }),
     )
 
     render(<RegisterForm onSubmit={onSubmit} error={null} />)

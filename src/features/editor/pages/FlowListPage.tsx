@@ -152,10 +152,10 @@ export function FlowListPage() {
                 transition: 'all 0.1s',
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = '#7C5CFC'
+                ;(e.currentTarget as HTMLElement).style.borderColor = '#7C5CFC'
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = '#E8E8EE'
+                ;(e.currentTarget as HTMLElement).style.borderColor = '#E8E8EE'
               }}
             >
               <div>

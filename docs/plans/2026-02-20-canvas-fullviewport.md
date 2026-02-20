@@ -13,6 +13,7 @@
 ### Task 1: コンテナサイズ取得の追加
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:387` (ref追加)
 - Modify: `src/features/editor/FlowEditor.tsx:443-450` (useEffect追加)
 
@@ -70,6 +71,7 @@ git commit -m "feat(editor): キャンバスコンテナのサイズ取得を追
 ### Task 2: SVGサイズとviewBoxの拡張
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:486-487` (svgW/svgH計算追加)
 - Modify: `src/features/editor/FlowEditor.tsx:1300-1304` (SVG属性変更)
 
@@ -112,6 +114,7 @@ git commit -m "feat(editor): SVGをコンテナ全体に拡張 (#17)"
 ### Task 3: コンテナスタイルの調整
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:1289-1298` (コンテナスタイル変更)
 
 **Step 1: コンテナの padding と overflow を変更**
@@ -130,6 +133,7 @@ style={{
 ```
 
 変更点:
+
 - `overflow: 'auto'` → `overflow: 'hidden'`（SVGがコンテナを埋めるためスクロール不要）
 - `padding: 40` を削除（余白はviewBox内のLM/TMで確保済み）
 
