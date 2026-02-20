@@ -32,7 +32,7 @@ export function FlowCard({ flow, onDelete, deleting = false }: FlowCardProps) {
           data-testid={`delete-flow-${flow.id}`}
           onClick={handleDelete}
           disabled={deleting}
-          className={deleting ? styles.deleteBtnDisabled : styles.deleteBtn}
+          className={`${styles.deleteBtn}${deleting ? ` ${styles.deleteBtnDisabled}` : ''}`}
         >
           {deleting ? '削除中...' : '削除'}
         </button>

@@ -951,18 +951,16 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           </PanelSection>
           <PanelSection label="情報" T={T}>
             <PanelRow label="レーン" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
-                {lane?.name}
-              </span>
+              <span className={styles.panelValueText}>{lane?.name}</span>
             </PanelRow>
             {oi !== -1 && (
               <PanelRow label="順番" T={T}>
-                <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>{oi + 1}</span>
+                <span className={styles.panelValueText}>{oi + 1}</span>
               </PanelRow>
             )}
           </PanelSection>
           <PanelSection label="操作" T={T}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className={styles.panelActions}>
               <PanelBtn
                 label="→ 接続"
                 color={T.accent}
@@ -984,14 +982,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         <>
           <PanelSection label="接続線" T={T}>
             <PanelRow label="From" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
-                {fromT?.label || '?'}
-              </span>
+              <span className={styles.panelValueText}>{fromT?.label || '?'}</span>
             </PanelRow>
             <PanelRow label="To" T={T}>
-              <span style={{ fontSize: 11, color: T.panelText, fontWeight: 500 }}>
-                {toT?.label || '?'}
-              </span>
+              <span className={styles.panelValueText}>{toT?.label || '?'}</span>
             </PanelRow>
           </PanelSection>
           <PanelSection label="コメント" T={T}>
@@ -1005,7 +999,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             />
           </PanelSection>
           <PanelSection label="操作" T={T}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className={styles.panelActions}>
               <PanelBtn
                 label="⇄ 方向を逆転"
                 color={T.accent}
@@ -1046,22 +1040,18 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             />
           </PanelSection>
           <PanelSection label="カラー" T={T}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className={styles.panelActions}>
               {PALETTES.map((p, ci) => (
                 <div
                   key={ci}
                   onClick={() =>
                     setLanes((prev) => prev.map((l) => (l.id === selLane ? { ...l, ci } : l)))
                   }
+                  className={styles.colorSwatch}
                   style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 6,
                     background: p.dot,
-                    cursor: 'pointer',
                     border:
                       selLaneData.ci === ci ? `2px solid ${T.accent}` : '2px solid transparent',
-                    transition: 'all 0.1s',
                   }}
                 />
               ))}
@@ -1100,46 +1090,19 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     return (
       <>
         <PanelSection label="テーマ" T={T}>
-          <div style={{ position: 'relative' }}>
+          <div className={styles.themePickerWrapper}>
             <div
               onClick={() => setShowThemePicker((v) => !v)}
-              style={{
-                padding: '7px 10px',
-                borderRadius: 7,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: T.inputBg,
-                border: `1px solid ${T.inputBorder}`,
-                color: T.panelText,
-              }}
+              className={styles.themePickerTrigger}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 14 }}>{THEMES[themeId].emoji}</span>
+              <span className={styles.themePickerLabel}>
+                <span className={styles.themePickerEmoji}>{THEMES[themeId].emoji}</span>
                 {THEMES[themeId].name}
               </span>
-              <span style={{ fontSize: 10, color: T.panelLabel }}>
-                {showThemePicker ? '▲' : '▼'}
-              </span>
+              <span className={styles.themePickerArrow}>{showThemePicker ? '▲' : '▼'}</span>
             </div>
             {showThemePicker && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 38,
-                  left: 0,
-                  right: 0,
-                  background: T.panelBg,
-                  border: `1px solid ${T.panelBorder}`,
-                  borderRadius: 7,
-                  padding: 4,
-                  zIndex: 10,
-                  boxShadow: `0 4px 12px rgba(0,0,0,${isDark ? 0.4 : 0.1})`,
-                }}
-              >
+              <div className={styles.themePickerDropdown}>
                 {(Object.entries(THEMES) as [ThemeId, Theme][]).map(([id, th]) => (
                   <div
                     key={id}
@@ -1147,20 +1110,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       setThemeId(id)
                       setShowThemePicker(false)
                     }}
+                    className={styles.themePickerOption}
                     style={{
-                      padding: '7px 10px',
-                      borderRadius: 5,
-                      cursor: 'pointer',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
                       background: themeId === id ? T.sidebarActiveBg : 'transparent',
                       color: themeId === id ? T.accent : T.panelText,
                     }}
                   >
-                    <span style={{ fontSize: 14 }}>{th.emoji}</span>
+                    <span className={styles.themePickerEmoji}>{th.emoji}</span>
                     {th.name}
                   </div>
                 ))}
@@ -1170,22 +1126,16 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         </PanelSection>
         <PanelSection label="キャンバス" T={T}>
           <PanelRow label="レーン数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
-              {lanes.length}
-            </span>
+            <span className={styles.panelValueTextLarge}>{lanes.length}</span>
           </PanelRow>
           <PanelRow label="行数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>{rows.length}</span>
+            <span className={styles.panelValueTextLarge}>{rows.length}</span>
           </PanelRow>
           <PanelRow label="ノード数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
-              {Object.keys(tasks).length}
-            </span>
+            <span className={styles.panelValueTextLarge}>{Object.keys(tasks).length}</span>
           </PanelRow>
           <PanelRow label="接続数" T={T}>
-            <span style={{ fontSize: 12, color: T.panelText, fontWeight: 600 }}>
-              {arrows.length}
-            </span>
+            <span className={styles.panelValueTextLarge}>{arrows.length}</span>
           </PanelRow>
         </PanelSection>
         <PanelSection label="エクスポート" T={T}>
@@ -2047,26 +1997,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       </div>
 
       {/* Status */}
-      <div
-        style={{
-          height: 24,
-          background: T.statusBg,
-          borderTop: `1px solid ${T.statusBorder}`,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 14px',
-          gap: 16,
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontSize: 10, color: T.statusText }}>
+      <div className={styles.statusBar}>
+        <span className={styles.statusText}>
           {Object.keys(tasks).length} tasks {'·'} {arrows.length} connections
         </span>
-        <span style={{ fontSize: 10, color: T.statusText, opacity: 0.5 }}>
-          {'⌘Z:戻す · ⌘⇧Z:やり直す'}
-        </span>
+        <span className={styles.statusTextFaded}>{'⌘Z:戻す · ⌘⇧Z:やり直す'}</span>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 10, color: T.statusText, opacity: 0.6 }}>
+        <span className={styles.statusTextHint}>
           {connectFrom
             ? '接続先クリック · Esc解除'
             : dragging
