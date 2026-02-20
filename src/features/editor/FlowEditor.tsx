@@ -385,6 +385,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [shareToken, setShareToken] = useState<string | null>(flow.shareToken)
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const canvasContainerRef = useRef<HTMLDivElement>(null)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
   // --- Notify parent of changes ---
   const prevSnapRef = useRef<string>('')
@@ -448,6 +450,17 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
     undoPrevSnap.current = s
   }, [snap])
+
+  useEffect(() => {
+    const el = canvasContainerRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect
+      setContainerSize({ width, height })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const applySnap = (s: string): void => {
     const d: EditorSnapshot = JSON.parse(s)
@@ -1287,6 +1300,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
 
         {/* Canvas */}
         <div
+          ref={canvasContainerRef}
           style={{
             flex: 1,
             overflow: 'auto',
