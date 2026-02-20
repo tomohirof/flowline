@@ -1,6 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
-import { LoginPage } from './features/auth/pages/LoginPage'
-import { RegisterPage } from './features/auth/pages/RegisterPage'
 import { FlowEditorPage } from './features/editor/pages/FlowEditorPage'
 import { Dashboard } from './features/dashboard/Dashboard'
 import { SharedFlowPage } from './features/shared/SharedFlowPage'
@@ -71,8 +69,8 @@ function App() {
         <Header />
         <main>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
+            <Route path="/register" element={<Navigate to="/?auth=register" replace />} />
             <Route path="/" element={<PublicHome />} />
             <Route
               path="/flows"
