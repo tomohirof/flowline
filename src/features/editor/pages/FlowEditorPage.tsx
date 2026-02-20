@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useFlow } from '../hooks/useFlow'
 import FlowEditor from '../FlowEditor'
+import styles from './FlowEditorPage.module.css'
 
 export function FlowEditorPage() {
   const { id } = useParams<{ id: string }>()
@@ -21,16 +22,7 @@ export function FlowEditorPage() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
-          color: '#999',
-        }}
-      >
+      <div className={`${styles.centerScreen} ${styles.loading}`}>
         <p>読み込み中...</p>
       </div>
     )
@@ -38,16 +30,7 @@ export function FlowEditorPage() {
 
   if (error) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
-          color: '#E06060',
-        }}
-      >
+      <div className={`${styles.centerScreen} ${styles.error}`}>
         <p>{error}</p>
       </div>
     )

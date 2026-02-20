@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { apiFetch, ApiError } from '../../lib/api'
 import type { Flow, FlowDetailResponse } from '../editor/types'
 import { SharedFlowViewer } from './SharedFlowViewer'
+import styles from './SharedFlowPage.module.css'
 
 export function SharedFlowPage() {
   const { token } = useParams<{ token: string }>()
@@ -44,19 +45,10 @@ export function SharedFlowPage() {
     return (
       <div
         data-testid="shared-flow-error"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
-          color: '#E06060',
-          gap: 12,
-        }}
+        className={`${styles.centerScreenColumn} ${styles.error}`}
       >
-        <p style={{ fontSize: 16, fontWeight: 600 }}>共有トークンが指定されていません</p>
-        <a href="/" style={{ fontSize: 14, color: '#7C5CFC' }}>
+        <p className={styles.errorMessage}>共有トークンが指定されていません</p>
+        <a href="/" className={styles.topLink}>
           Flowline トップへ
         </a>
       </div>
@@ -65,17 +57,7 @@ export function SharedFlowPage() {
 
   if (loading) {
     return (
-      <div
-        data-testid="shared-flow-loading"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
-          color: '#999',
-        }}
-      >
+      <div data-testid="shared-flow-loading" className={`${styles.centerScreen} ${styles.loading}`}>
         <p>読み込み中...</p>
       </div>
     )
@@ -85,19 +67,10 @@ export function SharedFlowPage() {
     return (
       <div
         data-testid="shared-flow-error"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          fontFamily: "'DM Sans','Noto Sans JP','Helvetica Neue',sans-serif",
-          color: '#E06060',
-          gap: 12,
-        }}
+        className={`${styles.centerScreenColumn} ${styles.error}`}
       >
-        <p style={{ fontSize: 16, fontWeight: 600 }}>{error}</p>
-        <a href="/" style={{ fontSize: 14, color: '#7C5CFC' }}>
+        <p className={styles.errorMessage}>{error}</p>
+        <a href="/" className={styles.topLink}>
           Flowline トップへ
         </a>
       </div>

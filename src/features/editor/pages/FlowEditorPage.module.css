@@ -1,0 +1,15 @@
+.centerScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: 'DM Sans', 'Noto Sans JP', 'Helvetica Neue', sans-serif;
+}
+
+.loading {
+  color: #999;
+}
+
+.error {
+  color: #e06060;
+}
