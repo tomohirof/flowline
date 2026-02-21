@@ -573,6 +573,7 @@
   transition: all 0.15s;
   gap: 2px;
   position: relative;
+  color: var(--theme-sidebar-icon);
 }
 
 .fileButton .toolTip {
@@ -589,6 +590,11 @@
   white-space: nowrap;
   pointer-events: none;
   z-index: 10;
+}
+
+.fileButton:hover {
+  background: var(--theme-sidebar-active-bg);
+  color: var(--theme-sidebar-active);
 }
 
 .fileButton:hover .toolTip {

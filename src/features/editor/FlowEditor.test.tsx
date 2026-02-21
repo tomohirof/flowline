@@ -1,8 +1,14 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import FlowEditor from './FlowEditor'
 import type { Flow } from './types'
+
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}))
 
 beforeEach(() => {
   global.ResizeObserver = class {
@@ -184,8 +190,6 @@ describe('floating arrow controls (#46)', () => {
   })
 })
 
-import userEvent from '@testing-library/user-event'
-
 describe('connection drag handles (#47)', () => {
   it('should render circle handles on selected node', async () => {
     const flow = createMinimalFlow()
@@ -212,11 +216,6 @@ describe('connection drag handles (#47)', () => {
     expect(hintText).toBeTruthy()
   })
 })
-
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
-}))
 
 describe('file button (#48)', () => {
   beforeEach(() => {

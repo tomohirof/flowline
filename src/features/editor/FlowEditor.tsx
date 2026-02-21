@@ -1320,17 +1320,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             data-testid="file-button"
             className={styles.fileButton}
             onClick={() => navigate('/')}
-            onMouseEnter={(e: React.MouseEvent) => {
-              const el = e.currentTarget as HTMLElement
-              el.style.background = T.sidebarActiveBg
-              el.style.color = T.sidebarActive
-            }}
-            onMouseLeave={(e: React.MouseEvent) => {
-              const el = e.currentTarget as HTMLElement
-              el.style.background = 'transparent'
-              el.style.color = T.sidebarIcon
-            }}
-            style={{ color: T.sidebarIcon }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <rect
