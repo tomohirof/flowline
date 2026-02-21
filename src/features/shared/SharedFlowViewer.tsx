@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
+import { calcLaneWidth } from '../editor/calcLaneWidth'
 
 interface Point {
   x: number
@@ -19,6 +20,20 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
   const [zoom, setZoom] = useState(1)
 
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0].contentRect.width
+      setContainerWidth((prev) => (prev === w ? prev : w))
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   // Build internal representation
   const sortedLanes = [...flow.lanes].sort((a, b) => a.position - b.position)
   const sortedNodes = [...flow.nodes].sort((a, b) => a.orderIndex - b.orderIndex)
@@ -27,21 +42,21 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   const maxRowIndex = Math.max(6, ...flow.nodes.map((n) => n.rowIndex))
   const rowCount = maxRowIndex + 1
 
-  const LW = 178,
-    RH = 84,
+  const RH = 84,
     HH = 46,
     TW = 144,
     TH = 52,
     LM = 28,
     TM = 24,
     G = T.laneGap
+  const LW = calcLaneWidth(containerWidth, sortedLanes.length, LM, G)
   const totalW = LM + sortedLanes.length * LW + (sortedLanes.length - 1) * G + 28
   const totalH = TM + HH + rowCount * RH + 40
 
-  const laneX = useCallback((li: number) => LM + li * (LW + G), [G])
+  const laneX = useCallback((li: number) => LM + li * (LW + G), [LW, G])
   const ct = useCallback(
     (li: number, ri: number): Point => ({ x: laneX(li) + LW / 2, y: TM + HH + ri * RH + RH / 2 }),
-    [laneX],
+    [laneX, LW],
   )
 
   // Build lane index map
@@ -159,7 +174,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       </div>
 
       {/* Canvas */}
-      <div className={styles.canvas} style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}>
+      <div ref={containerRef} className={styles.canvas} style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}>
         <svg
           className={styles.svg}
           width={totalW * zoom}
