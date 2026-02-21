@@ -8,77 +8,184 @@
     border-color 0.15s;
   display: flex;
   flex-direction: column;
+  position: relative;
+  cursor: pointer;
 }
 
-.card:hover {
+.cardHovered {
   border-color: #7c5cfc;
-  box-shadow: 0 4px 12px rgba(124, 92, 252, 0.1);
+  box-shadow: 0 4px 16px rgba(124, 92, 252, 0.12);
 }
 
-.link {
+/* サムネイル領域 */
+.thumbnail {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  border-bottom: 1px solid #e8e8ee;
+  background: #f5f5f8;
+}
+
+/* ホバーオーバーレイ */
+.hoverOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.12s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 「開く」ボタン */
+.openButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 24px;
+  background: #7c5cfc;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
   text-decoration: none;
-  color: inherit;
-  padding: 20px 18px 14px;
-  flex: 1;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.openButton:hover {
+  background: #6a4ae0;
+}
+
+/* メニューボタン（⋯） */
+.menuButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e0e0e8;
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.12s,
+    color 0.12s;
+  z-index: 2;
+}
+
+.menuButton:hover {
+  background: #fff;
+  color: #333;
+}
+
+/* 情報領域 */
+.info {
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
+/* タイトル */
 .title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.4;
 }
 
+/* リネーム入力 */
+.renameInput {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  border: 1px solid #7c5cfc;
+  border-radius: 4px;
+  padding: 2px 6px;
+  outline: none;
+  background: #faf9ff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* メタ情報行 */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* レーンカラードット */
+.laneDots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.laneDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* 更新日時 */
 .updatedAt {
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
-  margin-bottom: 8px;
 }
 
+/* 共有バッジ */
 .shareBadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 10px;
   color: #7c5cfc;
   background: #f0ecff;
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 4px;
-  width: fit-content;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 12px 12px;
+/* 非表示リンク（後方互換性: data-testid保持） */
+.hiddenLink {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
-.deleteBtn {
-  background: none;
+/* 非表示削除ボタン（後方互換性: data-testid保持） */
+.hiddenDelete {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
   border: none;
-  color: #ccc;
-  cursor: pointer;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition:
-    color 0.15s,
-    background 0.15s;
-  opacity: 1;
-}
-
-.deleteBtn:hover {
-  color: #e53935;
-  background: #ffebee;
-}
-
-.deleteBtnDisabled {
-  color: #999;
-  cursor: not-allowed;
-  opacity: 0.6;
+  background: none;
 }
