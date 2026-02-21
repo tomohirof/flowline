@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
 import styles from './FlowEditor.module.css'
 import type {
@@ -394,6 +395,7 @@ interface FlowEditorProps {
 // =============================================
 
 export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: FlowEditorProps) {
+  const navigate = useNavigate()
   // Initialize state from flow data (lazy initialization to avoid recomputing on every render)
   const [initState] = useState(() => flowToInternalState(flow))
   const [lanes, setLanes] = useState<InternalLane[]>(initState.lanes)
@@ -1313,6 +1315,33 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       <div className={styles.mainContent}>
         {/* Left Sidebar */}
         <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className={styles.sidebar}>
+          {/* Back to dashboard */}
+          <div
+            data-testid="file-button"
+            className={styles.fileButton}
+            onClick={() => navigate('/')}
+            onMouseEnter={(e: React.MouseEvent) => {
+              const el = e.currentTarget as HTMLElement
+              el.style.background = T.sidebarActiveBg
+              el.style.color = T.sidebarActive
+            }}
+            onMouseLeave={(e: React.MouseEvent) => {
+              const el = e.currentTarget as HTMLElement
+              el.style.background = 'transparent'
+              el.style.color = T.sidebarIcon
+            }}
+            style={{ color: T.sidebarIcon }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2"/>
+              <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+            <span className={styles.fileButtonText}>ファイル</span>
+            <span className={styles.toolTip}>ダッシュボードに戻る</span>
+          </div>
+          <div className={styles.sidebarSep} />
           {sideTools.map((t, i) => {
             if (t === 'sep') return <div key={i} className={styles.sidebarSep} />
             const isA = t.id === activeTool || (t.id === 'export' && showExport)

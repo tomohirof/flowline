@@ -212,3 +212,28 @@ describe('connection drag handles (#47)', () => {
     expect(hintText).toBeTruthy()
   })
 })
+
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+}))
+
+describe('file button (#48)', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear()
+  })
+
+  it('should render file button in sidebar', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const fileBtn = screen.getAllByTestId('file-button')[0]
+    expect(fileBtn).toBeTruthy()
+    expect(fileBtn.textContent).toContain('ファイル')
+  })
+
+  it('should navigate to dashboard on click', async () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const fileBtn = screen.getAllByTestId('file-button')[0]
+    await userEvent.click(fileBtn)
+    expect(mockNavigate).toHaveBeenCalledWith('/')
+  })
+})
