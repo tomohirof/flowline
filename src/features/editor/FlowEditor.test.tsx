@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import FlowEditor from './FlowEditor'
 import type { Flow } from './types'
 
@@ -106,8 +106,80 @@ describe('floating arrow controls (#46)', () => {
   })
 
   it('should not show floating controls when no arrow is selected', () => {
-    render(<FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />)
-    const floatingPill = document.querySelector('[data-testid="arrow-floating-controls"]')
-    expect(floatingPill).toBeNull()
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+  })
+
+  it('should show floating controls when arrow is clicked', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeTruthy()
+  })
+
+  it('should hide floating controls when arrow is clicked again (toggle)', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeTruthy()
+    // Click same arrow again to deselect
+    const arrowHit2 = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    fireEvent.click(arrowHit2!)
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+  })
+
+  it('should delete arrow when delete button is clicked', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+    const controls = container.querySelector('[data-testid="arrow-floating-controls"]')
+    expect(controls).toBeTruthy()
+    // Find clickable groups (reverse, comment, delete)
+    const clickableGroups = Array.from(controls!.querySelectorAll(':scope > g')).filter(
+      (g) => (g as HTMLElement).style.cursor === 'pointer',
+    )
+    expect(clickableGroups.length).toBe(3)
+    // Click delete (3rd button)
+    fireEvent.click(clickableGroups[2])
+    // Arrow should be removed
+    expect(container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')).toBeNull()
+    // Floating controls should be gone
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+  })
+
+  it('should hide floating controls when Escape is pressed', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    fireEvent.click(arrowHit!)
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeTruthy()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+  })
+
+  it('should hide floating controls when background is clicked', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    fireEvent.click(arrowHit!)
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeTruthy()
+    // Click the SVG background
+    const svg = container.querySelector('[data-testid="canvas-svg"]')
+    expect(svg).toBeTruthy()
+    fireEvent.click(svg!)
+    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
   })
 })

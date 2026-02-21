@@ -311,7 +311,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   fill={node.label === '作業' ? T.statusText : T.titleColor}
                   style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                 >
-                  {node.label.length > 10 ? node.label.slice(0, 10) + '...' : node.label}
+                  {node.label.length > 10 ? node.label.slice(0, 10) + '…' : node.label}
                 </text>
                 {node.note && (
                   <g>
@@ -333,7 +333,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                       fontSize={8}
                       fill="#8D6E63"
                     >
-                      {node.note.length > 14 ? node.note.slice(0, 14) + '...' : node.note}
+                      {node.note.length > 14 ? node.note.slice(0, 14) + '…' : node.note}
                     </text>
                   </g>
                 )}
@@ -386,9 +386,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                       fill={T.commentText}
                       fontWeight={600}
                     >
-                      {arrow.comment.length > 16
-                        ? arrow.comment.slice(0, 16) + '...'
-                        : arrow.comment}
+                      {arrow.comment.length > 16 ? arrow.comment.slice(0, 16) + '…' : arrow.comment}
                     </text>
                   </g>
                 )}

@@ -55,6 +55,8 @@ export const THEMES: Record<ThemeId, Theme> = {
     panelLabel: '#999',
     inputBg: '#F8F8FC',
     inputBorder: '#E0E0E8',
+    commentIconColor: '#D09030',
+    dangerColor: '#E06060',
     laneGap: 6,
   },
   midnight: {
@@ -95,6 +97,8 @@ export const THEMES: Record<ThemeId, Theme> = {
     panelLabel: '#666680',
     inputBg: '#2A2A38',
     inputBorder: '#3A3A4C',
+    commentIconColor: '#D4A050',
+    dangerColor: '#E06060',
     laneGap: 6,
   },
   blueprint: {
@@ -135,6 +139,8 @@ export const THEMES: Record<ThemeId, Theme> = {
     panelLabel: '#8899AA',
     inputBg: '#F4F6FA',
     inputBorder: '#D0D8E4',
+    commentIconColor: '#D09030',
+    dangerColor: '#E06060',
     laneGap: 6,
   },
 }

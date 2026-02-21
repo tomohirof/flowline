@@ -2020,7 +2020,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                           height="16"
                           viewBox="0 0 24 24"
                           fill="none"
-                          stroke="#D09030"
+                          stroke={T.commentIconColor}
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -2045,7 +2045,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                           height="16"
                           viewBox="0 0 24 24"
                           fill="none"
-                          stroke="#E06060"
+                          stroke={T.dangerColor}
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
