@@ -1305,10 +1305,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         >
           <svg
             ref={svgRef}
+            data-testid="canvas-svg"
             width={svgW}
             height={svgH}
             viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
             className={styles.svg}
+            style={{ minWidth: '100%', minHeight: '100%' }}
             onMouseMove={onSvgMouseMove}
             onMouseUp={onSvgMouseUp}
             onMouseLeave={() => {
