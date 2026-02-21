@@ -17,9 +17,7 @@ const createMinimalFlow = (): Flow => ({
   title: 'Test Flow',
   themeId: 'cloud',
   shareToken: null,
-  lanes: [
-    { id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 },
-  ],
+  lanes: [{ id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 }],
   nodes: [],
   arrows: [],
   createdAt: '2026-01-01T00:00:00Z',
@@ -30,9 +28,7 @@ describe('FlowEditor', () => {
   describe('canvas SVG sizing', () => {
     it('should render SVG with min-width and min-height 100% to fill container', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />
-      )
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       const svg = screen.getByTestId('canvas-svg')
       expect(svg).toBeTruthy()
