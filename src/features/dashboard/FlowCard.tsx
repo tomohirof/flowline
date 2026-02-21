@@ -10,7 +10,6 @@ interface FlowCardProps {
   flow: FlowSummary
   onDelete: (id: string, title: string) => void
   onRename: (id: string, newTitle: string) => void
-  onDuplicate: (id: string) => void
   onContextMenu: (id: string, x: number, y: number) => void
   deleting?: boolean
   isHovered: boolean

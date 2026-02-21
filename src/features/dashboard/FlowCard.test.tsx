@@ -47,7 +47,6 @@ describe('FlowCard', () => {
     flow: baseFlow,
     onDelete: vi.fn(),
     onRename: vi.fn(),
-    onDuplicate: vi.fn(),
     onContextMenu: vi.fn(),
     deleting: false,
     isHovered: false,

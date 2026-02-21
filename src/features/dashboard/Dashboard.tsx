@@ -275,7 +275,6 @@ export function Dashboard() {
                   flow={flow}
                   onDelete={handleDelete}
                   onRename={handleRename}
-                  onDuplicate={handleDuplicate}
                   onContextMenu={handleContextMenu}
                   deleting={deletingId === flow.id}
                   isHovered={hoveredId === flow.id}
