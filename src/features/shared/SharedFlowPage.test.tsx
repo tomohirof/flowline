@@ -48,6 +48,11 @@ function renderSharedPage(token: string = 'test-token-123') {
 describe('SharedFlowPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    global.ResizeObserver = class {
+      observe = vi.fn()
+      unobserve = vi.fn()
+      disconnect = vi.fn()
+    } as unknown as typeof ResizeObserver
   })
 
   afterEach(() => {
