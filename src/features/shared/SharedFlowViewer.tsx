@@ -44,8 +44,8 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
   const RH = 84,
     HH = 46,
-    TW = 144,
-    TH = 52,
+    TW = 152,
+    TH = 56,
     LM = 28,
     TM = 24,
     G = T.laneGap
@@ -275,7 +275,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   height={TH}
                   fill={T.nodeFill}
                   stroke={T.nodeStroke}
-                  strokeWidth={0.5}
+                  strokeWidth={1.2}
                   rx={10}
                   style={{
                     filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
@@ -306,7 +306,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   y={c.y + 6}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fontSize={11.5}
+                  fontSize={13.5}
                   fontWeight={500}
                   fill={node.label === '作業' ? T.statusText : T.titleColor}
                   style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
@@ -349,45 +349,45 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                 <defs>
                   <marker
                     id={`sm-${arrow.id}`}
-                    markerWidth="8"
-                    markerHeight="7"
-                    refX="7"
-                    refY="3.5"
+                    markerWidth="9"
+                    markerHeight="8"
+                    refX="8"
+                    refY="4"
                     orient="auto"
                   >
-                    <polygon points="0 0.5, 8 3.5, 0 6.5" fill={T.arrowColor} />
+                    <polygon points="0 0.5, 9 4, 0 7.5" fill={T.arrowColor} />
                   </marker>
                 </defs>
                 <path
                   d={d}
                   stroke={T.arrowColor}
-                  strokeWidth={1.2}
+                  strokeWidth={2}
                   fill="none"
                   markerEnd={`url(#sm-${arrow.id})`}
                 />
                 {arrow.comment && (
                   <g>
                     <rect
-                      x={mx - Math.max((arrow.comment?.length ?? 0) * 3.2, 12) - 10}
-                      y={my - 19}
-                      width={Math.max((arrow.comment?.length ?? 0) * 6.4 + 20, 44)}
-                      height={20}
-                      rx={10}
+                      x={mx - Math.max((arrow.comment?.length ?? 0) * 4, 14) - 12}
+                      y={my - 22}
+                      width={Math.max((arrow.comment?.length ?? 0) * 8 + 24, 50)}
+                      height={24}
+                      rx={12}
                       fill={T.commentPill}
                       stroke={T.commentBorder}
                       strokeWidth={0.5}
                     />
                     <text
                       x={mx}
-                      y={my - 8}
+                      y={my - 9}
                       textAnchor="middle"
                       dominantBaseline="central"
-                      fontSize={9}
+                      fontSize={12}
                       fill={T.commentText}
-                      fontWeight={500}
+                      fontWeight={600}
                     >
-                      {arrow.comment.length > 18
-                        ? arrow.comment.slice(0, 18) + '...'
+                      {arrow.comment.length > 16
+                        ? arrow.comment.slice(0, 16) + '...'
                         : arrow.comment}
                     </text>
                   </g>
