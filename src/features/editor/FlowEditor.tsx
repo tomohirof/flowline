@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
 import styles from './FlowEditor.module.css'
 import type {
@@ -394,6 +395,7 @@ interface FlowEditorProps {
 // =============================================
 
 export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: FlowEditorProps) {
+  const navigate = useNavigate()
   // Initialize state from flow data (lazy initialization to avoid recomputing on every render)
   const [initState] = useState(() => flowToInternalState(flow))
   const [lanes, setLanes] = useState<InternalLane[]>(initState.lanes)
@@ -407,6 +409,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [editLane, setEditLane] = useState<string | null>(null)
   const [selTask, setSelTask] = useState<string | null>(null)
   const [selArrow, setSelArrow] = useState<string | null>(null)
+  const [editArrowComment, setEditArrowComment] = useState<string | null>(null)
   const [selLane, setSelLane] = useState<string | null>(null)
   const [editNote, setEditNote] = useState<string | null>(null)
   const [showExport, setShowExport] = useState<boolean>(false)
@@ -416,6 +419,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [connectFrom, setConnectFrom] = useState<string | null>(null)
+  const [connectDragPt, setConnectDragPt] = useState<Point | null>(null)
+  const [connectFromPt, setConnectFromPt] = useState<Point | null>(null)
   const [dragging, setDragging] = useState<DragState | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [activeTool, setActiveTool] = useState<ToolId | string>('select')
@@ -545,8 +550,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const T = THEMES[themeId]
   const RH = 84,
     HH = 46,
-    TW = 144,
-    TH = 52,
+    TW = 152,
+    TH = 56,
     LM = 28,
     TM = 24,
     G = T.laneGap
@@ -618,8 +623,11 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       }
       if (e.key === 'Escape') {
         setConnectFrom(null)
+        setConnectDragPt(null)
+        setConnectFromPt(null)
         setSelTask(null)
         setSelArrow(null)
+        setEditArrowComment(null)
         setSelLane(null)
         setDragging(null)
         setDragOver(null)
@@ -674,13 +682,49 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelArrow(null)
     setSelLane(null)
   }
+  const startConnectDrag = (k: string, hx: number, hy: number, e: React.MouseEvent): void => {
+    e.stopPropagation()
+    e.preventDefault()
+    setConnectFrom(k)
+    setConnectFromPt({ x: hx, y: hy })
+    setConnectDragPt({ x: hx, y: hy })
+    setSelTask(null)
+    setActiveTool('connect')
+  }
   const onSvgMouseMove = (e: React.MouseEvent): void => {
-    if (!dragging) return
     const pt = svgPt(e.clientX, e.clientY)
+    if (connectFrom) {
+      setConnectDragPt(pt)
+      return
+    }
+    if (!dragging) return
     const cell = cellFromPos(pt.x, pt.y)
     setDragOver(cell && cell.key !== dragging.key && !tasks[cell.key] ? cell.key : null)
   }
-  const onSvgMouseUp = (): void => {
+  const onSvgMouseUp = (e: React.MouseEvent): void => {
+    if (connectFrom) {
+      const pt = svgPt(e.clientX, e.clientY)
+      for (const k of Object.keys(tasks)) {
+        const t = tasks[k],
+          li = liMap[t.lid],
+          ri = riMap[t.rid]
+        if (li === undefined || ri === undefined) continue
+        const c = ct(li, ri)
+        if (
+          Math.abs(pt.x - c.x) < TW / 2 + 12 &&
+          Math.abs(pt.y - c.y) < TH / 2 + 12 &&
+          k !== connectFrom
+        ) {
+          setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
+          break
+        }
+      }
+      setConnectFrom(null)
+      setConnectDragPt(null)
+      setConnectFromPt(null)
+      setActiveTool('select')
+      return
+    }
     if (!dragging) return
     if (dragOver) {
       for (let li = 0; li < lanes.length; li++)
@@ -877,9 +921,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelTask(null)
     setSelArrow(null)
     setSelLane(null)
+    setEditArrowComment(null)
     setShowThemePicker(false)
     if (connectFrom) {
       setConnectFrom(null)
+      setConnectDragPt(null)
+      setConnectFromPt(null)
       setActiveTool('select')
     }
   }
@@ -1235,7 +1282,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         <div className={styles.spacer} />
         {connectFrom && (
           <div className={styles.connectBanner}>
-            <span className={styles.connectBannerText}>{'→ 接続先をクリック'}</span>
+            <span className={styles.connectBannerText}>{'→ 接続先にドロップ'}</span>
             <button
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation()
@@ -1268,6 +1315,54 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       <div className={styles.mainContent}>
         {/* Left Sidebar */}
         <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className={styles.sidebar}>
+          {/* Back to dashboard */}
+          <div
+            data-testid="file-button"
+            className={styles.fileButton}
+            onClick={() => navigate('/')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect
+                x="3"
+                y="3"
+                width="7"
+                height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <rect
+                x="14"
+                y="3"
+                width="7"
+                height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <rect
+                x="3"
+                y="14"
+                width="7"
+                height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <rect
+                x="14"
+                y="14"
+                width="7"
+                height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+            </svg>
+            <span className={styles.fileButtonText}>ファイル</span>
+            <span className={styles.toolTip}>ダッシュボードに戻る</span>
+          </div>
+          <div className={styles.sidebarSep} />
           {sideTools.map((t, i) => {
             if (t === 'sep') return <div key={i} className={styles.sidebarSep} />
             const isA = t.id === activeTool || (t.id === 'export' && showExport)
@@ -1318,6 +1413,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               if (dragging) {
                 setDragging(null)
                 setDragOver(null)
+              }
+              if (connectFrom) {
+                setConnectFrom(null)
+                setConnectDragPt(null)
+                setConnectFromPt(null)
+                setActiveTool('select')
               }
             }}
           >
@@ -1715,7 +1816,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                               ? T.accent
                               : T.nodeStroke
                       }
-                      strokeWidth={isConnSrc || isSel ? 2 : 0.5}
+                      strokeWidth={isConnSrc || isSel ? 2 : 1.2}
                       strokeDasharray={isConnSrc ? '4,3' : 'none'}
                       rx={10}
                       style={{
@@ -1808,7 +1909,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         y={c.y + 6}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize={11.5}
+                        fontSize={13.5}
                         fontWeight={500}
                         fill={task.label === '作業' ? T.statusText : T.titleColor}
                         style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
@@ -1885,22 +1986,19 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   <defs>
                     <marker
                       id={`m-${arrow.id}`}
-                      markerWidth="8"
-                      markerHeight="7"
-                      refX="7"
-                      refY="3.5"
+                      markerWidth="9"
+                      markerHeight="8"
+                      refX="8"
+                      refY="4"
                       orient="auto"
                     >
-                      <polygon
-                        points="0 0.5, 8 3.5, 0 6.5"
-                        fill={isSel ? T.accent : T.arrowColor}
-                      />
+                      <polygon points="0 0.5, 9 4, 0 7.5" fill={isSel ? T.accent : T.arrowColor} />
                     </marker>
                   </defs>
                   <path
                     d={d}
                     stroke={isSel ? T.arrowSel : T.arrowColor}
-                    strokeWidth={isSel ? 2 : 1.2}
+                    strokeWidth={isSel ? 2.5 : 2}
                     fill="none"
                     markerEnd={`url(#m-${arrow.id})`}
                     style={{ pointerEvents: 'none' }}
@@ -1908,26 +2006,26 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   {arrow.comment && (
                     <g style={{ pointerEvents: 'none' }}>
                       <rect
-                        x={mx - Math.max(arrow.comment.length * 3.2, 12) - 10}
-                        y={my - 19}
-                        width={Math.max(arrow.comment.length * 6.4 + 20, 44)}
-                        height={20}
-                        rx={10}
+                        x={mx - Math.max(arrow.comment.length * 4, 14) - 12}
+                        y={my - 22}
+                        width={Math.max(arrow.comment.length * 8 + 24, 50)}
+                        height={24}
+                        rx={12}
                         fill={T.commentPill}
                         stroke={T.commentBorder}
                         strokeWidth={0.5}
                       />
                       <text
                         x={mx}
-                        y={my - 8}
+                        y={my - 9}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize={9}
+                        fontSize={12}
                         fill={T.commentText}
-                        fontWeight={500}
+                        fontWeight={600}
                       >
-                        {arrow.comment.length > 18
-                          ? arrow.comment.slice(0, 18) + '…'
+                        {arrow.comment.length > 16
+                          ? arrow.comment.slice(0, 16) + '…'
                           : arrow.comment}
                       </text>
                     </g>
@@ -1953,38 +2051,252 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               />
             ))}
 
-            {/* Selection handles */}
-            {selTask &&
-              tasks[selTask] &&
-              !connectFrom &&
-              !dragging &&
+            {/* Floating arrow controls */}
+            {selArrow &&
               (() => {
-                const t = tasks[selTask],
+                const ap = arrowPaths.find((x) => x.arrow.id === selArrow)
+                if (!ap) return null
+                const { mx, my } = ap.path
+                const bw = 96,
+                  bh = 30,
+                  br = bh / 2,
+                  by = my + 10
+                return (
+                  <g data-testid="arrow-floating-controls">
+                    <rect
+                      x={mx - bw / 2}
+                      y={by}
+                      width={bw}
+                      height={bh}
+                      rx={br}
+                      fill={T.nodeFill}
+                      stroke={T.commentBorder}
+                      strokeWidth={0.5}
+                      style={{ filter: `drop-shadow(0 2px 8px rgba(0,0,0,${isDark ? 0.3 : 0.1}))` }}
+                    />
+                    {/* Reverse */}
+                    <g
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setArrows((p) =>
+                          p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
+                        )
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <rect x={mx - bw / 2} y={by} width={32} height={bh} fill="transparent" />
+                      <g transform={`translate(${mx - bw / 2 + 8},${by + 7})`}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke={T.accent}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M8 3L4 7l4 4" />
+                          <path d="M4 7h16" />
+                          <path d="M16 21l4-4-4-4" />
+                          <path d="M20 17H4" />
+                        </svg>
+                      </g>
+                    </g>
+                    {/* Comment */}
+                    <g
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setEditArrowComment(selArrow)
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <rect x={mx - 16} y={by} width={32} height={bh} fill="transparent" />
+                      <g transform={`translate(${mx - 8},${by + 7})`}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke={T.commentIconColor}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                        </svg>
+                      </g>
+                    </g>
+                    {/* Delete */}
+                    <g
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setArrows((p) => p.filter((a) => a.id !== selArrow))
+                        setSelArrow(null)
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <rect x={mx + bw / 2 - 32} y={by} width={32} height={bh} fill="transparent" />
+                      <g transform={`translate(${mx + bw / 2 - 24},${by + 7})`}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke={T.dangerColor}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      </g>
+                    </g>
+                  </g>
+                )
+              })()}
+
+            {/* Inline arrow comment edit */}
+            {editArrowComment &&
+              (() => {
+                const ap = arrowPaths.find((x) => x.arrow.id === editArrowComment)
+                if (!ap) return null
+                const { mx, my } = ap.path
+                return (
+                  <foreignObject x={mx - 100} y={my + 44} width={200} height={30}>
+                    <input
+                      autoFocus
+                      value={arrows.find((a) => a.id === editArrowComment)?.comment || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const v = e.target.value
+                        setArrows((p) =>
+                          p.map((a) => (a.id === editArrowComment ? { ...a, comment: v } : a)),
+                        )
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key === 'Enter' || e.key === 'Escape') setEditArrowComment(null)
+                      }}
+                      onBlur={() => setEditArrowComment(null)}
+                      placeholder="コメント…"
+                      style={{
+                        width: '100%',
+                        height: 28,
+                        fontSize: 12,
+                        padding: '0 10px',
+                        border: `1px solid ${T.inputBorder}`,
+                        borderRadius: 8,
+                        outline: 'none',
+                        background: T.nodeFill,
+                        color: T.panelText,
+                        fontFamily: 'inherit',
+                        boxShadow: `0 2px 8px rgba(0,0,0,${isDark ? 0.3 : 0.1})`,
+                      }}
+                    />
+                  </foreignObject>
+                )
+              })()}
+
+            {/* Connection handles on hovered or selected nodes */}
+            {!dragging &&
+              !editing &&
+              (() => {
+                const showKey = selTask || hovered
+                if (!showKey || !tasks[showKey]) return null
+                if (connectFrom && showKey === connectFrom && connectDragPt) return null
+                const t = tasks[showKey],
                   li = liMap[t.lid],
                   ri = riMap[t.rid]
                 if (li === undefined || ri === undefined) return null
                 const c = ct(li, ri)
-                return (
-                  [
-                    [c.x - TW / 2, c.y],
-                    [c.x + TW / 2, c.y],
-                    [c.x, c.y - TH / 2],
-                    [c.x, c.y + TH / 2],
-                  ] as [number, number][]
-                ).map(([hx, hy], i) => (
-                  <rect
-                    key={i}
-                    x={hx - 3}
-                    y={hy - 3}
-                    width={6}
-                    height={6}
-                    fill={T.nodeFill}
-                    stroke={T.accent}
-                    strokeWidth={1.2}
-                    rx={1.5}
-                  />
+                const handles = [
+                  { x: c.x, y: c.y - TH / 2 },
+                  { x: c.x, y: c.y + TH / 2 },
+                  { x: c.x - TW / 2, y: c.y },
+                  { x: c.x + TW / 2, y: c.y },
+                ]
+                const isSel = selTask === showKey
+                return handles.map((h, i) => (
+                  <g key={`ch-${i}`}>
+                    <circle
+                      cx={h.x}
+                      cy={h.y}
+                      r={isSel ? 6 : 5}
+                      data-testid="connection-handle"
+                      fill={T.nodeFill}
+                      stroke={T.accent}
+                      strokeWidth={1.5}
+                      style={{ cursor: 'crosshair', transition: 'r 0.1s' }}
+                      onMouseDown={(e: React.MouseEvent) => startConnectDrag(showKey, h.x, h.y, e)}
+                    />
+                    {isSel && (
+                      <circle
+                        cx={h.x}
+                        cy={h.y}
+                        r={2.5}
+                        fill={T.accent}
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    )}
+                  </g>
                 ))
               })()}
+
+            {/* Highlight target nodes while dragging connection */}
+            {connectFrom &&
+              connectDragPt &&
+              Object.keys(tasks).map((k) => {
+                if (k === connectFrom) return null
+                const t = tasks[k],
+                  li = liMap[t.lid],
+                  ri = riMap[t.rid]
+                if (li === undefined || ri === undefined) return null
+                const c = ct(li, ri)
+                const isNear =
+                  Math.abs(connectDragPt.x - c.x) < TW / 2 + 12 &&
+                  Math.abs(connectDragPt.y - c.y) < TH / 2 + 12
+                if (!isNear) return null
+                return (
+                  <rect
+                    key={`ct-${k}`}
+                    x={c.x - TW / 2 - 2}
+                    y={c.y - TH / 2 - 2}
+                    width={TW + 4}
+                    height={TH + 4}
+                    rx={12}
+                    fill={`${T.accent}08`}
+                    stroke={T.accent}
+                    strokeWidth={1.5}
+                    strokeDasharray="4,3"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                )
+              })}
+
+            {/* Temp connection line while dragging */}
+            {connectFrom && connectDragPt && connectFromPt && (
+              <g style={{ pointerEvents: 'none' }}>
+                <line
+                  x1={connectFromPt.x}
+                  y1={connectFromPt.y}
+                  x2={connectDragPt.x}
+                  y2={connectDragPt.y}
+                  stroke={T.accent}
+                  strokeWidth={2}
+                  strokeDasharray="6,4"
+                  opacity={0.6}
+                />
+                <circle
+                  cx={connectDragPt.x}
+                  cy={connectDragPt.y}
+                  r={4}
+                  fill={T.accent}
+                  opacity={0.5}
+                />
+              </g>
+            )}
           </svg>
         </div>
 
@@ -2011,7 +2323,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             ? '接続先クリック · Esc解除'
             : dragging
               ? '空きセルにドロップ'
-              : 'クリック:追加 · ドラッグ:移動 · ヘッダ:レーン選択'}
+              : 'クリック:追加 · ドラッグ:移動 · ○をドラッグ:接続'}
         </span>
       </div>
 

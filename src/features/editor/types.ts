@@ -47,6 +47,8 @@ export interface Theme {
   panelLabel: string
   inputBg: string
   inputBorder: string
+  commentIconColor: string
+  dangerColor: string
   laneGap: number
 }
 

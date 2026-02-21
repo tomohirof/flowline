@@ -493,7 +493,7 @@
   border: none;
   outline: none;
   text-align: center;
-  font-size: 11.5px;
+  font-size: 13.5px;
   background: transparent;
   color: var(--theme-title-color);
   font-weight: 500;
@@ -555,4 +555,55 @@
 .dragPulseAnim {
   animation: dragPulse 1s ease infinite;
   pointer-events: none;
+}
+
+/* =============================================
+   File Button (Dashboard link)
+   ============================================= */
+
+.fileButton {
+  width: 38px;
+  height: 42px;
+  border-radius: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  gap: 2px;
+  position: relative;
+  color: var(--theme-sidebar-icon);
+}
+
+.fileButton .toolTip {
+  display: none;
+  position: absolute;
+  left: 46px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--tooltip-bg);
+  color: #fff;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.fileButton:hover {
+  background: var(--theme-sidebar-active-bg);
+  color: var(--theme-sidebar-active);
+}
+
+.fileButton:hover .toolTip {
+  display: block;
+}
+
+.fileButtonText {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-family: inherit;
 }
