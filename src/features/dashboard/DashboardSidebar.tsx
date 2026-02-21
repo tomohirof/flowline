@@ -27,7 +27,7 @@ export function DashboardSidebar({ selectedNav, onNavChange, userName }: Dashboa
       {/* Navigation */}
       <div className={styles.navGroup}>
         {NAV_ITEMS.map((n) => (
-          <div
+          <button
             key={n.id}
             data-testid={`nav-item-${n.id}`}
             onClick={() => onNavChange(n.id)}
@@ -35,7 +35,7 @@ export function DashboardSidebar({ selectedNav, onNavChange, userName }: Dashboa
           >
             <span className={styles.navIcon}>{n.icon}</span>
             {n.label}
-          </div>
+          </button>
         ))}
       </div>
 

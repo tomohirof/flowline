@@ -137,11 +137,6 @@ export function Dashboard() {
     }
   }
 
-  const handleDuplicate = (_id: string) => {
-    void _id // suppress TS6133
-    // TODO: implement duplicate via GET detail + POST
-  }
-
   const handleContextMenu = (id: string, x: number, y: number) => {
     setContextMenu({ flowId: id, x, y })
   }
@@ -167,13 +162,6 @@ export function Dashboard() {
     }
   }
 
-  const handleContextDuplicate = () => {
-    if (contextMenu) {
-      handleDuplicate(contextMenu.flowId)
-      setContextMenu(null)
-    }
-  }
-
   const handleContextDelete = () => {
     if (contextMenu && contextFlow) {
       handleDelete(contextMenu.flowId, contextFlow.title)
@@ -182,7 +170,7 @@ export function Dashboard() {
   }
 
   // Lane colors for list view
-  const getLaneColors = () => PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
+  const laneColors = PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
 
   return (
     <div data-testid="dashboard" className={styles.layout}>
@@ -292,70 +280,59 @@ export function Dashboard() {
                 <span className={styles.listHeaderLanes}>レーン</span>
                 <span className={styles.listHeaderActions} />
               </div>
-              {filteredAndSortedFlows.map((flow) => {
-                const laneColors = getLaneColors()
-                return (
-                  <div
-                    key={flow.id}
-                    data-testid={`flow-card-${flow.id}`}
-                    className={styles.listRow}
-                  >
-                    <div className={styles.listName}>
-                      <Link
-                        to={`/flows/${flow.id}`}
-                        data-testid={`flow-link-${flow.id}`}
-                        className={styles.listLink}
-                      >
-                        {flow.title}
-                      </Link>
-                      {flow.shareToken && (
-                        <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>
-                          共有中
-                        </span>
-                      )}
-                    </div>
-                    <div className={styles.listUpdated}>{formatRelativeTime(flow.updatedAt)}</div>
-                    <div className={styles.listLanes}>
-                      {laneColors.map((color, i) => (
-                        <span
-                          key={i}
-                          className={styles.laneDot}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                    <div className={styles.listActions}>
-                      <button
-                        className={styles.menuBtn}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                          handleContextMenu(flow.id, rect.left, rect.bottom)
-                        }}
-                        aria-label="メニュー"
-                      >
-                        &#x22EF;
-                      </button>
-                    </div>
-
-                    {/* Hidden delete button for test compatibility */}
-                    <button
-                      data-testid={`delete-flow-${flow.id}`}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        handleDelete(flow.id, flow.title)
-                      }}
-                      disabled={deletingId === flow.id}
-                      className={styles.hiddenDelete}
-                      tabIndex={-1}
-                      aria-hidden="true"
+              {filteredAndSortedFlows.map((flow) => (
+                <div key={flow.id} data-testid={`flow-card-${flow.id}`} className={styles.listRow}>
+                  <div className={styles.listName}>
+                    <Link
+                      to={`/flows/${flow.id}`}
+                      data-testid={`flow-link-${flow.id}`}
+                      className={styles.listLink}
                     >
-                      {deletingId === flow.id ? '削除中...' : '削除'}
+                      {flow.title}
+                    </Link>
+                    {flow.shareToken && (
+                      <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>
+                        共有中
+                      </span>
+                    )}
+                  </div>
+                  <div className={styles.listUpdated}>{formatRelativeTime(flow.updatedAt)}</div>
+                  <div className={styles.listLanes}>
+                    {laneColors.map((color, i) => (
+                      <span key={i} className={styles.laneDot} style={{ backgroundColor: color }} />
+                    ))}
+                  </div>
+                  <div className={styles.listActions}>
+                    <button
+                      className={styles.menuBtn}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                        handleContextMenu(flow.id, rect.left, rect.bottom)
+                      }}
+                      aria-label="メニュー"
+                    >
+                      &#x22EF;
                     </button>
                   </div>
-                )
-              })}
+
+                  {/* Hidden delete button for test compatibility */}
+                  <button
+                    data-testid={`delete-flow-${flow.id}`}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleDelete(flow.id, flow.title)
+                    }}
+                    disabled={deletingId === flow.id}
+                    className={styles.hiddenDelete}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  >
+                    {deletingId === flow.id ? '削除中...' : '削除'}
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -368,7 +345,6 @@ export function Dashboard() {
           y={contextMenu.y}
           onOpen={handleContextOpen}
           onRename={handleContextRename}
-          onDuplicate={handleContextDuplicate}
           onDelete={handleContextDelete}
           onClose={handleCloseContextMenu}
         />

@@ -119,6 +119,8 @@
 .avatar {
   width: 30px;
   height: 30px;
+  padding: 0;
+  border: none;
   border-radius: 15px;
   background: linear-gradient(135deg, #7c5cfc, #5b8def);
   display: flex;

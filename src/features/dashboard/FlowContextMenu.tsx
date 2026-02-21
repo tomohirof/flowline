@@ -6,7 +6,6 @@ interface FlowContextMenuProps {
   y: number
   onOpen: () => void
   onRename: () => void
-  onDuplicate: () => void
   onDelete: () => void
   onClose: () => void
 }
@@ -22,7 +21,6 @@ export function FlowContextMenu({
   y,
   onOpen,
   onRename,
-  onDuplicate,
   onDelete,
   onClose,
 }: FlowContextMenuProps) {
@@ -41,7 +39,6 @@ export function FlowContextMenu({
   const items: (MenuItem | 'sep')[] = [
     { label: '開く', action: onOpen },
     { label: '名前を変更', action: onRename },
-    { label: '複製', action: onDuplicate },
     'sep',
     { label: '削除', action: onDelete, danger: true },
   ]
@@ -59,13 +56,13 @@ export function FlowContextMenu({
           return <div key={i} className={styles.separator} />
         }
         return (
-          <div
+          <button
             key={i}
             onClick={item.action}
             className={`${styles.item} ${item.danger ? styles.itemDanger : ''}`}
           >
             {item.label}
-          </div>
+          </button>
         )
       })}
     </div>

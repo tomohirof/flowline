@@ -14,7 +14,6 @@ describe('FlowContextMenu', () => {
     y: 200,
     onOpen: vi.fn(),
     onRename: vi.fn(),
-    onDuplicate: vi.fn(),
     onDelete: vi.fn(),
     onClose: vi.fn(),
   }
@@ -24,7 +23,6 @@ describe('FlowContextMenu', () => {
 
     expect(screen.getByText('開く')).toBeInTheDocument()
     expect(screen.getByText('名前を変更')).toBeInTheDocument()
-    expect(screen.getByText('複製')).toBeInTheDocument()
     expect(screen.getByText('削除')).toBeInTheDocument()
   })
 
@@ -44,15 +42,6 @@ describe('FlowContextMenu', () => {
 
     await user.click(screen.getByText('名前を変更'))
     expect(onRename).toHaveBeenCalledTimes(1)
-  })
-
-  it('should call onDuplicate when "複製" is clicked', async () => {
-    const user = userEvent.setup()
-    const onDuplicate = vi.fn()
-    render(<FlowContextMenu {...defaultProps} onDuplicate={onDuplicate} />)
-
-    await user.click(screen.getByText('複製'))
-    expect(onDuplicate).toHaveBeenCalledTimes(1)
   })
 
   it('should call onDelete when "削除" is clicked', async () => {
@@ -75,5 +64,11 @@ describe('FlowContextMenu', () => {
   it('should have data-testid context-menu', () => {
     render(<FlowContextMenu {...defaultProps} />)
     expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+  })
+
+  it('should render menu items as accessible buttons', () => {
+    render(<FlowContextMenu {...defaultProps} />)
+    const buttons = screen.getAllByRole('button')
+    expect(buttons.length).toBe(3)
   })
 })

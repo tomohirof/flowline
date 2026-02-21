@@ -16,15 +16,20 @@
 }
 
 .navItem {
+  width: 100%;
   padding: 7px 10px;
+  border: none;
   border-radius: 7px;
+  background: none;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
+  font-family: inherit;
   color: #666;
   cursor: pointer;
+  text-align: left;
   transition: all 0.12s ease;
 }
 

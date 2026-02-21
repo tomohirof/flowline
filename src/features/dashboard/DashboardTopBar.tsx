@@ -56,14 +56,15 @@ export function DashboardTopBar({
       <div className={styles.dividerSmall} />
 
       {/* Avatar with logout */}
-      <div
+      <button
         data-testid="user-avatar"
         onClick={onLogout}
         className={styles.avatar}
         title={`${userName} - ログアウト`}
+        aria-label="ログアウト"
       >
         {initial}
-      </div>
+      </button>
     </div>
   )
 }
