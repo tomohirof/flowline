@@ -84,3 +84,20 @@ describe('visual constants (#44, #45)', () => {
     expect(commentLabel).toBeTruthy()
   })
 })
+
+describe('floating arrow controls (#46)', () => {
+  const createFlowWithArrow = (): Flow => ({
+    ...createMinimalFlow(),
+    nodes: [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ],
+    arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
+  })
+
+  it('should not show floating controls when no arrow is selected', () => {
+    render(<FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />)
+    const floatingPill = document.querySelector('[data-testid="arrow-floating-controls"]')
+    expect(floatingPill).toBeNull()
+  })
+})
