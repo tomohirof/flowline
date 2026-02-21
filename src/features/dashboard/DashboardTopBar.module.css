@@ -1,0 +1,131 @@
+.topbar {
+  height: 52px;
+  border-bottom: 1px solid #ececf0;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  flex-shrink: 0;
+  gap: 12px;
+  background: #fff;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 8px;
+}
+
+.logoIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.logoText {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1a1a2e;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: #ececf0;
+}
+
+.dividerSmall {
+  width: 1px;
+  height: 20px;
+  background: #ececf0;
+  margin: 0 4px;
+}
+
+.searchWrapper {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #bbb;
+}
+
+.searchInput {
+  width: 100%;
+  height: 34px;
+  padding-left: 32px;
+  padding-right: 12px;
+  border: 1px solid #ececf0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  background: #fafafd;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.searchInput:focus {
+  border-color: #7c5cfc;
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.08);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.createBtn {
+  height: 34px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #7c5cfc, #6246ea);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(124, 92, 252, 0.25);
+  opacity: 1;
+}
+
+.createBtn:hover {
+  box-shadow: 0 4px 16px rgba(124, 92, 252, 0.35);
+}
+
+.createBtnDisabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
