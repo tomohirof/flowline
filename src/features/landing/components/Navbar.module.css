@@ -13,7 +13,7 @@
 }
 
 .scrolled {
-  background: rgba(10, 10, 15, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
@@ -78,7 +78,7 @@
 
 .navLink:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .actions {

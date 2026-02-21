@@ -5,11 +5,11 @@
   --brand-light: #9b82fd;
   --blue: #5b8def;
   --gradient: linear-gradient(135deg, #7c5cfc, #5b8def);
-  --bg: #0a0a0f;
-  --text: #e8e6f0;
-  --text-sub: #8a8698;
-  --text-muted: #5a5768;
-  --border: rgba(255, 255, 255, 0.06);
+  --bg: #ffffff;
+  --text: #1a1a2e;
+  --text-sub: #64648c;
+  --text-muted: #9090a8;
+  --border: rgba(0, 0, 0, 0.08);
   --font: 'Satoshi', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
 
   font-family: var(--font);
@@ -125,5 +125,5 @@
 
 .btnSecondary:hover {
   border-color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.03);
 }
