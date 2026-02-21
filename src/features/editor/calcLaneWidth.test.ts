@@ -77,4 +77,9 @@ describe('calcLaneWidth', () => {
     const result = calcLaneWidth(Infinity, 4, 28, 6)
     expect(result).toBe(178)
   })
+
+  it('should return fallback 178px when laneCount is Infinity', () => {
+    const result = calcLaneWidth(1440, Infinity, 28, 6)
+    expect(result).toBe(178)
+  })
 })
