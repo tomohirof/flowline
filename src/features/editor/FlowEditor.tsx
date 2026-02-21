@@ -1894,10 +1894,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       refY="4"
                       orient="auto"
                     >
-                      <polygon
-                        points="0 0.5, 9 4, 0 7.5"
-                        fill={isSel ? T.accent : T.arrowColor}
-                      />
+                      <polygon points="0 0.5, 9 4, 0 7.5" fill={isSel ? T.accent : T.arrowColor} />
                     </marker>
                   </defs>
                   <path
@@ -1956,95 +1953,153 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               />
             ))}
 
-
             {/* Floating arrow controls */}
-            {selArrow && (() => {
-              const ap = arrowPaths.find(x => x.arrow.id === selArrow)
-              if (!ap) return null
-              const { mx, my } = ap.path
-              const bw = 96, bh = 30, br = bh / 2, by = my + 10
-              return (
-                <g data-testid="arrow-floating-controls">
-                  <rect x={mx - bw / 2} y={by} width={bw} height={bh} rx={br}
-                    fill={T.nodeFill} stroke={T.commentBorder} strokeWidth={0.5}
-                    style={{ filter: `drop-shadow(0 2px 8px rgba(0,0,0,${isDark ? 0.3 : 0.1}))` }} />
-                  {/* Reverse */}
-                  <g onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation()
-                    setArrows(p => p.map(a => a.id === selArrow ? { ...a, from: a.to, to: a.from } : a))
-                  }} style={{ cursor: 'pointer' }}>
-                    <rect x={mx - bw / 2} y={by} width={32} height={bh} fill="transparent" />
-                    <g transform={`translate(${mx - bw / 2 + 8},${by + 7})`}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke={T.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M8 3L4 7l4 4"/><path d="M4 7h16"/>
-                        <path d="M16 21l4-4-4-4"/><path d="M20 17H4"/>
-                      </svg>
+            {selArrow &&
+              (() => {
+                const ap = arrowPaths.find((x) => x.arrow.id === selArrow)
+                if (!ap) return null
+                const { mx, my } = ap.path
+                const bw = 96,
+                  bh = 30,
+                  br = bh / 2,
+                  by = my + 10
+                return (
+                  <g data-testid="arrow-floating-controls">
+                    <rect
+                      x={mx - bw / 2}
+                      y={by}
+                      width={bw}
+                      height={bh}
+                      rx={br}
+                      fill={T.nodeFill}
+                      stroke={T.commentBorder}
+                      strokeWidth={0.5}
+                      style={{ filter: `drop-shadow(0 2px 8px rgba(0,0,0,${isDark ? 0.3 : 0.1}))` }}
+                    />
+                    {/* Reverse */}
+                    <g
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setArrows((p) =>
+                          p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
+                        )
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <rect x={mx - bw / 2} y={by} width={32} height={bh} fill="transparent" />
+                      <g transform={`translate(${mx - bw / 2 + 8},${by + 7})`}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke={T.accent}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M8 3L4 7l4 4" />
+                          <path d="M4 7h16" />
+                          <path d="M16 21l4-4-4-4" />
+                          <path d="M20 17H4" />
+                        </svg>
+                      </g>
+                    </g>
+                    {/* Comment */}
+                    <g
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setEditArrowComment(selArrow)
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <rect x={mx - 16} y={by} width={32} height={bh} fill="transparent" />
+                      <g transform={`translate(${mx - 8},${by + 7})`}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#D09030"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                        </svg>
+                      </g>
+                    </g>
+                    {/* Delete */}
+                    <g
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setArrows((p) => p.filter((a) => a.id !== selArrow))
+                        setSelArrow(null)
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <rect x={mx + bw / 2 - 32} y={by} width={32} height={bh} fill="transparent" />
+                      <g transform={`translate(${mx + bw / 2 - 24},${by + 7})`}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#E06060"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      </g>
                     </g>
                   </g>
-                  {/* Comment */}
-                  <g onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation()
-                    setEditArrowComment(selArrow)
-                  }} style={{ cursor: 'pointer' }}>
-                    <rect x={mx - 16} y={by} width={32} height={bh} fill="transparent" />
-                    <g transform={`translate(${mx - 8},${by + 7})`}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="#D09030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                      </svg>
-                    </g>
-                  </g>
-                  {/* Delete */}
-                  <g onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation()
-                    setArrows(p => p.filter(a => a.id !== selArrow))
-                    setSelArrow(null)
-                  }} style={{ cursor: 'pointer' }}>
-                    <rect x={mx + bw / 2 - 32} y={by} width={32} height={bh} fill="transparent" />
-                    <g transform={`translate(${mx + bw / 2 - 24},${by + 7})`}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="#E06060" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                        <line x1="10" y1="11" x2="10" y2="17"/>
-                        <line x1="14" y1="11" x2="14" y2="17"/>
-                      </svg>
-                    </g>
-                  </g>
-                </g>
-              )
-            })()}
+                )
+              })()}
 
             {/* Inline arrow comment edit */}
-            {editArrowComment && (() => {
-              const ap = arrowPaths.find(x => x.arrow.id === editArrowComment)
-              if (!ap) return null
-              const { mx, my } = ap.path
-              return (
-                <foreignObject x={mx - 100} y={my + 44} width={200} height={30}>
-                  <input
-                    autoFocus
-                    value={arrows.find(a => a.id === editArrowComment)?.comment || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const v = e.target.value
-                      setArrows(p => p.map(a => a.id === editArrowComment ? { ...a, comment: v } : a))
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                      if (e.key === 'Enter' || e.key === 'Escape') setEditArrowComment(null)
-                    }}
-                    onBlur={() => setEditArrowComment(null)}
-                    placeholder="コメント…"
-                    style={{
-                      width: '100%', height: 28, fontSize: 12, padding: '0 10px',
-                      border: `1px solid ${T.inputBorder}`, borderRadius: 8, outline: 'none',
-                      background: T.nodeFill, color: T.panelText, fontFamily: 'inherit',
-                      boxShadow: `0 2px 8px rgba(0,0,0,${isDark ? 0.3 : 0.1})`,
-                    }}
-                  />
-                </foreignObject>
-              )
-            })()}
+            {editArrowComment &&
+              (() => {
+                const ap = arrowPaths.find((x) => x.arrow.id === editArrowComment)
+                if (!ap) return null
+                const { mx, my } = ap.path
+                return (
+                  <foreignObject x={mx - 100} y={my + 44} width={200} height={30}>
+                    <input
+                      autoFocus
+                      value={arrows.find((a) => a.id === editArrowComment)?.comment || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const v = e.target.value
+                        setArrows((p) =>
+                          p.map((a) => (a.id === editArrowComment ? { ...a, comment: v } : a)),
+                        )
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key === 'Enter' || e.key === 'Escape') setEditArrowComment(null)
+                      }}
+                      onBlur={() => setEditArrowComment(null)}
+                      placeholder="コメント…"
+                      style={{
+                        width: '100%',
+                        height: 28,
+                        fontSize: 12,
+                        padding: '0 10px',
+                        border: `1px solid ${T.inputBorder}`,
+                        borderRadius: 8,
+                        outline: 'none',
+                        background: T.nodeFill,
+                        color: T.panelText,
+                        fontFamily: 'inherit',
+                        boxShadow: `0 2px 8px rgba(0,0,0,${isDark ? 0.3 : 0.1})`,
+                      }}
+                    />
+                  </foreignObject>
+                )
+              })()}
 
             {/* Selection handles */}
             {selTask &&
