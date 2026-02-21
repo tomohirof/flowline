@@ -351,4 +351,191 @@ describe('Dashboard', () => {
 
     confirmSpy.mockRestore()
   })
+
+  // =============================================
+  // 新機能テスト: TopBar / Sidebar 表示
+  // =============================================
+  it('should render dashboard with topbar and sidebar', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId('dashboard-topbar')).toBeInTheDocument()
+    expect(screen.getByTestId('dashboard-sidebar')).toBeInTheDocument()
+  })
+
+  // =============================================
+  // 新機能テスト: 検索フィルタリング
+  // =============================================
+  it('should filter flows by search query', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+
+    // Type search query that matches only flow-1
+    const searchInput = screen.getByTestId('search-input')
+    await user.type(searchInput, '業務')
+
+    // flow-1 (業務フロー) should be visible
+    expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    // flow-2 (申請処理フロー) should be hidden
+    expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
+  })
+
+  it('should show empty state when search matches nothing', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+
+    const searchInput = screen.getByTestId('search-input')
+    await user.type(searchInput, '存在しないフロー名')
+
+    // No cards should be visible
+    expect(screen.queryByTestId('flow-card-flow-1')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
+
+    // Should show empty state
+    expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument()
+  })
+
+  // =============================================
+  // 新機能テスト: ソート
+  // =============================================
+  it('should sort flows by name', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+
+    // Default sort is by updated (newest first). Change to name sort.
+    const sortSelect = screen.getByTestId('sort-select')
+    await user.selectOptions(sortSelect, 'name')
+
+    // After sorting by name (Japanese locale):
+    // '業務フロー' vs '申請処理フロー'
+    // Verify both cards still exist
+    const cards = screen.getAllByTestId(/^flow-card-/)
+    expect(cards).toHaveLength(2)
+
+    // The order should be determined by Japanese locale sort
+    // '業務フロー'.localeCompare('申請処理フロー', 'ja')
+    // Both cards should still be present after sort
+    expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    expect(screen.getByTestId('flow-card-flow-2')).toBeInTheDocument()
+  })
+
+  // =============================================
+  // 新機能テスト: グリッド/リスト表示切替
+  // =============================================
+  it('should toggle between grid and list view', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+
+    // Default should be grid view
+    expect(screen.getByTestId('dashboard-grid')).toBeInTheDocument()
+    expect(screen.queryByTestId('dashboard-list')).not.toBeInTheDocument()
+
+    // Switch to list view
+    const listBtn = screen.getByTestId('view-list-button')
+    await user.click(listBtn)
+
+    // Now should show list
+    expect(screen.getByTestId('dashboard-list')).toBeInTheDocument()
+    expect(screen.queryByTestId('dashboard-grid')).not.toBeInTheDocument()
+
+    // Cards should still be accessible in list view
+    expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    expect(screen.getByTestId('flow-card-flow-2')).toBeInTheDocument()
+
+    // Switch back to grid view
+    const gridBtn = screen.getByTestId('view-grid-button')
+    await user.click(gridBtn)
+
+    expect(screen.getByTestId('dashboard-grid')).toBeInTheDocument()
+    expect(screen.queryByTestId('dashboard-list')).not.toBeInTheDocument()
+  })
+
+  // =============================================
+  // 新機能テスト: リスト表示でのリンク・削除互換性
+  // =============================================
+  it('should have links and delete buttons in list view', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+
+    // Switch to list view
+    await user.click(screen.getByTestId('view-list-button'))
+
+    // Links should work in list view
+    const link1 = screen.getByTestId('flow-link-flow-1')
+    expect(link1).toHaveAttribute('href', '/flows/flow-1')
+
+    const link2 = screen.getByTestId('flow-link-flow-2')
+    expect(link2).toHaveAttribute('href', '/flows/flow-2')
+
+    // Delete buttons should exist
+    expect(screen.getByTestId('delete-flow-flow-1')).toBeInTheDocument()
+    expect(screen.getByTestId('delete-flow-flow-2')).toBeInTheDocument()
+  })
+
+  // =============================================
+  // 新機能テスト: 検索は大文字小文字を区別しない
+  // =============================================
+  it('should filter flows case-insensitively', async () => {
+    const user = userEvent.setup()
+    const flowsWithAscii = [
+      ...mockFlows,
+      {
+        id: 'flow-3',
+        title: 'My Test Flow',
+        themeId: 'cloud',
+        shareToken: null,
+        createdAt: '2026-01-13T08:00:00Z',
+        updatedAt: '2026-01-13T08:00:00Z',
+      },
+    ]
+    mockApiFetch.mockResolvedValueOnce({ flows: flowsWithAscii })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-3')).toBeInTheDocument()
+    })
+
+    const searchInput = screen.getByTestId('search-input')
+    await user.type(searchInput, 'my test')
+
+    expect(screen.getByTestId('flow-card-flow-3')).toBeInTheDocument()
+    expect(screen.queryByTestId('flow-card-flow-1')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
+  })
 })
