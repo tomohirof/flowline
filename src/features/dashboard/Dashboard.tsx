@@ -123,7 +123,18 @@ export function Dashboard() {
 
   const handleRename = async (id: string, newTitle: string) => {
     setRenamingId(null)
+    // Optimistic update
     setFlows((prev) => prev.map((f) => (f.id === id ? { ...f, title: newTitle } : f)))
+    try {
+      await apiFetch(`/flows/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ title: newTitle }),
+      })
+    } catch {
+      setError('フロー名の変更に失敗しました')
+      // Revert on failure
+      loadFlows()
+    }
   }
 
   const handleDuplicate = (_id: string) => {
