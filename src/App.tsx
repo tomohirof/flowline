@@ -4,7 +4,6 @@ import { Dashboard } from './features/dashboard/Dashboard'
 import { SharedFlowPage } from './features/shared/SharedFlowPage'
 import { LandingPage } from './features/landing/LandingPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
-import './App.css'
 
 function Header() {
   const { user, loading, logout } = useAuth()
