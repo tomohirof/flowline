@@ -12,6 +12,8 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState<boolean>(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const loadFlows = useCallback(async () => {
@@ -68,6 +70,19 @@ export function Dashboard() {
     }
   }
 
+  const handleRename = async (id: string, newTitle: string) => {
+    setRenamingId(null)
+    setFlows((prev) => prev.map((f) => (f.id === id ? { ...f, title: newTitle } : f)))
+  }
+
+  const handleDuplicate = (_id: string) => {
+    // TODO: implement in Dashboard.tsx redesign
+  }
+
+  const handleContextMenu = (_id: string, _x: number, _y: number) => {
+    // TODO: implement in Dashboard.tsx redesign
+  }
+
   return (
     <div data-testid="dashboard" className={styles.container}>
       {/* ヘッダー */}
@@ -108,7 +123,13 @@ export function Dashboard() {
               key={flow.id}
               flow={flow}
               onDelete={handleDelete}
+              onRename={handleRename}
+              onDuplicate={handleDuplicate}
+              onContextMenu={handleContextMenu}
               deleting={deletingId === flow.id}
+              isHovered={hoveredId === flow.id}
+              onHover={setHoveredId}
+              renamingId={renamingId}
             />
           ))}
         </div>

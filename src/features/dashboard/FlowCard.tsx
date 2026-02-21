@@ -1,42 +1,187 @@
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import type { FlowSummary } from '../editor/types'
+import { PALETTES } from '../editor/theme-constants'
 import { formatRelativeTime } from '../../utils/formatRelativeTime'
+import { FlowThumbnail } from './FlowThumbnail'
 import styles from './FlowCard.module.css'
 
 interface FlowCardProps {
   flow: FlowSummary
   onDelete: (id: string, title: string) => void
+  onRename: (id: string, newTitle: string) => void
+  onDuplicate: (id: string) => void
+  onContextMenu: (id: string, x: number, y: number) => void
   deleting?: boolean
+  isHovered: boolean
+  onHover: (id: string | null) => void
+  renamingId: string | null
 }
 
-export function FlowCard({ flow, onDelete, deleting = false }: FlowCardProps) {
+const DEFAULT_LANE_COUNT = 3
+const DEFAULT_NODE_COUNT = 5
+
+export function FlowCard({
+  flow,
+  onDelete,
+  onRename,
+  onContextMenu,
+  deleting = false,
+  isHovered,
+  onHover,
+  renamingId,
+}: FlowCardProps) {
+  const isRenaming = renamingId === flow.id
+  const [renameValue, setRenameValue] = useState(flow.title)
+  const renameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isRenaming) {
+      setRenameValue(flow.title)
+      // Focus after render
+      requestAnimationFrame(() => {
+        renameInputRef.current?.focus()
+        renameInputRef.current?.select()
+      })
+    }
+  }, [isRenaming, flow.title])
+
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     onDelete(flow.id, flow.title)
   }
 
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    onContextMenu(flow.id, rect.left, rect.bottom)
+  }
+
+  const handleRenameSubmit = () => {
+    const trimmed = renameValue.trim()
+    if (trimmed && trimmed !== flow.title) {
+      onRename(flow.id, trimmed)
+    } else {
+      onRename(flow.id, flow.title)
+    }
+  }
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleRenameSubmit()
+    } else if (e.key === 'Escape') {
+      onRename(flow.id, flow.title)
+    }
+  }
+
+  // レーンカラードット（最大5色）
+  const laneColors = PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
+
   return (
-    <div data-testid={`flow-card-${flow.id}`} className={styles.card}>
-      <Link to={`/flows/${flow.id}`} data-testid={`flow-link-${flow.id}`} className={styles.link}>
-        <div className={styles.title}>{flow.title}</div>
-        <div className={styles.updatedAt}>更新: {formatRelativeTime(flow.updatedAt)}</div>
-        {flow.shareToken && (
-          <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>
-            共有中
-          </span>
+    <div
+      data-testid={`flow-card-${flow.id}`}
+      className={`${styles.card}${isHovered ? ` ${styles.cardHovered}` : ''}`}
+      onMouseEnter={() => onHover(flow.id)}
+      onMouseLeave={() => onHover(null)}
+    >
+      {/* サムネイル領域 */}
+      <div className={styles.thumbnail}>
+        <FlowThumbnail
+          themeId={flow.themeId}
+          laneCount={DEFAULT_LANE_COUNT}
+          nodeCount={DEFAULT_NODE_COUNT}
+        />
+
+        {/* ホバーオーバーレイ */}
+        {isHovered && (
+          <div className={styles.hoverOverlay}>
+            <Link
+              to={`/flows/${flow.id}`}
+              data-testid={`flow-link-${flow.id}`}
+              className={styles.openButton}
+            >
+              開く
+            </Link>
+          </div>
         )}
-      </Link>
-      <div className={styles.actions}>
-        <button
-          data-testid={`delete-flow-${flow.id}`}
-          onClick={handleDelete}
-          disabled={deleting}
-          className={`${styles.deleteBtn}${deleting ? ` ${styles.deleteBtnDisabled}` : ''}`}
-        >
-          {deleting ? '削除中...' : '削除'}
-        </button>
+
+        {/* メニューボタン（ホバー時のみ） */}
+        {isHovered && (
+          <button
+            data-testid={`card-menu-${flow.id}`}
+            className={styles.menuButton}
+            onClick={handleMenuClick}
+            aria-label="メニュー"
+          >
+            &#x22EF;
+          </button>
+        )}
       </div>
+
+      {/* 情報領域 */}
+      <div className={styles.info}>
+        {/* タイトル or リネーム入力 */}
+        {isRenaming ? (
+          <input
+            data-testid={`rename-input-${flow.id}`}
+            ref={renameInputRef}
+            type="text"
+            className={styles.renameInput}
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={handleRenameKeyDown}
+            onBlur={handleRenameSubmit}
+          />
+        ) : (
+          <div className={styles.title}>{flow.title}</div>
+        )}
+
+        {/* メタ情報行 */}
+        <div className={styles.meta}>
+          <div className={styles.laneDots}>
+            {laneColors.map((color, i) => (
+              <span
+                key={i}
+                data-testid="lane-dot"
+                className={styles.laneDot}
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+          <span className={styles.updatedAt}>更新: {formatRelativeTime(flow.updatedAt)}</span>
+          {flow.shareToken && (
+            <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>
+              共有中
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 非表示リンク (非ホバー時のdata-testid互換) */}
+      {!isHovered && (
+        <Link
+          to={`/flows/${flow.id}`}
+          data-testid={`flow-link-${flow.id}`}
+          className={styles.hiddenLink}
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* 非表示削除ボタン（後方互換性） */}
+      <button
+        data-testid={`delete-flow-${flow.id}`}
+        onClick={handleDelete}
+        disabled={deleting}
+        className={styles.hiddenDelete}
+        tabIndex={-1}
+        aria-hidden="true"
+      >
+        {deleting ? '削除中...' : '削除'}
+      </button>
     </div>
   )
 }
