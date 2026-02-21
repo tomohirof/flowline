@@ -41,7 +41,11 @@ export function FlowThumbnail({ themeId, laneCount, nodeCount }: FlowThumbnailPr
         return (
           <g key={li}>
             <rect
-              x={x} y={10} width={lw} height={80} rx={3}
+              x={x}
+              y={10}
+              width={lw}
+              height={80}
+              rx={3}
               fill={lbg}
               stroke={isDark ? '#333' : '#ddd'}
               strokeWidth={0.3}
@@ -53,13 +57,33 @@ export function FlowThumbnail({ themeId, laneCount, nodeCount }: FlowThumbnailPr
               return (
                 <g key={ri}>
                   <rect
-                    x={x + 3} y={ny} width={lw - 6} height={12} rx={2.5}
+                    x={x + 3}
+                    y={ny}
+                    width={lw - 6}
+                    height={12}
+                    rx={2.5}
                     fill={nbg}
                     stroke={isDark ? '#444' : '#e0e0e0'}
                     strokeWidth={0.3}
                   />
-                  <rect x={x + 5} y={ny + 2.5} width={8} height={2} rx={1} fill={c} opacity={0.25} />
-                  <rect x={x + 5} y={ny + 6} width={10} height={1.5} rx={0.75} fill="#999" opacity={0.2} />
+                  <rect
+                    x={x + 5}
+                    y={ny + 2.5}
+                    width={8}
+                    height={2}
+                    rx={1}
+                    fill={c}
+                    opacity={0.25}
+                  />
+                  <rect
+                    x={x + 5}
+                    y={ny + 6}
+                    width={10}
+                    height={1.5}
+                    rx={0.75}
+                    fill="#999"
+                    opacity={0.2}
+                  />
                 </g>
               )
             })}

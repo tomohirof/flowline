@@ -13,6 +13,7 @@
 ### Task 1: LandingPage全幅テスト作成
 
 **Files:**
+
 - Reference: `src/features/landing/LandingPage.test.tsx`
 - Reference: `src/index.css`
 
@@ -31,11 +32,13 @@ Expected: FAIL
 ### Task 2: index.css 修正
 
 **Files:**
+
 - Modify: `src/index.css`
 
 **Step 1: Viteデフォルトスタイルを削除・修正**
 
 修正後の `index.css`:
+
 ```css
 * {
   margin: 0;
@@ -65,6 +68,7 @@ Expected: PASS
 ### Task 3: App.css 削除
 
 **Files:**
+
 - Delete: `src/App.css`
 - Modify: `src/App.tsx:7`
 

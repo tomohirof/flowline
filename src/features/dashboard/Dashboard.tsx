@@ -16,14 +16,6 @@ import styles from './Dashboard.module.css'
 type SortMode = 'updated' | 'name'
 type ViewMode = 'grid' | 'list'
 
-const NAV_LABELS: Record<string, string> = {
-  recent: '最近',
-  all: 'すべてのファイル',
-  shared: '共有ファイル',
-  drafts: 'ドラフト',
-  trash: 'ごみ箱',
-}
-
 const DEFAULT_LANE_COUNT = 3
 
 export function Dashboard() {
@@ -134,7 +126,8 @@ export function Dashboard() {
     setFlows((prev) => prev.map((f) => (f.id === id ? { ...f, title: newTitle } : f)))
   }
 
-  const handleDuplicate = (_id: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleDuplicate = (id: string) => {
     // TODO: implement duplicate via GET detail + POST
   }
 
@@ -179,8 +172,6 @@ export function Dashboard() {
 
   // Lane colors for list view
   const getLaneColors = () => PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
-
-  const navLabel = NAV_LABELS[selectedNav] ?? 'マイフロー'
 
   return (
     <div data-testid="dashboard" className={styles.layout}>
@@ -308,17 +299,12 @@ export function Dashboard() {
                         {flow.title}
                       </Link>
                       {flow.shareToken && (
-                        <span
-                          data-testid={`share-badge-${flow.id}`}
-                          className={styles.shareBadge}
-                        >
+                        <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>
                           共有中
                         </span>
                       )}
                     </div>
-                    <div className={styles.listUpdated}>
-                      {formatRelativeTime(flow.updatedAt)}
-                    </div>
+                    <div className={styles.listUpdated}>{formatRelativeTime(flow.updatedAt)}</div>
                     <div className={styles.listLanes}>
                       {laneColors.map((color, i) => (
                         <span
