@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
@@ -53,11 +53,11 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   const totalW = LM + sortedLanes.length * LW + (sortedLanes.length - 1) * G + 28
   const totalH = TM + HH + rowCount * RH + 40
 
-  const laneX = useCallback((li: number) => LM + li * (LW + G), [LW, G])
-  const ct = useCallback(
-    (li: number, ri: number): Point => ({ x: laneX(li) + LW / 2, y: TM + HH + ri * RH + RH / 2 }),
-    [laneX, LW],
-  )
+  const laneX = (li: number) => LM + li * (LW + G)
+  const ct = (li: number, ri: number): Point => ({
+    x: laneX(li) + LW / 2,
+    y: TM + HH + ri * RH + RH / 2,
+  })
 
   // Build lane index map
   const laneIdToIndex: Record<string, number> = {}
@@ -174,7 +174,11 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className={styles.canvas} style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}>
+      <div
+        ref={containerRef}
+        className={styles.canvas}
+        style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}
+      >
         <svg
           className={styles.svg}
           width={totalW * zoom}
