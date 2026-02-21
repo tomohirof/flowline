@@ -126,8 +126,8 @@ export function Dashboard() {
     setFlows((prev) => prev.map((f) => (f.id === id ? { ...f, title: newTitle } : f)))
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDuplicate = (id: string) => {
+  const handleDuplicate = (_id: string) => {
+    void _id // suppress TS6133
     // TODO: implement duplicate via GET detail + POST
   }
 
