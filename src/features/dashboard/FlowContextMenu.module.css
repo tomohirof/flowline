@@ -1,0 +1,57 @@
+.menu {
+  position: fixed;
+  z-index: 300;
+  width: 180px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 5px;
+  border: 1px solid #ececf0;
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  animation: ctxIn 0.15s ease both;
+}
+
+@keyframes ctxIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.separator {
+  height: 1px;
+  background: #f0f0f4;
+  margin: 4px 0;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #444;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.item:hover {
+  background: #f5f5fa;
+}
+
+.itemDanger {
+  color: #e06060;
+}
+
+.itemDanger:hover {
+  background: #fff5f5;
+}

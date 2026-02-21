@@ -9,9 +9,10 @@ function Header() {
   const { user, loading, logout } = useAuth()
   const location = useLocation()
 
-  // Hide header on landing page, flow editor pages, and shared view (full-screen)
+  // Hide header on landing page, dashboard, flow editor pages, and shared view (full-screen)
   if (
     location.pathname === '/' ||
+    location.pathname === '/flows' ||
     location.pathname.match(/^\/flows\/[^/]+$/) ||
     location.pathname.match(/^\/shared\/[^/]+$/)
   ) {

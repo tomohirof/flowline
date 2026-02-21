@@ -174,7 +174,11 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className={styles.canvas} style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}>
+      <div
+        ref={containerRef}
+        className={styles.canvas}
+        style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}
+      >
         <svg
           className={styles.svg}
           width={totalW * zoom}

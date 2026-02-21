@@ -1,0 +1,187 @@
+.sidebar {
+  width: 220px;
+  border-right: 1px solid #ececf0;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem {
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #666;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+}
+
+.navItem:hover {
+  background: #f5f5fa;
+  color: #444;
+}
+
+.navItemActive {
+  background: #f0ebff;
+  color: #7c5cfc;
+  font-weight: 600;
+}
+
+.navIcon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.divider {
+  height: 1px;
+  background: #ececf0;
+  margin: 16px 0;
+}
+
+.userSection {
+  margin-bottom: 4px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+}
+
+.userAvatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.userName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #444;
+}
+
+.planBadge {
+  font-size: 9px;
+  font-weight: 600;
+  color: #7c5cfc;
+  background: #f0ebff;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  font-weight: 700;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+}
+
+.teamItem {
+  padding: 7px 10px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.teamItem:hover {
+  background: #f5f5fa;
+}
+
+.teamInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.teamIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #f0f0f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #999;
+}
+
+.teamCount {
+  font-size: 10px;
+  color: #ccc;
+  font-weight: 500;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.upgradeCard {
+  margin: 12px 4px 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fafafd;
+  border: 1px solid #ececf0;
+  text-align: center;
+}
+
+.upgradeIcon {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.upgradeText {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.upgradeBtn {
+  width: 100%;
+  height: 30px;
+  border: none;
+  border-radius: 7px;
+  background: #7c5cfc;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
