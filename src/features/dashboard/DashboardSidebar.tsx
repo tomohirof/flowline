@@ -71,9 +71,7 @@ export function DashboardSidebar({ selectedNav, onNavChange, userName }: Dashboa
       {/* Upgrade card */}
       <div className={styles.upgradeCard}>
         <div className={styles.upgradeIcon}>⊕</div>
-        <p className={styles.upgradeText}>
-          Proプランでチーム共有やバージョン履歴が使えます
-        </p>
+        <p className={styles.upgradeText}>Proプランでチーム共有やバージョン履歴が使えます</p>
         <button className={styles.upgradeBtn}>プランを表示</button>
       </div>
     </div>

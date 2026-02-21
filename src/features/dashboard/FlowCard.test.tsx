@@ -8,8 +8,21 @@ import type { FlowSummary } from '../editor/types'
 
 // FlowThumbnail をモック化（SVG描画の内部詳細はテスト不要）
 vi.mock('./FlowThumbnail', () => ({
-  FlowThumbnail: ({ themeId, laneCount, nodeCount }: { themeId: string; laneCount: number; nodeCount: number }) => (
-    <div data-testid="flow-thumbnail" data-theme={themeId} data-lanes={laneCount} data-nodes={nodeCount}>
+  FlowThumbnail: ({
+    themeId,
+    laneCount,
+    nodeCount,
+  }: {
+    themeId: string
+    laneCount: number
+    nodeCount: number
+  }) => (
+    <div
+      data-testid="flow-thumbnail"
+      data-theme={themeId}
+      data-lanes={laneCount}
+      data-nodes={nodeCount}
+    >
       thumbnail
     </div>
   ),

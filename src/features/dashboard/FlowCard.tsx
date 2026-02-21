@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import type { FlowSummary } from '../editor/types'
 import { PALETTES } from '../editor/theme-constants'
@@ -32,13 +32,27 @@ export function FlowCard({
   renamingId,
 }: FlowCardProps) {
   const isRenaming = renamingId === flow.id
-  const [renameValue, setRenameValue] = useState(flow.title)
   const renameInputRef = useRef<HTMLInputElement>(null)
 
+  // Focus and select input when entering rename mode via callback ref
+  const renameRefCallback = useCallback(
+    (node: HTMLInputElement | null) => {
+      renameInputRef.current = node
+      if (node && isRenaming) {
+        node.value = flow.title
+        requestAnimationFrame(() => {
+          node.focus()
+          node.select()
+        })
+      }
+    },
+    [isRenaming, flow.title],
+  )
+
+  // Also handle focus when isRenaming changes for already-mounted input
   useEffect(() => {
-    if (isRenaming) {
-      setRenameValue(flow.title)
-      // Focus after render
+    if (isRenaming && renameInputRef.current) {
+      renameInputRef.current.value = flow.title
       requestAnimationFrame(() => {
         renameInputRef.current?.focus()
         renameInputRef.current?.select()
@@ -60,7 +74,7 @@ export function FlowCard({
   }
 
   const handleRenameSubmit = () => {
-    const trimmed = renameValue.trim()
+    const trimmed = (renameInputRef.current?.value ?? '').trim()
     if (trimmed && trimmed !== flow.title) {
       onRename(flow.id, trimmed)
     } else {
@@ -127,11 +141,10 @@ export function FlowCard({
         {isRenaming ? (
           <input
             data-testid={`rename-input-${flow.id}`}
-            ref={renameInputRef}
+            ref={renameRefCallback}
             type="text"
             className={styles.renameInput}
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
+            defaultValue={flow.title}
             onKeyDown={handleRenameKeyDown}
             onBlur={handleRenameSubmit}
           />

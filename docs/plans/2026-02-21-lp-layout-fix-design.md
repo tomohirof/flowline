@@ -16,6 +16,7 @@ body {
 ```
 
 `display: flex` + `place-items: center` により:
+
 - `#root` が `flex: 0 1 auto`（デフォルト）で全幅に伸びない
 - `#root` の幅がコンテンツ幅（~1248px）に収縮
 - 全セクションが左寄せに見える
