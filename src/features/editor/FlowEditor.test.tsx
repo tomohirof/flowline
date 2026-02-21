@@ -184,17 +184,18 @@ describe('floating arrow controls (#46)', () => {
   })
 })
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import userEvent from '@testing-library/user-event'
 
 describe('connection drag handles (#47)', () => {
   it('should render circle handles on selected node', async () => {
     const flow = createMinimalFlow()
-    flow.nodes = [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 }]
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     // Click on node to select it
     const nodeRects = document.querySelectorAll('rect[rx="10"]')
-    const nodeRect = Array.from(nodeRects).find(r => r.getAttribute('width') === '152')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
     expect(nodeRect).toBeTruthy()
     if (nodeRect) await userEvent.click(nodeRect)
     // Should show 4 circle handles
@@ -205,7 +206,9 @@ describe('connection drag handles (#47)', () => {
   it('should update status bar hint text', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     const statusHints = document.querySelectorAll('[class*="statusTextHint"]')
-    const hintText = Array.from(statusHints).find(el => el.textContent?.includes('○をドラッグ:接続'))
+    const hintText = Array.from(statusHints).find((el) =>
+      el.textContent?.includes('○をドラッグ:接続'),
+    )
     expect(hintText).toBeTruthy()
   })
 })

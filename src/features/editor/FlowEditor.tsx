@@ -703,11 +703,17 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     if (connectFrom) {
       const pt = svgPt(e.clientX, e.clientY)
       for (const k of Object.keys(tasks)) {
-        const t = tasks[k], li = liMap[t.lid], ri = riMap[t.rid]
+        const t = tasks[k],
+          li = liMap[t.lid],
+          ri = riMap[t.rid]
         if (li === undefined || ri === undefined) continue
         const c = ct(li, ri)
-        if (Math.abs(pt.x - c.x) < TW / 2 + 4 && Math.abs(pt.y - c.y) < TH / 2 + 4 && k !== connectFrom) {
-          setArrows(p => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
+        if (
+          Math.abs(pt.x - c.x) < TW / 2 + 4 &&
+          Math.abs(pt.y - c.y) < TH / 2 + 4 &&
+          k !== connectFrom
+        ) {
+          setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
           break
         }
       }
@@ -2144,51 +2150,101 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               })()}
 
             {/* Connection handles on hovered or selected nodes */}
-            {!dragging && !editing && (() => {
-              const showKey = selTask || hovered
-              if (!showKey || !tasks[showKey]) return null
-              if (connectFrom && showKey === connectFrom && connectDragPt) return null
-              const t = tasks[showKey], li = liMap[t.lid], ri = riMap[t.rid]
-              if (li === undefined || ri === undefined) return null
-              const c = ct(li, ri)
-              const handles = [
-                { x: c.x, y: c.y - TH / 2 },
-                { x: c.x, y: c.y + TH / 2 },
-                { x: c.x - TW / 2, y: c.y },
-                { x: c.x + TW / 2, y: c.y },
-              ]
-              const isSel = selTask === showKey
-              return handles.map((h, i) => (
-                <g key={`ch-${i}`}>
-                  <circle cx={h.x} cy={h.y} r={isSel ? 6 : 5}
-                    data-testid="connection-handle"
-                    fill={T.nodeFill} stroke={T.accent} strokeWidth={1.5}
-                    style={{ cursor: 'crosshair', transition: 'r 0.1s' }}
-                    onMouseDown={(e: React.MouseEvent) => startConnectDrag(showKey, h.x, h.y, e)} />
-                  {isSel && <circle cx={h.x} cy={h.y} r={2.5} fill={T.accent} style={{ pointerEvents: 'none' }} />}
-                </g>
-              ))
-            })()}
+            {!dragging &&
+              !editing &&
+              (() => {
+                const showKey = selTask || hovered
+                if (!showKey || !tasks[showKey]) return null
+                if (connectFrom && showKey === connectFrom && connectDragPt) return null
+                const t = tasks[showKey],
+                  li = liMap[t.lid],
+                  ri = riMap[t.rid]
+                if (li === undefined || ri === undefined) return null
+                const c = ct(li, ri)
+                const handles = [
+                  { x: c.x, y: c.y - TH / 2 },
+                  { x: c.x, y: c.y + TH / 2 },
+                  { x: c.x - TW / 2, y: c.y },
+                  { x: c.x + TW / 2, y: c.y },
+                ]
+                const isSel = selTask === showKey
+                return handles.map((h, i) => (
+                  <g key={`ch-${i}`}>
+                    <circle
+                      cx={h.x}
+                      cy={h.y}
+                      r={isSel ? 6 : 5}
+                      data-testid="connection-handle"
+                      fill={T.nodeFill}
+                      stroke={T.accent}
+                      strokeWidth={1.5}
+                      style={{ cursor: 'crosshair', transition: 'r 0.1s' }}
+                      onMouseDown={(e: React.MouseEvent) => startConnectDrag(showKey, h.x, h.y, e)}
+                    />
+                    {isSel && (
+                      <circle
+                        cx={h.x}
+                        cy={h.y}
+                        r={2.5}
+                        fill={T.accent}
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    )}
+                  </g>
+                ))
+              })()}
 
             {/* Highlight target nodes while dragging connection */}
-            {connectFrom && connectDragPt && Object.keys(tasks).map(k => {
-              if (k === connectFrom) return null
-              const t = tasks[k], li = liMap[t.lid], ri = riMap[t.rid]
-              if (li === undefined || ri === undefined) return null
-              const c = ct(li, ri)
-              const isNear = Math.abs(connectDragPt.x - c.x) < TW / 2 + 20 && Math.abs(connectDragPt.y - c.y) < TH / 2 + 20
-              if (!isNear) return null
-              return <rect key={`ct-${k}`} x={c.x - TW / 2 - 2} y={c.y - TH / 2 - 2} width={TW + 4} height={TH + 4}
-                rx={12} fill={`${T.accent}08`} stroke={T.accent} strokeWidth={1.5} strokeDasharray="4,3"
-                style={{ pointerEvents: 'none' }} />
-            })}
+            {connectFrom &&
+              connectDragPt &&
+              Object.keys(tasks).map((k) => {
+                if (k === connectFrom) return null
+                const t = tasks[k],
+                  li = liMap[t.lid],
+                  ri = riMap[t.rid]
+                if (li === undefined || ri === undefined) return null
+                const c = ct(li, ri)
+                const isNear =
+                  Math.abs(connectDragPt.x - c.x) < TW / 2 + 20 &&
+                  Math.abs(connectDragPt.y - c.y) < TH / 2 + 20
+                if (!isNear) return null
+                return (
+                  <rect
+                    key={`ct-${k}`}
+                    x={c.x - TW / 2 - 2}
+                    y={c.y - TH / 2 - 2}
+                    width={TW + 4}
+                    height={TH + 4}
+                    rx={12}
+                    fill={`${T.accent}08`}
+                    stroke={T.accent}
+                    strokeWidth={1.5}
+                    strokeDasharray="4,3"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                )
+              })}
 
             {/* Temp connection line while dragging */}
             {connectFrom && connectDragPt && connectFromPt && (
               <g style={{ pointerEvents: 'none' }}>
-                <line x1={connectFromPt.x} y1={connectFromPt.y} x2={connectDragPt.x} y2={connectDragPt.y}
-                  stroke={T.accent} strokeWidth={2} strokeDasharray="6,4" opacity={0.6} />
-                <circle cx={connectDragPt.x} cy={connectDragPt.y} r={4} fill={T.accent} opacity={0.5} />
+                <line
+                  x1={connectFromPt.x}
+                  y1={connectFromPt.y}
+                  x2={connectDragPt.x}
+                  y2={connectDragPt.y}
+                  stroke={T.accent}
+                  strokeWidth={2}
+                  strokeDasharray="6,4"
+                  opacity={0.6}
+                />
+                <circle
+                  cx={connectDragPt.x}
+                  cy={connectDragPt.y}
+                  r={4}
+                  fill={T.accent}
+                  opacity={0.5}
+                />
               </g>
             )}
           </svg>
