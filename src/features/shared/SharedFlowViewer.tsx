@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
+
 import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
@@ -38,11 +39,11 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   const totalW = LM + sortedLanes.length * LW + (sortedLanes.length - 1) * G + 28
   const totalH = TM + HH + rowCount * RH + 40
 
-  const laneX = useCallback((li: number) => LM + li * (LW + G), [G])
-  const ct = useCallback(
-    (li: number, ri: number): Point => ({ x: laneX(li) + LW / 2, y: TM + HH + ri * RH + RH / 2 }),
-    [laneX],
-  )
+  const laneX = (li: number) => LM + li * (LW + G)
+  const ct = (li: number, ri: number): Point => ({
+    x: laneX(li) + LW / 2,
+    y: TM + HH + ri * RH + RH / 2,
+  })
 
   // Build lane index map
   const laneIdToIndex: Record<string, number> = {}
