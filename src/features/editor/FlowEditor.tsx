@@ -417,6 +417,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [connectFrom, setConnectFrom] = useState<string | null>(null)
+  const [connectDragPt, setConnectDragPt] = useState<Point | null>(null)
+  const [connectFromPt, setConnectFromPt] = useState<Point | null>(null)
   const [dragging, setDragging] = useState<DragState | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [activeTool, setActiveTool] = useState<ToolId | string>('select')
@@ -619,6 +621,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       }
       if (e.key === 'Escape') {
         setConnectFrom(null)
+        setConnectDragPt(null)
+        setConnectFromPt(null)
         setSelTask(null)
         setSelArrow(null)
         setEditArrowComment(null)
@@ -676,13 +680,43 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelArrow(null)
     setSelLane(null)
   }
+  const startConnectDrag = (k: string, hx: number, hy: number, e: React.MouseEvent): void => {
+    e.stopPropagation()
+    e.preventDefault()
+    setConnectFrom(k)
+    setConnectFromPt({ x: hx, y: hy })
+    setConnectDragPt({ x: hx, y: hy })
+    setSelTask(null)
+    setActiveTool('connect')
+  }
   const onSvgMouseMove = (e: React.MouseEvent): void => {
-    if (!dragging) return
     const pt = svgPt(e.clientX, e.clientY)
+    if (connectFrom) {
+      setConnectDragPt(pt)
+      return
+    }
+    if (!dragging) return
     const cell = cellFromPos(pt.x, pt.y)
     setDragOver(cell && cell.key !== dragging.key && !tasks[cell.key] ? cell.key : null)
   }
-  const onSvgMouseUp = (): void => {
+  const onSvgMouseUp = (e: React.MouseEvent): void => {
+    if (connectFrom) {
+      const pt = svgPt(e.clientX, e.clientY)
+      for (const k of Object.keys(tasks)) {
+        const t = tasks[k], li = liMap[t.lid], ri = riMap[t.rid]
+        if (li === undefined || ri === undefined) continue
+        const c = ct(li, ri)
+        if (Math.abs(pt.x - c.x) < TW / 2 + 4 && Math.abs(pt.y - c.y) < TH / 2 + 4 && k !== connectFrom) {
+          setArrows(p => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
+          break
+        }
+      }
+      setConnectFrom(null)
+      setConnectDragPt(null)
+      setConnectFromPt(null)
+      setActiveTool('select')
+      return
+    }
     if (!dragging) return
     if (dragOver) {
       for (let li = 0; li < lanes.length; li++)
@@ -883,6 +917,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setShowThemePicker(false)
     if (connectFrom) {
       setConnectFrom(null)
+      setConnectDragPt(null)
+      setConnectFromPt(null)
       setActiveTool('select')
     }
   }
@@ -1238,7 +1274,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         <div className={styles.spacer} />
         {connectFrom && (
           <div className={styles.connectBanner}>
-            <span className={styles.connectBannerText}>{'→ 接続先をクリック'}</span>
+            <span className={styles.connectBannerText}>{'→ 接続先にドロップ'}</span>
             <button
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation()
@@ -1321,6 +1357,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               if (dragging) {
                 setDragging(null)
                 setDragOver(null)
+              }
+              if (connectFrom) {
+                setConnectFrom(null)
+                setConnectDragPt(null)
+                setConnectFromPt(null)
+                setActiveTool('select')
               }
             }}
           >
@@ -2101,38 +2143,54 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                 )
               })()}
 
-            {/* Selection handles */}
-            {selTask &&
-              tasks[selTask] &&
-              !connectFrom &&
-              !dragging &&
-              (() => {
-                const t = tasks[selTask],
-                  li = liMap[t.lid],
-                  ri = riMap[t.rid]
-                if (li === undefined || ri === undefined) return null
-                const c = ct(li, ri)
-                return (
-                  [
-                    [c.x - TW / 2, c.y],
-                    [c.x + TW / 2, c.y],
-                    [c.x, c.y - TH / 2],
-                    [c.x, c.y + TH / 2],
-                  ] as [number, number][]
-                ).map(([hx, hy], i) => (
-                  <rect
-                    key={i}
-                    x={hx - 3}
-                    y={hy - 3}
-                    width={6}
-                    height={6}
-                    fill={T.nodeFill}
-                    stroke={T.accent}
-                    strokeWidth={1.2}
-                    rx={1.5}
-                  />
-                ))
-              })()}
+            {/* Connection handles on hovered or selected nodes */}
+            {!dragging && !editing && (() => {
+              const showKey = selTask || hovered
+              if (!showKey || !tasks[showKey]) return null
+              if (connectFrom && showKey === connectFrom && connectDragPt) return null
+              const t = tasks[showKey], li = liMap[t.lid], ri = riMap[t.rid]
+              if (li === undefined || ri === undefined) return null
+              const c = ct(li, ri)
+              const handles = [
+                { x: c.x, y: c.y - TH / 2 },
+                { x: c.x, y: c.y + TH / 2 },
+                { x: c.x - TW / 2, y: c.y },
+                { x: c.x + TW / 2, y: c.y },
+              ]
+              const isSel = selTask === showKey
+              return handles.map((h, i) => (
+                <g key={`ch-${i}`}>
+                  <circle cx={h.x} cy={h.y} r={isSel ? 6 : 5}
+                    data-testid="connection-handle"
+                    fill={T.nodeFill} stroke={T.accent} strokeWidth={1.5}
+                    style={{ cursor: 'crosshair', transition: 'r 0.1s' }}
+                    onMouseDown={(e: React.MouseEvent) => startConnectDrag(showKey, h.x, h.y, e)} />
+                  {isSel && <circle cx={h.x} cy={h.y} r={2.5} fill={T.accent} style={{ pointerEvents: 'none' }} />}
+                </g>
+              ))
+            })()}
+
+            {/* Highlight target nodes while dragging connection */}
+            {connectFrom && connectDragPt && Object.keys(tasks).map(k => {
+              if (k === connectFrom) return null
+              const t = tasks[k], li = liMap[t.lid], ri = riMap[t.rid]
+              if (li === undefined || ri === undefined) return null
+              const c = ct(li, ri)
+              const isNear = Math.abs(connectDragPt.x - c.x) < TW / 2 + 20 && Math.abs(connectDragPt.y - c.y) < TH / 2 + 20
+              if (!isNear) return null
+              return <rect key={`ct-${k}`} x={c.x - TW / 2 - 2} y={c.y - TH / 2 - 2} width={TW + 4} height={TH + 4}
+                rx={12} fill={`${T.accent}08`} stroke={T.accent} strokeWidth={1.5} strokeDasharray="4,3"
+                style={{ pointerEvents: 'none' }} />
+            })}
+
+            {/* Temp connection line while dragging */}
+            {connectFrom && connectDragPt && connectFromPt && (
+              <g style={{ pointerEvents: 'none' }}>
+                <line x1={connectFromPt.x} y1={connectFromPt.y} x2={connectDragPt.x} y2={connectDragPt.y}
+                  stroke={T.accent} strokeWidth={2} strokeDasharray="6,4" opacity={0.6} />
+                <circle cx={connectDragPt.x} cy={connectDragPt.y} r={4} fill={T.accent} opacity={0.5} />
+              </g>
+            )}
           </svg>
         </div>
 
@@ -2159,7 +2217,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             ? '接続先クリック · Esc解除'
             : dragging
               ? '空きセルにドロップ'
-              : 'クリック:追加 · ドラッグ:移動 · ヘッダ:レーン選択'}
+              : 'クリック:追加 · ドラッグ:移動 · ○をドラッグ:接続'}
         </span>
       </div>
 
