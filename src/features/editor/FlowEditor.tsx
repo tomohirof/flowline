@@ -709,8 +709,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         if (li === undefined || ri === undefined) continue
         const c = ct(li, ri)
         if (
-          Math.abs(pt.x - c.x) < TW / 2 + 4 &&
-          Math.abs(pt.y - c.y) < TH / 2 + 4 &&
+          Math.abs(pt.x - c.x) < TW / 2 + 12 &&
+          Math.abs(pt.y - c.y) < TH / 2 + 12 &&
           k !== connectFrom
         ) {
           setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
@@ -2205,8 +2205,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                 if (li === undefined || ri === undefined) return null
                 const c = ct(li, ri)
                 const isNear =
-                  Math.abs(connectDragPt.x - c.x) < TW / 2 + 20 &&
-                  Math.abs(connectDragPt.y - c.y) < TH / 2 + 20
+                  Math.abs(connectDragPt.x - c.x) < TW / 2 + 12 &&
+                  Math.abs(connectDragPt.y - c.y) < TH / 2 + 12
                 if (!isNear) return null
                 return (
                   <rect
