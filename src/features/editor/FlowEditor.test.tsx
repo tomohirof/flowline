@@ -37,3 +37,50 @@ describe('FlowEditor', () => {
     })
   })
 })
+
+describe('visual constants (#44, #45)', () => {
+  it('should render node card with updated dimensions (152x56)', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 }]
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const nodeRects = document.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find(r => r.getAttribute('width') === '152' && r.getAttribute('height') === '56')
+    expect(nodeRect).toBeTruthy()
+  })
+
+  it('should render node label with fontSize 13.5', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 }]
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const texts = document.querySelectorAll('text')
+    const nodeLabel = Array.from(texts).find(t => t.textContent === 'テスト' && t.getAttribute('font-size') === '13.5')
+    expect(nodeLabel).toBeTruthy()
+  })
+
+  it('should render arrow with strokeWidth 2 and updated marker', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }]
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const arrowPath = document.querySelector('path[marker-end]')
+    expect(arrowPath?.getAttribute('stroke-width')).toBe('2')
+    const marker = document.querySelector('marker')
+    expect(marker?.getAttribute('markerWidth')).toBe('9')
+  })
+
+  it('should render comment label with fontSize 12 and height 24', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: 'テストコメント' }]
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const commentTexts = document.querySelectorAll('text')
+    const commentLabel = Array.from(commentTexts).find(t => t.textContent === 'テストコメント' && t.getAttribute('font-size') === '12')
+    expect(commentLabel).toBeTruthy()
+  })
+})
