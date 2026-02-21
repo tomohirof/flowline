@@ -20,6 +20,7 @@ import type {
   SaveStatus,
 } from './types'
 import { PALETTES, THEMES } from './theme-constants'
+import { calcLaneWidth } from './calcLaneWidth'
 
 const uid = (): string => crypto.randomUUID()
 
@@ -542,14 +543,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   }, [snap])
 
   const T = THEMES[themeId]
-  const LW = 178,
-    RH = 84,
+  const RH = 84,
     HH = 46,
     TW = 144,
     TH = 52,
     LM = 28,
     TM = 24,
     G = T.laneGap
+  const LW = calcLaneWidth(containerSize.width, lanes.length, LM, G)
   const totalW = LM + lanes.length * LW + (lanes.length - 1) * G + 28
   const totalH = TM + HH + rows.length * RH + 40
   const svgW = Math.max(containerSize.width, (totalW + LM) * zoom)
@@ -559,10 +560,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   lanes.forEach((l, i) => (liMap[l.id] = i))
   const riMap: Record<string, number> = {}
   rows.forEach((r, i) => (riMap[r.id] = i))
-  const laneX = useCallback((li: number): number => LM + li * (LW + G), [G])
+  const laneX = useCallback((li: number): number => LM + li * (LW + G), [LW, G])
   const ct = useCallback(
     (li: number, ri: number): Point => ({ x: laneX(li) + LW / 2, y: TM + HH + ri * RH + RH / 2 }),
-    [laneX],
+    [laneX, LW],
   )
   const isDark = themeId === 'midnight'
 
