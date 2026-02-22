@@ -651,3 +651,132 @@ describe('editor user avatar and UserMenuPanel (#58)', () => {
     expect(container.querySelector('[data-testid="user-menu-panel"]')).toBeNull()
   })
 })
+
+describe('Multi-select (#76)', () => {
+  const createFlowWith2Nodes = (): Flow => {
+    const flow = createMinimalFlow()
+    flow.lanes = [
+      { id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 },
+      { id: 'lane-2', name: 'レーン2', colorIndex: 1, position: 1 },
+    ]
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'タスクA', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-2', rowIndex: 0, label: 'タスクB', note: null, orderIndex: 1 },
+    ]
+    return flow
+  }
+
+  const findNodeRects = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('rect[rx="10"]')).filter(
+      (r) => r.getAttribute('width') === '152',
+    )
+
+  it('should enter multi-select mode when Shift+clicking two nodes', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    expect(rects.length).toBe(2)
+
+    // Shift+click first node, then Shift+click second node
+    fireEvent.click(rects[0], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    // Panel header should show "2件選択"
+    expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should clear multi-select on normal click', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+
+    // Shift+click both nodes
+    fireEvent.click(rects[0], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    // Multi-select panel should be visible
+    expect(container.querySelector('[data-testid="multi-delete-btn"]')).toBeTruthy()
+
+    // Normal click on background clears multi-select
+    const svg = container.querySelector('[data-testid="canvas-svg"]')!
+    fireEvent.click(svg)
+
+    // Multi-select panel should be gone
+    expect(container.querySelector('[data-testid="multi-delete-btn"]')).toBeNull()
+    expect(container.querySelector('[data-testid="multi-deselect-btn"]')).toBeNull()
+  })
+
+  it('should show multi-select panel with delete and deselect buttons', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+
+    fireEvent.click(rects[0], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    expect(container.querySelector('[data-testid="multi-delete-btn"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="multi-deselect-btn"]')).toBeTruthy()
+  })
+
+  it('should show Shift+click hint in default status bar', () => {
+    render(<FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />)
+    const hints = document.querySelectorAll('[class*="statusTextHint"]')
+    const shiftHint = Array.from(hints).find((el) =>
+      el.textContent?.includes('Shift+クリック:複数選択'),
+    )
+    expect(shiftHint).toBeTruthy()
+  })
+
+  it('should show multi-select hint in status bar when nodes are selected', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+
+    fireEvent.click(rects[0], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    const hints = document.querySelectorAll('[class*="statusTextHint"]')
+    const multiHint = Array.from(hints).find((el) => el.textContent?.includes('件選択中'))
+    expect(multiHint).toBeTruthy()
+  })
+
+  it('should clear multi-select when deselect button is clicked', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+
+    fireEvent.click(rects[0], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    // Multi-select panel should be visible
+    const deselectBtn = container.querySelector('[data-testid="multi-deselect-btn"]') as HTMLElement
+    expect(deselectBtn).toBeTruthy()
+    fireEvent.click(deselectBtn)
+
+    // Multi-select panel should be gone after deselect
+    expect(container.querySelector('[data-testid="multi-delete-btn"]')).toBeNull()
+    expect(container.querySelector('[data-testid="multi-deselect-btn"]')).toBeNull()
+  })
+
+  it('should seed selected node into multi-select on first Shift+click', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+
+    // Normal click on first node to select it
+    fireEvent.click(rects[0])
+    expect(screen.getAllByText('ノード').length).toBeGreaterThanOrEqual(1)
+
+    // Shift+click on second node - should seed first node into multiSel too
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    // Both nodes should be in multi-select: 2件選択
+    expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+  })
+})
