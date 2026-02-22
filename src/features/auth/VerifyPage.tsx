@@ -6,16 +6,12 @@ import styles from './VerifyPage.module.css'
 export function VerifyPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
-  const [error, setError] = useState('')
   const token = searchParams.get('token')
+  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(token ? 'verifying' : 'error')
+  const [error, setError] = useState(token ? '' : '認証トークンが見つかりません')
 
   useEffect(() => {
-    if (!token) {
-      setStatus('error')
-      setError('認証トークンが見つかりません')
-      return
-    }
+    if (!token) return
 
     apiFetch<{ verified: boolean }>(`/auth/verify?token=${token}`)
       .then(() => {

@@ -7,7 +7,7 @@ interface User {
   name: string
 }
 
-export interface RegisterResult {
+interface RegisterResult {
   needsVerification: true
   email: string
 }
