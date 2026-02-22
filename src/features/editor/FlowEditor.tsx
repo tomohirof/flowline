@@ -434,6 +434,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [editing, setEditing] = useState<string | null>(null)
   const [editLane, setEditLane] = useState<string | null>(null)
   const [selTask, setSelTask] = useState<string | null>(null)
+  const [multiSel, setMultiSel] = useState<Set<string>>(new Set())
   const [selArrow, setSelArrow] = useState<string | null>(null)
   const [editArrowComment, setEditArrowComment] = useState<string | null>(null)
   const [selLane, setSelLane] = useState<string | null>(null)
@@ -595,6 +596,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelTask(null)
     setSelArrow(null)
     setSelLane(null)
+    setMultiSel(new Set())
     setEditing(null)
     undoPrevSnap.current = s
   }
@@ -680,7 +682,22 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           (document.activeElement as HTMLElement)?.tagName === 'INPUT'
         )
           return
-        if (selArrow) {
+        if (multiSel.size > 0) {
+          setTasks((p) => {
+            const n = { ...p }
+            multiSel.forEach((k) => delete n[k])
+            return n
+          })
+          setNotes((p) => {
+            const n = { ...p }
+            multiSel.forEach((k) => delete n[k])
+            return n
+          })
+          setOrder((p) => p.filter((x) => !multiSel.has(x)))
+          setArrows((p) => p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)))
+          setMultiSel(new Set())
+          e.preventDefault()
+        } else if (selArrow) {
           setArrows((p) => p.filter((a) => a.id !== selArrow))
           setSelArrow(null)
           e.preventDefault()
@@ -697,6 +714,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         setSelArrow(null)
         setEditArrowComment(null)
         setSelLane(null)
+        setMultiSel(new Set())
         setDragging(null)
         setDragOver(null)
         setActiveTool('select')
@@ -705,7 +723,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [selArrow, selTask, editing, editLane, editTitle, editNote, undo, redo])
+  }, [selArrow, selTask, editing, editLane, editTitle, editNote, undo, redo, multiSel])
 
   const moveLane = (id: string, dir: number): void => {
     setLanes((prev) => {
@@ -749,6 +767,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelTask(null)
     setSelArrow(null)
     setSelLane(null)
+    setMultiSel(new Set())
   }
   const startConnectDrag = (k: string, hx: number, hy: number, e: React.MouseEvent): void => {
     e.stopPropagation()
@@ -844,6 +863,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       setActiveTool('select')
       return
     }
+    setMultiSel(new Set())
     if (tasks[k]) {
       setEditing(k)
       setSelArrow(null)
@@ -876,9 +896,23 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       setActiveTool('select')
       return
     }
-    setSelTask(selTask === k ? null : k)
-    setSelArrow(null)
-    setSelLane(null)
+    if (e.shiftKey) {
+      setMultiSel((prev) => {
+        const next = new Set(prev)
+        if (selTask && prev.size === 0) next.add(selTask)
+        if (next.has(k)) next.delete(k)
+        else next.add(k)
+        return next
+      })
+      setSelTask(null)
+      setSelArrow(null)
+      setSelLane(null)
+    } else {
+      setMultiSel(new Set())
+      setSelTask(selTask === k ? null : k)
+      setSelArrow(null)
+      setSelLane(null)
+    }
   }
   const startConnect = (k: string): void => {
     setConnectFrom(k)
@@ -969,6 +1003,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelTask(null)
     setSelArrow(null)
     setSelLane(null)
+    setMultiSel(new Set())
     setEditArrowComment(null)
     setShowThemePicker(false)
     if (connectFrom) {
@@ -1020,6 +1055,169 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
 
   // --- Right Panel ---
   const renderRightPanel = (): ReactNode => {
+    // Multiple nodes selected
+    if (multiSel.size > 0) {
+      return (
+        <>
+          <PanelSection label="">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span className={styles.multiSelBadge}>{multiSel.size}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: T.panelText }}>
+                ノード選択中
+              </span>
+            </div>
+            <span style={{ fontSize: 10, color: T.panelLabel }}>
+              Shift+クリックで追加/解除 · Delete で一括削除
+            </span>
+          </PanelSection>
+          <PanelSection label="背景色">
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {(isDark ? NODE_COLORS_DARK : NODE_COLORS).map((nc) => (
+                <div
+                  key={nc.id}
+                  onClick={() =>
+                    setTasks((p) => {
+                      const n = { ...p }
+                      multiSel.forEach((k) => {
+                        if (n[k]) n[k] = { ...n[k], bg: nc.fill || undefined }
+                      })
+                      return n
+                    })
+                  }
+                  title={nc.label}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    background: nc.fill || T.nodeFill,
+                    border: `1.5px solid ${nc.dot}`,
+                    transition: 'all 0.1s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {nc.fill === null && (
+                    <span style={{ fontSize: 10, color: T.panelLabel }}>&#x2298;</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </PanelSection>
+          <PanelSection label="枠の色">
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {LINE_COLORS.map((lc) => (
+                <div
+                  key={lc.id}
+                  onClick={() =>
+                    setTasks((p) => {
+                      const n = { ...p }
+                      multiSel.forEach((k) => {
+                        if (n[k]) n[k] = { ...n[k], strokeColor: lc.color || undefined }
+                      })
+                      return n
+                    })
+                  }
+                  title={lc.label}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    background: T.nodeFill,
+                    border: `2px solid ${lc.color || T.nodeStroke}`,
+                    transition: 'all 0.1s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {lc.color === null && (
+                    <span style={{ fontSize: 10, color: T.panelLabel }}>&#x2298;</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </PanelSection>
+          <PanelSection label="枠の種類">
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {STROKE_STYLES.map((ss) => (
+                <div
+                  key={ss.id}
+                  onClick={() =>
+                    setTasks((p) => {
+                      const n = { ...p }
+                      multiSel.forEach((k) => {
+                        if (n[k]) n[k] = { ...n[k], dash: ss.dash === 'none' ? undefined : ss.dash }
+                      })
+                      return n
+                    })
+                  }
+                  title={ss.label}
+                  style={{
+                    flex: 1,
+                    minWidth: 42,
+                    height: 30,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    border: `1px solid ${T.inputBorder}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.1s',
+                  }}
+                >
+                  <svg width="32" height="2" viewBox="0 0 32 2">
+                    <line
+                      x1="0"
+                      y1="1"
+                      x2="32"
+                      y2="1"
+                      stroke={T.panelText}
+                      strokeWidth="2"
+                      strokeDasharray={ss.dash}
+                    />
+                  </svg>
+                </div>
+              ))}
+            </div>
+          </PanelSection>
+          <PanelSection label="操作">
+            <button
+              className={styles.dangerBtn}
+              onClick={() => {
+                setTasks((p) => {
+                  const n = { ...p }
+                  multiSel.forEach((k) => delete n[k])
+                  return n
+                })
+                setNotes((p) => {
+                  const n = { ...p }
+                  multiSel.forEach((k) => delete n[k])
+                  return n
+                })
+                setOrder((p) => p.filter((x) => !multiSel.has(x)))
+                setArrows((p) => p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)))
+                setMultiSel(new Set())
+              }}
+              data-testid="multi-delete-btn"
+            >
+              {multiSel.size}件を削除
+            </button>
+            <button
+              className={styles.panelBtn}
+              onClick={() => setMultiSel(new Set())}
+              style={{ marginTop: 6 }}
+              data-testid="multi-deselect-btn"
+            >
+              選択解除
+            </button>
+          </PanelSection>
+        </>
+      )
+    }
     // Node selected
     if (selTask && selTaskData) {
       const lane = lanes.find((l) => l.id === selTaskData.lid)
@@ -1818,6 +2016,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       setSelLane(selLane === lane.id ? null : lane.id)
                       setSelTask(null)
                       setSelArrow(null)
+                      setMultiSel(new Set())
                     }}
                     onDoubleClick={(e: React.MouseEvent) => {
                       e.stopPropagation()
@@ -2118,6 +2317,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                 const c = ct(li, ri),
                   p = PALETTES[lane.ci]
                 const isSel = selTask === k,
+                  isMulti = multiSel.has(k),
                   isLast = order.length > 0 && order[order.length - 1] === k
                 const oi = order.indexOf(k),
                   isConnSrc = connectFrom === k,
@@ -2150,13 +2350,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       stroke={
                         isConnSrc
                           ? T.accent
-                          : isSel
+                          : isSel || isMulti
                             ? T.nodeSelStroke
                             : isConnTgt && isHov
                               ? T.accent
                               : task.strokeColor || T.nodeStroke
                       }
-                      strokeWidth={isConnSrc || isSel ? 2 : 1.2}
+                      strokeWidth={isConnSrc || isSel || isMulti ? 2 : 1.2}
                       strokeDasharray={isConnSrc ? '4,3' : task.dash || 'none'}
                       rx={10}
                       style={{
@@ -2168,6 +2368,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         e.stopPropagation()
                         setEditing(k)
                         setSelTask(k)
+                        setMultiSel(new Set())
                         setTimeout(() => inputRef.current?.focus(), 40)
                       }}
                       onMouseDown={(e: React.MouseEvent) => {
@@ -2194,8 +2395,21 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     >
                       {lane.name}
                     </text>
-                    {isLast && !isSel && !connectFrom && (
+                    {isLast && !isSel && !isMulti && !connectFrom && (
                       <circle cx={c.x - TW / 2 + 10} cy={c.y - TH / 2 + 10} r={3} fill="#66BB6A" />
+                    )}
+                    {isMulti && (
+                      <g>
+                        <circle cx={c.x + TW / 2 - 6} cy={c.y - TH / 2 + 6} r={8} fill={T.accent} />
+                        <polyline
+                          points={`${c.x + TW / 2 - 10},${c.y - TH / 2 + 6} ${c.x + TW / 2 - 7},${c.y - TH / 2 + 9} ${c.x + TW / 2 - 2},${c.y - TH / 2 + 3}`}
+                          fill="none"
+                          stroke="#fff"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
                     )}
                     {oi !== -1 && !connectFrom && !dragging && editorSettings.showOrderBadge && (
                       <g>
@@ -2549,6 +2763,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             {/* Connection handles on hovered or selected nodes */}
             {!dragging &&
               !editing &&
+              multiSel.size === 0 &&
               (() => {
                 const showKey = selTask || hovered
                 if (!showKey || !tasks[showKey]) return null
@@ -2651,7 +2866,15 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className={styles.rightPanel}>
           <div className={styles.rightPanelHeader}>
             <span className={styles.rightPanelTitle}>
-              {selTask ? 'ノード' : selArrow ? '接続線' : selLane ? 'レーン' : 'プロパティ'}
+              {multiSel.size > 0
+                ? `${multiSel.size}件選択`
+                : selTask
+                  ? 'ノード'
+                  : selArrow
+                    ? '接続線'
+                    : selLane
+                      ? 'レーン'
+                      : 'プロパティ'}
             </span>
           </div>
           {renderRightPanel()}
@@ -2666,11 +2889,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         <span className={styles.statusTextFaded}>{'⌘Z:戻す · ⌘⇧Z:やり直す'}</span>
         <div style={{ flex: 1 }} />
         <span className={styles.statusTextHint}>
-          {connectFrom
-            ? '接続先クリック · Esc解除'
-            : dragging
-              ? '空きセルにドロップ'
-              : 'クリック:追加 · ドラッグ:移動 · ○をドラッグ:接続'}
+          {multiSel.size > 0
+            ? `${multiSel.size}件選択中 · Shift+クリックで追加 · Delete削除`
+            : connectFrom
+              ? '接続先クリック · Esc解除'
+              : dragging
+                ? '空きセルにドロップ'
+                : 'クリック:追加 · ドラッグ:移動 · ○:接続 · Shift+クリック:複数選択'}
         </span>
       </div>
 
