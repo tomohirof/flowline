@@ -921,7 +921,9 @@ describe('IME composition Enter (#87)', () => {
     fireEvent.keyDown(nodeInput, { key: 'Enter', isComposing: true })
 
     // Node edit input should still be visible
-    const nodeInputAfter = document.querySelector('input[class*="nodeEditInput"]') as HTMLInputElement
+    const nodeInputAfter = document.querySelector(
+      'input[class*="nodeEditInput"]',
+    ) as HTMLInputElement
     expect(nodeInputAfter).toBeTruthy()
     vi.useRealTimers()
   })
@@ -934,7 +936,8 @@ describe('IME composition Enter (#87)', () => {
     // Find the transparent rect overlay on the lane header and double-click it
     const allRects = container.querySelectorAll('rect')
     const laneHeaderRect = Array.from(allRects).find(
-      (r) => r.getAttribute('fill') === 'transparent' && (r as HTMLElement).style.cursor === 'pointer',
+      (r) =>
+        r.getAttribute('fill') === 'transparent' && (r as HTMLElement).style.cursor === 'pointer',
     )
     expect(laneHeaderRect).toBeTruthy()
     fireEvent.dblClick(laneHeaderRect!)
@@ -950,7 +953,9 @@ describe('IME composition Enter (#87)', () => {
     fireEvent.keyDown(laneInput, { key: 'Enter', isComposing: true })
 
     // Lane name input should still be visible
-    const laneInputAfter = document.querySelector('input[class*="laneNameInput"]') as HTMLInputElement
+    const laneInputAfter = document.querySelector(
+      'input[class*="laneNameInput"]',
+    ) as HTMLInputElement
     expect(laneInputAfter).toBeTruthy()
     vi.useRealTimers()
   })
@@ -980,17 +985,23 @@ describe('IME composition Enter (#87)', () => {
 
     // Wait for the arrow comment input to appear
     await waitFor(() => {
-      const commentInput = container.querySelector('input[placeholder="コメント…"]') as HTMLInputElement
+      const commentInput = container.querySelector(
+        'input[placeholder="コメント…"]',
+      ) as HTMLInputElement
       expect(commentInput).toBeTruthy()
     })
 
-    const commentInput = container.querySelector('input[placeholder="コメント…"]') as HTMLInputElement
+    const commentInput = container.querySelector(
+      'input[placeholder="コメント…"]',
+    ) as HTMLInputElement
 
     // Press Enter with isComposing=true (simulating IME composition)
     fireEvent.keyDown(commentInput, { key: 'Enter', isComposing: true })
 
     // Arrow comment input should still be visible
-    const commentInputAfter = container.querySelector('input[placeholder="コメント…"]') as HTMLInputElement
+    const commentInputAfter = container.querySelector(
+      'input[placeholder="コメント…"]',
+    ) as HTMLInputElement
     expect(commentInputAfter).toBeTruthy()
   })
 })

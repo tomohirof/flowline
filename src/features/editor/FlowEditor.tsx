@@ -2743,7 +2743,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         )
                       }}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                        if ((e.key === 'Enter' && !e.nativeEvent.isComposing) || e.key === 'Escape') setEditArrowComment(null)
+                        if ((e.key === 'Enter' && !e.nativeEvent.isComposing) || e.key === 'Escape')
+                          setEditArrowComment(null)
                       }}
                       onBlur={() => setEditArrowComment(null)}
                       placeholder="コメント…"
