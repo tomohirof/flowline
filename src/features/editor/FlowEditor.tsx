@@ -455,19 +455,12 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
   // --- Notify parent of changes ---
-  const prevSnapRef = useRef<string>('')
+  const prevStructSnapRef = useRef<string>('')
+  const prevMetaSnapRef = useRef<string>('')
 
   const buildPayload = useCallback((): FlowSavePayload => {
     return internalStateToPayload(lanes, rows, tasks, order, arrows, notes, title, themeId)
   }, [lanes, rows, tasks, order, arrows, notes, title, themeId])
-
-  useEffect(() => {
-    const snap = JSON.stringify({ tasks, order, arrows, notes, lanes, rows, title, themeId })
-    if (prevSnapRef.current && prevSnapRef.current !== snap) {
-      onSave(buildPayload())
-    }
-    prevSnapRef.current = snap
-  }, [tasks, order, arrows, notes, lanes, rows, title, themeId, onSave, buildPayload])
 
   // Re-initialize when flow prop changes (render-time state adjustment)
   const [prevFlowId, setPrevFlowId] = useState(flow.id)
@@ -488,10 +481,28 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setEditing(null)
   }
 
-  // Reset undo snapshot ref when flow changes
+  // Reset snapshot refs when flow changes (must be declared BEFORE auto-save effect)
   useEffect(() => {
-    prevSnapRef.current = ''
+    prevStructSnapRef.current = ''
+    prevMetaSnapRef.current = ''
   }, [prevFlowId])
+
+  useEffect(() => {
+    const structSnap = JSON.stringify({ tasks, order, arrows, notes, lanes, rows })
+    const metaSnap = JSON.stringify({ title, themeId })
+
+    const structChanged = prevStructSnapRef.current !== '' && prevStructSnapRef.current !== structSnap
+    const metaChanged = prevMetaSnapRef.current !== '' && prevMetaSnapRef.current !== metaSnap
+
+    if (structChanged) {
+      onSave(buildPayload())
+    } else if (metaChanged) {
+      onSave({ title, themeId })
+    }
+
+    prevStructSnapRef.current = structSnap
+    prevMetaSnapRef.current = metaSnap
+  }, [tasks, order, arrows, notes, lanes, rows, title, themeId, onSave, buildPayload])
 
   // --- Undo / Redo ---
   const historyRef = useRef<string[]>([])

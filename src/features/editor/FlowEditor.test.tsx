@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FlowEditor from './FlowEditor'
 import type { Flow } from './types'
@@ -436,5 +436,96 @@ describe('right panel - node styling sections (#51, #52)', () => {
     const bgSection = bgLabel.closest('div')?.parentElement
     const swatches = bgSection?.querySelectorAll('[title]')
     expect(swatches?.length).toBe(10)
+  })
+})
+
+describe('auto-save payload optimization', () => {
+  it('should send metadata-only payload when title is changed', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    const flow = createMinimalFlow()
+
+    const { container } = render(<FlowEditor flow={flow} onSave={onSave} saveStatus="saved" />)
+
+    // Click on the title text to enter edit mode (use class selector to avoid multiple matches)
+    const titleSpan = container.querySelector('[class*="titleText"]') as HTMLElement
+    expect(titleSpan).toBeTruthy()
+    await user.click(titleSpan)
+
+    // Change the title
+    const titleInput = document.querySelector('input[class*="titleInput"]') as HTMLInputElement
+    expect(titleInput).toBeTruthy()
+    await user.clear(titleInput)
+    await user.type(titleInput, 'New Title')
+
+    // Blur to exit edit mode and trigger state update
+    fireEvent.blur(titleInput)
+
+    // Wait for the useEffect to fire and check onSave was called with metadata-only payload
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalled()
+    })
+
+    // The payload should only contain title and themeId (no lanes, nodes, arrows)
+    const lastCall = onSave.mock.calls[onSave.mock.calls.length - 1][0]
+    expect(lastCall).toHaveProperty('title', 'New Title')
+    expect(lastCall).toHaveProperty('themeId', 'cloud')
+    expect(lastCall).not.toHaveProperty('lanes')
+    expect(lastCall).not.toHaveProperty('nodes')
+    expect(lastCall).not.toHaveProperty('arrows')
+  })
+
+  it('should send full payload when structure is changed (arrow deleted)', async () => {
+    const onSave = vi.fn()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+      ],
+      arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
+    }
+
+    const { container } = render(<FlowEditor flow={flow} onSave={onSave} saveStatus="saved" />)
+
+    // Click arrow to select it
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+
+    // Delete the arrow via floating controls
+    const controls = container.querySelector('[data-testid="arrow-floating-controls"]')
+    expect(controls).toBeTruthy()
+    const clickableGroups = Array.from(controls!.querySelectorAll(':scope > g')).filter(
+      (g) => (g as HTMLElement).style.cursor === 'pointer',
+    )
+    // Click delete (3rd button)
+    fireEvent.click(clickableGroups[2])
+
+    // Verify arrow was actually deleted from DOM
+    expect(container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')).toBeNull()
+
+    // Wait for auto-save to trigger
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalled()
+    })
+
+    // The payload should contain the full structure (lanes, nodes, arrows)
+    const lastCall = onSave.mock.calls[onSave.mock.calls.length - 1][0]
+    expect(lastCall).toHaveProperty('title')
+    expect(lastCall).toHaveProperty('themeId')
+    expect(lastCall).toHaveProperty('lanes')
+    expect(lastCall).toHaveProperty('nodes')
+    expect(lastCall).toHaveProperty('arrows')
+  })
+
+  it('should not call onSave on initial render', () => {
+    const onSave = vi.fn()
+    const flow = createMinimalFlow()
+
+    render(<FlowEditor flow={flow} onSave={onSave} saveStatus="saved" />)
+
+    // onSave should not be called on initial render
+    expect(onSave).not.toHaveBeenCalled()
   })
 })
