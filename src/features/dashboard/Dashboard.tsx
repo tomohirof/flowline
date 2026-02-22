@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
-import type { FlowListResponse, FlowSummary } from '../editor/types'
+import type { FlowListResponse, FlowSummary, FlowDetailResponse } from '../editor/types'
 import { FlowCard } from './FlowCard'
 import { FlowContextMenu } from './FlowContextMenu'
 import { DashboardTopBar } from './DashboardTopBar'
@@ -24,6 +24,7 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState<boolean>(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
 
@@ -165,6 +166,66 @@ export function Dashboard() {
   const handleContextDelete = () => {
     if (contextMenu && contextFlow) {
       handleDelete(contextMenu.flowId, contextFlow.title)
+      setContextMenu(null)
+    }
+  }
+
+  const handleDuplicate = async (id: string) => {
+    if (duplicatingId) return
+    setDuplicatingId(id)
+    setError(null)
+    try {
+      const data = await apiFetch<FlowDetailResponse>(`/flows/${id}`)
+      const original = data.flow
+
+      const laneIdMap = new Map<string, string>()
+      const nodeIdMap = new Map<string, string>()
+
+      const newLanes = original.lanes.map((lane) => {
+        const newId = crypto.randomUUID()
+        laneIdMap.set(lane.id, newId)
+        return { ...lane, id: newId }
+      })
+
+      const newNodes = original.nodes.map((node) => {
+        const newId = crypto.randomUUID()
+        nodeIdMap.set(node.id, newId)
+        return {
+          ...node,
+          id: newId,
+          laneId: laneIdMap.get(node.laneId) ?? node.laneId,
+        }
+      })
+
+      const newArrows = original.arrows.map((arrow) => ({
+        ...arrow,
+        id: crypto.randomUUID(),
+        fromNodeId: nodeIdMap.get(arrow.fromNodeId) ?? arrow.fromNodeId,
+        toNodeId: nodeIdMap.get(arrow.toNodeId) ?? arrow.toNodeId,
+      }))
+
+      const result = await apiFetch<{ flow: { id: string } }>('/flows', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: `コピー ${original.title}`,
+          themeId: original.themeId,
+          lanes: newLanes,
+          nodes: newNodes,
+          arrows: newArrows,
+        }),
+      })
+
+      navigate(`/flows/${result.flow.id}`)
+    } catch {
+      setError('フローの複製に失敗しました')
+    } finally {
+      setDuplicatingId(null)
+    }
+  }
+
+  const handleContextDuplicate = () => {
+    if (contextMenu) {
+      handleDuplicate(contextMenu.flowId)
       setContextMenu(null)
     }
   }
@@ -345,6 +406,7 @@ export function Dashboard() {
           y={contextMenu.y}
           onOpen={handleContextOpen}
           onRename={handleContextRename}
+          onDuplicate={handleContextDuplicate}
           onDelete={handleContextDelete}
           onClose={handleCloseContextMenu}
         />

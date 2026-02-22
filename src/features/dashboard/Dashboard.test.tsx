@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { Dashboard } from './Dashboard'
@@ -510,6 +510,310 @@ describe('Dashboard', () => {
   // =============================================
   // 新機能テスト: 検索は大文字小文字を区別しない
   // =============================================
+  // =============================================
+  // フロー複製テスト
+  // =============================================
+  describe('フロー複製', () => {
+    const mockFlowDetail = {
+      flow: {
+        id: 'flow-1',
+        title: '業務フロー',
+        themeId: 'cloud',
+        shareToken: 'abc123',
+        createdAt: '2026-01-15T10:00:00Z',
+        updatedAt: '2026-01-15T10:00:00Z',
+        lanes: [
+          { id: 'lane-1', name: '担当者A', colorIndex: 0, position: 0 },
+          { id: 'lane-2', name: '担当者B', colorIndex: 1, position: 1 },
+        ],
+        nodes: [
+          {
+            id: 'node-1',
+            laneId: 'lane-1',
+            rowIndex: 0,
+            label: 'タスク1',
+            note: null,
+            orderIndex: 0,
+          },
+          {
+            id: 'node-2',
+            laneId: 'lane-2',
+            rowIndex: 1,
+            label: 'タスク2',
+            note: '備考',
+            orderIndex: 0,
+          },
+        ],
+        arrows: [{ id: 'arrow-1', fromNodeId: 'node-1', toNodeId: 'node-2', comment: '接続' }],
+      },
+    }
+
+    it('should duplicate flow with new IDs and navigate to editor', async () => {
+      const user = userEvent.setup()
+      // 1st call: GET /flows (initial load)
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      // 2nd call: GET /flows/flow-1 (fetch detail)
+      mockApiFetch.mockResolvedValueOnce(mockFlowDetail)
+      // 3rd call: POST /flows (create duplicate)
+      mockApiFetch.mockResolvedValueOnce({ flow: { id: 'new-flow-id' } })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // Hover the card to reveal the menu button
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+
+      // Wait for the menu button to appear after hover
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+
+      // Click the menu button to open context menu
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+
+      // Wait for context menu to appear
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+
+      // Click '複製' in the context menu
+      await user.click(screen.getByText('複製'))
+
+      // Verify GET /flows/flow-1 was called
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith('/flows/flow-1')
+      })
+
+      // Verify POST /flows was called
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith(
+          '/flows',
+          expect.objectContaining({ method: 'POST' }),
+        )
+      })
+
+      // Verify POST body
+      const postCall = mockApiFetch.mock.calls.find(
+        (call) =>
+          call[0] === '/flows' && call[1] && (call[1] as { method?: string }).method === 'POST',
+      )
+      expect(postCall).toBeDefined()
+      const postBody = JSON.parse((postCall![1] as { body: string }).body)
+
+      // Title should be prefixed with "コピー "
+      expect(postBody.title).toBe('コピー 業務フロー')
+      // ThemeId should be same
+      expect(postBody.themeId).toBe('cloud')
+
+      // All IDs should be new (not the original IDs)
+      expect(postBody.lanes).toHaveLength(2)
+      expect(postBody.lanes[0].id).not.toBe('lane-1')
+      expect(postBody.lanes[1].id).not.toBe('lane-2')
+      // Lane names should be preserved
+      expect(postBody.lanes[0].name).toBe('担当者A')
+      expect(postBody.lanes[1].name).toBe('担当者B')
+
+      expect(postBody.nodes).toHaveLength(2)
+      expect(postBody.nodes[0].id).not.toBe('node-1')
+      expect(postBody.nodes[1].id).not.toBe('node-2')
+      // Node labels should be preserved
+      expect(postBody.nodes[0].label).toBe('タスク1')
+      expect(postBody.nodes[1].label).toBe('タスク2')
+
+      // Node laneIds should be remapped to new lane IDs
+      expect(postBody.nodes[0].laneId).toBe(postBody.lanes[0].id)
+      expect(postBody.nodes[1].laneId).toBe(postBody.lanes[1].id)
+
+      expect(postBody.arrows).toHaveLength(1)
+      expect(postBody.arrows[0].id).not.toBe('arrow-1')
+      // Arrow fromNodeId/toNodeId should be remapped to new node IDs
+      expect(postBody.arrows[0].fromNodeId).toBe(postBody.nodes[0].id)
+      expect(postBody.arrows[0].toNodeId).toBe(postBody.nodes[1].id)
+      expect(postBody.arrows[0].comment).toBe('接続')
+
+      // Should navigate to the new flow
+      expect(mockNavigate).toHaveBeenCalledWith('/flows/new-flow-id')
+    })
+
+    it('should show error when duplicate fails on GET', async () => {
+      const user = userEvent.setup()
+      // 1st call: GET /flows (initial load)
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      // 2nd call: GET /flows/flow-1 rejects
+      mockApiFetch.mockRejectedValueOnce(new Error('Not found'))
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // Hover → wait for menu button → menu → duplicate
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+      await user.click(screen.getByText('複製'))
+
+      // Error should be shown
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
+      })
+      expect(screen.getByText('フローの複製に失敗しました')).toBeInTheDocument()
+    })
+
+    it('should show error when duplicate fails on POST', async () => {
+      const user = userEvent.setup()
+      // 1st call: GET /flows (initial load)
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      // 2nd call: GET /flows/flow-1 returns detail
+      mockApiFetch.mockResolvedValueOnce(mockFlowDetail)
+      // 3rd call: POST /flows rejects
+      mockApiFetch.mockRejectedValueOnce(new Error('Server error'))
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // Hover → wait for menu button → menu → duplicate
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+      await user.click(screen.getByText('複製'))
+
+      // Error should be shown
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
+      })
+      expect(screen.getByText('フローの複製に失敗しました')).toBeInTheDocument()
+    })
+
+    it('should duplicate flow with no nodes or arrows', async () => {
+      const user = userEvent.setup()
+      const emptyFlowDetail = {
+        flow: {
+          ...mockFlowDetail.flow,
+          nodes: [],
+          arrows: [],
+        },
+      }
+
+      // 1st call: GET /flows (initial load)
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      // 2nd call: GET /flows/flow-1 returns detail with empty nodes/arrows
+      mockApiFetch.mockResolvedValueOnce(emptyFlowDetail)
+      // 3rd call: POST /flows
+      mockApiFetch.mockResolvedValueOnce({ flow: { id: 'new-empty-flow' } })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // Hover → wait for menu button → menu → duplicate
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+      await user.click(screen.getByText('複製'))
+
+      // Verify POST was called
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith(
+          '/flows',
+          expect.objectContaining({ method: 'POST' }),
+        )
+      })
+
+      // Verify POST body
+      const postCall = mockApiFetch.mock.calls.find(
+        (call) =>
+          call[0] === '/flows' && call[1] && (call[1] as { method?: string }).method === 'POST',
+      )
+      expect(postCall).toBeDefined()
+      const postBody = JSON.parse((postCall![1] as { body: string }).body)
+
+      // Lanes should have new IDs
+      expect(postBody.lanes).toHaveLength(2)
+      expect(postBody.lanes[0].id).not.toBe('lane-1')
+      expect(postBody.lanes[1].id).not.toBe('lane-2')
+      expect(postBody.lanes[0].name).toBe('担当者A')
+
+      // Nodes and arrows should be empty
+      expect(postBody.nodes).toHaveLength(0)
+      expect(postBody.arrows).toHaveLength(0)
+
+      // Should navigate to the new flow
+      expect(mockNavigate).toHaveBeenCalledWith('/flows/new-empty-flow')
+    })
+
+    it('should prevent duplicate clicks while duplicating', async () => {
+      const user = userEvent.setup()
+
+      // 1st call: GET /flows (initial load)
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      // 2nd call: GET /flows/flow-1 - never resolves (simulates in-progress)
+      mockApiFetch.mockImplementationOnce(() => new Promise(() => {}))
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // First duplicate click
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+      await user.click(screen.getByText('複製'))
+
+      // Wait for the GET call to be made
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith('/flows/flow-1')
+      })
+
+      const callCountAfterFirst = mockApiFetch.mock.calls.length
+
+      // Try to trigger duplicate again via flow-2's context menu
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-2'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-2')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-2'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+      await user.click(screen.getByText('複製'))
+
+      // Should not have triggered additional API calls
+      expect(mockApiFetch.mock.calls.length).toBe(callCountAfterFirst)
+    })
+  })
+
   it('should filter flows case-insensitively', async () => {
     const user = userEvent.setup()
     const flowsWithAscii = [

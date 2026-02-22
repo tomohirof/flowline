@@ -14,6 +14,7 @@ describe('FlowContextMenu', () => {
     y: 200,
     onOpen: vi.fn(),
     onRename: vi.fn(),
+    onDuplicate: vi.fn(),
     onDelete: vi.fn(),
     onClose: vi.fn(),
   }
@@ -69,6 +70,29 @@ describe('FlowContextMenu', () => {
   it('should render menu items as accessible buttons', () => {
     render(<FlowContextMenu {...defaultProps} />)
     const buttons = screen.getAllByRole('button')
-    expect(buttons.length).toBe(3)
+    expect(buttons.length).toBe(4)
+  })
+
+  it('should render "複製" menu item', () => {
+    render(<FlowContextMenu {...defaultProps} />)
+    expect(screen.getByText('複製')).toBeInTheDocument()
+  })
+
+  it('should call onDuplicate when "複製" is clicked', async () => {
+    const user = userEvent.setup()
+    const onDuplicate = vi.fn()
+    render(<FlowContextMenu {...defaultProps} onDuplicate={onDuplicate} />)
+    await user.click(screen.getByText('複製'))
+    expect(onDuplicate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should render menu items in correct order: 開く, 名前を変更, 複製, separator, 削除', () => {
+    render(<FlowContextMenu {...defaultProps} />)
+    const buttons = screen.getAllByRole('button')
+    expect(buttons).toHaveLength(4)
+    expect(buttons[0]).toHaveTextContent('開く')
+    expect(buttons[1]).toHaveTextContent('名前を変更')
+    expect(buttons[2]).toHaveTextContent('複製')
+    expect(buttons[3]).toHaveTextContent('削除')
   })
 })
