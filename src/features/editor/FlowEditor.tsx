@@ -491,7 +491,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     const structSnap = JSON.stringify({ tasks, order, arrows, notes, lanes, rows })
     const metaSnap = JSON.stringify({ title, themeId })
 
-    const structChanged = prevStructSnapRef.current !== '' && prevStructSnapRef.current !== structSnap
+    const structChanged =
+      prevStructSnapRef.current !== '' && prevStructSnapRef.current !== structSnap
     const metaChanged = prevMetaSnapRef.current !== '' && prevMetaSnapRef.current !== metaSnap
 
     if (structChanged) {
