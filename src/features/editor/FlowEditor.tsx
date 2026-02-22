@@ -1184,6 +1184,109 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               T={T}
             />
           </PanelSection>
+          <PanelSection label="線の色" T={T}>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {LINE_COLORS.map((lc) => {
+                const isActive = lc.color === null
+                  ? !selArrowData.color
+                  : selArrowData.color === lc.color
+                return (
+                  <div
+                    key={lc.id}
+                    onClick={() =>
+                      setArrows((p) =>
+                        p.map((a) =>
+                          a.id === selArrow
+                            ? { ...a, color: lc.color || undefined }
+                            : a,
+                        ),
+                      )
+                    }
+                    title={lc.label}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: isDark ? '#2A2A38' : '#fff',
+                      border: isActive
+                        ? `2px solid ${T.accent}`
+                        : `2px solid ${lc.color || T.arrowColor}`,
+                      transition: 'all 0.1s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {lc.color && (
+                      <div
+                        style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 3,
+                          background: lc.color,
+                        }}
+                      />
+                    )}
+                    {lc.color === null && (
+                      <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
+          <PanelSection label="線の種類" T={T}>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {STROKE_STYLES.map((ss) => {
+                const isActive = ss.dash === 'none'
+                  ? !selArrowData.dash
+                  : selArrowData.dash === ss.dash
+                return (
+                  <div
+                    key={ss.id}
+                    onClick={() =>
+                      setArrows((p) =>
+                        p.map((a) =>
+                          a.id === selArrow
+                            ? { ...a, dash: ss.dash === 'none' ? undefined : ss.dash }
+                            : a,
+                        ),
+                      )
+                    }
+                    title={ss.label}
+                    style={{
+                      flex: 1,
+                      minWidth: 42,
+                      height: 30,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: isActive
+                        ? isDark ? '#333' : '#F0EBFF'
+                        : 'transparent',
+                      border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.1s',
+                    }}
+                  >
+                    <svg width="32" height="2" viewBox="0 0 32 2">
+                      <line
+                        x1="0"
+                        y1="1"
+                        x2="32"
+                        y2="1"
+                        stroke={isActive ? T.accent : T.panelText}
+                        strokeWidth="2"
+                        strokeDasharray={ss.dash}
+                      />
+                    </svg>
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
           <PanelSection label="操作" T={T}>
             <div className={styles.panelActions}>
               <PanelBtn

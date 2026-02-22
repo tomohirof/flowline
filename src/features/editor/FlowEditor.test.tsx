@@ -332,6 +332,61 @@ describe('arrow color and style rendering (#52)', () => {
   })
 })
 
+describe('right panel - arrow styling sections (#52)', () => {
+  const createFlowWithArrowForPanel = (): Flow => ({
+    ...createMinimalFlow(),
+    nodes: [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ],
+    arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
+  })
+
+  it('should show line color section when arrow is selected', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrowForPanel()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+    expect(screen.getAllByText('線の色').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should show line style section when arrow is selected', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrowForPanel()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+    expect(screen.getAllByText('線の種類').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should render 10 line color swatches', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrowForPanel()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    fireEvent.click(arrowHit!)
+    const colorLabel = screen.getAllByText('線の色')[0]
+    const colorSection = colorLabel.closest('div')?.parentElement
+    const swatches = colorSection?.querySelectorAll('[title]')
+    expect(swatches?.length).toBe(10)
+  })
+
+  it('should render 4 stroke style buttons with SVG previews', () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithArrowForPanel()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    fireEvent.click(arrowHit!)
+    const styleLabel = screen.getAllByText('線の種類')[0]
+    const styleSection = styleLabel.closest('div')?.parentElement
+    const svgPreviews = styleSection?.querySelectorAll('svg')
+    expect(svgPreviews?.length).toBe(4)
+  })
+})
+
 describe('right panel - node styling sections (#51, #52)', () => {
   const createFlowWithNode = (): Flow => ({
     ...createMinimalFlow(),
