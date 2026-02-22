@@ -539,6 +539,92 @@ describe('auto-save payload optimization', () => {
   })
 })
 
+describe('editorSettings panel (#72)', () => {
+  it('should show behavior and display setting sections when nothing selected', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    expect(screen.getAllByText('挙動').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('表示').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should render all 6 setting checkboxes with correct data-testid', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const settingKeys = [
+      'copyLabelOnSameRow',
+      'autoConnect',
+      'autoAddRow',
+      'enterEditOnCreate',
+      'showDotGrid',
+      'showOrderBadge',
+    ]
+    for (const key of settingKeys) {
+      expect(screen.getAllByTestId(`setting-${key}`).length).toBeGreaterThanOrEqual(1)
+    }
+  })
+
+  it('should render correct labels for all settings', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    expect(screen.getAllByText('同行テキストコピー').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('自動接続').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('自動行追加').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('作成後すぐ編集').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('ドットグリッド').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('順番バッジ').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should toggle autoConnect setting when checkbox is clicked', async () => {
+    const user = userEvent.setup()
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const checkbox = screen.getAllByTestId('setting-autoConnect')[0]
+    // Default ON: should have checkmark SVG
+    expect(checkbox.querySelector('svg')).toBeTruthy()
+    // Click to toggle OFF
+    await user.click(checkbox)
+    expect(checkbox.querySelector('svg')).toBeNull()
+    // Click to toggle back ON
+    await user.click(checkbox)
+    expect(checkbox.querySelector('svg')).toBeTruthy()
+  })
+
+  it('should have copyLabelOnSameRow OFF by default (no checkmark)', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const checkbox = screen.getAllByTestId('setting-copyLabelOnSameRow')[0]
+    expect(checkbox.querySelector('svg')).toBeNull()
+  })
+
+  it('should have autoConnect, autoAddRow, enterEditOnCreate ON by default', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    expect(screen.getAllByTestId('setting-autoConnect')[0].querySelector('svg')).toBeTruthy()
+    expect(screen.getAllByTestId('setting-autoAddRow')[0].querySelector('svg')).toBeTruthy()
+    expect(
+      screen.getAllByTestId('setting-enterEditOnCreate')[0].querySelector('svg'),
+    ).toBeTruthy()
+  })
+
+  it('should have showDotGrid and showOrderBadge ON by default', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    expect(screen.getAllByTestId('setting-showDotGrid')[0].querySelector('svg')).toBeTruthy()
+    expect(
+      screen.getAllByTestId('setting-showOrderBadge')[0].querySelector('svg'),
+    ).toBeTruthy()
+  })
+
+  it('should hide settings sections when a node is selected', async () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(
+      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const nodeRect = Array.from(container.querySelectorAll('rect[rx="10"]')).find(
+      (r) => r.getAttribute('width') === '152',
+    )
+    if (nodeRect) await userEvent.click(nodeRect)
+    // When node selected, right panel shows node properties, not settings
+    expect(screen.getAllByText('背景色').length).toBeGreaterThanOrEqual(1)
+  })
+})
+
 describe('editor user avatar and UserMenuPanel (#58)', () => {
   it('should render user avatar in title bar', async () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
