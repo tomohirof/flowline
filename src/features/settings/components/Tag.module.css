@@ -1,0 +1,22 @@
+.tag {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e8;
+  background: #fff;
+  color: #888;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+
+.tagActive {
+  border: 1.5px solid #7c5cfc;
+  background: #f5f0ff;
+  color: #7c5cfc;
+  font-weight: 700;
+}
