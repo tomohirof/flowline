@@ -80,9 +80,10 @@ describe('FlowContextMenu', () => {
 
   it('should call onDuplicate when "複製" is clicked', async () => {
     const user = userEvent.setup()
-    render(<FlowContextMenu {...defaultProps} />)
+    const onDuplicate = vi.fn()
+    render(<FlowContextMenu {...defaultProps} onDuplicate={onDuplicate} />)
     await user.click(screen.getByText('複製'))
-    expect(defaultProps.onDuplicate).toHaveBeenCalledTimes(1)
+    expect(onDuplicate).toHaveBeenCalledTimes(1)
   })
 
   it('should render menu items in correct order: 開く, 名前を変更, 複製, separator, 削除', () => {
