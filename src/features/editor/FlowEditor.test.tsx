@@ -1072,3 +1072,34 @@ describe('empty row at bottom on reload (#84)', () => {
     expect(rows.length).toBe(11)
   })
 })
+
+describe('row insertion UI (#91)', () => {
+  it('should render row gap hit areas for each row boundary', () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    // With 7+ rows (default), there should be 8+ row gap hit areas (between + after)
+    const rowGapHitAreas = document.querySelectorAll('[data-testid^="rowgap-hit-"]')
+    expect(rowGapHitAreas.length).toBeGreaterThanOrEqual(8)
+  })
+
+  it('should show row gap visual feedback on hover', async () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const hitArea = document.querySelector('[data-testid="rowgap-hit-0"]')
+    expect(hitArea).toBeTruthy()
+    await userEvent.hover(hitArea!)
+    const feedback = document.querySelector('[data-testid="rowgap-feedback-0"]')
+    expect(feedback).toBeTruthy()
+  })
+
+  it('should insert row at specified position when row gap is clicked', async () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    const hitArea = document.querySelector('[data-testid="rowgap-hit-1"]')
+    expect(hitArea).toBeTruthy()
+    await userEvent.click(hitArea!)
+    const newRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(newRowCount).toBe(initialRowCount + 1)
+  })
+})
