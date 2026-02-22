@@ -238,6 +238,53 @@ describe('file button (#48)', () => {
   })
 })
 
+describe('arrow routing exitPt/entryPt (#50)', () => {
+  it('should route downward arrow from bottom-center to top-center', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const arrowPath = container.querySelector('path[marker-end]')
+    expect(arrowPath).toBeTruthy()
+    const d = arrowPath!.getAttribute('d')!
+    // Downward arrow: should be a straight vertical line (same X for start and end)
+    const match = d.match(/^M([\d.]+),([\d.]+)\s+L([\d.]+),([\d.]+)$/)
+    expect(match).toBeTruthy()
+    if (match) {
+      const [, x1, y1, x2, y2] = match.map(Number)
+      expect(x1).toBe(x2)
+      expect(y2).toBeGreaterThan(y1)
+    }
+  })
+
+  it('should route same-row arrow horizontally', () => {
+    const flow = createMinimalFlow()
+    flow.lanes = [
+      { id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 },
+      { id: 'lane-2', name: 'レーン2', colorIndex: 1, position: 1 },
+    ]
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-2', rowIndex: 0, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const arrowPath = container.querySelector('path[marker-end]')
+    expect(arrowPath).toBeTruthy()
+    const d = arrowPath!.getAttribute('d')!
+    const match = d.match(/^M([\d.]+),([\d.]+)\s+L([\d.]+),([\d.]+)$/)
+    expect(match).toBeTruthy()
+    if (match) {
+      const [, x1, y1, x2, y2] = match.map(Number)
+      expect(y1).toBe(y2)
+      expect(x2).toBeGreaterThan(x1)
+    }
+  })
+})
+
 describe('color constants (#51, #52)', () => {
   it('should have 10 NODE_COLORS for light theme', () => {
     expect(NODE_COLORS).toHaveLength(10)

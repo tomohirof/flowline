@@ -842,12 +842,23 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
   }
 
-  const edgePt = (c: Point, o: Point, hw: number, hh: number): Point => {
+  const exitPt = (c: Point, o: Point, hw: number, hh: number): Point => {
     const dx = o.x - c.x,
       dy = o.y - c.y
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y + hh }
-    if (Math.abs(dy) / hh > Math.abs(dx) / hw) return { x: c.x, y: c.y + (dy > 0 ? hh : -hh) }
-    return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
+    if (dy > RH * 0.3) return { x: c.x, y: c.y + hh }
+    if (dy < -RH * 0.3) return { x: c.x + (dx >= 0 ? hw : -hw), y: c.y }
+    if (Math.abs(dx) > 1) return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
+    return { x: c.x, y: c.y + hh }
+  }
+  const entryPt = (c: Point, o: Point, hw: number, hh: number): Point => {
+    const dx = o.x - c.x,
+      dy = o.y - c.y
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y - hh }
+    if (dy < -RH * 0.3) return { x: c.x, y: c.y - hh }
+    if (dy > RH * 0.3) return { x: c.x, y: c.y + hh }
+    if (Math.abs(dx) > 1) return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
+    return { x: c.x, y: c.y - hh }
   }
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
     const ft = tasks[arrow.from],
@@ -862,8 +873,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       t = ct(tli, tri),
       hw = TW / 2,
       hh = TH / 2
-    const s = edgePt(f, t, hw, hh),
-      e = edgePt(t, f, hw, hh)
+    const s = exitPt(f, t, hw, hh),
+      e = entryPt(t, f, hw, hh)
     const dx = e.x - s.x,
       dy = e.y - s.y
     let d: string
