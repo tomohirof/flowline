@@ -474,11 +474,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     showOrderBadge: true,
   })
 
+  const fullSettingsRef = useRef<Record<string, unknown>>({})
+
   useEffect(() => {
     let cancelled = false
     apiFetch<{ settings: Record<string, unknown> }>('/settings')
       .then((data) => {
         if (!cancelled) {
+          fullSettingsRef.current = data.settings
           setEditorSettings((prev) => ({
             ...prev,
             ...(typeof data.settings.copyLabelOnSameRow === 'boolean' && {
@@ -511,15 +514,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   }, [])
 
   const updateEditorSetting = useCallback((key: string, value: boolean) => {
-    setEditorSettings((prev) => {
-      const next = { ...prev, [key]: value }
-      apiFetch('/settings', {
-        method: 'PUT',
-        body: JSON.stringify(next),
-      }).catch(() => {
-        // 保存失敗は無視（UIは即時反映）
-      })
-      return next
+    setEditorSettings((prev) => ({ ...prev, [key]: value }))
+    const merged = { ...fullSettingsRef.current, [key]: value }
+    fullSettingsRef.current = merged
+    apiFetch('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(merged),
+    }).catch(() => {
+      // 保存失敗は無視（UIは即時反映）
     })
   }, [])
 
