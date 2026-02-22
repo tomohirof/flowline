@@ -1,0 +1,88 @@
+.wrapper {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #e0e0e8;
+  border-radius: 9px;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  background: #fafafd;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.submitButton {
+  height: 40px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 10px;
+  background: #1a1a2e;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.submitButton:hover {
+  opacity: 0.9;
+}
+
+.dangerZone {
+  margin-top: 32px;
+  padding: 20px 16px;
+  border-top: 1px solid #f0f0f4;
+}
+
+.dangerTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e06060;
+  margin: 0 0 8px;
+}
+
+.dangerDesc {
+  font-size: 12px;
+  color: #999;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.deleteButton {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid #f0c0c0;
+  border-radius: 8px;
+  background: #fff5f5;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e06060;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.deleteButton:hover {
+  background: #fee;
+}

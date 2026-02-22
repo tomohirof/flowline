@@ -1,0 +1,6 @@
+export { ProfileSection } from './ProfileSection'
+export { EditorSection } from './EditorSection'
+export { InteractionSection } from './InteractionSection'
+export { DisplaySection } from './DisplaySection'
+export { NotificationSection } from './NotificationSection'
+export { SecuritySection } from './SecuritySection'
