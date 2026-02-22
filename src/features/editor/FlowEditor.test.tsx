@@ -1,10 +1,24 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FlowEditor from './FlowEditor'
 import type { Flow } from './types'
 import { NODE_COLORS, NODE_COLORS_DARK, LINE_COLORS, STROKE_STYLES } from './theme-constants'
+import { apiFetch } from '../../lib/api'
+
+vi.mock('../../lib/api', () => ({
+  apiFetch: vi.fn(),
+  ApiError: class extends Error {
+    status: number
+    constructor(msg: string, status: number) {
+      super(msg)
+      this.status = status
+    }
+  },
+}))
+
+const mockApiFetch = apiFetch as ReturnType<typeof vi.fn>
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', () => ({
@@ -46,6 +60,18 @@ beforeEach(() => {
     unobserve = vi.fn()
     disconnect = vi.fn()
   } as unknown as typeof ResizeObserver
+
+  mockApiFetch.mockResolvedValue({
+    settings: {
+      copyLabelOnSameRow: false,
+      autoConnect: true,
+      autoAddRow: true,
+      enterEditOnCreate: true,
+      showDotGrid: true,
+      showOrderBadge: true,
+    },
+    profile: { name: 'Test User', email: 'test@example.com' },
+  })
 })
 
 const createMinimalFlow = (): Flow => ({
@@ -1115,5 +1141,70 @@ describe('lane gap UI header-only (#91)', () => {
     const hitArea = laneGapHitAreas[0]
     const height = hitArea.getAttribute('height')
     expect(Number(height)).toBe(70) // TM + HH = 24 + 46 = 70
+  })
+})
+
+describe('editorSettings API sync (#89)', () => {
+  beforeEach(() => {
+    vi.useRealTimers()
+    cleanup()
+  })
+
+  it('should load editorSettings from API on mount', async () => {
+    mockApiFetch.mockReset()
+    const settingsData = {
+      settings: {
+        copyLabelOnSameRow: true,
+        autoConnect: false,
+        autoAddRow: true,
+        enterEditOnCreate: true,
+        showDotGrid: true,
+        showOrderBadge: true,
+      },
+      profile: { name: 'Test User', email: 'test@example.com' },
+    }
+    mockApiFetch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => resolve(settingsData), 10)
+        }),
+    )
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    expect(mockApiFetch).toHaveBeenCalledWith('/settings')
+    await waitFor(
+      () => {
+        const checkboxes = screen.getAllByTestId('setting-copyLabelOnSameRow')
+        expect(checkboxes[0].getAttribute('aria-checked')).toBe('true')
+      },
+      { timeout: 3000 },
+    )
+  })
+
+  it('should use defaults when API fails', async () => {
+    mockApiFetch.mockRejectedValueOnce(new Error('Network error'))
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const checkboxes = screen.getAllByTestId('setting-copyLabelOnSameRow')
+    expect(checkboxes[0].getAttribute('aria-checked')).toBe('false')
+  })
+
+  it('should save editorSettings to API when toggled', async () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
+    })
+    mockApiFetch.mockClear()
+
+    const checkbox = screen.getByTestId('setting-copyLabelOnSameRow')
+    fireEvent.click(checkbox)
+
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/settings', {
+        method: 'PUT',
+        body: expect.stringContaining('"copyLabelOnSameRow":true'),
+      })
+    })
   })
 })

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
+import { apiFetch } from '../../lib/api'
 import styles from './FlowEditor.module.css'
 import type {
   Theme,
@@ -464,29 +465,67 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     enterEditOnCreate: boolean
     showDotGrid: boolean
     showOrderBadge: boolean
-  }>(() => {
-    const defaults = {
-      copyLabelOnSameRow: false,
-      autoConnect: true,
-      autoAddRow: true,
-      enterEditOnCreate: true,
-      showDotGrid: true,
-      showOrderBadge: true,
-    }
-    try {
-      const saved = localStorage.getItem('editorSettings')
-      return saved ? { ...defaults, ...JSON.parse(saved) } : defaults
-    } catch {
-      return defaults
-    }
+  }>({
+    copyLabelOnSameRow: false,
+    autoConnect: true,
+    autoAddRow: true,
+    enterEditOnCreate: true,
+    showDotGrid: true,
+    showOrderBadge: true,
   })
+
   useEffect(() => {
-    try {
-      localStorage.setItem('editorSettings', JSON.stringify(editorSettings))
-    } catch {
-      // localStorage unavailable
+    let cancelled = false
+    apiFetch<{ settings: Record<string, unknown> }>('/settings')
+      .then((data) => {
+        if (!cancelled) {
+          setEditorSettings((prev) => ({
+            ...prev,
+            ...(typeof data.settings.copyLabelOnSameRow === 'boolean' && {
+              copyLabelOnSameRow: data.settings.copyLabelOnSameRow,
+            }),
+            ...(typeof data.settings.autoConnect === 'boolean' && {
+              autoConnect: data.settings.autoConnect,
+            }),
+            ...(typeof data.settings.autoAddRow === 'boolean' && {
+              autoAddRow: data.settings.autoAddRow,
+            }),
+            ...(typeof data.settings.enterEditOnCreate === 'boolean' && {
+              enterEditOnCreate: data.settings.enterEditOnCreate,
+            }),
+            ...(typeof data.settings.showDotGrid === 'boolean' && {
+              showDotGrid: data.settings.showDotGrid,
+            }),
+            ...(typeof data.settings.showOrderBadge === 'boolean' && {
+              showOrderBadge: data.settings.showOrderBadge,
+            }),
+          }))
+        }
+      })
+      .catch(() => {
+        // API失敗時はデフォルト値のまま
+      })
+    return () => {
+      cancelled = true
     }
-  }, [editorSettings])
+  }, [])
+
+  const updateEditorSetting = useCallback(
+    (key: string, value: boolean) => {
+      setEditorSettings((prev) => {
+        const next = { ...prev, [key]: value }
+        apiFetch('/settings', {
+          method: 'PUT',
+          body: JSON.stringify(next),
+        }).catch(() => {
+          // 保存失敗は無視（UIは即時反映）
+        })
+        return next
+      })
+    },
+    [],
+  )
+
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
@@ -1658,11 +1697,11 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               aria-checked={editorSettings[s.key]}
               tabIndex={0}
               className={styles.settingCheckbox}
-              onClick={() => setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))}
+              onClick={() => updateEditorSetting(s.key, !editorSettings[s.key])}
               onKeyDown={(e) => {
                 if (e.key === ' ' || e.key === 'Enter') {
                   e.preventDefault()
-                  setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))
+                  updateEditorSetting(s.key, !editorSettings[s.key])
                 }
               }}
               data-testid={`setting-${s.key}`}
@@ -1702,11 +1741,11 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               aria-checked={editorSettings[s.key]}
               tabIndex={0}
               className={styles.settingCheckbox}
-              onClick={() => setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))}
+              onClick={() => updateEditorSetting(s.key, !editorSettings[s.key])}
               onKeyDown={(e) => {
                 if (e.key === ' ' || e.key === 'Enter') {
                   e.preventDefault()
-                  setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))
+                  updateEditorSetting(s.key, !editorSettings[s.key])
                 }
               }}
               data-testid={`setting-${s.key}`}
