@@ -1446,8 +1446,17 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           ).map((s) => (
             <div
               key={s.key}
+              role="checkbox"
+              aria-checked={editorSettings[s.key]}
+              tabIndex={0}
               className={styles.settingCheckbox}
               onClick={() => setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))}
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault()
+                  setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))
+                }
+              }}
               data-testid={`setting-${s.key}`}
             >
               <div
@@ -1481,8 +1490,17 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           ).map((s) => (
             <div
               key={s.key}
+              role="checkbox"
+              aria-checked={editorSettings[s.key]}
+              tabIndex={0}
               className={styles.settingCheckbox}
               onClick={() => setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))}
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault()
+                  setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))
+                }
+              }}
               data-testid={`setting-${s.key}`}
             >
               <div
