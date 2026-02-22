@@ -21,6 +21,7 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [verifyEmail, setVerifyEmail] = useState('')
+  const [verifySource, setVerifySource] = useState<'login' | 'register'>('register')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -57,11 +58,18 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
           const result = await register(email, password, name)
           if (result.needsVerification) {
             setVerifyEmail(result.email)
+            setVerifySource('register')
             setMode('verify')
             return
           }
         }
       } catch (err: unknown) {
+        if (err instanceof ApiError && err.status === 403 && mode === 'login') {
+          setVerifyEmail(email)
+          setVerifySource('login')
+          setMode('verify')
+          return
+        }
         if (err instanceof ApiError) {
           setError(err.message)
         } else if (err instanceof Error) {
@@ -165,9 +173,9 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
             <button
               type="button"
               className={styles.backLink}
-              onClick={() => switchMode('register')}
+              onClick={() => switchMode(verifySource)}
             >
-              ← メールアドレスを変更する
+              {verifySource === 'login' ? '← ログイン画面に戻る' : '← メールアドレスを変更する'}
             </button>
           </div>
         ) : (
