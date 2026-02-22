@@ -765,6 +765,53 @@ describe('Dashboard', () => {
       // Should navigate to the new flow
       expect(mockNavigate).toHaveBeenCalledWith('/flows/new-empty-flow')
     })
+
+    it('should prevent duplicate clicks while duplicating', async () => {
+      const user = userEvent.setup()
+
+      // 1st call: GET /flows (initial load)
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      // 2nd call: GET /flows/flow-1 - never resolves (simulates in-progress)
+      mockApiFetch.mockImplementationOnce(() => new Promise(() => {}))
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // First duplicate click
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+      await user.click(screen.getByText('複製'))
+
+      // Wait for the GET call to be made
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith('/flows/flow-1')
+      })
+
+      const callCountAfterFirst = mockApiFetch.mock.calls.length
+
+      // Try to trigger duplicate again via flow-2's context menu
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-2'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-2')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-2'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+      await user.click(screen.getByText('複製'))
+
+      // Should not have triggered additional API calls
+      expect(mockApiFetch.mock.calls.length).toBe(callCountAfterFirst)
+    })
   })
 
   it('should filter flows case-insensitively', async () => {

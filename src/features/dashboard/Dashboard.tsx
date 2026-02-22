@@ -218,6 +218,7 @@ export function Dashboard() {
       navigate(`/flows/${result.flow.id}`)
     } catch {
       setError('フローの複製に失敗しました')
+    } finally {
       setDuplicatingId(null)
     }
   }
