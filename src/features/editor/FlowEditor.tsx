@@ -454,7 +454,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
   const [showShareDialog, setShowShareDialog] = useState<boolean>(false)
   const [shareToken, setShareToken] = useState<string | null>(flow.shareToken)
-  const [editorSettings, setEditorSettings] = useState(() => {
+  const [editorSettings, setEditorSettings] = useState<{
+    copyLabelOnSameRow: boolean
+    autoConnect: boolean
+    autoAddRow: boolean
+    enterEditOnCreate: boolean
+    showDotGrid: boolean
+    showOrderBadge: boolean
+  }>(() => {
     const defaults = {
       copyLabelOnSameRow: false,
       autoConnect: true,
