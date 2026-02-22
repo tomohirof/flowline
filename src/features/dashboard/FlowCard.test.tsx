@@ -227,6 +227,33 @@ describe('FlowCard', () => {
     expect(onContextMenu).toHaveBeenCalledWith('flow-1', expect.any(Number), expect.any(Number))
   })
 
+  // --- IME composition Enter (#87) ---
+
+  it('should not call onRename when Enter is pressed during IME composition', () => {
+    const onRename = vi.fn()
+    renderCard({ renamingId: 'flow-1', onRename })
+
+    const input = screen.getByTestId('rename-input-flow-1')
+
+    // Press Enter with isComposing=true (simulating IME composition via React fireEvent)
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true })
+
+    // onRename should NOT be called during IME composition
+    expect(onRename).not.toHaveBeenCalled()
+  })
+
+  it('should call onRename when Enter is pressed normally (isComposing=false)', () => {
+    const onRename = vi.fn()
+    renderCard({ renamingId: 'flow-1', onRename })
+
+    const input = screen.getByTestId('rename-input-flow-1')
+    fireEvent.change(input, { target: { value: '新しいタイトル' } })
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: false })
+
+    // onRename should be called when not composing
+    expect(onRename).toHaveBeenCalledWith('flow-1', '新しいタイトル')
+  })
+
   // --- レーンカラードット ---
 
   it('should render lane color dots in info area', () => {

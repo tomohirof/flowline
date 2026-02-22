@@ -82,7 +82,7 @@ export function FlowCard({
   }
 
   const handleRenameKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       e.preventDefault()
       handleRenameSubmit()
     } else if (e.key === 'Escape') {

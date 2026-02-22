@@ -1790,7 +1790,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
             onBlur={() => setEditTitle(false)}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-              e.key === 'Enter' && setEditTitle(false)
+              e.key === 'Enter' && !e.nativeEvent.isComposing && setEditTitle(false)
             }
             autoFocus
             className={styles.titleInput}
@@ -2041,7 +2041,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         }}
                         onBlur={() => setEditLane(null)}
                         onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                          e.key === 'Enter' && setEditLane(null)
+                          e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
                         }
                         className={styles.laneNameInput}
                       />
@@ -2455,7 +2455,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                           }}
                           onBlur={() => setEditing(null)}
                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                            if (e.key === 'Enter') setEditing(null)
+                            if (e.key === 'Enter' && !e.nativeEvent.isComposing) setEditing(null)
                           }}
                           onClick={(e: React.MouseEvent) => e.stopPropagation()}
                           className={styles.nodeEditInput}
@@ -2502,7 +2502,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                               }
                               onBlur={() => setEditNote(null)}
                               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                                e.key === 'Enter' && setEditNote(null)
+                                e.key === 'Enter' && !e.nativeEvent.isComposing && setEditNote(null)
                               }
                               onClick={(e: React.MouseEvent) => e.stopPropagation()}
                               className={styles.noteEditInput}
@@ -2742,7 +2742,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         )
                       }}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                        if (e.key === 'Enter' || e.key === 'Escape') setEditArrowComment(null)
+                        if ((e.key === 'Enter' && !e.nativeEvent.isComposing) || e.key === 'Escape') setEditArrowComment(null)
                       }}
                       onBlur={() => setEditArrowComment(null)}
                       placeholder="コメント…"
