@@ -193,14 +193,14 @@ const Ico = ({ children, size = 18 }: { children: ReactNode; size?: number }) =>
 // Right Panel Sub-Components
 // =============================================
 
-const PanelSection = ({ label, children }: { label?: string; children: ReactNode; T: Theme }) => (
+const PanelSection = ({ label, children }: { label?: string; children: ReactNode }) => (
   <div className={styles.panelSection}>
     {label && <div className={styles.panelSectionLabel}>{label}</div>}
     {children}
   </div>
 )
 
-const PanelRow = ({ label, children }: { label: string; children?: ReactNode; T: Theme }) => (
+const PanelRow = ({ label, children }: { label: string; children?: ReactNode }) => (
   <div className={styles.panelRow}>
     <span className={styles.panelRowLabel}>{label}</span>
     <div className={styles.panelRowChildren}>{children}</div>
@@ -215,7 +215,6 @@ const PanelInput = ({
   value: string
   onChange: (v: string) => void
   placeholder?: string
-  T: Theme
 }) => (
   <input
     value={value}
@@ -236,7 +235,6 @@ const PanelBtn = ({
   color: string
   bg?: string
   onClick: () => void
-  T: Theme
   full?: boolean
 }) => (
   <button
@@ -294,7 +292,15 @@ function flowToInternalState(flow: Flow): {
     const ri = n.rowIndex
     if (ri >= 0 && ri < rows.length) {
       const key = `${n.laneId}_${rows[ri].id}`
-      tasks[key] = { label: n.label, lid: n.laneId, rid: rows[ri].id, nodeId: n.id }
+      tasks[key] = {
+        label: n.label,
+        lid: n.laneId,
+        rid: rows[ri].id,
+        nodeId: n.id,
+        bg: n.bg || undefined,
+        strokeColor: n.strokeColor || undefined,
+        dash: n.dash || undefined,
+      }
       if (n.note) {
         notes[key] = n.note
       }
@@ -312,7 +318,14 @@ function flowToInternalState(flow: Flow): {
       const from = nodeIdToKey[a.fromNodeId]
       const to = nodeIdToKey[a.toNodeId]
       if (!from || !to) return null
-      return { id: a.id, from, to, comment: a.comment ?? '' }
+      return {
+        id: a.id,
+        from,
+        to,
+        comment: a.comment ?? '',
+        color: a.color || undefined,
+        dash: a.dash || undefined,
+      }
     })
     .filter((a): a is InternalArrow => a !== null)
 
@@ -359,6 +372,9 @@ function internalStateToPayload(
         label: task.label,
         note: notes[k] || null,
         orderIndex: orderIdx,
+        bg: task.bg || null,
+        strokeColor: task.strokeColor || null,
+        dash: task.dash || null,
       }
     })
 
@@ -373,6 +389,8 @@ function internalStateToPayload(
         fromNodeId,
         toNodeId,
         comment: a.comment || null,
+        color: a.color || null,
+        dash: a.dash || null,
       }
     })
     .filter((a): a is NonNullable<typeof a> => a !== null)
@@ -996,26 +1014,24 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       const oi = order.indexOf(selTask)
       return (
         <>
-          <PanelSection label="ノード" T={T}>
-            <PanelRow label="ラベル" T={T} />
+          <PanelSection label="ノード">
+            <PanelRow label="ラベル" />
             <PanelInput
               value={selTaskData.label === '作業' ? '' : selTaskData.label}
               placeholder="作業"
               onChange={(v: string) =>
                 setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], label: v || '作業' } }))
               }
-              T={T}
             />
           </PanelSection>
-          <PanelSection label="メモ" T={T}>
+          <PanelSection label="メモ">
             <PanelInput
               value={notes[selTask] || ''}
               placeholder="メモを追加…"
               onChange={(v: string) => setNotes((p2) => ({ ...p2, [selTask]: v }))}
-              T={T}
             />
           </PanelSection>
-          <PanelSection label="背景色" T={T}>
+          <PanelSection label="背景色">
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {(isDark ? NODE_COLORS_DARK : NODE_COLORS).map((nc) => {
                 const isActive = nc.fill === null ? !selTaskData.bg : selTaskData.bg === nc.fill
@@ -1050,7 +1066,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               })}
             </div>
           </PanelSection>
-          <PanelSection label="枠の色" T={T}>
+          <PanelSection label="枠の色">
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {LINE_COLORS.map((lc) => {
                 const isActive =
@@ -1072,7 +1088,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       height: 24,
                       borderRadius: 6,
                       cursor: 'pointer',
-                      background: isDark ? '#2A2A38' : '#fff',
+                      background: T.nodeFill,
                       border: isActive
                         ? `2px solid ${T.accent}`
                         : `2px solid ${lc.color || T.nodeStroke}`,
@@ -1090,7 +1106,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               })}
             </div>
           </PanelSection>
-          <PanelSection label="枠の種類" T={T}>
+          <PanelSection label="枠の種類">
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {STROKE_STYLES.map((ss) => {
                 const isActive =
@@ -1138,25 +1154,20 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               })}
             </div>
           </PanelSection>
-          <PanelSection label="情報" T={T}>
-            <PanelRow label="レーン" T={T}>
+          <PanelSection label="情報">
+            <PanelRow label="レーン">
               <span className={styles.panelValueText}>{lane?.name}</span>
             </PanelRow>
             {oi !== -1 && (
-              <PanelRow label="順番" T={T}>
+              <PanelRow label="順番">
                 <span className={styles.panelValueText}>{oi + 1}</span>
               </PanelRow>
             )}
           </PanelSection>
-          <PanelSection label="操作" T={T}>
+          <PanelSection label="操作">
             <div className={styles.panelActions}>
-              <PanelBtn
-                label="→ 接続"
-                color={T.accent}
-                onClick={() => startConnect(selTask)}
-                T={T}
-              />
-              <PanelBtn label="削除" color="#E06060" onClick={() => delTask(selTask)} T={T} />
+              <PanelBtn label="→ 接続" color={T.accent} onClick={() => startConnect(selTask)} />
+              <PanelBtn label="削除" color="#E06060" onClick={() => delTask(selTask)} />
             </div>
           </PanelSection>
         </>
@@ -1169,25 +1180,24 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         toT = tasks[selArrowData.to]
       return (
         <>
-          <PanelSection label="接続線" T={T}>
-            <PanelRow label="From" T={T}>
+          <PanelSection label="接続線">
+            <PanelRow label="From">
               <span className={styles.panelValueText}>{fromT?.label || '?'}</span>
             </PanelRow>
-            <PanelRow label="To" T={T}>
+            <PanelRow label="To">
               <span className={styles.panelValueText}>{toT?.label || '?'}</span>
             </PanelRow>
           </PanelSection>
-          <PanelSection label="コメント" T={T}>
+          <PanelSection label="コメント">
             <PanelInput
               value={selArrowData.comment || ''}
               placeholder="ラベルを追加…"
               onChange={(v: string) =>
                 setArrows((p) => p.map((a) => (a.id === selArrow ? { ...a, comment: v } : a)))
               }
-              T={T}
             />
           </PanelSection>
-          <PanelSection label="線の色" T={T}>
+          <PanelSection label="線の色">
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {LINE_COLORS.map((lc) => {
                 const isActive =
@@ -1208,7 +1218,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       height: 24,
                       borderRadius: 6,
                       cursor: 'pointer',
-                      background: isDark ? '#2A2A38' : '#fff',
+                      background: T.nodeFill,
                       border: isActive
                         ? `2px solid ${T.accent}`
                         : `2px solid ${lc.color || T.arrowColor}`,
@@ -1236,7 +1246,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               })}
             </div>
           </PanelSection>
-          <PanelSection label="線の種類" T={T}>
+          <PanelSection label="線の種類">
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {STROKE_STYLES.map((ss) => {
                 const isActive =
@@ -1284,7 +1294,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               })}
             </div>
           </PanelSection>
-          <PanelSection label="操作" T={T}>
+          <PanelSection label="操作">
             <div className={styles.panelActions}>
               <PanelBtn
                 label="⇄ 方向を逆転"
@@ -1294,7 +1304,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
                   )
                 }
-                T={T}
               />
               <PanelBtn
                 label="削除"
@@ -1303,7 +1312,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   setArrows((p) => p.filter((a) => a.id !== selArrow))
                   setSelArrow(null)
                 }}
-                T={T}
               />
             </div>
           </PanelSection>
@@ -1315,17 +1323,16 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     if (selLane && selLaneData) {
       return (
         <>
-          <PanelSection label="レーン" T={T}>
-            <PanelRow label="名前" T={T} />
+          <PanelSection label="レーン">
+            <PanelRow label="名前" />
             <PanelInput
               value={selLaneData.name}
               onChange={(v: string) =>
                 setLanes((p) => p.map((l) => (l.id === selLane ? { ...l, name: v } : l)))
               }
-              T={T}
             />
           </PanelSection>
-          <PanelSection label="カラー" T={T}>
+          <PanelSection label="カラー">
             <div className={styles.panelActions}>
               {PALETTES.map((p, ci) => (
                 <div
@@ -1343,30 +1350,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               ))}
             </div>
           </PanelSection>
-          <PanelSection label="順番" T={T}>
+          <PanelSection label="順番">
             <div style={{ display: 'flex', gap: 6 }}>
-              <PanelBtn
-                label="← 左へ"
-                color={T.accent}
-                onClick={() => moveLane(selLane, -1)}
-                T={T}
-              />
-              <PanelBtn
-                label="右へ →"
-                color={T.accent}
-                onClick={() => moveLane(selLane, 1)}
-                T={T}
-              />
+              <PanelBtn label="← 左へ" color={T.accent} onClick={() => moveLane(selLane, -1)} />
+              <PanelBtn label="右へ →" color={T.accent} onClick={() => moveLane(selLane, 1)} />
             </div>
           </PanelSection>
-          <PanelSection label="操作" T={T}>
-            <PanelBtn
-              label="レーンを削除"
-              color="#E06060"
-              onClick={() => rmLane(selLane)}
-              T={T}
-              full
-            />
+          <PanelSection label="操作">
+            <PanelBtn label="レーンを削除" color="#E06060" onClick={() => rmLane(selLane)} full />
           </PanelSection>
         </>
       )
@@ -1375,7 +1366,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     // Nothing selected -> Theme & Canvas
     return (
       <>
-        <PanelSection label="テーマ" T={T}>
+        <PanelSection label="テーマ">
           <div className={styles.themePickerWrapper}>
             <div
               onClick={() => setShowThemePicker((v) => !v)}
@@ -1410,26 +1401,25 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             )}
           </div>
         </PanelSection>
-        <PanelSection label="キャンバス" T={T}>
-          <PanelRow label="レーン数" T={T}>
+        <PanelSection label="キャンバス">
+          <PanelRow label="レーン数">
             <span className={styles.panelValueTextLarge}>{lanes.length}</span>
           </PanelRow>
-          <PanelRow label="行数" T={T}>
+          <PanelRow label="行数">
             <span className={styles.panelValueTextLarge}>{rows.length}</span>
           </PanelRow>
-          <PanelRow label="ノード数" T={T}>
+          <PanelRow label="ノード数">
             <span className={styles.panelValueTextLarge}>{Object.keys(tasks).length}</span>
           </PanelRow>
-          <PanelRow label="接続数" T={T}>
+          <PanelRow label="接続数">
             <span className={styles.panelValueTextLarge}>{arrows.length}</span>
           </PanelRow>
         </PanelSection>
-        <PanelSection label="エクスポート" T={T}>
+        <PanelSection label="エクスポート">
           <PanelBtn
             label="Mermaid コードをコピー"
             color={T.accent}
             onClick={() => navigator.clipboard?.writeText(exportMermaid())}
-            T={T}
             full
           />
         </PanelSection>

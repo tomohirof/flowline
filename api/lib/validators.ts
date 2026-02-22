@@ -14,6 +14,9 @@ const nodeSchema = z.object({
   label: z.string().min(1),
   note: z.string().nullable().optional(),
   orderIndex: z.number().int().min(0),
+  bg: z.string().nullable().optional(),
+  strokeColor: z.string().nullable().optional(),
+  dash: z.string().nullable().optional(),
 })
 
 const arrowSchema = z.object({
@@ -21,6 +24,8 @@ const arrowSchema = z.object({
   fromNodeId: z.string().min(1),
   toNodeId: z.string().min(1),
   comment: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  dash: z.string().nullable().optional(),
 })
 
 export const createFlowSchema = z.object({

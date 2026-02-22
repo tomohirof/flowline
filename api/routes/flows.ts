@@ -131,7 +131,7 @@ flows.post('/', async (c) => {
     statements.push(
       db
         .prepare(
-          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index, bg, stroke_color, dash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         )
         .bind(
           node.id,
@@ -141,6 +141,9 @@ flows.post('/', async (c) => {
           node.label,
           node.note ?? null,
           node.orderIndex,
+          node.bg ?? null,
+          node.strokeColor ?? null,
+          node.dash ?? null,
         ),
     )
   }
@@ -150,9 +153,17 @@ flows.post('/', async (c) => {
     statements.push(
       db
         .prepare(
-          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)',
+          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash) VALUES (?, ?, ?, ?, ?, ?, ?)',
         )
-        .bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null),
+        .bind(
+          arrow.id,
+          flowId,
+          arrow.fromNodeId,
+          arrow.toNodeId,
+          arrow.comment ?? null,
+          arrow.color ?? null,
+          arrow.dash ?? null,
+        ),
     )
   }
 
@@ -259,7 +270,7 @@ flows.put('/:id', async (c) => {
     statements.push(
       db
         .prepare(
-          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index, bg, stroke_color, dash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         )
         .bind(
           node.id,
@@ -269,6 +280,9 @@ flows.put('/:id', async (c) => {
           node.label,
           node.note ?? null,
           node.orderIndex,
+          node.bg ?? null,
+          node.strokeColor ?? null,
+          node.dash ?? null,
         ),
     )
   }
@@ -278,9 +292,17 @@ flows.put('/:id', async (c) => {
     statements.push(
       db
         .prepare(
-          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment) VALUES (?, ?, ?, ?, ?)',
+          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash) VALUES (?, ?, ?, ?, ?, ?, ?)',
         )
-        .bind(arrow.id, flowId, arrow.fromNodeId, arrow.toNodeId, arrow.comment ?? null),
+        .bind(
+          arrow.id,
+          flowId,
+          arrow.fromNodeId,
+          arrow.toNodeId,
+          arrow.comment ?? null,
+          arrow.color ?? null,
+          arrow.dash ?? null,
+        ),
     )
   }
 

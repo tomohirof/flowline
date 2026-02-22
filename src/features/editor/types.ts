@@ -72,6 +72,9 @@ export interface Node {
   label: string
   note: string | null
   orderIndex: number
+  bg?: string | null
+  strokeColor?: string | null
+  dash?: string | null
 }
 
 export interface Arrow {
@@ -79,6 +82,8 @@ export interface Arrow {
   fromNodeId: string
   toNodeId: string
   comment: string | null
+  color?: string | null
+  dash?: string | null
 }
 
 export interface Flow {
