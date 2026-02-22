@@ -615,6 +615,87 @@ describe('Flows API', () => {
       expect(after.updated_at).toBeDefined()
       expect(after.updated_at).not.toBe(oldTimestamp)
     })
+
+    it('should preserve existing lanes, nodes, arrows when only title is changed', async () => {
+      // Add arrow to existing setup (beforeEach already inserts flow-1, lane-old, node-old)
+      insertNode(db, 'node-old-2', 'flow-1', 'lane-old', 1, 'Old Task 2', null, 1)
+      insertArrow(db, 'arrow-old', 'flow-1', 'node-old', 'node-old-2', 'Old connection')
+
+      // Send only title update (no lanes/nodes/arrows in body)
+      const res = await putJson('/api/flows/flow-1', { title: '新しいタイトル' }, env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+
+      // Verify title updated in response
+      expect(body.flow.title).toBe('新しいタイトル')
+
+      // Verify lanes/nodes/arrows are preserved in response
+      expect(body.flow.lanes).toHaveLength(1)
+      expect(body.flow.lanes[0].name).toBe('Old Lane')
+      expect(body.flow.nodes).toHaveLength(2)
+      expect(body.flow.nodes[0].label).toBe('Old Task')
+      expect(body.flow.arrows).toHaveLength(1)
+      expect(body.flow.arrows[0].comment).toBe('Old connection')
+
+      // Verify DB-level preservation
+      const dbLanes = db.prepare('SELECT * FROM lanes WHERE flow_id = ?').all('flow-1')
+      expect(dbLanes).toHaveLength(1)
+
+      const dbNodes = db.prepare('SELECT * FROM nodes WHERE flow_id = ?').all('flow-1')
+      expect(dbNodes).toHaveLength(2)
+
+      const dbArrows = db.prepare('SELECT * FROM arrows WHERE flow_id = ?').all('flow-1')
+      expect(dbArrows).toHaveLength(1)
+    })
+
+    it('should preserve existing lanes, nodes, arrows when only themeId is changed', async () => {
+      // Add arrow to existing setup
+      insertNode(db, 'node-old-2', 'flow-1', 'lane-old', 1, 'Old Task 2', null, 1)
+      insertArrow(db, 'arrow-old', 'flow-1', 'node-old', 'node-old-2', 'Old connection')
+
+      const res = await putJson('/api/flows/flow-1', { themeId: 'sunset' }, env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+
+      // Verify themeId updated
+      expect(body.flow.themeId).toBe('sunset')
+
+      // Verify original title preserved
+      expect(body.flow.title).toBe('Original Title')
+
+      // Verify lanes/nodes/arrows preserved
+      expect(body.flow.lanes).toHaveLength(1)
+      expect(body.flow.nodes).toHaveLength(2)
+      expect(body.flow.arrows).toHaveLength(1)
+
+      // DB-level check
+      const dbLanes = db.prepare('SELECT * FROM lanes WHERE flow_id = ?').all('flow-1')
+      expect(dbLanes).toHaveLength(1)
+
+      const dbNodes = db.prepare('SELECT * FROM nodes WHERE flow_id = ?').all('flow-1')
+      expect(dbNodes).toHaveLength(2)
+
+      const dbArrows = db.prepare('SELECT * FROM arrows WHERE flow_id = ?').all('flow-1')
+      expect(dbArrows).toHaveLength(1)
+    })
+
+    it('should return 500 with error message when database save fails', async () => {
+      // Drop lanes table to cause batch INSERT to fail when structural changes are sent
+      // (checkFlowOwnership only uses flows table, so it passes)
+      db.exec('DROP TABLE arrows; DROP TABLE nodes; DROP TABLE lanes;')
+
+      const payload = {
+        title: 'Will Fail',
+        lanes: [{ id: 'lane-1', name: 'New Lane', colorIndex: 0, position: 0 }],
+        nodes: [],
+        arrows: [],
+      }
+
+      const res = await putJson('/api/flows/flow-1', payload, env, cookie)
+      expect(res.status).toBe(500)
+      const body = await res.json()
+      expect(body.error).toBe('フローの保存に失敗しました')
+    })
   })
 
   // ========================================
