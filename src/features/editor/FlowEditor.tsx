@@ -31,6 +31,7 @@ import {
   STROKE_STYLES,
 } from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
+import { exitPt, entryPt, buildArrowPath } from '../../lib/arrow-routing'
 
 const uid = (): string => crypto.randomUUID()
 
@@ -879,24 +880,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
   }
 
-  const exitPt = (c: Point, o: Point, hw: number, hh: number): Point => {
-    const dx = o.x - c.x,
-      dy = o.y - c.y
-    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y + hh }
-    if (dy > RH * 0.3) return { x: c.x, y: c.y + hh }
-    if (dy < -RH * 0.3) return { x: c.x + (dx >= 0 ? hw : -hw), y: c.y }
-    if (Math.abs(dx) > 1) return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
-    return { x: c.x, y: c.y + hh }
-  }
-  const entryPt = (c: Point, o: Point, hw: number, hh: number): Point => {
-    const dx = o.x - c.x,
-      dy = o.y - c.y
-    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y - hh }
-    if (dy < -RH * 0.3) return { x: c.x, y: c.y - hh }
-    if (dy > RH * 0.3) return { x: c.x, y: c.y + hh }
-    if (Math.abs(dx) > 1) return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
-    return { x: c.x, y: c.y - hh }
-  }
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
     const ft = tasks[arrow.from],
       tt = tasks[arrow.to]
@@ -910,29 +893,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       t = ct(tli, tri),
       hw = TW / 2,
       hh = TH / 2
-    const s = exitPt(f, t, hw, hh),
-      e = entryPt(t, f, hw, hh)
-    const dx = e.x - s.x,
-      dy = e.y - s.y
-    let d: string
-    if (Math.abs(dx) < 2 || Math.abs(dy) < 2) {
-      d = `M${s.x},${s.y} L${e.x},${e.y}`
-    } else {
-      const sV = Math.abs(s.y - f.y) > Math.abs(s.x - f.x)
-      const eV = Math.abs(e.y - t.y) > Math.abs(e.x - t.x)
-      if (sV && eV) {
-        const my = (s.y + e.y) / 2
-        d = `M${s.x},${s.y} L${s.x},${my} L${e.x},${my} L${e.x},${e.y}`
-      } else if (!sV && !eV) {
-        const mx = (s.x + e.x) / 2
-        d = `M${s.x},${s.y} L${mx},${s.y} L${mx},${e.y} L${e.x},${e.y}`
-      } else if (sV) {
-        d = `M${s.x},${s.y} L${s.x},${e.y} L${e.x},${e.y}`
-      } else {
-        d = `M${s.x},${s.y} L${e.x},${s.y} L${e.x},${e.y}`
-      }
-    }
-    return { d, mx: (s.x + e.x) / 2, my: (s.y + e.y) / 2 }
+    const s = exitPt(f, t, hw, hh, RH),
+      e = entryPt(t, f, hw, hh, RH)
+    return buildArrowPath(s, e, f, t)
   }
 
   const exportMermaid = (): string => {
