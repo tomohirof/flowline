@@ -143,6 +143,9 @@ export interface TaskData {
   rid: string
   /** Stable node ID for API persistence. Generated on creation, preserved across saves. */
   nodeId: string
+  bg?: string
+  strokeColor?: string
+  dash?: string
 }
 
 export interface RowData {
@@ -160,6 +163,8 @@ export interface InternalArrow {
   from: string
   to: string
   comment: string
+  color?: string
+  dash?: string
 }
 
 export interface DragState {

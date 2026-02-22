@@ -4,6 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FlowEditor from './FlowEditor'
 import type { Flow } from './types'
+import { NODE_COLORS, NODE_COLORS_DARK, LINE_COLORS, STROKE_STYLES } from './theme-constants'
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', () => ({
@@ -234,5 +235,34 @@ describe('file button (#48)', () => {
     const fileBtn = screen.getAllByTestId('file-button')[0]
     await userEvent.click(fileBtn)
     expect(mockNavigate).toHaveBeenCalledWith('/')
+  })
+})
+
+describe('color constants (#51, #52)', () => {
+  it('should have 10 NODE_COLORS for light theme', () => {
+    expect(NODE_COLORS).toHaveLength(10)
+    expect(NODE_COLORS[0].id).toBe('default')
+    expect(NODE_COLORS[0].fill).toBeNull()
+  })
+
+  it('should have 9 NODE_COLORS_DARK for dark theme', () => {
+    expect(NODE_COLORS_DARK).toHaveLength(9)
+    expect(NODE_COLORS_DARK[0].id).toBe('default')
+    expect(NODE_COLORS_DARK[0].fill).toBeNull()
+  })
+
+  it('should have 10 LINE_COLORS', () => {
+    expect(LINE_COLORS).toHaveLength(10)
+    expect(LINE_COLORS[0].id).toBe('default')
+    expect(LINE_COLORS[0].color).toBeNull()
+  })
+
+  it('should have 4 STROKE_STYLES', () => {
+    expect(STROKE_STYLES).toHaveLength(4)
+    expect(STROKE_STYLES[0].id).toBe('solid')
+    expect(STROKE_STYLES[0].dash).toBe('none')
+    expect(STROKE_STYLES[1].dash).toBe('8,4')
+    expect(STROKE_STYLES[2].dash).toBe('3,3')
+    expect(STROKE_STYLES[3].dash).toBe('8,3,2,3')
   })
 })
