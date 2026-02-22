@@ -45,19 +45,19 @@ const [editorSettings, setEditorSettings] = useState({
 
 ### 挙動セクション
 
-| 設定キー            | ラベル             | デフォルト |
-| ------------------- | ------------------ | ---------- |
-| copyLabelOnSameRow  | 同行テキストコピー | OFF        |
-| autoConnect         | 自動接続           | ON         |
-| autoAddRow          | 自動行追加         | ON         |
-| enterEditOnCreate   | 作成後すぐ編集     | ON         |
+| 設定キー           | ラベル             | デフォルト |
+| ------------------ | ------------------ | ---------- |
+| copyLabelOnSameRow | 同行テキストコピー | OFF        |
+| autoConnect        | 自動接続           | ON         |
+| autoAddRow         | 自動行追加         | ON         |
+| enterEditOnCreate  | 作成後すぐ編集     | ON         |
 
 ### 表示セクション
 
-| 設定キー       | ラベル       | デフォルト |
-| -------------- | ------------ | ---------- |
+| 設定キー       | ラベル         | デフォルト |
+| -------------- | -------------- | ---------- |
 | showDotGrid    | ドットグリッド | ON         |
-| showOrderBadge | 順番バッジ   | ON         |
+| showOrderBadge | 順番バッジ     | ON         |
 
 ## cellClick への影響
 

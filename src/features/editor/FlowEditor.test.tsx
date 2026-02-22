@@ -595,17 +595,13 @@ describe('editorSettings panel (#72)', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     expect(screen.getAllByTestId('setting-autoConnect')[0].querySelector('svg')).toBeTruthy()
     expect(screen.getAllByTestId('setting-autoAddRow')[0].querySelector('svg')).toBeTruthy()
-    expect(
-      screen.getAllByTestId('setting-enterEditOnCreate')[0].querySelector('svg'),
-    ).toBeTruthy()
+    expect(screen.getAllByTestId('setting-enterEditOnCreate')[0].querySelector('svg')).toBeTruthy()
   })
 
   it('should have showDotGrid and showOrderBadge ON by default', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     expect(screen.getAllByTestId('setting-showDotGrid')[0].querySelector('svg')).toBeTruthy()
-    expect(
-      screen.getAllByTestId('setting-showOrderBadge')[0].querySelector('svg'),
-    ).toBeTruthy()
+    expect(screen.getAllByTestId('setting-showOrderBadge')[0].querySelector('svg')).toBeTruthy()
   })
 
   it('should hide settings sections when a node is selected', async () => {
@@ -613,9 +609,7 @@ describe('editorSettings panel (#72)', () => {
     flow.nodes = [
       { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
     ]
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     const nodeRect = Array.from(container.querySelectorAll('rect[rx="10"]')).find(
       (r) => r.getAttribute('width') === '152',
     )

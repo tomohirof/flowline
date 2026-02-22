@@ -201,9 +201,7 @@ cellClick 関数（~line 808-832）の新規ノード作成部分を以下に変
 // 現在の行 823: 新規タスク作成
 let label = '作業'
 if (editorSettings.copyLabelOnSameRow) {
-  const sameRowNode = Object.entries(tasks).find(
-    ([key, t]) => t.rid === rid && key !== k,
-  )
+  const sameRowNode = Object.entries(tasks).find(([key, t]) => t.rid === rid && key !== k)
   if (sameRowNode) label = sameRowNode[1].label
 }
 setTasks((p) => ({ ...p, [k]: { label, lid, rid, nodeId: uid() } }))
@@ -222,8 +220,7 @@ if (editorSettings.enterEditOnCreate) {
 }
 
 // 現在の行 831: 行追加 → autoAddRow で制御
-if (editorSettings.autoAddRow && ri === rows.length - 1)
-  setRows((p) => [...p, { id: uid() }])
+if (editorSettings.autoAddRow && ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
 ```
 
 **Step 2: コミット**

@@ -830,9 +830,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
     let label = '作業'
     if (editorSettings.copyLabelOnSameRow) {
-      const sameRowNode = Object.entries(tasks).find(
-        ([key, t]) => t.rid === rid && key !== k,
-      )
+      const sameRowNode = Object.entries(tasks).find(([key, t]) => t.rid === rid && key !== k)
       if (sameRowNode) label = sameRowNode[1].label
     }
     setTasks((p) => ({ ...p, [k]: { label, lid, rid, nodeId: uid() } }))
@@ -845,8 +843,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       setSelArrow(null)
       setTimeout(() => inputRef.current?.focus(), 40)
     }
-    if (editorSettings.autoAddRow && ri === rows.length - 1)
-      setRows((p) => [...p, { id: uid() }])
+    if (editorSettings.autoAddRow && ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
   }
   const taskClick = (k: string, e: React.MouseEvent): void => {
     e.stopPropagation()
@@ -1428,9 +1425,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             <div
               key={s.key}
               className={styles.settingCheckbox}
-              onClick={() =>
-                setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))
-              }
+              onClick={() => setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))}
               data-testid={`setting-${s.key}`}
             >
               <div
@@ -1465,9 +1460,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             <div
               key={s.key}
               className={styles.settingCheckbox}
-              onClick={() =>
-                setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))
-              }
+              onClick={() => setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))}
               data-testid={`setting-${s.key}`}
             >
               <div
