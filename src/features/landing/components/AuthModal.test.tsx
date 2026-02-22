@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthModal } from './AuthModal'
+import { ApiError } from '../../../lib/api'
 
 const mockLogin = vi.fn()
 const mockRegister = vi.fn()
@@ -199,7 +200,6 @@ describe('AuthModal', () => {
   })
 
   it('should show verify screen when login returns 403 (email not verified)', async () => {
-    const { ApiError } = await import('../../../lib/api')
     mockLogin.mockRejectedValue(new ApiError(403, 'メールアドレスの確認が必要です'))
     render(
       <MemoryRouter>
@@ -221,7 +221,6 @@ describe('AuthModal', () => {
   })
 
   it('should allow resend from verify screen after login 403', async () => {
-    const { ApiError } = await import('../../../lib/api')
     mockLogin.mockRejectedValue(new ApiError(403, 'メールアドレスの確認が必要です'))
     mockResendVerification.mockResolvedValue(undefined)
     render(
@@ -266,6 +265,30 @@ describe('AuthModal', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument()
     })
+  })
+
+  it('should go back to login when clicking back button after login 403', async () => {
+    mockLogin.mockRejectedValue(new ApiError(403, 'メールアドレスの確認が必要です'))
+    render(
+      <MemoryRouter>
+        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
+      </MemoryRouter>,
+    )
+    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      target: { value: 'unverified@example.com' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.click(screen.getByTestId('auth-submit'))
+
+    await waitFor(() => {
+      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/ログイン画面に戻る/))
+    expect(screen.getByPlaceholderText('メールアドレス')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('パスワード')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('お名前')).not.toBeInTheDocument()
   })
 
   it('Googleログインボタンクリックで「準備中」メッセージを表示する', () => {
