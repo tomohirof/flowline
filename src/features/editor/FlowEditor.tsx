@@ -475,6 +475,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   })
 
   const fullSettingsRef = useRef<Record<string, unknown>>({})
+  const settingsLoadedRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -482,6 +483,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       .then((data) => {
         if (!cancelled) {
           fullSettingsRef.current = data.settings
+          settingsLoadedRef.current = true
           setEditorSettings((prev) => ({
             ...prev,
             ...(typeof data.settings.copyLabelOnSameRow === 'boolean' && {
@@ -515,6 +517,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
 
   const updateEditorSetting = useCallback((key: string, value: boolean) => {
     setEditorSettings((prev) => ({ ...prev, [key]: value }))
+    if (!settingsLoadedRef.current) return
     const merged = { ...fullSettingsRef.current, [key]: value }
     fullSettingsRef.current = merged
     apiFetch('/settings', {
