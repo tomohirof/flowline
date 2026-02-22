@@ -6,7 +6,7 @@ import { createTestDb, createMockD1 } from '../../helpers/mock-d1'
 const JWT_SECRET = 'test-secret-key-for-settings-tests'
 
 function createEnv(sqliteDb: ReturnType<typeof Database>) {
-  return { FLOWLINE_DB: createMockD1(sqliteDb), JWT_SECRET }
+  return { FLOWLINE_DB: createMockD1(sqliteDb), JWT_SECRET, RESEND_API_KEY: '' }
 }
 
 function postJson(path: string, body: object, env: object, cookie?: string) {
@@ -64,8 +64,11 @@ function extractCookie(res: Response): string {
   return match ? `auth_token=${match[1]}` : ''
 }
 
-async function registerAndGetCookie(env: object): Promise<string> {
-  const res = await postJson(
+async function registerAndGetCookie(
+  env: object,
+  sqliteDb: ReturnType<typeof Database>,
+): Promise<string> {
+  await postJson(
     '/api/auth/register',
     {
       email: 'settings-user@example.com',
@@ -74,7 +77,17 @@ async function registerAndGetCookie(env: object): Promise<string> {
     },
     env,
   )
-  return extractCookie(res)
+  // Email verification flow: register no longer sets cookie.
+  // Manually verify email, then login to get cookie.
+  sqliteDb
+    .prepare('UPDATE users SET email_verified = 1 WHERE email = ?')
+    .run('settings-user@example.com')
+  const loginRes = await postJson(
+    '/api/auth/login',
+    { email: 'settings-user@example.com', password: 'password123' },
+    env,
+  )
+  return extractCookie(loginRes)
 }
 
 describe('Settings API', () => {
@@ -152,7 +165,7 @@ describe('Settings API', () => {
   // ===========================================
   describe('GET /api/settings', () => {
     it('should return default settings for new user', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await getWithCookie('/api/settings', env, cookie)
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -164,7 +177,7 @@ describe('Settings API', () => {
     })
 
     it('should return profile info along with settings', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await getWithCookie('/api/settings', env, cookie)
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -174,14 +187,14 @@ describe('Settings API', () => {
     })
 
     it('should not include password_hash in profile', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await getWithCookie('/api/settings', env, cookie)
       const body = await res.json()
       expect(body.profile.password_hash).toBeUndefined()
     })
 
     it('should return merged settings after partial update', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       // Update one setting
       await putJson('/api/settings', { autoConnect: false }, env, cookie)
       // GET should show updated + defaults
@@ -198,7 +211,7 @@ describe('Settings API', () => {
   // ===========================================
   describe('PUT /api/settings', () => {
     it('should update allowed settings', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson(
         '/api/settings',
         { autoConnect: false, language: 'en' },
@@ -212,7 +225,7 @@ describe('Settings API', () => {
     })
 
     it('should ignore unknown keys', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson(
         '/api/settings',
         { autoConnect: false, unknownKey: 'value' },
@@ -225,7 +238,7 @@ describe('Settings API', () => {
     })
 
     it('should merge with existing settings', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       // First update
       await putJson('/api/settings', { autoConnect: false }, env, cookie)
       // Second update - should merge, not replace
@@ -236,13 +249,13 @@ describe('Settings API', () => {
     })
 
     it('should return 400 for empty body', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson('/api/settings', {}, env, cookie)
       expect(res.status).toBe(400)
     })
 
     it('should return 400 for malformed JSON body', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await app.request(
         '/api/settings',
         {
@@ -264,7 +277,7 @@ describe('Settings API', () => {
   // ===========================================
   describe('PUT /api/settings/profile', () => {
     it('should update user name', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson('/api/settings/profile', { name: 'New Name' }, env, cookie)
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -272,7 +285,7 @@ describe('Settings API', () => {
     })
 
     it('should trim whitespace from name', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson('/api/settings/profile', { name: '  Trimmed Name  ' }, env, cookie)
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -280,25 +293,25 @@ describe('Settings API', () => {
     })
 
     it('should return 400 for empty name', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson('/api/settings/profile', { name: '' }, env, cookie)
       expect(res.status).toBe(400)
     })
 
     it('should return 400 for whitespace-only name', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson('/api/settings/profile', { name: '   ' }, env, cookie)
       expect(res.status).toBe(400)
     })
 
     it('should return 400 for missing name field', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson('/api/settings/profile', {}, env, cookie)
       expect(res.status).toBe(400)
     })
 
     it('should return 400 for malformed JSON body', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await app.request(
         '/api/settings/profile',
         {
@@ -320,7 +333,7 @@ describe('Settings API', () => {
   // ===========================================
   describe('PUT /api/settings/password', () => {
     it('should change password with correct current password', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson(
         '/api/settings/password',
         { currentPassword: 'password123', newPassword: 'newpassword123' },
@@ -331,7 +344,7 @@ describe('Settings API', () => {
     })
 
     it('should allow login with new password after change', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       await putJson(
         '/api/settings/password',
         { currentPassword: 'password123', newPassword: 'newpassword123' },
@@ -348,7 +361,7 @@ describe('Settings API', () => {
     })
 
     it('should reject login with old password after change', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       await putJson(
         '/api/settings/password',
         { currentPassword: 'password123', newPassword: 'newpassword123' },
@@ -365,7 +378,7 @@ describe('Settings API', () => {
     })
 
     it('should return 400 for wrong current password', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson(
         '/api/settings/password',
         { currentPassword: 'wrongpassword', newPassword: 'newpassword123' },
@@ -376,7 +389,7 @@ describe('Settings API', () => {
     })
 
     it('should return 400 for new password shorter than 8 characters', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson(
         '/api/settings/password',
         { currentPassword: 'password123', newPassword: '1234567' },
@@ -387,7 +400,7 @@ describe('Settings API', () => {
     })
 
     it('should accept new password with exactly 8 characters', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson(
         '/api/settings/password',
         { currentPassword: 'password123', newPassword: '12345678' },
@@ -398,7 +411,7 @@ describe('Settings API', () => {
     })
 
     it('should return 400 for missing currentPassword', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson(
         '/api/settings/password',
         { newPassword: 'newpassword123' },
@@ -409,7 +422,7 @@ describe('Settings API', () => {
     })
 
     it('should return 400 for missing newPassword', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await putJson(
         '/api/settings/password',
         { currentPassword: 'password123' },
@@ -420,7 +433,7 @@ describe('Settings API', () => {
     })
 
     it('should return 400 for malformed JSON body', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await app.request(
         '/api/settings/password',
         {
@@ -442,13 +455,13 @@ describe('Settings API', () => {
   // ===========================================
   describe('DELETE /api/settings/account', () => {
     it('should delete user and all their data', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       const res = await deleteWithCookie('/api/settings/account', env, cookie)
       expect(res.status).toBe(200)
     })
 
     it('should prevent login after account deletion', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       await deleteWithCookie('/api/settings/account', env, cookie)
       // Try logging in
       const loginRes = await postJson(
@@ -460,7 +473,7 @@ describe('Settings API', () => {
     })
 
     it('should delete user flows when account is deleted', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       // Create a flow first
       await app.request(
         '/api/flows',
@@ -487,7 +500,7 @@ describe('Settings API', () => {
     })
 
     it('should return 404 if user not found', async () => {
-      const cookie = await registerAndGetCookie(env)
+      const cookie = await registerAndGetCookie(env, db)
       // Delete user manually from DB first
       db.prepare('DELETE FROM users WHERE email = ?').run('settings-user@example.com')
       const res = await deleteWithCookie('/api/settings/account', env, cookie)
