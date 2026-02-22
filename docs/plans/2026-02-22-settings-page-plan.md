@@ -13,6 +13,7 @@
 ### Task 1: DBマイグレーション + 設定APIルート
 
 **Files:**
+
 - Create: `migrations/0003_user_settings.sql`
 - Create: `api/routes/settings.ts`
 - Modify: `api/app.ts`
@@ -21,6 +22,7 @@
 **Step 1: Write the migration**
 
 `migrations/0003_user_settings.sql`:
+
 ```sql
 ALTER TABLE users ADD COLUMN settings TEXT DEFAULT '{}';
 ```
@@ -28,6 +30,7 @@ ALTER TABLE users ADD COLUMN settings TEXT DEFAULT '{}';
 **Step 2: Write the failing tests**
 
 `api/routes/settings.test.ts`:
+
 ```typescript
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -112,6 +115,7 @@ Expected: FAIL (file/routes not found)
 **Step 4: Implement settings API route**
 
 `api/routes/settings.ts`:
+
 ```typescript
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth'
@@ -179,9 +183,7 @@ settings.put('/', async (c) => {
   }
 
   // Merge with existing
-  const existing = await c.env.FLOWLINE_DB.prepare(
-    'SELECT settings FROM users WHERE id = ?',
-  )
+  const existing = await c.env.FLOWLINE_DB.prepare('SELECT settings FROM users WHERE id = ?')
     .bind(userId)
     .first<{ settings: string | null }>()
 
@@ -189,7 +191,7 @@ settings.put('/', async (c) => {
   const merged = { ...current, ...filtered }
 
   await c.env.FLOWLINE_DB.prepare(
-    'UPDATE users SET settings = ?, updated_at = datetime(\'now\') WHERE id = ?',
+    "UPDATE users SET settings = ?, updated_at = datetime('now') WHERE id = ?",
   )
     .bind(JSON.stringify(merged), userId)
     .run()
@@ -212,7 +214,7 @@ settings.put('/profile', async (c) => {
   }
 
   await c.env.FLOWLINE_DB.prepare(
-    'UPDATE users SET name = ?, updated_at = datetime(\'now\') WHERE id = ?',
+    "UPDATE users SET name = ?, updated_at = datetime('now') WHERE id = ?",
   )
     .bind(body.name.trim(), userId)
     .run()
@@ -237,9 +239,7 @@ settings.put('/password', async (c) => {
     return c.json({ error: '新しいパスワードは8文字以上で入力してください' }, 400)
   }
 
-  const user = await c.env.FLOWLINE_DB.prepare(
-    'SELECT password_hash FROM users WHERE id = ?',
-  )
+  const user = await c.env.FLOWLINE_DB.prepare('SELECT password_hash FROM users WHERE id = ?')
     .bind(userId)
     .first<{ password_hash: string }>()
 
@@ -254,7 +254,7 @@ settings.put('/password', async (c) => {
 
   const newHash = await hashPassword(body.newPassword)
   await c.env.FLOWLINE_DB.prepare(
-    'UPDATE users SET password_hash = ?, updated_at = datetime(\'now\') WHERE id = ?',
+    "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
   )
     .bind(newHash, userId)
     .run()
@@ -267,9 +267,7 @@ settings.delete('/account', async (c) => {
   const userId = c.get('userId')
 
   // Delete user's flows and related data
-  const userFlows = await c.env.FLOWLINE_DB.prepare(
-    'SELECT id FROM flows WHERE user_id = ?',
-  )
+  const userFlows = await c.env.FLOWLINE_DB.prepare('SELECT id FROM flows WHERE user_id = ?')
     .bind(userId)
     .all<{ id: string }>()
 
@@ -294,6 +292,7 @@ export { settings }
 **Step 5: Register route in app.ts**
 
 `api/app.ts` に追加:
+
 ```typescript
 import { settings } from './routes/settings'
 // ... existing routes ...
@@ -317,6 +316,7 @@ git commit -m "feat: 設定API + DBマイグレーション追加 #71"
 ### Task 2: Toggle / Tag / Section / SettingRow 共通コンポーネント
 
 **Files:**
+
 - Create: `src/features/settings/components/Toggle.tsx`
 - Create: `src/features/settings/components/Toggle.module.css`
 - Create: `src/features/settings/components/Tag.tsx`
@@ -333,6 +333,7 @@ git commit -m "feat: 設定API + DBマイグレーション追加 #71"
 **Step 1: Write failing tests for Toggle**
 
 `src/features/settings/components/Toggle.test.tsx`:
+
 ```tsx
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
@@ -366,6 +367,7 @@ describe('Toggle', () => {
 **Step 2: Write failing tests for Tag**
 
 `src/features/settings/components/Tag.test.tsx`:
+
 ```tsx
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
@@ -398,6 +400,7 @@ describe('Tag', () => {
 **Step 3: Write failing tests for Section and SettingRow**
 
 `src/features/settings/components/Section.test.tsx`:
+
 ```tsx
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
@@ -411,18 +414,27 @@ describe('Section', () => {
   })
 
   it('should render description when provided', () => {
-    render(<Section title="ノード作成" desc="説明文">child</Section>)
+    render(
+      <Section title="ノード作成" desc="説明文">
+        child
+      </Section>,
+    )
     expect(screen.getByText('説明文')).toBeInTheDocument()
   })
 
   it('should render children', () => {
-    render(<Section title="テスト"><span data-testid="child">子要素</span></Section>)
+    render(
+      <Section title="テスト">
+        <span data-testid="child">子要素</span>
+      </Section>,
+    )
     expect(screen.getByTestId('child')).toBeInTheDocument()
   })
 })
 ```
 
 `src/features/settings/components/SettingRow.test.tsx`:
+
 ```tsx
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
@@ -431,17 +443,29 @@ import { SettingRow } from './SettingRow'
 
 describe('SettingRow', () => {
   it('should render label', () => {
-    render(<SettingRow label="自動接続"><span>control</span></SettingRow>)
+    render(
+      <SettingRow label="自動接続">
+        <span>control</span>
+      </SettingRow>,
+    )
     expect(screen.getByText('自動接続')).toBeInTheDocument()
   })
 
   it('should render description when provided', () => {
-    render(<SettingRow label="自動接続" desc="説明"><span>control</span></SettingRow>)
+    render(
+      <SettingRow label="自動接続" desc="説明">
+        <span>control</span>
+      </SettingRow>,
+    )
     expect(screen.getByText('説明')).toBeInTheDocument()
   })
 
   it('should render children as control area', () => {
-    render(<SettingRow label="自動接続"><span data-testid="ctrl">toggle</span></SettingRow>)
+    render(
+      <SettingRow label="自動接続">
+        <span data-testid="ctrl">toggle</span>
+      </SettingRow>,
+    )
     expect(screen.getByTestId('ctrl')).toBeInTheDocument()
   })
 })
@@ -450,6 +474,7 @@ describe('SettingRow', () => {
 **Step 4: Implement all 4 components**
 
 `src/features/settings/components/Toggle.tsx`:
+
 ```tsx
 import styles from './Toggle.module.css'
 
@@ -473,6 +498,7 @@ export function Toggle({ checked, onChange }: ToggleProps) {
 ```
 
 `src/features/settings/components/Toggle.module.css`:
+
 ```css
 .track {
   width: 40px;
@@ -506,6 +532,7 @@ export function Toggle({ checked, onChange }: ToggleProps) {
 ```
 
 `src/features/settings/components/Tag.tsx`:
+
 ```tsx
 import styles from './Tag.module.css'
 
@@ -529,6 +556,7 @@ export function Tag({ label, active, onClick }: TagProps) {
 ```
 
 `src/features/settings/components/Tag.module.css`:
+
 ```css
 .tag {
   height: 30px;
@@ -552,6 +580,7 @@ export function Tag({ label, active, onClick }: TagProps) {
 ```
 
 `src/features/settings/components/Section.tsx`:
+
 ```tsx
 import type { ReactNode } from 'react'
 import styles from './Section.module.css'
@@ -575,6 +604,7 @@ export function Section({ title, desc, children }: SectionProps) {
 ```
 
 `src/features/settings/components/Section.module.css`:
+
 ```css
 .section {
   margin-bottom: 32px;
@@ -602,6 +632,7 @@ export function Section({ title, desc, children }: SectionProps) {
 ```
 
 `src/features/settings/components/SettingRow.tsx`:
+
 ```tsx
 import type { ReactNode } from 'react'
 import styles from './SettingRow.module.css'
@@ -626,6 +657,7 @@ export function SettingRow({ label, desc, children }: SettingRowProps) {
 ```
 
 `src/features/settings/components/SettingRow.module.css`:
+
 ```css
 .row {
   display: flex;
@@ -672,6 +704,7 @@ git commit -m "feat: Toggle/Tag/Section/SettingRow 共通コンポーネント�
 ### Task 3: 6カテゴリのセクションコンポーネント
 
 **Files:**
+
 - Create: `src/features/settings/sections/ProfileSection.tsx`
 - Create: `src/features/settings/sections/EditorSection.tsx`
 - Create: `src/features/settings/sections/InteractionSection.tsx`
@@ -685,6 +718,7 @@ git commit -m "feat: Toggle/Tag/Section/SettingRow 共通コンポーネント�
 **Step 1: Write failing test for EditorSection (representative)**
 
 `src/features/settings/sections/EditorSection.test.tsx`:
+
 ```tsx
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
@@ -771,6 +805,7 @@ git commit -m "feat: 6カテゴリのセクションコンポーネント追加 
 ### Task 4: SettingsPage メインページ + ルーティング
 
 **Files:**
+
 - Create: `src/features/settings/SettingsPage.tsx`
 - Create: `src/features/settings/SettingsPage.module.css`
 - Modify: `src/App.tsx` — `/settings` ルート追加、Header非表示追加
@@ -779,6 +814,7 @@ git commit -m "feat: 6カテゴリのセクションコンポーネント追加 
 **Step 1: Write failing tests**
 
 `src/features/settings/SettingsPage.test.tsx`:
+
 ```tsx
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -869,6 +905,7 @@ describe('SettingsPage', () => {
 **Step 2: Implement SettingsPage**
 
 レイアウト構成:
+
 - トップバー: ←戻る + F + "設定" + 保存ボタン
 - ボディ: 左ナビ(200px) + 右コンテンツ
 - 6カテゴリのナビゲーション、クリックで右側コンテンツ切替
@@ -879,21 +916,22 @@ describe('SettingsPage', () => {
 **Step 3: Add route in App.tsx**
 
 `src/App.tsx` に追加:
+
 ```tsx
 import { SettingsPage } from './features/settings/SettingsPage'
 
 // Header非表示条件に追加
-location.pathname === '/settings' ||
-
-// Routes内に追加
-<Route
-  path="/settings"
-  element={
-    <ProtectedRoute>
-      <SettingsPage />
-    </ProtectedRoute>
-  }
-/>
+location.pathname === '/settings' || (
+  // Routes内に追加
+  <Route
+    path="/settings"
+    element={
+      <ProtectedRoute>
+        <SettingsPage />
+      </ProtectedRoute>
+    }
+  />
+)
 ```
 
 **Step 4: Run tests**
@@ -913,6 +951,7 @@ git commit -m "feat: 設定ページ + /settings ルーティング追加 #71"
 ### Task 5: UserMenuPanel にナビゲーションリンク追加
 
 **Files:**
+
 - Modify: `src/components/UserMenuPanel.tsx` — メニュー項目に onClick ハンドラ追加
 - Modify: `src/components/UserMenuPanel.test.tsx` — ナビゲーションテスト追加
 
@@ -974,6 +1013,7 @@ npx vite --port 5174
 **Step 2: Playwright スクリプトで設定画面を確認**
 
 確認事項:
+
 - ダッシュボードからアバタークリック → メニューの「プロフィール設定」クリック → `/settings` に遷移
 - 設定画面のレイアウト（トップバー、サイドバー、コンテンツ）
 - 6カテゴリの切替
