@@ -687,7 +687,7 @@ describe('Flows API', () => {
       const payload = {
         title: 'Will Fail',
         lanes: [{ id: 'lane-1', name: 'New Lane', colorIndex: 0, position: 0 }],
-        nodes: [],
+        nodes: [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'Task', orderIndex: 0 }],
         arrows: [],
       }
 
@@ -695,6 +695,63 @@ describe('Flows API', () => {
       expect(res.status).toBe(500)
       const body = await res.json()
       expect(body.error).toBe('フローの保存に失敗しました')
+    })
+
+    // ========================================
+    // Partial structural data rejection
+    // ========================================
+
+    it('should return 400 when only lanes are provided without nodes and arrows', async () => {
+      insertNode(db, 'node-old-2', 'flow-1', 'lane-old', 1, 'Task 2', null, 1)
+      insertArrow(db, 'arrow-old', 'flow-1', 'node-old', 'node-old-2', 'Connection')
+
+      const payload = {
+        title: 'Partial Update',
+        lanes: [{ id: 'lane-1', name: 'Lane', colorIndex: 0, position: 0 }],
+      }
+      const res = await putJson('/api/flows/flow-1', payload, env, cookie)
+      expect(res.status).toBe(400)
+      const body = await res.json()
+      expect(body.error).toContain('構造データ')
+
+      // Verify existing data is preserved (not deleted)
+      const dbNodes = db.prepare('SELECT * FROM nodes WHERE flow_id = ?').all('flow-1')
+      expect(dbNodes).toHaveLength(2)
+      const dbArrows = db.prepare('SELECT * FROM arrows WHERE flow_id = ?').all('flow-1')
+      expect(dbArrows).toHaveLength(1)
+    })
+
+    it('should return 400 when only nodes are provided without lanes', async () => {
+      const payload = {
+        title: 'Partial Update',
+        nodes: [{ id: 'n1', laneId: 'lane-old', rowIndex: 0, label: 'Task', orderIndex: 0 }],
+      }
+      const res = await putJson('/api/flows/flow-1', payload, env, cookie)
+      expect(res.status).toBe(400)
+    })
+
+    it('should return 400 when lanes and nodes provided but arrows missing', async () => {
+      const payload = {
+        title: 'Partial Update',
+        lanes: [{ id: 'lane-1', name: 'Lane', colorIndex: 0, position: 0 }],
+        nodes: [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'Task', orderIndex: 0 }],
+      }
+      const res = await putJson('/api/flows/flow-1', payload, env, cookie)
+      expect(res.status).toBe(400)
+    })
+
+    it('should accept full structural update with all three arrays', async () => {
+      const payload = {
+        title: 'Full Update',
+        lanes: [{ id: 'lane-1', name: 'Lane', colorIndex: 0, position: 0 }],
+        nodes: [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'Task', orderIndex: 0 }],
+        arrows: [],
+      }
+      const res = await putJson('/api/flows/flow-1', payload, env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.flow.lanes).toHaveLength(1)
+      expect(body.flow.nodes).toHaveLength(1)
     })
   })
 
