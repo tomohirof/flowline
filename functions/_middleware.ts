@@ -63,6 +63,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       laneCount,
       nodeCount,
       shareToken: flow.share_token,
+      baseUrl: url.origin,
     })
 
     return new Response(html, {

@@ -45,6 +45,7 @@ export interface OgpParams {
   laneCount: number
   nodeCount: number
   shareToken: string
+  baseUrl: string
 }
 
 /**
@@ -61,8 +62,9 @@ export function generateOgpHtml(params: OgpParams): string {
   const ogDescription = `${author}さんが作成したフロー図（${laneCount}レーン、${nodeCount}ノード）`
   const twitterDescription = `${author}さんが作成したフロー図`
   const safeToken = encodeURIComponent(shareToken)
-  const ogUrl = `https://flowline.app/shared/${safeToken}`
-  const ogImage = `https://flowline.app/api/ogp/share/${safeToken}.png`
+  const base = params.baseUrl.replace(/\/+$/, '')
+  const ogUrl = `${base}/shared/${safeToken}`
+  const ogImage = `${base}/api/ogp/share/${safeToken}.png`
 
   return `<!DOCTYPE html>
 <html lang="ja">

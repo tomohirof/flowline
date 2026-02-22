@@ -123,6 +123,7 @@ describe('Shared page middleware logic', () => {
       laneCount,
       nodeCount,
       shareToken: flow.share_token,
+      baseUrl: 'https://flowline.pages.dev',
     })
 
     expect(html).toContain('受注管理フロー — Flowline')
@@ -174,6 +175,7 @@ describe('Shared page middleware logic', () => {
       laneCount,
       nodeCount,
       shareToken: flow.share_token,
+      baseUrl: 'https://flowline.pages.dev',
     })
 
     expect(html).toContain('空のフロー — Flowline')
@@ -217,6 +219,7 @@ describe('Shared page middleware logic', () => {
       laneCount,
       nodeCount,
       shareToken: flow.share_token,
+      baseUrl: 'https://flowline.pages.dev',
     })
 
     expect(html).toContain('ミニフロー — Flowline')
@@ -246,6 +249,7 @@ describe('Shared page middleware logic', () => {
       laneCount: 0,
       nodeCount: 0,
       shareToken: flow.share_token,
+      baseUrl: 'https://flowline.pages.dev',
     })
 
     // User-supplied content should be escaped (not raw HTML injection)
