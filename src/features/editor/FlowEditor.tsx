@@ -318,14 +318,10 @@ function flowToInternalState(flow: Flow): {
       const from = nodeIdToKey[a.fromNodeId]
       const to = nodeIdToKey[a.toNodeId]
       if (!from || !to) return null
-      return {
-        id: a.id,
-        from,
-        to,
-        comment: a.comment ?? '',
-        color: a.color || undefined,
-        dash: a.dash || undefined,
-      }
+      const arr: InternalArrow = { id: a.id, from, to, comment: a.comment ?? '' }
+      if (a.color) arr.color = a.color
+      if (a.dash) arr.dash = a.dash
+      return arr
     })
     .filter((a): a is InternalArrow => a !== null)
 
