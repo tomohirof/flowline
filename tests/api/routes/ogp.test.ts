@@ -26,6 +26,7 @@ vi.mock('@resvg/resvg-wasm', () => {
 
 // Import app after mocks are set up
 import { app } from '../../../api/app'
+import { _resetOgpCacheForTesting } from '../../../api/routes/ogp'
 
 const JWT_SECRET = 'test-secret-key'
 
@@ -195,6 +196,61 @@ describe('OGP Image API', () => {
     it('should return 404 for empty token (.png only)', async () => {
       const res = await getRequest('/api/ogp/share/.png', env)
       expect(res.status).toBe(404)
+    })
+
+    it('should return 500 with error message when font loading fails', async () => {
+      // Reset caches so loadFont actually calls fetch
+      _resetOgpCacheForTesting()
+      vi.restoreAllMocks()
+      vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network error'))
+
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'font-fail')
+
+      const res = await getRequest('/api/ogp/share/font-fail.png', env)
+      expect(res.status).toBe(500)
+      const body = await res.json()
+      expect(body).toHaveProperty('error')
+    })
+
+    it('should return 500 with error message when font fetch returns non-OK status', async () => {
+      // Reset caches so loadFont actually calls fetch
+      _resetOgpCacheForTesting()
+      vi.restoreAllMocks()
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+        new Response('Not Found', { status: 404 }),
+      )
+
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'font-404')
+
+      const res = await getRequest('/api/ogp/share/font-404.png', env)
+      expect(res.status).toBe(500)
+      const body = await res.json()
+      expect(body).toHaveProperty('error')
+    })
+
+    it('should return 500 with error message when WASM initialization fails', async () => {
+      _resetOgpCacheForTesting()
+      const { initWasm } = await import('@resvg/resvg-wasm')
+      vi.mocked(initWasm).mockRejectedValueOnce(new Error('WASM load failed'))
+
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'wasm-fail')
+
+      const res = await getRequest('/api/ogp/share/wasm-fail.png', env)
+      expect(res.status).toBe(500)
+      const body = await res.json()
+      expect(body).toHaveProperty('error')
+    })
+
+    it('should return 500 with error message when SVG generation (satori) fails', async () => {
+      const satori = await import('satori')
+      vi.mocked(satori.default).mockRejectedValueOnce(new Error('SVG generation failed'))
+
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'satori-fail')
+
+      const res = await getRequest('/api/ogp/share/satori-fail.png', env)
+      expect(res.status).toBe(500)
+      const body = await res.json()
+      expect(body).toHaveProperty('error')
     })
   })
 })

@@ -8,16 +8,40 @@ let wasmInitialized = false
 async function ensureWasmInitialized() {
   if (wasmInitialized) return
   try {
-    // Load wasm module dynamically for Cloudflare Workers compatibility
     const wasmModule = await import(
       // @ts-expect-error -- wasm module import for Cloudflare Workers
       '../../node_modules/@resvg/resvg-wasm/index_bg.wasm'
     )
     await initWasm(wasmModule.default || wasmModule)
-  } catch {
-    // Already initialized in this isolate, or mocked in test
+    wasmInitialized = true
+  } catch (e) {
+    if (e instanceof Error && e.message.includes('Already initialized')) {
+      wasmInitialized = true
+      return
+    }
+    // If the wasm module import fails (e.g. test/Node.js environment), try initWasm without args
+    const isModuleError =
+      e instanceof Error &&
+      (e.message.includes('Cannot find module') ||
+        e.message.includes('Unknown file extension') ||
+        (e as { code?: string }).code === 'ERR_MODULE_NOT_FOUND' ||
+        (e as { code?: string }).code === 'ERR_UNKNOWN_FILE_EXTENSION')
+    if (isModuleError) {
+      try {
+        // @ts-expect-error -- in test environment, initWasm is mocked and doesn't require args
+        await initWasm()
+        wasmInitialized = true
+        return
+      } catch (retryError) {
+        if (retryError instanceof Error && retryError.message.includes('Already initialized')) {
+          wasmInitialized = true
+          return
+        }
+        throw retryError
+      }
+    }
+    throw e
   }
-  wasmInitialized = true
 }
 
 /** Cached font data to avoid re-fetching on every request */
@@ -28,6 +52,9 @@ async function loadFont(): Promise<ArrayBuffer> {
   const res = await fetch(
     'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-400-normal.woff',
   )
+  if (!res.ok) {
+    throw new Error(`Font fetch failed: ${res.status}`)
+  }
   cachedFontData = await res.arrayBuffer()
   return cachedFontData
 }
@@ -248,6 +275,7 @@ function buildOgpElement(title: string, authorName: string, laneCount: number, n
               fontSize: '16px',
               color: 'rgba(255,255,255,0.5)',
             },
+            // Branding text shown in the PNG image (intentionally static, not baseUrl)
             children: 'flowline.app',
           },
         },
@@ -270,73 +298,77 @@ ogp.get('/share/:tokenPng', async (c) => {
     return c.json({ error: 'Invalid token' }, 404)
   }
 
-  const db = c.env.FLOWLINE_DB
+  try {
+    const db = c.env.FLOWLINE_DB
 
-  // Query flow with author name
-  const flow = await db
-    .prepare(
-      'SELECT f.*, u.name as author_name FROM flows f JOIN users u ON f.user_id = u.id WHERE f.share_token = ?',
+    // Query flow with author name
+    const flow = await db
+      .prepare(
+        'SELECT f.*, u.name as author_name FROM flows f JOIN users u ON f.user_id = u.id WHERE f.share_token = ?',
+      )
+      .bind(token)
+      .first<FlowWithAuthor>()
+
+    if (!flow) {
+      return c.json({ error: '共有フローが見つかりません' }, 404)
+    }
+
+    const laneCount = await db
+      .prepare('SELECT COUNT(*) as count FROM lanes WHERE flow_id = ?')
+      .bind(flow.id)
+      .first<{ count: number }>('count')
+
+    const nodeCount = await db
+      .prepare('SELECT COUNT(*) as count FROM nodes WHERE flow_id = ?')
+      .bind(flow.id)
+      .first<{ count: number }>('count')
+
+    await ensureWasmInitialized()
+    const fontData = await loadFont()
+
+    const element = buildOgpElement(
+      flow.title,
+      flow.author_name,
+      Number(laneCount ?? 0),
+      Number(nodeCount ?? 0),
     )
-    .bind(token)
-    .first<FlowWithAuthor>()
 
-  if (!flow) {
-    return c.json({ error: '共有フローが見つかりません' }, 404)
-  }
+    const svg = await satori(element as unknown as React.ReactNode, {
+      width: 1200,
+      height: 630,
+      fonts: [
+        {
+          name: 'Noto Sans JP',
+          data: fontData,
+          weight: 400,
+          style: 'normal' as const,
+        },
+      ],
+    })
 
-  // Query lane count and node count
-  const laneCount = await db
-    .prepare('SELECT COUNT(*) as count FROM lanes WHERE flow_id = ?')
-    .bind(flow.id)
-    .first<{ count: number }>('count')
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: 'width' as const, value: 1200 },
+    })
+    const pngData = resvg.render()
+    const pngBuffer = pngData.asPng()
 
-  const nodeCount = await db
-    .prepare('SELECT COUNT(*) as count FROM nodes WHERE flow_id = ?')
-    .bind(flow.id)
-    .first<{ count: number }>('count')
-
-  // Initialize resvg-wasm if needed
-  await ensureWasmInitialized()
-
-  // Load font
-  const fontData = await loadFont()
-
-  // Build the OGP element
-  const element = buildOgpElement(
-    flow.title,
-    flow.author_name,
-    Number(laneCount ?? 0),
-    Number(nodeCount ?? 0),
-  )
-
-  // Generate SVG using satori
-  const svg = await satori(element as unknown as React.ReactNode, {
-    width: 1200,
-    height: 630,
-    fonts: [
-      {
-        name: 'Noto Sans JP',
-        data: fontData,
-        weight: 400,
-        style: 'normal' as const,
+    return new Response(pngBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=86400',
       },
-    ],
-  })
-
-  // Convert SVG to PNG using resvg-wasm
-  const resvg = new Resvg(svg, {
-    fitTo: { mode: 'width' as const, value: 1200 },
-  })
-  const pngData = resvg.render()
-  const pngBuffer = pngData.asPng()
-
-  return new Response(pngBuffer, {
-    status: 200,
-    headers: {
-      'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=86400',
-    },
-  })
+    })
+  } catch (e) {
+    console.error('OGP image generation failed:', e)
+    return c.json({ error: 'OGP画像の生成に失敗しました' }, 500)
+  }
 })
 
-export { ogp }
+/** Reset internal caches — for testing only */
+function _resetOgpCacheForTesting() {
+  wasmInitialized = false
+  cachedFontData = null
+}
+
+export { ogp, _resetOgpCacheForTesting }

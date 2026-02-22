@@ -135,6 +135,7 @@ describe('OGP Utility', () => {
       laneCount: 3,
       nodeCount: 10,
       shareToken: 'abc123',
+      baseUrl: 'https://flowline.pages.dev',
     }
 
     it('should include correct og:title meta tag', () => {
@@ -155,7 +156,7 @@ describe('OGP Utility', () => {
     it('should include og:url with share token', () => {
       const html = generateOgpHtml(defaultParams)
       expect(html).toContain(
-        '<meta property="og:url" content="https://flowline.app/shared/abc123">',
+        '<meta property="og:url" content="https://flowline.pages.dev/shared/abc123">',
       )
     })
 
@@ -169,7 +170,7 @@ describe('OGP Utility', () => {
     it('should include dynamic og:image URL with share token', () => {
       const html = generateOgpHtml(defaultParams)
       expect(html).toContain(
-        '<meta property="og:image" content="https://flowline.app/api/ogp/share/abc123.png">',
+        '<meta property="og:image" content="https://flowline.pages.dev/api/ogp/share/abc123.png">',
       )
     })
 
@@ -209,7 +210,7 @@ describe('OGP Utility', () => {
     it('should include twitter:image', () => {
       const html = generateOgpHtml(defaultParams)
       expect(html).toContain(
-        '<meta name="twitter:image" content="https://flowline.app/api/ogp/share/abc123.png">',
+        '<meta name="twitter:image" content="https://flowline.pages.dev/api/ogp/share/abc123.png">',
       )
     })
 
@@ -246,8 +247,8 @@ describe('OGP Utility', () => {
         ...defaultParams,
         shareToken: 'xyz789',
       })
-      expect(html).toContain('https://flowline.app/shared/xyz789')
-      expect(html).toContain('https://flowline.app/api/ogp/share/xyz789.png')
+      expect(html).toContain('https://flowline.pages.dev/shared/xyz789')
+      expect(html).toContain('https://flowline.pages.dev/api/ogp/share/xyz789.png')
       expect(html).toContain("'/shared/xyz789'")
     })
 
@@ -258,6 +259,24 @@ describe('OGP Utility', () => {
         nodeCount: 0,
       })
       expect(html).toContain('（0レーン、0ノード）')
+    })
+
+    it('should use provided baseUrl for og:url and og:image', () => {
+      const html = generateOgpHtml({
+        ...defaultParams,
+        baseUrl: 'https://custom.example.com',
+      })
+      expect(html).toContain('https://custom.example.com/shared/abc123')
+      expect(html).toContain('https://custom.example.com/api/ogp/share/abc123.png')
+    })
+
+    it('should handle baseUrl with trailing slash', () => {
+      const html = generateOgpHtml({
+        ...defaultParams,
+        baseUrl: 'https://example.com/',
+      })
+      expect(html).toContain('https://example.com/shared/abc123')
+      expect(html).not.toContain('https://example.com//shared/')
     })
 
     it('should be a complete HTML document', () => {
