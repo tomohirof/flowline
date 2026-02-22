@@ -8,6 +8,7 @@ import { ogp } from './routes/ogp'
 type Bindings = {
   FLOWLINE_DB: D1Database
   JWT_SECRET: string
+  RESEND_API_KEY: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>().basePath('/api')
