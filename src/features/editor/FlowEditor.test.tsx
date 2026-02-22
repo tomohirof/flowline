@@ -1107,9 +1107,7 @@ describe('row insertion UI (#91)', () => {
 describe('lane gap UI header-only (#91)', () => {
   it('should render lane gap hit area with header-only height', () => {
     const flow = createMinimalFlow()
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     // Lane gap hit areas should exist (for 1 lane: 2 gaps, left and right)
     const laneGapHitAreas = container.querySelectorAll('[data-testid^="lanegap-hit-"]')
     expect(laneGapHitAreas.length).toBe(2)

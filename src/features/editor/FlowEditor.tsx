@@ -2276,8 +2276,22 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         opacity={0.3}
                       />
                       <circle cx={gx} cy={gy} r={10} fill={T.accent} />
-                      <line x1={gx - 4} y1={gy} x2={gx + 4} y2={gy} stroke="#fff" strokeWidth={1.5} />
-                      <line x1={gx} y1={gy - 4} x2={gx} y2={gy + 4} stroke="#fff" strokeWidth={1.5} />
+                      <line
+                        x1={gx - 4}
+                        y1={gy}
+                        x2={gx + 4}
+                        y2={gy}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                      <line
+                        x1={gx}
+                        y1={gy - 4}
+                        x2={gx}
+                        y2={gy + 4}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
                     </g>
                   )}
                 </g>
