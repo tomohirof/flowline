@@ -72,6 +72,9 @@ export interface Node {
   label: string
   note: string | null
   orderIndex: number
+  bg?: string | null
+  strokeColor?: string | null
+  dash?: string | null
 }
 
 export interface Arrow {
@@ -79,6 +82,8 @@ export interface Arrow {
   fromNodeId: string
   toNodeId: string
   comment: string | null
+  color?: string | null
+  dash?: string | null
 }
 
 export interface Flow {
@@ -143,6 +148,9 @@ export interface TaskData {
   rid: string
   /** Stable node ID for API persistence. Generated on creation, preserved across saves. */
   nodeId: string
+  bg?: string
+  strokeColor?: string
+  dash?: string
 }
 
 export interface RowData {
@@ -160,6 +168,8 @@ export interface InternalArrow {
   from: string
   to: string
   comment: string
+  color?: string
+  dash?: string
 }
 
 export interface DragState {

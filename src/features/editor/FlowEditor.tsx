@@ -20,7 +20,14 @@ import type {
   FlowSavePayload,
   SaveStatus,
 } from './types'
-import { PALETTES, THEMES } from './theme-constants'
+import {
+  PALETTES,
+  THEMES,
+  NODE_COLORS,
+  NODE_COLORS_DARK,
+  LINE_COLORS,
+  STROKE_STYLES,
+} from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
 
 const uid = (): string => crypto.randomUUID()
@@ -186,14 +193,14 @@ const Ico = ({ children, size = 18 }: { children: ReactNode; size?: number }) =>
 // Right Panel Sub-Components
 // =============================================
 
-const PanelSection = ({ label, children }: { label?: string; children: ReactNode; T: Theme }) => (
+const PanelSection = ({ label, children }: { label?: string; children: ReactNode }) => (
   <div className={styles.panelSection}>
     {label && <div className={styles.panelSectionLabel}>{label}</div>}
     {children}
   </div>
 )
 
-const PanelRow = ({ label, children }: { label: string; children?: ReactNode; T: Theme }) => (
+const PanelRow = ({ label, children }: { label: string; children?: ReactNode }) => (
   <div className={styles.panelRow}>
     <span className={styles.panelRowLabel}>{label}</span>
     <div className={styles.panelRowChildren}>{children}</div>
@@ -208,7 +215,6 @@ const PanelInput = ({
   value: string
   onChange: (v: string) => void
   placeholder?: string
-  T: Theme
 }) => (
   <input
     value={value}
@@ -229,7 +235,6 @@ const PanelBtn = ({
   color: string
   bg?: string
   onClick: () => void
-  T: Theme
   full?: boolean
 }) => (
   <button
@@ -287,7 +292,15 @@ function flowToInternalState(flow: Flow): {
     const ri = n.rowIndex
     if (ri >= 0 && ri < rows.length) {
       const key = `${n.laneId}_${rows[ri].id}`
-      tasks[key] = { label: n.label, lid: n.laneId, rid: rows[ri].id, nodeId: n.id }
+      tasks[key] = {
+        label: n.label,
+        lid: n.laneId,
+        rid: rows[ri].id,
+        nodeId: n.id,
+        bg: n.bg || undefined,
+        strokeColor: n.strokeColor || undefined,
+        dash: n.dash || undefined,
+      }
       if (n.note) {
         notes[key] = n.note
       }
@@ -305,7 +318,10 @@ function flowToInternalState(flow: Flow): {
       const from = nodeIdToKey[a.fromNodeId]
       const to = nodeIdToKey[a.toNodeId]
       if (!from || !to) return null
-      return { id: a.id, from, to, comment: a.comment ?? '' }
+      const arr: InternalArrow = { id: a.id, from, to, comment: a.comment ?? '' }
+      if (a.color) arr.color = a.color
+      if (a.dash) arr.dash = a.dash
+      return arr
     })
     .filter((a): a is InternalArrow => a !== null)
 
@@ -352,6 +368,9 @@ function internalStateToPayload(
         label: task.label,
         note: notes[k] || null,
         orderIndex: orderIdx,
+        bg: task.bg || null,
+        strokeColor: task.strokeColor || null,
+        dash: task.dash || null,
       }
     })
 
@@ -366,6 +385,8 @@ function internalStateToPayload(
         fromNodeId,
         toNodeId,
         comment: a.comment || null,
+        color: a.color || null,
+        dash: a.dash || null,
       }
     })
     .filter((a): a is NonNullable<typeof a> => a !== null)
@@ -842,12 +863,23 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
   }
 
-  const edgePt = (c: Point, o: Point, hw: number, hh: number): Point => {
+  const exitPt = (c: Point, o: Point, hw: number, hh: number): Point => {
     const dx = o.x - c.x,
       dy = o.y - c.y
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y + hh }
-    if (Math.abs(dy) / hh > Math.abs(dx) / hw) return { x: c.x, y: c.y + (dy > 0 ? hh : -hh) }
-    return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
+    if (dy > RH * 0.3) return { x: c.x, y: c.y + hh }
+    if (dy < -RH * 0.3) return { x: c.x + (dx >= 0 ? hw : -hw), y: c.y }
+    if (Math.abs(dx) > 1) return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
+    return { x: c.x, y: c.y + hh }
+  }
+  const entryPt = (c: Point, o: Point, hw: number, hh: number): Point => {
+    const dx = o.x - c.x,
+      dy = o.y - c.y
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y - hh }
+    if (dy < -RH * 0.3) return { x: c.x, y: c.y - hh }
+    if (dy > RH * 0.3) return { x: c.x, y: c.y + hh }
+    if (Math.abs(dx) > 1) return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
+    return { x: c.x, y: c.y - hh }
   }
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
     const ft = tasks[arrow.from],
@@ -862,8 +894,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       t = ct(tli, tri),
       hw = TW / 2,
       hh = TH / 2
-    const s = edgePt(f, t, hw, hh),
-      e = edgePt(t, f, hw, hh)
+    const s = exitPt(f, t, hw, hh),
+      e = entryPt(t, f, hw, hh)
     const dx = e.x - s.x,
       dy = e.y - s.y
     let d: string
@@ -978,44 +1010,160 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       const oi = order.indexOf(selTask)
       return (
         <>
-          <PanelSection label="ノード" T={T}>
-            <PanelRow label="ラベル" T={T} />
+          <PanelSection label="ノード">
+            <PanelRow label="ラベル" />
             <PanelInput
               value={selTaskData.label === '作業' ? '' : selTaskData.label}
               placeholder="作業"
               onChange={(v: string) =>
                 setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], label: v || '作業' } }))
               }
-              T={T}
             />
           </PanelSection>
-          <PanelSection label="メモ" T={T}>
+          <PanelSection label="メモ">
             <PanelInput
               value={notes[selTask] || ''}
               placeholder="メモを追加…"
               onChange={(v: string) => setNotes((p2) => ({ ...p2, [selTask]: v }))}
-              T={T}
             />
           </PanelSection>
-          <PanelSection label="情報" T={T}>
-            <PanelRow label="レーン" T={T}>
+          <PanelSection label="背景色">
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {(isDark ? NODE_COLORS_DARK : NODE_COLORS).map((nc) => {
+                const isActive = nc.fill === null ? !selTaskData.bg : selTaskData.bg === nc.fill
+                return (
+                  <div
+                    key={nc.id}
+                    onClick={() =>
+                      setTasks((p2) => ({
+                        ...p2,
+                        [selTask]: { ...p2[selTask], bg: nc.fill || undefined },
+                      }))
+                    }
+                    title={nc.label}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: nc.fill || T.nodeFill,
+                      border: isActive ? `2px solid ${T.accent}` : `1.5px solid ${nc.dot}`,
+                      transition: 'all 0.1s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {nc.fill === null && (
+                      <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
+          <PanelSection label="枠の色">
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {LINE_COLORS.map((lc) => {
+                const isActive =
+                  lc.color === null
+                    ? !selTaskData.strokeColor
+                    : selTaskData.strokeColor === lc.color
+                return (
+                  <div
+                    key={lc.id}
+                    onClick={() =>
+                      setTasks((p2) => ({
+                        ...p2,
+                        [selTask]: { ...p2[selTask], strokeColor: lc.color || undefined },
+                      }))
+                    }
+                    title={lc.label}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: T.nodeFill,
+                      border: isActive
+                        ? `2px solid ${T.accent}`
+                        : `2px solid ${lc.color || T.nodeStroke}`,
+                      transition: 'all 0.1s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {lc.color === null && (
+                      <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
+          <PanelSection label="枠の種類">
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {STROKE_STYLES.map((ss) => {
+                const isActive =
+                  ss.dash === 'none' ? !selTaskData.dash : selTaskData.dash === ss.dash
+                return (
+                  <div
+                    key={ss.id}
+                    onClick={() =>
+                      setTasks((p2) => ({
+                        ...p2,
+                        [selTask]: {
+                          ...p2[selTask],
+                          dash: ss.dash === 'none' ? undefined : ss.dash,
+                        },
+                      }))
+                    }
+                    title={ss.label}
+                    style={{
+                      flex: 1,
+                      minWidth: 42,
+                      height: 30,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
+                      border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.1s',
+                    }}
+                  >
+                    <svg width="32" height="2" viewBox="0 0 32 2">
+                      <line
+                        x1="0"
+                        y1="1"
+                        x2="32"
+                        y2="1"
+                        stroke={isActive ? T.accent : T.panelText}
+                        strokeWidth="2"
+                        strokeDasharray={ss.dash}
+                      />
+                    </svg>
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
+          <PanelSection label="情報">
+            <PanelRow label="レーン">
               <span className={styles.panelValueText}>{lane?.name}</span>
             </PanelRow>
             {oi !== -1 && (
-              <PanelRow label="順番" T={T}>
+              <PanelRow label="順番">
                 <span className={styles.panelValueText}>{oi + 1}</span>
               </PanelRow>
             )}
           </PanelSection>
-          <PanelSection label="操作" T={T}>
+          <PanelSection label="操作">
             <div className={styles.panelActions}>
-              <PanelBtn
-                label="→ 接続"
-                color={T.accent}
-                onClick={() => startConnect(selTask)}
-                T={T}
-              />
-              <PanelBtn label="削除" color="#E06060" onClick={() => delTask(selTask)} T={T} />
+              <PanelBtn label="→ 接続" color={T.accent} onClick={() => startConnect(selTask)} />
+              <PanelBtn label="削除" color="#E06060" onClick={() => delTask(selTask)} />
             </div>
           </PanelSection>
         </>
@@ -1028,25 +1176,121 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         toT = tasks[selArrowData.to]
       return (
         <>
-          <PanelSection label="接続線" T={T}>
-            <PanelRow label="From" T={T}>
+          <PanelSection label="接続線">
+            <PanelRow label="From">
               <span className={styles.panelValueText}>{fromT?.label || '?'}</span>
             </PanelRow>
-            <PanelRow label="To" T={T}>
+            <PanelRow label="To">
               <span className={styles.panelValueText}>{toT?.label || '?'}</span>
             </PanelRow>
           </PanelSection>
-          <PanelSection label="コメント" T={T}>
+          <PanelSection label="コメント">
             <PanelInput
               value={selArrowData.comment || ''}
               placeholder="ラベルを追加…"
               onChange={(v: string) =>
                 setArrows((p) => p.map((a) => (a.id === selArrow ? { ...a, comment: v } : a)))
               }
-              T={T}
             />
           </PanelSection>
-          <PanelSection label="操作" T={T}>
+          <PanelSection label="線の色">
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {LINE_COLORS.map((lc) => {
+                const isActive =
+                  lc.color === null ? !selArrowData.color : selArrowData.color === lc.color
+                return (
+                  <div
+                    key={lc.id}
+                    onClick={() =>
+                      setArrows((p) =>
+                        p.map((a) =>
+                          a.id === selArrow ? { ...a, color: lc.color || undefined } : a,
+                        ),
+                      )
+                    }
+                    title={lc.label}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: T.nodeFill,
+                      border: isActive
+                        ? `2px solid ${T.accent}`
+                        : `2px solid ${lc.color || T.arrowColor}`,
+                      transition: 'all 0.1s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {lc.color && (
+                      <div
+                        style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 3,
+                          background: lc.color,
+                        }}
+                      />
+                    )}
+                    {lc.color === null && (
+                      <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
+          <PanelSection label="線の種類">
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {STROKE_STYLES.map((ss) => {
+                const isActive =
+                  ss.dash === 'none' ? !selArrowData.dash : selArrowData.dash === ss.dash
+                return (
+                  <div
+                    key={ss.id}
+                    onClick={() =>
+                      setArrows((p) =>
+                        p.map((a) =>
+                          a.id === selArrow
+                            ? { ...a, dash: ss.dash === 'none' ? undefined : ss.dash }
+                            : a,
+                        ),
+                      )
+                    }
+                    title={ss.label}
+                    style={{
+                      flex: 1,
+                      minWidth: 42,
+                      height: 30,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
+                      border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.1s',
+                    }}
+                  >
+                    <svg width="32" height="2" viewBox="0 0 32 2">
+                      <line
+                        x1="0"
+                        y1="1"
+                        x2="32"
+                        y2="1"
+                        stroke={isActive ? T.accent : T.panelText}
+                        strokeWidth="2"
+                        strokeDasharray={ss.dash}
+                      />
+                    </svg>
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
+          <PanelSection label="操作">
             <div className={styles.panelActions}>
               <PanelBtn
                 label="⇄ 方向を逆転"
@@ -1056,7 +1300,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
                   )
                 }
-                T={T}
               />
               <PanelBtn
                 label="削除"
@@ -1065,7 +1308,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   setArrows((p) => p.filter((a) => a.id !== selArrow))
                   setSelArrow(null)
                 }}
-                T={T}
               />
             </div>
           </PanelSection>
@@ -1077,17 +1319,16 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     if (selLane && selLaneData) {
       return (
         <>
-          <PanelSection label="レーン" T={T}>
-            <PanelRow label="名前" T={T} />
+          <PanelSection label="レーン">
+            <PanelRow label="名前" />
             <PanelInput
               value={selLaneData.name}
               onChange={(v: string) =>
                 setLanes((p) => p.map((l) => (l.id === selLane ? { ...l, name: v } : l)))
               }
-              T={T}
             />
           </PanelSection>
-          <PanelSection label="カラー" T={T}>
+          <PanelSection label="カラー">
             <div className={styles.panelActions}>
               {PALETTES.map((p, ci) => (
                 <div
@@ -1105,30 +1346,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               ))}
             </div>
           </PanelSection>
-          <PanelSection label="順番" T={T}>
+          <PanelSection label="順番">
             <div style={{ display: 'flex', gap: 6 }}>
-              <PanelBtn
-                label="← 左へ"
-                color={T.accent}
-                onClick={() => moveLane(selLane, -1)}
-                T={T}
-              />
-              <PanelBtn
-                label="右へ →"
-                color={T.accent}
-                onClick={() => moveLane(selLane, 1)}
-                T={T}
-              />
+              <PanelBtn label="← 左へ" color={T.accent} onClick={() => moveLane(selLane, -1)} />
+              <PanelBtn label="右へ →" color={T.accent} onClick={() => moveLane(selLane, 1)} />
             </div>
           </PanelSection>
-          <PanelSection label="操作" T={T}>
-            <PanelBtn
-              label="レーンを削除"
-              color="#E06060"
-              onClick={() => rmLane(selLane)}
-              T={T}
-              full
-            />
+          <PanelSection label="操作">
+            <PanelBtn label="レーンを削除" color="#E06060" onClick={() => rmLane(selLane)} full />
           </PanelSection>
         </>
       )
@@ -1137,7 +1362,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     // Nothing selected -> Theme & Canvas
     return (
       <>
-        <PanelSection label="テーマ" T={T}>
+        <PanelSection label="テーマ">
           <div className={styles.themePickerWrapper}>
             <div
               onClick={() => setShowThemePicker((v) => !v)}
@@ -1172,26 +1397,25 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             )}
           </div>
         </PanelSection>
-        <PanelSection label="キャンバス" T={T}>
-          <PanelRow label="レーン数" T={T}>
+        <PanelSection label="キャンバス">
+          <PanelRow label="レーン数">
             <span className={styles.panelValueTextLarge}>{lanes.length}</span>
           </PanelRow>
-          <PanelRow label="行数" T={T}>
+          <PanelRow label="行数">
             <span className={styles.panelValueTextLarge}>{rows.length}</span>
           </PanelRow>
-          <PanelRow label="ノード数" T={T}>
+          <PanelRow label="ノード数">
             <span className={styles.panelValueTextLarge}>{Object.keys(tasks).length}</span>
           </PanelRow>
-          <PanelRow label="接続数" T={T}>
+          <PanelRow label="接続数">
             <span className={styles.panelValueTextLarge}>{arrows.length}</span>
           </PanelRow>
         </PanelSection>
-        <PanelSection label="エクスポート" T={T}>
+        <PanelSection label="エクスポート">
           <PanelBtn
             label="Mermaid コードをコピー"
             color={T.accent}
             onClick={() => navigator.clipboard?.writeText(exportMermaid())}
-            T={T}
             full
           />
         </PanelSection>
@@ -1806,7 +2030,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       y={c.y - TH / 2}
                       width={TW}
                       height={TH}
-                      fill={isConnTgt && isHov ? `${T.accent}0A` : T.nodeFill}
+                      fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
                       stroke={
                         isConnSrc
                           ? T.accent
@@ -1814,10 +2038,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                             ? T.nodeSelStroke
                             : isConnTgt && isHov
                               ? T.accent
-                              : T.nodeStroke
+                              : task.strokeColor || T.nodeStroke
                       }
                       strokeWidth={isConnSrc || isSel ? 2 : 1.2}
-                      strokeDasharray={isConnSrc ? '4,3' : 'none'}
+                      strokeDasharray={isConnSrc ? '4,3' : task.dash || 'none'}
                       rx={10}
                       style={{
                         cursor: connectFrom ? 'pointer' : 'grab',
@@ -1981,6 +2205,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             {arrowPaths.map(({ arrow, path }) => {
               const { d, mx, my } = path
               const isSel = selArrow === arrow.id
+              const ac = arrow.color || T.arrowColor
+              const selC = arrow.color || T.arrowSel
+              const dashArr = arrow.dash || 'none'
               return (
                 <g key={`av-${arrow.id}`}>
                   <defs>
@@ -1992,13 +2219,17 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       refY="4"
                       orient="auto"
                     >
-                      <polygon points="0 0.5, 9 4, 0 7.5" fill={isSel ? T.accent : T.arrowColor} />
+                      <polygon
+                        points="0 0.5, 9 4, 0 7.5"
+                        fill={isSel ? arrow.color || T.accent : ac}
+                      />
                     </marker>
                   </defs>
                   <path
                     d={d}
-                    stroke={isSel ? T.arrowSel : T.arrowColor}
+                    stroke={isSel ? selC : ac}
                     strokeWidth={isSel ? 2.5 : 2}
+                    strokeDasharray={dashArr}
                     fill="none"
                     markerEnd={`url(#m-${arrow.id})`}
                     style={{ pointerEvents: 'none' }}

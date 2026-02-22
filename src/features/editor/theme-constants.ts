@@ -144,3 +144,75 @@ export const THEMES: Record<ThemeId, Theme> = {
     laneGap: 6,
   },
 }
+
+// =============================================
+// Node background color palettes
+// =============================================
+
+export interface NodeColor {
+  id: string
+  fill: string | null
+  label: string
+  dot: string
+}
+
+export const NODE_COLORS: NodeColor[] = [
+  { id: 'default', fill: null, label: 'デフォルト', dot: '#ccc' },
+  { id: 'white', fill: '#FFFFFF', label: 'ホワイト', dot: '#E0E0E0' },
+  { id: 'cream', fill: '#FFF9EF', label: 'クリーム', dot: '#F0DFC0' },
+  { id: 'peach', fill: '#FFF0EB', label: 'ピーチ', dot: '#F0C8B8' },
+  { id: 'rose', fill: '#FFF0F5', label: 'ローズ', dot: '#F0C0D0' },
+  { id: 'lavender', fill: '#F5F0FF', label: 'ラベンダー', dot: '#D0C0F0' },
+  { id: 'sky', fill: '#EEF5FF', label: 'スカイ', dot: '#B8D0F0' },
+  { id: 'mint', fill: '#EEFFF5', label: 'ミント', dot: '#B0E0C8' },
+  { id: 'lemon', fill: '#FEFFF0', label: 'レモン', dot: '#E0E0A0' },
+  { id: 'smoke', fill: '#F4F4F6', label: 'スモーク', dot: '#C8C8D0' },
+]
+
+export const NODE_COLORS_DARK: NodeColor[] = [
+  { id: 'default', fill: null, label: 'デフォルト', dot: '#555' },
+  { id: 'charcoal', fill: '#2A2A38', label: 'チャコール', dot: '#444458' },
+  { id: 'warm', fill: '#302A24', label: 'ウォーム', dot: '#584830' },
+  { id: 'blush', fill: '#302428', label: 'ブラッシュ', dot: '#583040' },
+  { id: 'grape', fill: '#2A2434', label: 'グレープ', dot: '#483060' },
+  { id: 'navy', fill: '#242A34', label: 'ネイビー', dot: '#304060' },
+  { id: 'forest', fill: '#243028', label: 'フォレスト', dot: '#305040' },
+  { id: 'olive', fill: '#2C2E22', label: 'オリーブ', dot: '#505030' },
+  { id: 'slate', fill: '#2C2C32', label: 'スレート', dot: '#484850' },
+]
+
+// =============================================
+// Line color & stroke style palettes
+// =============================================
+
+export interface LineColor {
+  id: string
+  color: string | null
+  label: string
+}
+
+export const LINE_COLORS: LineColor[] = [
+  { id: 'default', color: null, label: 'デフォルト' },
+  { id: 'gray', color: '#8A889A', label: 'グレー' },
+  { id: 'red', color: '#E06060', label: 'レッド' },
+  { id: 'orange', color: '#D08040', label: 'オレンジ' },
+  { id: 'amber', color: '#C0A030', label: 'アンバー' },
+  { id: 'green', color: '#50A060', label: 'グリーン' },
+  { id: 'teal', color: '#40A0A0', label: 'ティール' },
+  { id: 'blue', color: '#5080D0', label: 'ブルー' },
+  { id: 'purple', color: '#8060C0', label: 'パープル' },
+  { id: 'pink', color: '#C06088', label: 'ピンク' },
+]
+
+export interface StrokeStyle {
+  id: string
+  label: string
+  dash: string
+}
+
+export const STROKE_STYLES: StrokeStyle[] = [
+  { id: 'solid', label: '実線', dash: 'none' },
+  { id: 'dashed', label: '破線', dash: '8,4' },
+  { id: 'dotted', label: '点線', dash: '3,3' },
+  { id: 'dashdot', label: '一点鎖線', dash: '8,3,2,3' },
+]

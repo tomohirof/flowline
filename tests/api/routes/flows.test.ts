@@ -327,6 +327,82 @@ describe('Flows API', () => {
       const res = await postJson('/api/flows', { title: longTitle }, env, cookie)
       expect(res.status).toBe(400)
     })
+
+    it('should persist node styles (bg, strokeColor, dash) and arrow styles (color, dash)', async () => {
+      const payload = {
+        title: 'Styled Flow',
+        lanes: [{ id: 'lane-1', name: 'Lane', colorIndex: 0, position: 0 }],
+        nodes: [
+          {
+            id: 'node-1',
+            laneId: 'lane-1',
+            rowIndex: 0,
+            label: 'Styled',
+            note: null,
+            orderIndex: 0,
+            bg: '#EEF5FF',
+            strokeColor: '#5080D0',
+            dash: '8,4',
+          },
+          {
+            id: 'node-2',
+            laneId: 'lane-1',
+            rowIndex: 1,
+            label: 'Default',
+            note: null,
+            orderIndex: 1,
+          },
+        ],
+        arrows: [
+          {
+            id: 'arrow-1',
+            fromNodeId: 'node-1',
+            toNodeId: 'node-2',
+            comment: null,
+            color: '#E06060',
+            dash: '3,3',
+          },
+        ],
+      }
+
+      const res = await postJson('/api/flows', payload, env, cookie)
+      expect(res.status).toBe(201)
+      const body = await res.json()
+
+      // Check API response includes styles
+      expect(body.flow.nodes[0].bg).toBe('#EEF5FF')
+      expect(body.flow.nodes[0].strokeColor).toBe('#5080D0')
+      expect(body.flow.nodes[0].dash).toBe('8,4')
+      expect(body.flow.nodes[1].bg).toBeNull()
+      expect(body.flow.nodes[1].strokeColor).toBeNull()
+      expect(body.flow.nodes[1].dash).toBeNull()
+      expect(body.flow.arrows[0].color).toBe('#E06060')
+      expect(body.flow.arrows[0].dash).toBe('3,3')
+
+      // Verify DB persistence
+      const dbNode = db.prepare('SELECT * FROM nodes WHERE id = ?').get('node-1') as {
+        bg: string | null
+        stroke_color: string | null
+        dash: string | null
+      }
+      expect(dbNode.bg).toBe('#EEF5FF')
+      expect(dbNode.stroke_color).toBe('#5080D0')
+      expect(dbNode.dash).toBe('8,4')
+
+      const dbArrow = db.prepare('SELECT * FROM arrows WHERE id = ?').get('arrow-1') as {
+        color: string | null
+        dash: string | null
+      }
+      expect(dbArrow.color).toBe('#E06060')
+      expect(dbArrow.dash).toBe('3,3')
+
+      // Verify GET returns styles
+      const flowId = body.flow.id
+      const getRes = await getWithCookie(`/api/flows/${flowId}`, env, cookie)
+      const getBody = await getRes.json()
+      expect(getBody.flow.nodes[0].bg).toBe('#EEF5FF')
+      expect(getBody.flow.arrows[0].color).toBe('#E06060')
+    })
   })
 
   // ========================================
@@ -496,6 +572,34 @@ describe('Flows API', () => {
     it('should return 401 without auth', async () => {
       const res = await putJson('/api/flows/flow-1', { title: 'Updated' }, env)
       expect(res.status).toBe(401)
+    })
+
+    it('should persist updated node and arrow styles', async () => {
+      const payload = {
+        title: 'Styled Update',
+        lanes: [{ id: 'lane-1', name: 'Lane', colorIndex: 0, position: 0 }],
+        nodes: [
+          {
+            id: 'node-new',
+            laneId: 'lane-1',
+            rowIndex: 0,
+            label: 'Updated',
+            note: null,
+            orderIndex: 0,
+            bg: '#FFF0EB',
+            strokeColor: '#C06088',
+            dash: '3,3',
+          },
+        ],
+        arrows: [],
+      }
+
+      const res = await putJson('/api/flows/flow-1', payload, env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.flow.nodes[0].bg).toBe('#FFF0EB')
+      expect(body.flow.nodes[0].strokeColor).toBe('#C06088')
+      expect(body.flow.nodes[0].dash).toBe('3,3')
     })
 
     it('should update updated_at timestamp', async () => {

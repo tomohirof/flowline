@@ -31,6 +31,9 @@ export interface NodeRow {
   label: string
   note: string | null
   order_index: number
+  bg: string | null
+  stroke_color: string | null
+  dash: string | null
   created_at: string
   updated_at: string
 }
@@ -41,6 +44,8 @@ export interface ArrowRow {
   from_node_id: string
   to_node_id: string
   comment: string | null
+  color: string | null
+  dash: string | null
   created_at: string
   updated_at: string
 }
@@ -75,6 +80,9 @@ export function toNode(row: NodeRow) {
     label: row.label,
     note: row.note,
     orderIndex: row.order_index,
+    bg: row.bg,
+    strokeColor: row.stroke_color,
+    dash: row.dash,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -86,6 +94,8 @@ export function toArrow(row: ArrowRow) {
     fromNodeId: row.from_node_id,
     toNodeId: row.to_node_id,
     comment: row.comment,
+    color: row.color,
+    dash: row.dash,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

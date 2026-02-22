@@ -5,10 +5,13 @@ import { resolve } from 'path'
 export function createTestDb(): ReturnType<typeof Database> {
   const db = new Database(':memory:')
   db.pragma('foreign_keys = ON')
-  const sql = readFileSync(resolve(__dirname, '../../migrations/0001_initial.sql'), 'utf-8')
-  const statements = sql.split(';').filter((s) => s.trim())
-  for (const stmt of statements) {
-    db.exec(stmt + ';')
+  const migrationFiles = ['0001_initial.sql', '0002_node_arrow_styles.sql']
+  for (const file of migrationFiles) {
+    const sql = readFileSync(resolve(__dirname, '../../migrations/', file), 'utf-8')
+    const statements = sql.split(';').filter((s) => s.trim())
+    for (const stmt of statements) {
+      db.exec(stmt + ';')
+    }
   }
   return db
 }
