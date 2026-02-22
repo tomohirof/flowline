@@ -63,7 +63,14 @@ auth.post('/register', async (c) => {
   await c.env.FLOWLINE_DB.prepare(
     'INSERT INTO users (id, email, password_hash, name, email_verified, verification_token, verification_sent_at) VALUES (?, ?, ?, ?, 0, ?, ?)',
   )
-    .bind(id, body.email, passwordHash, body.name.trim(), verificationToken, new Date().toISOString())
+    .bind(
+      id,
+      body.email,
+      passwordHash,
+      body.name.trim(),
+      verificationToken,
+      new Date().toISOString(),
+    )
     .run()
 
   // メール送信（失敗してもユーザー作成は成功させる）
@@ -96,7 +103,13 @@ auth.post('/login', async (c) => {
     'SELECT id, email, password_hash, name, email_verified FROM users WHERE email = ?',
   )
     .bind(body.email)
-    .first<{ id: string; email: string; password_hash: string; name: string; email_verified: number }>()
+    .first<{
+      id: string
+      email: string
+      password_hash: string
+      name: string
+      email_verified: number
+    }>()
 
   if (!user) {
     return c.json({ error: 'メールアドレスまたはパスワードが正しくありません' }, 401)
@@ -151,9 +164,7 @@ auth.get('/verify', async (c) => {
     return c.json({ error: '認証トークンが無効または期限切れです' }, 400)
   }
 
-  const user = await c.env.FLOWLINE_DB.prepare(
-    'SELECT id, email, name FROM users WHERE id = ?',
-  )
+  const user = await c.env.FLOWLINE_DB.prepare('SELECT id, email, name FROM users WHERE id = ?')
     .bind(payload.sub)
     .first<{ id: string; email: string; name: string }>()
 
@@ -213,7 +224,12 @@ auth.post('/resend-verification', async (c) => {
   const baseUrl = new URL(c.req.url).origin
   try {
     if (c.env.RESEND_API_KEY) {
-      await sendVerificationEmail(body.email.toLowerCase(), verificationToken, c.env.RESEND_API_KEY, baseUrl)
+      await sendVerificationEmail(
+        body.email.toLowerCase(),
+        verificationToken,
+        c.env.RESEND_API_KEY,
+        baseUrl,
+      )
     }
   } catch {
     // メール送信失敗はログのみ

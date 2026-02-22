@@ -30,10 +30,16 @@ export interface VerificationPayload {
 
 export async function createVerificationToken(userId: string, secret: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
-  return sign({ sub: userId, purpose: 'email-verify', iat: now, exp: now + VERIFY_EXPIRATION_SECONDS }, secret)
+  return sign(
+    { sub: userId, purpose: 'email-verify', iat: now, exp: now + VERIFY_EXPIRATION_SECONDS },
+    secret,
+  )
 }
 
-export async function verifyVerificationToken(token: string, secret: string): Promise<VerificationPayload> {
+export async function verifyVerificationToken(
+  token: string,
+  secret: string,
+): Promise<VerificationPayload> {
   const payload = await verify(token, secret, 'HS256')
   const p = payload as unknown as VerificationPayload
   if (p.purpose !== 'email-verify') {

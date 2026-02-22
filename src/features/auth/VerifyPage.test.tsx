@@ -25,7 +25,7 @@ function renderWithRouter(initialEntries: string[] = ['/verify']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <VerifyPage />
-    </MemoryRouter>
+    </MemoryRouter>,
   )
 }
 

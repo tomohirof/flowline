@@ -134,7 +134,16 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
         {mode === 'verify' ? (
           <div className={styles.verifyContainer}>
             <div className={styles.verifyIcon}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7C5CFC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#7C5CFC"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <rect x="2" y="4" width="20" height="16" rx="2" />
                 <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
               </svg>
@@ -153,11 +162,7 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
             >
               {submitting ? '送信中...' : '確認メールを再送する'}
             </button>
-            <button
-              type="button"
-              className={styles.backLink}
-              onClick={() => setMode('register')}
-            >
+            <button type="button" className={styles.backLink} onClick={() => setMode('register')}>
               ← メールアドレスを変更する
             </button>
           </div>

@@ -39,7 +39,12 @@ describe('sendVerificationEmail', () => {
   })
 
   it('should POST to Resend API with correct parameters', async () => {
-    await sendVerificationEmail('test@example.com', 'token123', 'resend-key', 'https://flowline.pages.dev')
+    await sendVerificationEmail(
+      'test@example.com',
+      'token123',
+      'resend-key',
+      'https://flowline.pages.dev',
+    )
 
     expect(mockFetch).toHaveBeenCalledWith(
       'https://api.resend.com/emails',
@@ -72,7 +77,11 @@ describe('sendVerificationEmail', () => {
   })
 
   it('should throw error when Resend API returns 500', async () => {
-    mockFetch.mockResolvedValue({ ok: false, status: 500, text: async () => 'Internal Server Error' })
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => 'Internal Server Error',
+    })
     await expect(
       sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.pages.dev'),
     ).rejects.toThrow(/500/)

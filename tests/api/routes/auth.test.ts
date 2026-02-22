@@ -305,9 +305,9 @@ describe('Auth API', () => {
         },
         env,
       )
-      const user = db
-        .prepare('SELECT name FROM users WHERE email = ?')
-        .get('test@example.com') as { name: string }
+      const user = db.prepare('SELECT name FROM users WHERE email = ?').get('test@example.com') as {
+        name: string
+      }
       expect(user.name).toBe('Test User')
     })
 
@@ -792,11 +792,7 @@ describe('Auth API', () => {
         'newtoken@example.com',
       )
 
-      await postJson(
-        '/api/auth/resend-verification',
-        { email: 'newtoken@example.com' },
-        env,
-      )
+      await postJson('/api/auth/resend-verification', { email: 'newtoken@example.com' }, env)
       const after = db
         .prepare('SELECT verification_sent_at FROM users WHERE email = ?')
         .get('newtoken@example.com') as { verification_sent_at: string }

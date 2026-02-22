@@ -7,7 +7,9 @@ export function VerifyPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const token = searchParams.get('token')
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(token ? 'verifying' : 'error')
+  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(
+    token ? 'verifying' : 'error',
+  )
   const [error, setError] = useState(token ? '' : '認証トークンが見つかりません')
 
   useEffect(() => {

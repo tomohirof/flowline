@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { createToken, verifyToken, createVerificationToken, verifyVerificationToken } from '../../../api/lib/jwt'
+import {
+  createToken,
+  verifyToken,
+  createVerificationToken,
+  verifyVerificationToken,
+} from '../../../api/lib/jwt'
 
 const TEST_SECRET = 'test-secret-key-for-testing-only'
 

@@ -109,7 +109,11 @@ describe('useAuth', () => {
     })
 
     await act(async () => {
-      const registerResult = await result.current.register('test@example.com', 'password123', 'New User')
+      const registerResult = await result.current.register(
+        'test@example.com',
+        'password123',
+        'New User',
+      )
       expect(registerResult).toEqual({ needsVerification: true, email: 'test@example.com' })
     })
 

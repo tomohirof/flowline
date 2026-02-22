@@ -51,7 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data.user
   }
 
-  const register = async (email: string, password: string, name: string): Promise<RegisterResult> => {
+  const register = async (
+    email: string,
+    password: string,
+    name: string,
+  ): Promise<RegisterResult> => {
     await apiFetch<{ message: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
@@ -71,7 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext value={{ user, loading, login, register, resendVerification, logout }}>{children}</AuthContext>
+  return (
+    <AuthContext value={{ user, loading, login, register, resendVerification, logout }}>
+      {children}
+    </AuthContext>
+  )
 }
 
 export function useAuth() {
