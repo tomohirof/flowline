@@ -1,0 +1,62 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f5ff;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 48px 40px;
+  max-width: 420px;
+  width: 90vw;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.checkIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 12px;
+}
+
+.text {
+  font-size: 14px;
+  color: #64648c;
+  margin: 0;
+}
+
+.errorText {
+  font-size: 14px;
+  color: #e06060;
+  margin: 0 0 20px;
+}
+
+.btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}

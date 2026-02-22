@@ -4,17 +4,19 @@ import { Dashboard } from './features/dashboard/Dashboard'
 import { SharedFlowPage } from './features/shared/SharedFlowPage'
 import { LandingPage } from './features/landing/LandingPage'
 import { SettingsPage } from './features/settings/SettingsPage'
+import { VerifyPage } from './features/auth/VerifyPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 
 function Header() {
   const { user, loading, logout } = useAuth()
   const location = useLocation()
 
-  // Hide header on landing page, dashboard, flow editor pages, settings, and shared view (full-screen)
+  // Hide header on landing page, dashboard, flow editor pages, settings, verify, and shared view (full-screen)
   if (
     location.pathname === '/' ||
     location.pathname === '/flows' ||
     location.pathname === '/settings' ||
+    location.pathname === '/verify' ||
     location.pathname.match(/^\/flows\/[^/]+$/) ||
     location.pathname.match(/^\/shared\/[^/]+$/)
   ) {
@@ -98,6 +100,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/verify" element={<VerifyPage />} />
             <Route path="/shared/:token" element={<SharedFlowPage />} />
           </Routes>
         </main>
