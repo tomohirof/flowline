@@ -221,7 +221,7 @@ describe('connection drag handles (#47)', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     const statusHints = document.querySelectorAll('[class*="statusTextHint"]')
     const hintText = Array.from(statusHints).find((el) =>
-      el.textContent?.includes('○をドラッグ:接続'),
+      el.textContent?.includes('○:接続'),
     )
     expect(hintText).toBeTruthy()
   })

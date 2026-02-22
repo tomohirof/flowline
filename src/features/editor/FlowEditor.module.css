@@ -396,6 +396,38 @@
   padding: 0 10px;
 }
 
+.multiSelBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--theme-accent, #7c5cfc);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dangerBtn {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  background: #E06060;
+  color: #fff;
+  border: none;
+  transition: all 0.1s;
+}
+
+.dangerBtn:hover {
+  background: #d04040;
+}
+
 .panelValueText {
   font-size: 11px;
   color: var(--theme-panel-text);
