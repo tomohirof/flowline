@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createToken, verifyToken } from '../../../api/lib/jwt'
+import { createToken, verifyToken, createVerificationToken, verifyVerificationToken } from '../../../api/lib/jwt'
 
 const TEST_SECRET = 'test-secret-key-for-testing-only'
 
@@ -72,5 +72,37 @@ describe('JWT Utility', () => {
     parts[1] = parts[1] + 'tampered'
     const tamperedToken = parts.join('.')
     await expect(verifyToken(tamperedToken, TEST_SECRET)).rejects.toThrow()
+  })
+})
+
+describe('Verification Token', () => {
+  const secret = 'test-secret-key-for-testing-only'
+
+  it('should create and verify a verification token', async () => {
+    const token = await createVerificationToken('user-123', secret)
+    const payload = await verifyVerificationToken(token, secret)
+    expect(payload.sub).toBe('user-123')
+    expect(payload.purpose).toBe('email-verify')
+  })
+
+  it('should reject a regular JWT as verification token', async () => {
+    const token = await createToken('user-123', 'test@example.com', secret)
+    await expect(verifyVerificationToken(token, secret)).rejects.toThrow()
+  })
+
+  it('should have 24-hour expiration', async () => {
+    const token = await createVerificationToken('user-123', secret)
+    const payload = await verifyVerificationToken(token, secret)
+    const expectedExp = payload.iat + 24 * 60 * 60
+    expect(payload.exp).toBe(expectedExp)
+  })
+
+  it('should reject verification token with wrong secret', async () => {
+    const token = await createVerificationToken('user-123', secret)
+    await expect(verifyVerificationToken(token, 'wrong-secret')).rejects.toThrow()
+  })
+
+  it('should reject empty token', async () => {
+    await expect(verifyVerificationToken('', secret)).rejects.toThrow()
   })
 })
