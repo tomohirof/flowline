@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
@@ -280,7 +280,8 @@ function flowToInternalState(flow: Flow): {
   flow.nodes.forEach((n) => rowIndices.add(n.rowIndex))
   // Ensure at least 7 rows
   const maxRow = Math.max(6, ...[...rowIndices])
-  const rows: RowData[] = Array.from({ length: maxRow + 1 }, () => ({ id: uid() }))
+  const rowCount = rowIndices.size > 0 ? maxRow + 2 : maxRow + 1
+  const rows: RowData[] = Array.from({ length: rowCount }, () => ({ id: uid() }))
 
   // Build task map and order from nodes
   const tasks: Record<string, TaskData> = {}
@@ -1771,15 +1772,17 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
 
       {/* Title bar */}
       <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className={styles.titleBar}>
-        <div
-          className={styles.logoIcon}
-          style={{
-            background: `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`,
-          }}
-        >
-          F
-        </div>
-        <span className={styles.brandName}>Flowline</span>
+        <Link to="/flows" className={styles.logoLink} data-testid="logo-link">
+          <div
+            className={styles.logoIcon}
+            style={{
+              background: `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`,
+            }}
+          >
+            F
+          </div>
+          <span className={styles.brandName}>Flowline</span>
+        </Link>
         <div className={styles.divider} />
         {editTitle ? (
           <input
@@ -2215,6 +2218,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             {rows.map((_, ri) => (
               <text
                 key={ri}
+                data-testid={`canvas-row-${ri}`}
                 x={LM - 14}
                 y={TM + HH + ri * RH + RH / 2}
                 textAnchor="middle"

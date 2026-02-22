@@ -9,6 +9,26 @@ import { NODE_COLORS, NODE_COLORS_DARK, LINE_COLORS, STROKE_STYLES } from './the
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  Link: ({
+    to,
+    children,
+    ...props
+  }: {
+    to: string
+    children: React.ReactNode
+    [key: string]: unknown
+  }) => (
+    <a
+      href={to}
+      onClick={(e: React.MouseEvent) => {
+        e.preventDefault()
+        mockNavigate(to)
+      }}
+      {...props}
+    >
+      {children}
+    </a>
+  ),
 }))
 
 const mockLogout = vi.fn()
@@ -776,5 +796,71 @@ describe('Multi-select (#76)', () => {
 
     // Both nodes should be in multi-select: 2件選択
     expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('logo navigation (#83)', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear()
+  })
+
+  it('should render logo as a link to /flows', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const logoLinks = screen.getAllByTestId('logo-link')
+    const logoLink = logoLinks[0]
+    expect(logoLink).toBeTruthy()
+    expect(logoLink.tagName).toBe('A')
+    expect(logoLink.getAttribute('href')).toBe('/flows')
+  })
+
+  it('should navigate to /flows when logo is clicked', async () => {
+    const user = userEvent.setup()
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const logoLinks = screen.getAllByTestId('logo-link')
+    await user.click(logoLinks[0])
+    expect(mockNavigate).toHaveBeenCalledWith('/flows')
+  })
+
+  it('should contain logo icon and brand name text', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const logoLinks = screen.getAllByTestId('logo-link')
+    const logoLink = logoLinks[0]
+    expect(logoLink.textContent).toContain('F')
+    expect(logoLink.textContent).toContain('Flowline')
+  })
+})
+
+describe('empty row at bottom on reload (#84)', () => {
+  it('should have extra empty row below the last node row', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 6, label: 'B', note: null, orderIndex: 1 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    // ノードの最大rowIndex=6 → 行0~6(7行) + 空白行1 = 8行
+    const rows = container.querySelectorAll('[data-testid^="canvas-row-"]')
+    expect(rows.length).toBe(8)
+  })
+
+  it('should have at least 7 rows when no nodes exist', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = []
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const rows = container.querySelectorAll('[data-testid^="canvas-row-"]')
+    // ノードなし: maxRow=6, rowCount=6+1=7
+    expect(rows.length).toBe(7)
+  })
+
+  it('should have extra empty row when nodes span many rows', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 9, label: 'B', note: null, orderIndex: 1 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    // maxRowIndex=9 → 行0~9(10行) + 空白行1 = 11行
+    const rows = container.querySelectorAll('[data-testid^="canvas-row-"]')
+    expect(rows.length).toBe(11)
   })
 })
