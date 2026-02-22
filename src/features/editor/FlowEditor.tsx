@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
+import { useAuth } from '../../hooks/useAuth'
+import { UserMenuPanel } from '../../components/UserMenuPanel'
 import styles from './FlowEditor.module.css'
 import type {
   Theme,
@@ -417,6 +419,8 @@ interface FlowEditorProps {
 
 export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: FlowEditorProps) {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
   // Initialize state from flow data (lazy initialization to avoid recomputing on every render)
   const [initState] = useState(() => flowToInternalState(flow))
   const [lanes, setLanes] = useState<InternalLane[]>(initState.lanes)
@@ -1546,6 +1550,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           {saveStatusText[saveStatus]}
         </span>
         <span className={styles.zoomPercent}>{Math.round(zoom * 100)}%</span>
+        <button
+          data-testid="editor-user-avatar"
+          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}
+          className={styles.editorAvatar}
+        >
+          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+        </button>
       </div>
 
       <div className={styles.mainContent}>
@@ -2582,6 +2593,13 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           onClose={() => setShowShareDialog(false)}
         />
       )}
+      <UserMenuPanel
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        userName={user?.name ?? ''}
+        userEmail={user?.email ?? ''}
+        onLogout={logout}
+      />
     </div>
   )
 }

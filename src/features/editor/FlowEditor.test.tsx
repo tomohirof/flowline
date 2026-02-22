@@ -11,6 +11,15 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }))
 
+const mockLogout = vi.fn()
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'u1', email: 'test@example.com', name: 'Test User' },
+    loading: false,
+    logout: mockLogout,
+  }),
+}))
+
 beforeEach(() => {
   global.ResizeObserver = class {
     observe = vi.fn()
@@ -527,5 +536,35 @@ describe('auto-save payload optimization', () => {
 
     // onSave should not be called on initial render
     expect(onSave).not.toHaveBeenCalled()
+  })
+})
+
+describe('editor user avatar and UserMenuPanel (#58)', () => {
+  it('should render user avatar in title bar', async () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const avatars = screen.getAllByTestId('editor-user-avatar')
+    expect(avatars[0]).toBeInTheDocument()
+  })
+
+  it('should open user menu panel when editor avatar is clicked', async () => {
+    const user = userEvent.setup()
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const avatars = screen.getAllByTestId('editor-user-avatar')
+    await user.click(avatars[0])
+    expect(screen.getByTestId('user-menu-panel')).toBeInTheDocument()
+  })
+
+  it('should close user menu panel when overlay is clicked in editor', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const avatar = container.querySelector('[data-testid="editor-user-avatar"]') as HTMLElement
+    expect(avatar).toBeTruthy()
+    await user.click(avatar)
+    const panel = container.querySelector('[data-testid="user-menu-panel"]')
+    expect(panel).toBeTruthy()
+    const overlay = container.querySelector('[data-testid="user-menu-overlay"]') as HTMLElement
+    expect(overlay).toBeTruthy()
+    await user.click(overlay)
+    expect(container.querySelector('[data-testid="user-menu-panel"]')).toBeNull()
   })
 })
