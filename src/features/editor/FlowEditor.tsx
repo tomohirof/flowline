@@ -1817,7 +1817,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       y={c.y - TH / 2}
                       width={TW}
                       height={TH}
-                      fill={isConnTgt && isHov ? `${T.accent}0A` : T.nodeFill}
+                      fill={isConnTgt && isHov ? `${T.accent}0A` : (task.bg || T.nodeFill)}
                       stroke={
                         isConnSrc
                           ? T.accent
@@ -1825,10 +1825,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                             ? T.nodeSelStroke
                             : isConnTgt && isHov
                               ? T.accent
-                              : T.nodeStroke
+                              : (task.strokeColor || T.nodeStroke)
                       }
                       strokeWidth={isConnSrc || isSel ? 2 : 1.2}
-                      strokeDasharray={isConnSrc ? '4,3' : 'none'}
+                      strokeDasharray={isConnSrc ? '4,3' : (task.dash || 'none')}
                       rx={10}
                       style={{
                         cursor: connectFrom ? 'pointer' : 'grab',
@@ -1992,6 +1992,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             {arrowPaths.map(({ arrow, path }) => {
               const { d, mx, my } = path
               const isSel = selArrow === arrow.id
+              const ac = arrow.color || T.arrowColor
+              const selC = arrow.color || T.arrowSel
+              const dashArr = arrow.dash || 'none'
               return (
                 <g key={`av-${arrow.id}`}>
                   <defs>
@@ -2003,13 +2006,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       refY="4"
                       orient="auto"
                     >
-                      <polygon points="0 0.5, 9 4, 0 7.5" fill={isSel ? T.accent : T.arrowColor} />
+                      <polygon points="0 0.5, 9 4, 0 7.5" fill={isSel ? (arrow.color || T.accent) : ac} />
                     </marker>
                   </defs>
                   <path
                     d={d}
-                    stroke={isSel ? T.arrowSel : T.arrowColor}
+                    stroke={isSel ? selC : ac}
                     strokeWidth={isSel ? 2.5 : 2}
+                    strokeDasharray={dashArr}
                     fill="none"
                     markerEnd={`url(#m-${arrow.id})`}
                     style={{ pointerEvents: 'none' }}

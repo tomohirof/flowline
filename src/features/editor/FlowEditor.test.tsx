@@ -313,3 +313,21 @@ describe('color constants (#51, #52)', () => {
     expect(STROKE_STYLES[3].dash).toBe('8,3,2,3')
   })
 })
+
+describe('arrow color and style rendering (#52)', () => {
+  it('should render arrow with default arrowColor when no custom color', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }]
+    const { container } = render(
+      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const arrowPath = container.querySelector('path[marker-end]')
+    expect(arrowPath).toBeTruthy()
+    expect(arrowPath?.getAttribute('stroke')).toBe('#8A889A')
+    expect(arrowPath?.getAttribute('stroke-dasharray')).toBe('none')
+  })
+})
