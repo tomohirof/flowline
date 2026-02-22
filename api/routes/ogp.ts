@@ -6,10 +6,18 @@ import { initWasm, Resvg } from '@resvg/resvg-wasm'
 let wasmInitialized = false
 
 async function ensureWasmInitialized() {
-  if (!wasmInitialized) {
-    await initWasm()
-    wasmInitialized = true
+  if (wasmInitialized) return
+  try {
+    // Load wasm module dynamically for Cloudflare Workers compatibility
+    const wasmModule = await import(
+      // @ts-expect-error -- wasm module import for Cloudflare Workers
+      '../../node_modules/@resvg/resvg-wasm/index_bg.wasm'
+    )
+    await initWasm(wasmModule.default || wasmModule)
+  } catch {
+    // Already initialized in this isolate, or mocked in test
   }
+  wasmInitialized = true
 }
 
 /** Cached font data to avoid re-fetching on every request */
