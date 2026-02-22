@@ -687,9 +687,7 @@ describe('Flows API', () => {
       const payload = {
         title: 'Will Fail',
         lanes: [{ id: 'lane-1', name: 'New Lane', colorIndex: 0, position: 0 }],
-        nodes: [
-          { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'Task', orderIndex: 0 },
-        ],
+        nodes: [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'Task', orderIndex: 0 }],
         arrows: [],
       }
 
