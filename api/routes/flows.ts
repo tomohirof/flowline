@@ -224,16 +224,9 @@ flows.put('/:id', async (c) => {
   }
 
   const { title, themeId, lanes, nodes, arrows } = parsed.data
+  const hasStructuralChanges = lanes.length > 0 || nodes.length > 0 || arrows.length > 0
 
-  // Build batch: DELETE old children -> UPDATE flow -> INSERT new children
-  const statements: Array<ReturnType<D1Database['prepare']>> = []
-
-  // DELETE old arrows, nodes, lanes (order matters due to FK)
-  statements.push(db.prepare('DELETE FROM arrows WHERE flow_id = ?').bind(flowId))
-  statements.push(db.prepare('DELETE FROM nodes WHERE flow_id = ?').bind(flowId))
-  statements.push(db.prepare('DELETE FROM lanes WHERE flow_id = ?').bind(flowId))
-
-  // UPDATE flow
+  // UPDATE flow metadata
   const now = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
   const updateParts: string[] = []
   const updateParams: unknown[] = []
@@ -250,66 +243,93 @@ flows.put('/:id', async (c) => {
   updateParams.push(now)
   updateParams.push(flowId)
 
-  statements.push(
-    db.prepare(`UPDATE flows SET ${updateParts.join(', ')} WHERE id = ?`).bind(...updateParams),
-  )
+  try {
+    if (hasStructuralChanges) {
+      // Full update: DELETE old children -> UPDATE flow -> INSERT new children
+      const statements: Array<ReturnType<D1Database['prepare']>> = []
 
-  // INSERT new lanes
-  for (const lane of lanes) {
-    statements.push(
-      db
-        .prepare(
-          'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+      // DELETE old arrows, nodes, lanes (order matters due to FK)
+      statements.push(db.prepare('DELETE FROM arrows WHERE flow_id = ?').bind(flowId))
+      statements.push(db.prepare('DELETE FROM nodes WHERE flow_id = ?').bind(flowId))
+      statements.push(db.prepare('DELETE FROM lanes WHERE flow_id = ?').bind(flowId))
+
+      // UPDATE flow
+      statements.push(
+        db.prepare(`UPDATE flows SET ${updateParts.join(', ')} WHERE id = ?`).bind(...updateParams),
+      )
+
+      // INSERT new lanes
+      for (const lane of lanes) {
+        statements.push(
+          db
+            .prepare(
+              'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+            )
+            .bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
         )
-        .bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
-    )
+      }
+
+      // INSERT new nodes
+      for (const node of nodes) {
+        statements.push(
+          db
+            .prepare(
+              'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index, bg, stroke_color, dash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            )
+            .bind(
+              node.id,
+              flowId,
+              node.laneId,
+              node.rowIndex,
+              node.label,
+              node.note ?? null,
+              node.orderIndex,
+              node.bg ?? null,
+              node.strokeColor ?? null,
+              node.dash ?? null,
+            ),
+        )
+      }
+
+      // INSERT new arrows
+      for (const arrow of arrows) {
+        statements.push(
+          db
+            .prepare(
+              'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            )
+            .bind(
+              arrow.id,
+              flowId,
+              arrow.fromNodeId,
+              arrow.toNodeId,
+              arrow.comment ?? null,
+              arrow.color ?? null,
+              arrow.dash ?? null,
+            ),
+        )
+      }
+
+      await db.batch(statements)
+    } else {
+      // Metadata-only update: no DELETE/INSERT, just UPDATE flows table
+      await db
+        .prepare(`UPDATE flows SET ${updateParts.join(', ')} WHERE id = ?`)
+        .bind(...updateParams)
+        .run()
+    }
+  } catch (e) {
+    console.error('Failed to save flow:', e)
+    return c.json({ error: 'フローの保存に失敗しました' }, 500)
   }
 
-  // INSERT new nodes
-  for (const node of nodes) {
-    statements.push(
-      db
-        .prepare(
-          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index, bg, stroke_color, dash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        )
-        .bind(
-          node.id,
-          flowId,
-          node.laneId,
-          node.rowIndex,
-          node.label,
-          node.note ?? null,
-          node.orderIndex,
-          node.bg ?? null,
-          node.strokeColor ?? null,
-          node.dash ?? null,
-        ),
-    )
+  try {
+    const detail = await getFlowDetail(db, flowId)
+    return c.json({ flow: detail })
+  } catch (e) {
+    console.error('Failed to fetch flow after save:', e)
+    return c.json({ error: 'フローの取得に失敗しました' }, 500)
   }
-
-  // INSERT new arrows
-  for (const arrow of arrows) {
-    statements.push(
-      db
-        .prepare(
-          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        )
-        .bind(
-          arrow.id,
-          flowId,
-          arrow.fromNodeId,
-          arrow.toNodeId,
-          arrow.comment ?? null,
-          arrow.color ?? null,
-          arrow.dash ?? null,
-        ),
-    )
-  }
-
-  await db.batch(statements)
-
-  const detail = await getFlowDetail(db, flowId)
-  return c.json({ flow: detail })
 })
 
 // =============================================
