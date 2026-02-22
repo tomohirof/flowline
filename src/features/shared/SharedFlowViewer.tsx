@@ -3,11 +3,7 @@ import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
-
-interface Point {
-  x: number
-  y: number
-}
+import { exitPt, entryPt, buildArrowPath, type Point } from '../../lib/arrow-routing'
 
 interface SharedFlowViewerProps {
   flow: Flow
@@ -72,14 +68,6 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   })
 
   // Arrow path calculation
-  const edgePt = (c: Point, o: Point, hw: number, hh: number): Point => {
-    const dx = o.x - c.x,
-      dy = o.y - c.y
-    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y + hh }
-    if (Math.abs(dy) / hh > Math.abs(dx) / hw) return { x: c.x, y: c.y + (dy > 0 ? hh : -hh) }
-    return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
-  }
-
   const computeArrowPath = (arrow: Arrow): { d: string; mx: number; my: number } | null => {
     const fromNode = nodeById[arrow.fromNodeId]
     const toNode = nodeById[arrow.toNodeId]
@@ -93,29 +81,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     const t = ct(tli, toNode.rowIndex)
     const hw = TW / 2,
       hh = TH / 2
-    const s = edgePt(f, t, hw, hh)
-    const e = edgePt(t, f, hw, hh)
-    const dx = e.x - s.x,
-      dy = e.y - s.y
-    let d: string
-    if (Math.abs(dx) < 2 || Math.abs(dy) < 2) {
-      d = `M${s.x},${s.y} L${e.x},${e.y}`
-    } else {
-      const sV = Math.abs(s.y - f.y) > Math.abs(s.x - f.x)
-      const eV = Math.abs(e.y - t.y) > Math.abs(e.x - t.x)
-      if (sV && eV) {
-        const my = (s.y + e.y) / 2
-        d = `M${s.x},${s.y} L${s.x},${my} L${e.x},${my} L${e.x},${e.y}`
-      } else if (!sV && !eV) {
-        const mx = (s.x + e.x) / 2
-        d = `M${s.x},${s.y} L${mx},${s.y} L${mx},${e.y} L${e.x},${e.y}`
-      } else if (sV) {
-        d = `M${s.x},${s.y} L${s.x},${e.y} L${e.x},${e.y}`
-      } else {
-        d = `M${s.x},${s.y} L${e.x},${s.y} L${e.x},${e.y}`
-      }
-    }
-    return { d, mx: (s.x + e.x) / 2, my: (s.y + e.y) / 2 }
+    const s = exitPt(f, t, hw, hh, RH)
+    const e = entryPt(t, f, hw, hh, RH)
+    return buildArrowPath(s, e, f, t)
   }
 
   const arrowPaths = flow.arrows
