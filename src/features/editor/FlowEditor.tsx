@@ -2169,17 +2169,18 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   : gi === lanes.length
                     ? laneX(gi - 1) + LW + G / 2
                     : laneX(gi) - G / 2
-              const gy = TM + HH / 2 + (rows.length * RH) / 2
+              const gy = TM + HH / 2
               const isHov = hoveredLaneGap === gi
               const hitX =
                 gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
               return (
                 <g key={`gap-${gi}`}>
                   <rect
+                    data-testid={`lanegap-hit-${gi}`}
                     x={hitX}
-                    y={TM}
+                    y={0}
                     width={gi === 0 || gi === lanes.length ? 14 : G}
-                    height={HH + rows.length * RH}
+                    height={TM + HH}
                     fill="transparent"
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={() => setHoveredLaneGap(gi)}

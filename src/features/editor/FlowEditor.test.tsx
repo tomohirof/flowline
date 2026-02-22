@@ -1103,3 +1103,19 @@ describe('row insertion UI (#91)', () => {
     expect(newRowCount).toBe(initialRowCount + 1)
   })
 })
+
+describe('lane gap UI header-only (#91)', () => {
+  it('should render lane gap hit area with header-only height', () => {
+    const flow = createMinimalFlow()
+    const { container } = render(
+      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    // Lane gap hit areas should exist (for 1 lane: 2 gaps, left and right)
+    const laneGapHitAreas = container.querySelectorAll('[data-testid^="lanegap-hit-"]')
+    expect(laneGapHitAreas.length).toBe(2)
+    // Hit area height should be TM + HH (24 + 46 = 70), not HH + rows * RH
+    const hitArea = laneGapHitAreas[0]
+    const height = hitArea.getAttribute('height')
+    expect(Number(height)).toBe(70) // TM + HH = 24 + 46 = 70
+  })
+})
