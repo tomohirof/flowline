@@ -126,9 +126,9 @@ export interface FlowDetailResponse {
 export interface FlowSavePayload {
   title: string
   themeId: string
-  lanes: Lane[]
-  nodes: Node[]
-  arrows: Arrow[]
+  lanes?: Lane[]
+  nodes?: Node[]
+  arrows?: Arrow[]
 }
 
 // =============================================
