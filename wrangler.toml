@@ -2,6 +2,9 @@ name = "flowline"
 compatibility_date = "2025-01-01"
 pages_build_output_dir = "dist"
 
+[vars]
+RESEND_API_KEY = ""
+
 [[d1_databases]]
 binding = "FLOWLINE_DB"
 database_name = "flowline-db"
