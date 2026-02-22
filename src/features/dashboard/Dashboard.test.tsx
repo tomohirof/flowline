@@ -131,77 +131,60 @@ describe('Dashboard', () => {
     expect(screen.getByText('フローがまだありません。新規作成してみましょう！')).toBeInTheDocument()
   })
 
-  // === 新規作成ボタン ===
-  it('should have a create flow button', async () => {
-    mockApiFetch.mockResolvedValueOnce({ flows: [] })
-
+  // === 新規作成カード ===
+  it('should render create card in grid', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
     renderDashboard()
-
     await waitFor(() => {
-      expect(screen.getByTestId('create-flow-button')).toBeInTheDocument()
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
     })
-
-    expect(screen.getByText('+ 新規作成')).toBeInTheDocument()
+    expect(screen.getByTestId('create-flow-card')).toBeInTheDocument()
+    expect(screen.getByText('新規作成')).toBeInTheDocument()
   })
 
   it('should call POST /flows and navigate to editor on create', async () => {
     const user = userEvent.setup()
-    mockApiFetch.mockResolvedValueOnce({ flows: [] })
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
     mockApiFetch.mockResolvedValueOnce({ flow: { id: 'new-flow-id' } })
-
     renderDashboard()
-
     await waitFor(() => {
-      expect(screen.getByTestId('create-flow-button')).toBeInTheDocument()
+      expect(screen.getByTestId('create-flow-card')).toBeInTheDocument()
     })
-
-    await user.click(screen.getByTestId('create-flow-button'))
-
+    await user.click(screen.getByTestId('create-flow-card'))
     await waitFor(() => {
       expect(mockApiFetch).toHaveBeenCalledWith(
         '/flows',
         expect.objectContaining({ method: 'POST' }),
       )
     })
-
     expect(mockNavigate).toHaveBeenCalledWith('/flows/new-flow-id')
   })
 
   it('should show error when create flow fails', async () => {
     const user = userEvent.setup()
-    mockApiFetch.mockResolvedValueOnce({ flows: [] })
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
     mockApiFetch.mockRejectedValueOnce(new Error('Server error'))
-
     renderDashboard()
-
     await waitFor(() => {
-      expect(screen.getByTestId('create-flow-button')).toBeInTheDocument()
+      expect(screen.getByTestId('create-flow-card')).toBeInTheDocument()
     })
-
-    await user.click(screen.getByTestId('create-flow-button'))
-
+    await user.click(screen.getByTestId('create-flow-card'))
     await waitFor(() => {
       expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
     })
-
     expect(screen.getByText('フローの作成に失敗しました')).toBeInTheDocument()
   })
 
-  it('should disable create button while creating', async () => {
+  it('should disable create card while creating', async () => {
     const user = userEvent.setup()
-    mockApiFetch.mockResolvedValueOnce({ flows: [] })
-    // Second call (create) never resolves → stays in creating state
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
     mockApiFetch.mockImplementation(() => new Promise(() => {}))
-
     renderDashboard()
-
     await waitFor(() => {
-      expect(screen.getByTestId('create-flow-button')).toBeInTheDocument()
+      expect(screen.getByTestId('create-flow-card')).toBeInTheDocument()
     })
-
-    await user.click(screen.getByTestId('create-flow-button'))
-
-    expect(screen.getByTestId('create-flow-button')).toBeDisabled()
+    await user.click(screen.getByTestId('create-flow-card'))
+    expect(screen.getByTestId('create-flow-card')).toBeDisabled()
     expect(screen.getByText('作成中...')).toBeInTheDocument()
   })
 
@@ -812,6 +795,46 @@ describe('Dashboard', () => {
       // Should not have triggered additional API calls
       expect(mockApiFetch.mock.calls.length).toBe(callCountAfterFirst)
     })
+  })
+
+  // =============================================
+  // グリッド内新規作成カードの位置
+  // =============================================
+  it('should render create card as first item in grid', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+    renderDashboard()
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+    const grid = screen.getByTestId('dashboard-grid')
+    expect(grid.firstElementChild).toHaveAttribute('data-testid', 'create-flow-card')
+  })
+
+  // =============================================
+  // UserMenuPanel テスト
+  // =============================================
+  it('should open user menu panel when avatar is clicked', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce({ flows: [] })
+    renderDashboard()
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('user-avatar'))
+    expect(screen.getByTestId('user-menu-panel')).toBeInTheDocument()
+  })
+
+  it('should close user menu panel when overlay is clicked', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce({ flows: [] })
+    renderDashboard()
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('user-avatar'))
+    expect(screen.getByTestId('user-menu-panel')).toBeInTheDocument()
+    await user.click(screen.getByTestId('user-menu-overlay'))
+    expect(screen.queryByTestId('user-menu-panel')).not.toBeInTheDocument()
   })
 
   it('should filter flows case-insensitively', async () => {

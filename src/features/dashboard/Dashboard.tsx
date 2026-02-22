@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import type { FlowListResponse, FlowSummary, FlowDetailResponse } from '../editor/types'
 import { FlowCard } from './FlowCard'
 import { FlowContextMenu } from './FlowContextMenu'
 import { DashboardTopBar } from './DashboardTopBar'
 import { DashboardSidebar } from './DashboardSidebar'
+import { UserMenuPanel } from '../../components/UserMenuPanel'
 import { PALETTES } from '../editor/theme-constants'
 import { formatRelativeTime } from '../../utils/formatRelativeTime'
 import { DEFAULT_FLOW_TITLE, DEFAULT_FLOW_THEME_ID, createDefaultLanes } from './constants'
@@ -27,6 +27,8 @@ export function Dashboard() {
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
+
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // New features state
   const [searchQuery, setSearchQuery] = useState('')
@@ -239,10 +241,8 @@ export function Dashboard() {
       <DashboardTopBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onCreateFlow={handleCreate}
-        creating={creating}
         userName={userName}
-        onLogout={logout}
+        onToggleMenu={() => setMenuOpen((v) => !v)}
       />
 
       <div className={styles.body}>
@@ -318,6 +318,17 @@ export function Dashboard() {
             </div>
           ) : viewMode === 'grid' ? (
             <div data-testid="dashboard-grid" className={styles.grid}>
+              <button
+                data-testid="create-flow-card"
+                onClick={handleCreate}
+                disabled={creating}
+                className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
+              >
+                <span className={styles.createCardIcon}>+</span>
+                <span className={styles.createCardText}>
+                  {creating ? '作成中...' : '新規作成'}
+                </span>
+              </button>
               {filteredAndSortedFlows.map((flow) => (
                 <FlowCard
                   key={flow.id}
@@ -411,6 +422,14 @@ export function Dashboard() {
           onClose={handleCloseContextMenu}
         />
       )}
+
+      <UserMenuPanel
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        userName={userName}
+        userEmail={user?.email ?? ''}
+        onLogout={logout}
+      />
     </div>
   )
 }
