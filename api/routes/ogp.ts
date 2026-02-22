@@ -20,12 +20,12 @@ async function ensureWasmInitialized() {
       return
     }
     // If the wasm module import fails (e.g. test/Node.js environment), try initWasm without args
-    const isModuleError = e instanceof Error && (
-      e.message.includes('Cannot find module') ||
-      e.message.includes('Unknown file extension') ||
-      (e as { code?: string }).code === 'ERR_MODULE_NOT_FOUND' ||
-      (e as { code?: string }).code === 'ERR_UNKNOWN_FILE_EXTENSION'
-    )
+    const isModuleError =
+      e instanceof Error &&
+      (e.message.includes('Cannot find module') ||
+        e.message.includes('Unknown file extension') ||
+        (e as { code?: string }).code === 'ERR_MODULE_NOT_FOUND' ||
+        (e as { code?: string }).code === 'ERR_UNKNOWN_FILE_EXTENSION')
     if (isModuleError) {
       try {
         // @ts-expect-error -- in test environment, initWasm is mocked and doesn't require args
