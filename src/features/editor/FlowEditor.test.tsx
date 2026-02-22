@@ -829,3 +829,44 @@ describe('logo navigation (#83)', () => {
     expect(logoLink.textContent).toContain('Flowline')
   })
 })
+
+describe('empty row at bottom on reload (#84)', () => {
+  it('should have extra empty row below the last node row', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 6, label: 'B', note: null, orderIndex: 1 },
+    ]
+    const { container } = render(
+      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    // ノードの最大rowIndex=6 → 行0~6(7行) + 空白行1 = 8行
+    const rows = container.querySelectorAll('[data-testid^="canvas-row-"]')
+    expect(rows.length).toBe(8)
+  })
+
+  it('should have at least 7 rows when no nodes exist', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = []
+    const { container } = render(
+      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rows = container.querySelectorAll('[data-testid^="canvas-row-"]')
+    // ノードなし: maxRow=6, rowCount=6+1=7
+    expect(rows.length).toBe(7)
+  })
+
+  it('should have extra empty row when nodes span many rows', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 9, label: 'B', note: null, orderIndex: 1 },
+    ]
+    const { container } = render(
+      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    // maxRowIndex=9 → 行0~9(10行) + 空白行1 = 11行
+    const rows = container.querySelectorAll('[data-testid^="canvas-row-"]')
+    expect(rows.length).toBe(11)
+  })
+})

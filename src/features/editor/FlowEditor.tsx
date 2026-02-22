@@ -280,7 +280,8 @@ function flowToInternalState(flow: Flow): {
   flow.nodes.forEach((n) => rowIndices.add(n.rowIndex))
   // Ensure at least 7 rows
   const maxRow = Math.max(6, ...[...rowIndices])
-  const rows: RowData[] = Array.from({ length: maxRow + 1 }, () => ({ id: uid() }))
+  const rowCount = rowIndices.size > 0 ? maxRow + 2 : maxRow + 1
+  const rows: RowData[] = Array.from({ length: rowCount }, () => ({ id: uid() }))
 
   // Build task map and order from nodes
   const tasks: Record<string, TaskData> = {}
@@ -2217,6 +2218,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             {rows.map((_, ri) => (
               <text
                 key={ri}
+                data-testid={`canvas-row-${ri}`}
                 x={LM - 14}
                 y={TM + HH + ri * RH + RH / 2}
                 textAnchor="middle"
