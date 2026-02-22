@@ -454,14 +454,29 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
   const [showShareDialog, setShowShareDialog] = useState<boolean>(false)
   const [shareToken, setShareToken] = useState<string | null>(flow.shareToken)
-  const [editorSettings, setEditorSettings] = useState({
-    copyLabelOnSameRow: false,
-    autoConnect: true,
-    autoAddRow: true,
-    enterEditOnCreate: true,
-    showDotGrid: true,
-    showOrderBadge: true,
+  const [editorSettings, setEditorSettings] = useState(() => {
+    const defaults = {
+      copyLabelOnSameRow: false,
+      autoConnect: true,
+      autoAddRow: true,
+      enterEditOnCreate: true,
+      showDotGrid: true,
+      showOrderBadge: true,
+    }
+    try {
+      const saved = localStorage.getItem('editorSettings')
+      return saved ? { ...defaults, ...JSON.parse(saved) } : defaults
+    } catch {
+      return defaults
+    }
   })
+  useEffect(() => {
+    try {
+      localStorage.setItem('editorSettings', JSON.stringify(editorSettings))
+    } catch {
+      // localStorage unavailable
+    }
+  }, [editorSettings])
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
@@ -838,9 +853,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setOrder(no)
     if (editorSettings.autoConnect && no.length >= 2 && tasks[no[no.length - 2]])
       setArrows((p) => [...p, { id: uid(), from: no[no.length - 2], to: k, comment: '' }])
+    setSelArrow(null)
     if (editorSettings.enterEditOnCreate) {
       setEditing(k)
-      setSelArrow(null)
       setTimeout(() => inputRef.current?.focus(), 40)
     }
     if (editorSettings.autoAddRow && ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
