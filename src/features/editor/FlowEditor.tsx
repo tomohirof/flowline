@@ -1552,7 +1552,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         <span className={styles.zoomPercent}>{Math.round(zoom * 100)}%</span>
         <button
           data-testid="editor-user-avatar"
-          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setMenuOpen((v) => !v)
+          }}
           className={styles.editorAvatar}
         >
           {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}

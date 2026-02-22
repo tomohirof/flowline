@@ -325,9 +325,7 @@ export function Dashboard() {
                 className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
               >
                 <span className={styles.createCardIcon}>+</span>
-                <span className={styles.createCardText}>
-                  {creating ? '作成中...' : '新規作成'}
-                </span>
+                <span className={styles.createCardText}>{creating ? '作成中...' : '新規作成'}</span>
               </button>
               {filteredAndSortedFlows.map((flow) => (
                 <FlowCard

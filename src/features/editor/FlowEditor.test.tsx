@@ -556,7 +556,9 @@ describe('editor user avatar and UserMenuPanel (#58)', () => {
 
   it('should close user menu panel when overlay is clicked in editor', async () => {
     const user = userEvent.setup()
-    const { container } = render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const { container } = render(
+      <FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
     const avatar = container.querySelector('[data-testid="editor-user-avatar"]') as HTMLElement
     expect(avatar).toBeTruthy()
     await user.click(avatar)

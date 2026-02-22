@@ -5,7 +5,9 @@ import userEvent from '@testing-library/user-event'
 import { UserMenuPanel } from './UserMenuPanel'
 
 describe('UserMenuPanel', () => {
-  afterEach(() => { cleanup() })
+  afterEach(() => {
+    cleanup()
+  })
 
   const defaultProps = {
     isOpen: true,

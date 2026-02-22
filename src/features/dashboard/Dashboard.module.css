@@ -306,7 +306,7 @@
   justify-content: center;
   gap: 8px;
   min-height: 180px;
-  border: 2px dashed #D8D8E4;
+  border: 2px dashed #d8d8e4;
   border-radius: 12px;
   background: transparent;
   cursor: pointer;
@@ -315,8 +315,8 @@
 }
 
 .createCard:hover {
-  border-color: #7C5CFC;
-  background: #FAFAFF;
+  border-color: #7c5cfc;
+  background: #fafaff;
 }
 
 .createCardDisabled {
@@ -331,7 +331,7 @@
 }
 
 .createCard:hover .createCardIcon {
-  color: #7C5CFC;
+  color: #7c5cfc;
 }
 
 .createCardText {
@@ -341,7 +341,7 @@
 }
 
 .createCard:hover .createCardText {
-  color: #7C5CFC;
+  color: #7c5cfc;
 }
 
 /* Hidden delete button (for test compatibility in list view) */
