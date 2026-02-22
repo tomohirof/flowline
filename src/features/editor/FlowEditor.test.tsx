@@ -542,6 +542,7 @@ describe('auto-save payload optimization', () => {
 describe('editor user avatar and UserMenuPanel (#58)', () => {
   it('should render user avatar in title bar', async () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    // Multiple matches possible due to portal/re-render; verify at least one exists
     const avatars = screen.getAllByTestId('editor-user-avatar')
     expect(avatars[0]).toBeInTheDocument()
   })

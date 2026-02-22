@@ -76,4 +76,20 @@ describe('UserMenuPanel', () => {
     render(<UserMenuPanel {...defaultProps} userName="" />)
     expect(screen.getByTestId('user-menu-avatar')).toHaveTextContent('U')
   })
+
+  it('should close when Escape key is pressed', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(<UserMenuPanel {...defaultProps} onClose={onClose} />)
+    await user.keyboard('{Escape}')
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('should have dialog role and aria attributes', () => {
+    render(<UserMenuPanel {...defaultProps} />)
+    const panel = screen.getByTestId('user-menu-panel')
+    expect(panel).toHaveAttribute('role', 'dialog')
+    expect(panel).toHaveAttribute('aria-modal', 'true')
+    expect(panel).toHaveAttribute('aria-label', 'アカウントメニュー')
+  })
 })

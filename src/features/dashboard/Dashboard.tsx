@@ -311,9 +311,21 @@ export function Dashboard() {
                   : 'フローがまだありません。新規作成してみましょう！'}
               </p>
               {!searchQuery.trim() && (
-                <p className={styles.emptySubtitle}>
-                  「+ 新規作成」ボタンで最初のフローを作成できます
-                </p>
+                <p className={styles.emptySubtitle}>下のボタンから最初のフローを作成できます</p>
+              )}
+              {!searchQuery.trim() && (
+                <button
+                  data-testid="empty-create-flow-button"
+                  onClick={handleCreate}
+                  disabled={creating}
+                  className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
+                  style={{ marginTop: '16px', width: '200px', height: '120px' }}
+                >
+                  <span className={styles.createCardIcon}>+</span>
+                  <span className={styles.createCardText}>
+                    {creating ? '作成中...' : '新規作成'}
+                  </span>
+                </button>
               )}
             </div>
           ) : viewMode === 'grid' ? (

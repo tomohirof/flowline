@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { useEffect, type ReactElement } from 'react'
 import styles from './UserMenuPanel.module.css'
 
 interface UserMenuPanelProps {
@@ -178,6 +178,15 @@ export function UserMenuPanel({
   userEmail,
   onLogout,
 }: UserMenuPanelProps) {
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   const initial = userName ? userName.charAt(0).toUpperCase() : 'U'
@@ -185,7 +194,13 @@ export function UserMenuPanel({
   return (
     <>
       <div data-testid="user-menu-overlay" className={styles.overlay} onClick={onClose} />
-      <div data-testid="user-menu-panel" className={styles.panel}>
+      <div
+        data-testid="user-menu-panel"
+        className={styles.panel}
+        role="dialog"
+        aria-modal="true"
+        aria-label="アカウントメニュー"
+      >
         <div className={styles.header}>
           <span className={styles.headerTitle}>アカウント</span>
           <button
