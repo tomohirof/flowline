@@ -323,8 +323,13 @@ flows.put('/:id', async (c) => {
     return c.json({ error: 'フローの保存に失敗しました' }, 500)
   }
 
-  const detail = await getFlowDetail(db, flowId)
-  return c.json({ flow: detail })
+  try {
+    const detail = await getFlowDetail(db, flowId)
+    return c.json({ flow: detail })
+  } catch (e) {
+    console.error('Failed to fetch flow after save:', e)
+    return c.json({ error: 'フローの取得に失敗しました' }, 500)
+  }
 })
 
 // =============================================
