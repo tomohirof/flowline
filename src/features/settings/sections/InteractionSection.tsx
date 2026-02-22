@@ -21,13 +21,16 @@ export function InteractionSection({ settings, onToggle }: InteractionSectionPro
         />
       </SettingRow>
       <SettingRow
-        label="\u2318Z / Ctrl+Z でundo"
-        desc="キーボードショートカットによる操作の取り消し"
+        label={'\u2318Z / Ctrl+Z でundo'}
+        desc="キーボードショートカットによる操作の取り消し（常にON）"
       >
-        <Toggle checked={true} onChange={() => {}} />
+        <Toggle checked={true} onChange={() => {}} disabled />
       </SettingRow>
-      <SettingRow label="Delete / Backspace で削除" desc="選択中のノードや矢印をキーで削除">
-        <Toggle checked={true} onChange={() => {}} />
+      <SettingRow
+        label="Delete / Backspace で削除"
+        desc="選択中のノードや矢印をキーで削除（常にON）"
+      >
+        <Toggle checked={true} onChange={() => {}} disabled />
       </SettingRow>
     </Section>
   )

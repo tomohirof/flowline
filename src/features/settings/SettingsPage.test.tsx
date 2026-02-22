@@ -17,14 +17,16 @@ vi.mock('../../lib/api', () => ({
   },
 }))
 
-// Mock useAuth
+// Mock useAuth — stable references to prevent infinite re-render loops
+const mockUser = { id: 'user-1', email: 'test@example.com', name: 'Test User' }
+const mockLogout = vi.fn().mockResolvedValue(undefined)
 vi.mock('../../hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 'user-1', email: 'test@example.com', name: 'Test User' },
+    user: mockUser,
     loading: false,
     login: vi.fn(),
     register: vi.fn(),
-    logout: vi.fn(),
+    logout: mockLogout,
   }),
 }))
 

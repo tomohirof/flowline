@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import type { Settings } from './types'
@@ -77,19 +77,22 @@ const DEFAULT_SETTINGS: Settings = {
 }
 
 export function SettingsPage() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [profileName, setProfileName] = useState('')
   const [profileEmail, setProfileEmail] = useState('')
   const [activeNav, setActiveNav] = useState<NavId>('profile')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
   const [saved, setSaved] = useState(false)
 
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
+      setLoadFailed(false)
       const data = await apiFetch<{
         settings: Settings
         profile: { name: string; email: string }
@@ -99,6 +102,7 @@ export function SettingsPage() {
       setProfileEmail(data.profile.email)
     } catch {
       setError('設定の取得に失敗しました')
+      setLoadFailed(true)
       // Use user info as fallback
       if (user) {
         setProfileName(user.name)
@@ -143,17 +147,27 @@ export function SettingsPage() {
     }
   }
 
-  const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
-    await apiFetch('/settings/password', {
-      method: 'PUT',
-      body: JSON.stringify({ currentPassword, newPassword }),
-    })
+  const handlePasswordChange = async (
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<string | null> => {
+    try {
+      await apiFetch('/settings/password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      return null
+    } catch (e) {
+      return e instanceof Error ? e.message : 'パスワードの変更に失敗しました'
+    }
   }
 
   const handleDeleteAccount = async () => {
     await apiFetch('/settings/account', {
       method: 'DELETE',
     })
+    await logout()
+    navigate('/')
   }
 
   const renderContent = () => {
@@ -192,7 +206,7 @@ export function SettingsPage() {
     )
   }
 
-  if (error && !settings) {
+  if (error && loadFailed) {
     return (
       <div className={styles.layout}>
         <div className={styles.error} data-testid="settings-error">

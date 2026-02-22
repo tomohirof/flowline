@@ -29,3 +29,8 @@
 .thumbOn {
   left: 20px;
 }
+
+.trackDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

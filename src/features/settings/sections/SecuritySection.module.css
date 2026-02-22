@@ -86,3 +86,19 @@
 .deleteButton:hover {
   background: #fee;
 }
+
+.errorMsg {
+  font-size: 12px;
+  color: #e06060;
+  padding: 8px 12px;
+  background: #fff5f5;
+  border-radius: 6px;
+}
+
+.successMsg {
+  font-size: 12px;
+  color: #4caf50;
+  padding: 8px 12px;
+  background: #f5fff5;
+  border-radius: 6px;
+}

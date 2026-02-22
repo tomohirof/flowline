@@ -226,7 +226,9 @@ settings.delete('/account', async (c) => {
 
   await db.batch(statements)
 
-  return c.json({ message: 'アカウントを削除しました' })
+  return c.json({ message: 'アカウントを削除しました' }, 200, {
+    'Set-Cookie': 'auth_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax',
+  })
 })
 
 export { settings }
