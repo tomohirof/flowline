@@ -31,6 +31,15 @@ export async function sendVerificationEmail(
   }
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function buildEmailHtml(email: string, verifyUrl: string): string {
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -42,7 +51,7 @@ function buildEmailHtml(email: string, verifyUrl: string): string {
   <table role="presentation" width="560" style="max-width:560px;width:100%;">
     <tr><td style="background:linear-gradient(135deg,#7C5CFC 0%,#5B8DEF 100%);border-radius:16px 16px 0 0;padding:40px 32px;text-align:center;">
       <h1 style="color:#fff;font-size:28px;margin:0 0 8px;">ようこそ、Flowline へ！</h1>
-      <p style="color:rgba(255,255,255,0.85);font-size:15px;margin:0;">${email}</p>
+      <p style="color:rgba(255,255,255,0.85);font-size:15px;margin:0;">${escapeHtml(email)}</p>
     </td></tr>
     <tr><td style="background:#fff;border-radius:0 0 16px 16px;padding:32px;">
       <p style="color:#1a1a2e;font-size:15px;line-height:1.6;margin:0 0 24px;">

@@ -176,12 +176,16 @@ auth.get('/verify', async (c) => {
       verification_token: string | null
     }>()
 
-  if (!user || user.verification_token !== token) {
+  if (!user) {
     return c.json({ error: '認証トークンが無効または期限切れです' }, 400)
   }
 
   if (user.email_verified === 1) {
     return c.json({ verified: true, user: { id: user.id, email: user.email, name: user.name } })
+  }
+
+  if (user.verification_token !== token) {
+    return c.json({ error: '認証トークンが無効または期限切れです' }, 400)
   }
 
   await c.env.FLOWLINE_DB.prepare(
