@@ -298,6 +298,52 @@
   color: #666;
 }
 
+/* Create card in grid */
+.createCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 180px;
+  border: 2px dashed #d8d8e4;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.createCard:hover {
+  border-color: #7c5cfc;
+  background: #fafaff;
+}
+
+.createCardDisabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.createCardIcon {
+  font-size: 28px;
+  color: #bbb;
+  font-weight: 300;
+}
+
+.createCard:hover .createCardIcon {
+  color: #7c5cfc;
+}
+
+.createCardText {
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+}
+
+.createCard:hover .createCardText {
+  color: #7c5cfc;
+}
+
 /* Hidden delete button (for test compatibility in list view) */
 .hiddenDelete {
   position: absolute;

@@ -12,10 +12,8 @@ describe('DashboardTopBar', () => {
   const defaultProps = {
     searchQuery: '',
     onSearchChange: vi.fn(),
-    onCreateFlow: vi.fn(),
-    creating: false,
     userName: 'テストユーザー',
-    onLogout: vi.fn(),
+    onToggleMenu: vi.fn(),
   }
 
   it('should render Flowline logo', () => {
@@ -38,27 +36,10 @@ describe('DashboardTopBar', () => {
     expect(onSearchChange).toHaveBeenCalledWith('a')
   })
 
-  it('should render create flow button with text', () => {
+  it('should not render create flow button', () => {
     render(<DashboardTopBar {...defaultProps} />)
-    expect(screen.getByTestId('create-flow-button')).toBeInTheDocument()
-    expect(screen.getByText('+ 新規作成')).toBeInTheDocument()
-  })
-
-  it('should call onCreateFlow when create button is clicked', async () => {
-    const user = userEvent.setup()
-    const onCreateFlow = vi.fn()
-    render(<DashboardTopBar {...defaultProps} onCreateFlow={onCreateFlow} />)
-
-    await user.click(screen.getByTestId('create-flow-button'))
-    expect(onCreateFlow).toHaveBeenCalledTimes(1)
-  })
-
-  it('should disable create button and show 作成中... when creating', () => {
-    render(<DashboardTopBar {...defaultProps} creating={true} />)
-
-    const button = screen.getByTestId('create-flow-button')
-    expect(button).toBeDisabled()
-    expect(screen.getByText('作成中...')).toBeInTheDocument()
+    expect(screen.queryByTestId('create-flow-button')).not.toBeInTheDocument()
+    expect(screen.queryByText('+ 新規作成')).not.toBeInTheDocument()
   })
 
   it('should render user avatar', () => {
@@ -82,12 +63,23 @@ describe('DashboardTopBar', () => {
     expect(input.value).toBe('検索テスト')
   })
 
-  it('should call onLogout when avatar is clicked', async () => {
+  it('should call onToggleMenu when avatar is clicked', async () => {
     const user = userEvent.setup()
-    const onLogout = vi.fn()
-    render(<DashboardTopBar {...defaultProps} onLogout={onLogout} />)
+    const onToggleMenu = vi.fn()
+    render(<DashboardTopBar {...defaultProps} onToggleMenu={onToggleMenu} />)
 
     await user.click(screen.getByTestId('user-avatar'))
-    expect(onLogout).toHaveBeenCalledTimes(1)
+    expect(onToggleMenu).toHaveBeenCalledTimes(1)
+  })
+
+  it('should have メニュー as avatar aria-label', () => {
+    render(<DashboardTopBar {...defaultProps} />)
+    const avatar = screen.getByTestId('user-avatar')
+    expect(avatar).toHaveAttribute('aria-label', 'メニュー')
+  })
+
+  it('should display U as initial when userName is empty', () => {
+    render(<DashboardTopBar {...defaultProps} userName="" />)
+    expect(screen.getByText('U')).toBeInTheDocument()
   })
 })

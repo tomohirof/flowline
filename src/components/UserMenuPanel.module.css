@@ -1,0 +1,164 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.15);
+  z-index: 999;
+}
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  max-width: 85vw;
+  background: #fff;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.1);
+  animation: slideFromRight 0.2s ease-out;
+}
+
+@keyframes slideFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ececf0;
+}
+
+.headerTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #888;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid #ececf0;
+}
+
+.avatarLarge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.userEmail {
+  font-size: 11px;
+  color: #888;
+}
+
+.planBadge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #7c5cfc;
+  background: rgba(124, 92, 252, 0.08);
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.menuList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.menuItem:hover {
+  background: #f5f5fa;
+}
+
+.menuIcon {
+  display: flex;
+  align-items: center;
+  color: #888;
+}
+
+.separator {
+  height: 1px;
+  background: #ececf0;
+  margin: 4px 0;
+}
+
+.footer {
+  padding: 8px 0 16px;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #e06060;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.logoutBtn:hover {
+  background: #fef2f2;
+}

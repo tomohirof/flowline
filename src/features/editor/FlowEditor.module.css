@@ -192,6 +192,23 @@
   margin-left: 12px;
 }
 
+.editorAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  margin-left: 12px;
+}
+
 /* =============================================
    Main Content Area
    ============================================= */
