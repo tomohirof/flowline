@@ -454,6 +454,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
   const [showShareDialog, setShowShareDialog] = useState<boolean>(false)
   const [shareToken, setShareToken] = useState<string | null>(flow.shareToken)
+  const [editorSettings, setEditorSettings] = useState({
+    copyLabelOnSameRow: false,
+    autoConnect: true,
+    autoAddRow: true,
+    enterEditOnCreate: true,
+    showDotGrid: true,
+    showOrderBadge: true,
+  })
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
@@ -820,15 +828,25 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       setTimeout(() => inputRef.current?.focus(), 40)
       return
     }
-    setTasks((p) => ({ ...p, [k]: { label: '作業', lid, rid, nodeId: uid() } }))
+    let label = '作業'
+    if (editorSettings.copyLabelOnSameRow) {
+      const sameRowNode = Object.entries(tasks).find(
+        ([key, t]) => t.rid === rid && key !== k,
+      )
+      if (sameRowNode) label = sameRowNode[1].label
+    }
+    setTasks((p) => ({ ...p, [k]: { label, lid, rid, nodeId: uid() } }))
     const no = [...order, k]
     setOrder(no)
-    if (no.length >= 2 && tasks[no[no.length - 2]])
+    if (editorSettings.autoConnect && no.length >= 2 && tasks[no[no.length - 2]])
       setArrows((p) => [...p, { id: uid(), from: no[no.length - 2], to: k, comment: '' }])
-    setEditing(k)
-    setSelArrow(null)
-    setTimeout(() => inputRef.current?.focus(), 40)
-    if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
+    if (editorSettings.enterEditOnCreate) {
+      setEditing(k)
+      setSelArrow(null)
+      setTimeout(() => inputRef.current?.focus(), 40)
+    }
+    if (editorSettings.autoAddRow && ri === rows.length - 1)
+      setRows((p) => [...p, { id: uid() }])
   }
   const taskClick = (k: string, e: React.MouseEvent): void => {
     e.stopPropagation()
@@ -1398,6 +1416,82 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
             full
           />
         </PanelSection>
+        <PanelSection label="挙動">
+          {(
+            [
+              { key: 'copyLabelOnSameRow', label: '同行テキストコピー' },
+              { key: 'autoConnect', label: '自動接続' },
+              { key: 'autoAddRow', label: '自動行追加' },
+              { key: 'enterEditOnCreate', label: '作成後すぐ編集' },
+            ] as const
+          ).map((s) => (
+            <div
+              key={s.key}
+              className={styles.settingCheckbox}
+              onClick={() =>
+                setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))
+              }
+              data-testid={`setting-${s.key}`}
+            >
+              <div
+                className={`${styles.checkboxBox} ${editorSettings[s.key] ? styles.checkboxBoxChecked : ''}`}
+              >
+                {editorSettings[s.key] && (
+                  <svg
+                    width="9"
+                    height="9"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </div>
+              <span className={styles.checkboxLabel}>{s.label}</span>
+            </div>
+          ))}
+        </PanelSection>
+        <PanelSection label="表示">
+          {(
+            [
+              { key: 'showDotGrid', label: 'ドットグリッド' },
+              { key: 'showOrderBadge', label: '順番バッジ' },
+            ] as const
+          ).map((s) => (
+            <div
+              key={s.key}
+              className={styles.settingCheckbox}
+              onClick={() =>
+                setEditorSettings((p) => ({ ...p, [s.key]: !p[s.key] }))
+              }
+              data-testid={`setting-${s.key}`}
+            >
+              <div
+                className={`${styles.checkboxBox} ${editorSettings[s.key] ? styles.checkboxBoxChecked : ''}`}
+              >
+                {editorSettings[s.key] && (
+                  <svg
+                    width="9"
+                    height="9"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </div>
+              <span className={styles.checkboxLabel}>{s.label}</span>
+            </div>
+          ))}
+        </PanelSection>
       </>
     )
   }
@@ -1606,7 +1700,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         {/* Canvas */}
         <div
           ref={canvasContainerRef}
-          className={styles.canvas}
+          className={`${styles.canvas} ${editorSettings.showDotGrid ? '' : styles.canvasNoDots}`}
           style={{
             backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
             cursor: connectFrom ? 'crosshair' : dragging ? 'grabbing' : 'default',
@@ -2070,7 +2164,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     {isLast && !isSel && !connectFrom && (
                       <circle cx={c.x - TW / 2 + 10} cy={c.y - TH / 2 + 10} r={3} fill="#66BB6A" />
                     )}
-                    {oi !== -1 && !connectFrom && !dragging && (
+                    {oi !== -1 && !connectFrom && !dragging && editorSettings.showOrderBadge && (
                       <g>
                         <rect
                           x={c.x + TW / 2 - 18}

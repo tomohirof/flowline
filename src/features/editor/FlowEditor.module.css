@@ -624,3 +624,43 @@
   letter-spacing: -0.02em;
   font-family: inherit;
 }
+
+/* =============================================
+   Editor Settings Checkboxes
+   ============================================= */
+
+.settingCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.checkboxBox {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  border: 1.5px solid var(--theme-input-border);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.checkboxBoxChecked {
+  border-color: var(--theme-accent, #7c5cfc);
+  background: var(--theme-accent, #7c5cfc);
+}
+
+.checkboxLabel {
+  font-size: 10.5px;
+  color: var(--theme-panel-text);
+  font-weight: 500;
+}
+
+.canvasNoDots {
+  background-image: none !important;
+}
