@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  BOT_USER_AGENTS,
-  isBotUserAgent,
-  escapeHtml,
-  generateOgpHtml,
-} from '../../../api/lib/ogp'
+import { BOT_USER_AGENTS, isBotUserAgent, escapeHtml, generateOgpHtml } from '../../../api/lib/ogp'
 
 describe('OGP Utility', () => {
   // ========================================
@@ -144,9 +139,7 @@ describe('OGP Utility', () => {
 
     it('should include correct og:title meta tag', () => {
       const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        '<meta property="og:title" content="テストフロー — Flowline">',
-      )
+      expect(html).toContain('<meta property="og:title" content="テストフロー — Flowline">')
     })
 
     it('should include correct HTML title tag', () => {
@@ -198,16 +191,12 @@ describe('OGP Utility', () => {
 
     it('should include twitter:card summary_large_image', () => {
       const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        '<meta name="twitter:card" content="summary_large_image">',
-      )
+      expect(html).toContain('<meta name="twitter:card" content="summary_large_image">')
     })
 
     it('should include twitter:title', () => {
       const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        '<meta name="twitter:title" content="テストフロー — Flowline">',
-      )
+      expect(html).toContain('<meta name="twitter:title" content="テストフロー — Flowline">')
     })
 
     it('should include twitter:description', () => {
@@ -231,9 +220,7 @@ describe('OGP Utility', () => {
 
     it('should include redirect script to shared page', () => {
       const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        "<script>window.location.href = '/shared/abc123';</script>",
-      )
+      expect(html).toContain("<script>window.location.href = '/shared/abc123';</script>")
     })
 
     it('should HTML-escape title to prevent XSS', () => {

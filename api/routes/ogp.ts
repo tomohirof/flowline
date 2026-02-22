@@ -43,12 +43,7 @@ interface FlowWithAuthor {
   updated_at: string
 }
 
-function buildOgpElement(
-  title: string,
-  authorName: string,
-  laneCount: number,
-  nodeCount: number,
-) {
+function buildOgpElement(title: string, authorName: string, laneCount: number, nodeCount: number) {
   // satori uses React-like element objects: { type, props: { style, children } }
   return {
     type: 'div',
