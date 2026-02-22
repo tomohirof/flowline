@@ -510,21 +510,18 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
   }, [])
 
-  const updateEditorSetting = useCallback(
-    (key: string, value: boolean) => {
-      setEditorSettings((prev) => {
-        const next = { ...prev, [key]: value }
-        apiFetch('/settings', {
-          method: 'PUT',
-          body: JSON.stringify(next),
-        }).catch(() => {
-          // 保存失敗は無視（UIは即時反映）
-        })
-        return next
+  const updateEditorSetting = useCallback((key: string, value: boolean) => {
+    setEditorSettings((prev) => {
+      const next = { ...prev, [key]: value }
+      apiFetch('/settings', {
+        method: 'PUT',
+        body: JSON.stringify(next),
+      }).catch(() => {
+        // 保存失敗は無視（UIは即時反映）
       })
-    },
-    [],
-  )
+      return next
+    })
+  }, [])
 
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
