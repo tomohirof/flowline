@@ -1,0 +1,36 @@
+.track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: #e0e0e8;
+  transition: background 0.2s;
+}
+
+.trackOn {
+  background: #7c5cfc;
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s;
+  pointer-events: none;
+}
+
+.thumbOn {
+  left: 20px;
+}
+
+.trackDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

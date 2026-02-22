@@ -1,0 +1,217 @@
+/* =============================================
+   Settings Page layout
+   TopBar (56px) + Sidebar (200px) + Content
+   ============================================= */
+
+.layout {
+  min-height: 100vh;
+  background: #fafafd;
+  font-family:
+    'Noto Sans JP',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  color: #1a1a2e;
+}
+
+/* Top bar */
+.topbar {
+  height: 56px;
+  border-bottom: 1px solid #ececf0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+}
+
+.backButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #ececf0;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  transition: all 0.1s;
+  text-decoration: none;
+}
+
+.backButton:hover {
+  background: #f5f5fa;
+  color: #444;
+}
+
+.logoGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.pageTitle {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.saveWrapper {
+  position: relative;
+}
+
+.saveButton {
+  height: 36px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c5cfc, #6246ea);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  box-shadow: 0 2px 8px rgba(124, 92, 252, 0.25);
+  transition: all 0.15s;
+}
+
+.saveButton:hover {
+  box-shadow: 0 4px 16px rgba(124, 92, 252, 0.35);
+}
+
+.savedBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #10b981;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 10px;
+  animation: savedPop 0.3s ease both;
+  white-space: nowrap;
+}
+
+/* Body */
+.body {
+  display: flex;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Sidebar nav */
+.sidebar {
+  width: 200px;
+  padding: 24px 0;
+  flex-shrink: 0;
+  border-right: 1px solid #ececf0;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  color: #888;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.12s;
+  margin-right: 12px;
+  border: none;
+  font-family: inherit;
+  width: calc(100% - 12px);
+  text-align: left;
+}
+
+.navItem:hover {
+  background: #fafafd;
+}
+
+.navItemActive {
+  background: #f5f0ff;
+  color: #7c5cfc;
+  font-weight: 700;
+}
+
+.navItemActive:hover {
+  background: #f5f0ff;
+}
+
+/* Content */
+.content {
+  flex: 1;
+  padding: 32px 0 48px 40px;
+  min-width: 0;
+  animation: fadeIn 0.2s ease both;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Error */
+.error {
+  padding: 12px 16px;
+  background: #ffebee;
+  color: #c62828;
+  border-radius: 8px;
+  margin: 32px 40px;
+  font-size: 13px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes savedPop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

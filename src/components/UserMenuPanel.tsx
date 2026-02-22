@@ -1,4 +1,5 @@
 import { useEffect, type ReactElement } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './UserMenuPanel.module.css'
 
 interface UserMenuPanelProps {
@@ -12,11 +13,12 @@ interface UserMenuPanelProps {
 interface MenuItem {
   icon: string
   label: string
+  path?: string
 }
 
 const menuItems: (MenuItem | { type: 'sep'; id: string })[] = [
-  { icon: 'user', label: 'プロフィール設定' },
-  { icon: 'settings', label: 'アカウント設定' },
+  { icon: 'user', label: 'プロフィール設定', path: '/settings' },
+  { icon: 'settings', label: 'アカウント設定', path: '/settings' },
   { icon: 'credit-card', label: 'プランと請求' },
   { icon: 'users', label: 'チーム管理' },
   { type: 'sep', id: 'sep-1' },
@@ -178,6 +180,8 @@ export function UserMenuPanel({
   userEmail,
   onLogout,
 }: UserMenuPanelProps) {
+  const navigate = useNavigate()
+
   useEffect(() => {
     if (!isOpen) return
     const handler = (e: KeyboardEvent) => {
@@ -230,7 +234,17 @@ export function UserMenuPanel({
               return <div key={item.id} className={styles.separator} />
             }
             return (
-              <button key={item.icon} className={styles.menuItem}>
+              <button
+                key={item.icon}
+                className={styles.menuItem}
+                style={{ cursor: item.path ? 'pointer' : 'default' }}
+                onClick={() => {
+                  if (item.path) {
+                    navigate(item.path)
+                    onClose()
+                  }
+                }}
+              >
                 <span className={styles.menuIcon}>
                   <MenuIcon name={item.icon} />
                 </span>
