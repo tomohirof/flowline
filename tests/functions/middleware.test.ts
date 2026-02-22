@@ -127,7 +127,7 @@ describe('Shared page middleware logic', () => {
 
     expect(html).toContain('受注管理フロー — Flowline')
     expect(html).toContain('テスト太郎さんが作成したフロー図（2レーン、3ノード）')
-    expect(html).toContain('/ogp/share/test-token.png')
+    expect(html).toContain('/api/ogp/share/test-token.png')
     expect(html).toContain('og:type')
     expect(html).toContain('twitter:card')
   })

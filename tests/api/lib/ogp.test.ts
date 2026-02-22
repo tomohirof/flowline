@@ -169,7 +169,7 @@ describe('OGP Utility', () => {
     it('should include dynamic og:image URL with share token', () => {
       const html = generateOgpHtml(defaultParams)
       expect(html).toContain(
-        '<meta property="og:image" content="https://flowline.app/ogp/share/abc123.png">',
+        '<meta property="og:image" content="https://flowline.app/api/ogp/share/abc123.png">',
       )
     })
 
@@ -209,7 +209,7 @@ describe('OGP Utility', () => {
     it('should include twitter:image', () => {
       const html = generateOgpHtml(defaultParams)
       expect(html).toContain(
-        '<meta name="twitter:image" content="https://flowline.app/ogp/share/abc123.png">',
+        '<meta name="twitter:image" content="https://flowline.app/api/ogp/share/abc123.png">',
       )
     })
 
@@ -247,7 +247,7 @@ describe('OGP Utility', () => {
         shareToken: 'xyz789',
       })
       expect(html).toContain('https://flowline.app/shared/xyz789')
-      expect(html).toContain('https://flowline.app/ogp/share/xyz789.png')
+      expect(html).toContain('https://flowline.app/api/ogp/share/xyz789.png')
       expect(html).toContain("'/shared/xyz789'")
     })
 

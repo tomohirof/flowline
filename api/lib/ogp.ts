@@ -60,8 +60,9 @@ export function generateOgpHtml(params: OgpParams): string {
   const ogTitle = `${title} — Flowline`
   const ogDescription = `${author}さんが作成したフロー図（${laneCount}レーン、${nodeCount}ノード）`
   const twitterDescription = `${author}さんが作成したフロー図`
-  const ogUrl = `https://flowline.app/shared/${shareToken}`
-  const ogImage = `https://flowline.app/ogp/share/${shareToken}.png`
+  const safeToken = encodeURIComponent(shareToken)
+  const ogUrl = `https://flowline.app/shared/${safeToken}`
+  const ogImage = `https://flowline.app/api/ogp/share/${safeToken}.png`
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -85,7 +86,7 @@ export function generateOgpHtml(params: OgpParams): string {
 </head>
 <body>
 <p>リダイレクト中...</p>
-<script>window.location.href = '/shared/${shareToken}';</script>
+<script>window.location.href = '/shared/${safeToken}';</script>
 </body>
 </html>`
 }
