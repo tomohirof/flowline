@@ -596,6 +596,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelTask(null)
     setSelArrow(null)
     setSelLane(null)
+    setMultiSel(new Set())
     setEditing(null)
     undoPrevSnap.current = s
   }
@@ -766,6 +767,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setSelTask(null)
     setSelArrow(null)
     setSelLane(null)
+    setMultiSel(new Set())
   }
   const startConnectDrag = (k: string, hx: number, hy: number, e: React.MouseEvent): void => {
     e.stopPropagation()
@@ -2366,6 +2368,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         e.stopPropagation()
                         setEditing(k)
                         setSelTask(k)
+                        setMultiSel(new Set())
                         setTimeout(() => inputRef.current?.focus(), 40)
                       }}
                       onMouseDown={(e: React.MouseEvent) => {
