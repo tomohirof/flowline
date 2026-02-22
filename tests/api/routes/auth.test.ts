@@ -6,7 +6,7 @@ import { createTestDb, createMockD1 } from '../../helpers/mock-d1'
 const JWT_SECRET = 'test-secret-key-for-auth-tests'
 
 function createEnv(sqliteDb: ReturnType<typeof Database>) {
-  return { FLOWLINE_DB: createMockD1(sqliteDb), JWT_SECRET }
+  return { FLOWLINE_DB: createMockD1(sqliteDb), JWT_SECRET, RESEND_API_KEY: '' }
 }
 
 function postJson(path: string, body: object, env: object, cookie?: string) {
@@ -54,7 +54,7 @@ describe('Auth API', () => {
 
   // === Registration ===
   describe('POST /api/auth/register', () => {
-    it('should register a new user and return 201', async () => {
+    it('should register a new user and return 201 with message', async () => {
       const res = await postJson(
         '/api/auth/register',
         {
@@ -66,12 +66,11 @@ describe('Auth API', () => {
       )
       expect(res.status).toBe(201)
       const body = await res.json()
-      expect(body.user.email).toBe('test@example.com')
-      expect(body.user.name).toBe('Test User')
-      expect(body.user.id).toBeDefined()
+      expect(body.message).toContain('確認メール')
+      expect(body.user).toBeUndefined()
     })
 
-    it('should set auth_token cookie on registration', async () => {
+    it('should NOT set auth_token cookie on registration', async () => {
       const res = await postJson(
         '/api/auth/register',
         {
@@ -82,8 +81,7 @@ describe('Auth API', () => {
         env,
       )
       const cookie = res.headers.get('set-cookie')
-      expect(cookie).toContain('auth_token=')
-      expect(cookie).toContain('HttpOnly')
+      expect(cookie).toBeNull()
     })
 
     it('should store hashed password in DB, not plain text', async () => {
@@ -101,6 +99,30 @@ describe('Auth API', () => {
         .get('test@example.com') as { password_hash: string }
       expect(user.password_hash).not.toBe('password123')
       expect(user.password_hash).toMatch(/^\$2[aby]?\$/)
+    })
+
+    it('should store email_verified=0 in DB after registration', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'test@example.com', password: 'password123', name: 'Test' },
+        env,
+      )
+      const user = db
+        .prepare('SELECT email_verified FROM users WHERE email = ?')
+        .get('test@example.com') as { email_verified: number }
+      expect(user.email_verified).toBe(0)
+    })
+
+    it('should store verification_token in DB after registration', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'test@example.com', password: 'password123', name: 'Test' },
+        env,
+      )
+      const user = db
+        .prepare('SELECT verification_token FROM users WHERE email = ?')
+        .get('test@example.com') as { verification_token: string }
+      expect(user.verification_token).toBeTruthy()
     })
 
     it('should return 400 for invalid email', async () => {
@@ -273,8 +295,8 @@ describe('Auth API', () => {
       expect(body.error).toContain('既に登録')
     })
 
-    it('should trim name whitespace', async () => {
-      const res = await postJson(
+    it('should trim name whitespace in DB', async () => {
+      await postJson(
         '/api/auth/register',
         {
           email: 'test@example.com',
@@ -283,8 +305,10 @@ describe('Auth API', () => {
         },
         env,
       )
-      const body = await res.json()
-      expect(body.user.name).toBe('Test User')
+      const user = db
+        .prepare('SELECT name FROM users WHERE email = ?')
+        .get('test@example.com') as { name: string }
+      expect(user.name).toBe('Test User')
     })
 
     it('should not include password_hash in response', async () => {
@@ -298,7 +322,7 @@ describe('Auth API', () => {
         env,
       )
       const body = await res.json()
-      expect(body.user.password_hash).toBeUndefined()
+      expect(body.password_hash).toBeUndefined()
     })
 
     it('should accept exactly 8 character password', async () => {
@@ -340,6 +364,8 @@ describe('Auth API', () => {
         },
         env,
       )
+      // メール認証済みに設定
+      db.prepare('UPDATE users SET email_verified = 1 WHERE email = ?').run('existing@example.com')
     })
 
     it('should login with correct credentials', async () => {
@@ -456,6 +482,29 @@ describe('Auth API', () => {
       )
       expect(res.status).toBe(400)
     })
+
+    it('should return 403 for unverified user', async () => {
+      await postJson(
+        '/api/auth/register',
+        {
+          email: 'unverified@example.com',
+          password: 'password123',
+          name: 'Unverified',
+        },
+        env,
+      )
+      const res = await postJson(
+        '/api/auth/login',
+        {
+          email: 'unverified@example.com',
+          password: 'password123',
+        },
+        env,
+      )
+      expect(res.status).toBe(403)
+      const body = await res.json()
+      expect(body.error).toContain('メール認証')
+    })
   })
 
   // === Logout ===
@@ -488,7 +537,7 @@ describe('Auth API', () => {
     })
 
     it('should return user info with valid auth cookie', async () => {
-      const registerRes = await postJson(
+      await postJson(
         '/api/auth/register',
         {
           email: 'me@example.com',
@@ -497,7 +546,16 @@ describe('Auth API', () => {
         },
         env,
       )
-      const cookie = extractCookie(registerRes)
+      db.prepare('UPDATE users SET email_verified = 1 WHERE email = ?').run('me@example.com')
+      const loginRes = await postJson(
+        '/api/auth/login',
+        {
+          email: 'me@example.com',
+          password: 'password123',
+        },
+        env,
+      )
+      const cookie = extractCookie(loginRes)
 
       const res = await getWithCookie('/api/auth/me', env, cookie)
       expect(res.status).toBe(200)
@@ -507,7 +565,7 @@ describe('Auth API', () => {
     })
 
     it('should not include password_hash in me response', async () => {
-      const registerRes = await postJson(
+      await postJson(
         '/api/auth/register',
         {
           email: 'me@example.com',
@@ -516,7 +574,16 @@ describe('Auth API', () => {
         },
         env,
       )
-      const cookie = extractCookie(registerRes)
+      db.prepare('UPDATE users SET email_verified = 1 WHERE email = ?').run('me@example.com')
+      const loginRes = await postJson(
+        '/api/auth/login',
+        {
+          email: 'me@example.com',
+          password: 'password123',
+        },
+        env,
+      )
+      const cookie = extractCookie(loginRes)
 
       const res = await getWithCookie('/api/auth/me', env, cookie)
       const body = await res.json()
@@ -544,6 +611,8 @@ describe('Auth API', () => {
         },
         env,
       )
+      // Mark as verified
+      db.prepare('UPDATE users SET email_verified = 1 WHERE email = ?').run('login-me@example.com')
       // Login to get a new token
       const loginRes = await postJson(
         '/api/auth/login',
@@ -559,6 +628,201 @@ describe('Auth API', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.user.email).toBe('login-me@example.com')
+    })
+  })
+
+  // === Verify ===
+  describe('GET /api/auth/verify', () => {
+    it('should verify email with valid token and set auth cookie', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'verify@example.com', password: 'password123', name: 'Verify' },
+        env,
+      )
+      const user = db
+        .prepare('SELECT verification_token FROM users WHERE email = ?')
+        .get('verify@example.com') as { verification_token: string }
+
+      const res = await app.request(`/api/auth/verify?token=${user.verification_token}`, {}, env)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.verified).toBe(true)
+      expect(body.user.email).toBe('verify@example.com')
+      expect(body.user.name).toBe('Verify')
+
+      const updated = db
+        .prepare('SELECT email_verified, verification_token FROM users WHERE email = ?')
+        .get('verify@example.com') as { email_verified: number; verification_token: string | null }
+      expect(updated.email_verified).toBe(1)
+      expect(updated.verification_token).toBeNull()
+
+      expect(res.headers.get('set-cookie')).toContain('auth_token=')
+    })
+
+    it('should return 400 for invalid token', async () => {
+      const res = await app.request('/api/auth/verify?token=invalid-token', {}, env)
+      expect(res.status).toBe(400)
+      const body = await res.json()
+      expect(body.error).toContain('無効')
+    })
+
+    it('should return 400 when token is missing', async () => {
+      const res = await app.request('/api/auth/verify', {}, env)
+      expect(res.status).toBe(400)
+      const body = await res.json()
+      expect(body.error).toContain('トークン')
+    })
+
+    it('should return 400 for empty token query parameter', async () => {
+      const res = await app.request('/api/auth/verify?token=', {}, env)
+      expect(res.status).toBe(400)
+    })
+
+    it('should allow login after verification', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'postverify@example.com', password: 'password123', name: 'PostVerify' },
+        env,
+      )
+      const user = db
+        .prepare('SELECT verification_token FROM users WHERE email = ?')
+        .get('postverify@example.com') as { verification_token: string }
+
+      await app.request(`/api/auth/verify?token=${user.verification_token}`, {}, env)
+
+      const loginRes = await postJson(
+        '/api/auth/login',
+        { email: 'postverify@example.com', password: 'password123' },
+        env,
+      )
+      expect(loginRes.status).toBe(200)
+      const body = await loginRes.json()
+      expect(body.user.email).toBe('postverify@example.com')
+    })
+
+    it('should return 400 for token with non-existent user', async () => {
+      // Create a verification token for a non-existent user
+      const { createVerificationToken } = await import('../../../api/lib/jwt')
+      const fakeToken = await createVerificationToken('non-existent-id', JWT_SECRET)
+      const res = await app.request(`/api/auth/verify?token=${fakeToken}`, {}, env)
+      expect(res.status).toBe(400)
+      const body = await res.json()
+      expect(body.error).toContain('ユーザー')
+    })
+  })
+
+  // === Resend Verification ===
+  describe('POST /api/auth/resend-verification', () => {
+    it('should resend verification email for unverified user', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'resend@example.com', password: 'password123', name: 'Resend' },
+        env,
+      )
+      // verification_sent_at を過去に設定（レート制限回避）
+      db.prepare('UPDATE users SET verification_sent_at = ? WHERE email = ?').run(
+        new Date(Date.now() - 120000).toISOString(),
+        'resend@example.com',
+      )
+      const res = await postJson(
+        '/api/auth/resend-verification',
+        { email: 'resend@example.com' },
+        env,
+      )
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.message).toContain('再送')
+    })
+
+    it('should return 200 for non-existent email (prevent info leak)', async () => {
+      const res = await postJson(
+        '/api/auth/resend-verification',
+        { email: 'nonexistent@example.com' },
+        env,
+      )
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.message).toContain('再送')
+    })
+
+    it('should return 200 for already verified user (prevent info leak)', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'verified@example.com', password: 'password123', name: 'Verified' },
+        env,
+      )
+      db.prepare('UPDATE users SET email_verified = 1 WHERE email = ?').run('verified@example.com')
+      const res = await postJson(
+        '/api/auth/resend-verification',
+        { email: 'verified@example.com' },
+        env,
+      )
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.message).toContain('再送')
+    })
+
+    it('should return 429 for rate-limited resend within 60 seconds', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'rate@example.com', password: 'password123', name: 'Rate' },
+        env,
+      )
+      const res = await postJson(
+        '/api/auth/resend-verification',
+        { email: 'rate@example.com' },
+        env,
+      )
+      expect(res.status).toBe(429)
+      const body = await res.json()
+      expect(body.error).toContain('60秒')
+    })
+
+    it('should update verification_token and verification_sent_at on resend', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'newtoken@example.com', password: 'password123', name: 'NewToken' },
+        env,
+      )
+
+      const pastTime = new Date(Date.now() - 120000).toISOString()
+      // レート制限回避 + 古いsent_atを設定
+      db.prepare('UPDATE users SET verification_sent_at = ? WHERE email = ?').run(
+        pastTime,
+        'newtoken@example.com',
+      )
+
+      await postJson(
+        '/api/auth/resend-verification',
+        { email: 'newtoken@example.com' },
+        env,
+      )
+      const after = db
+        .prepare('SELECT verification_sent_at FROM users WHERE email = ?')
+        .get('newtoken@example.com') as { verification_sent_at: string }
+
+      // verification_sent_at が更新されていることを確認
+      expect(after.verification_sent_at).not.toBe(pastTime)
+    })
+
+    it('should return 200 for missing email field', async () => {
+      const res = await postJson('/api/auth/resend-verification', {}, env)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.message).toContain('再送')
+    })
+
+    it('should return 400 for malformed JSON body', async () => {
+      const res = await app.request(
+        '/api/auth/resend-verification',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: 'not-json',
+        },
+        env,
+      )
+      expect(res.status).toBe(400)
     })
   })
 })
