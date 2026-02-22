@@ -7,11 +7,17 @@ interface User {
   name: string
 }
 
+export interface RegisterResult {
+  needsVerification: true
+  email: string
+}
+
 interface AuthContextValue {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<User>
-  register: (email: string, password: string, name: string) => Promise<User>
+  register: (email: string, password: string, name: string) => Promise<RegisterResult>
+  resendVerification: (email: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -45,13 +51,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data.user
   }
 
-  const register = async (email: string, password: string, name: string) => {
-    const data = await apiFetch<{ user: User }>('/auth/register', {
+  const register = async (email: string, password: string, name: string): Promise<RegisterResult> => {
+    await apiFetch<{ message: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     })
-    setUser(data.user)
-    return data.user
+    return { needsVerification: true, email }
+  }
+
+  const resendVerification = async (email: string): Promise<void> => {
+    await apiFetch('/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
   }
 
   const logout = async () => {
@@ -59,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext value={{ user, loading, login, register, logout }}>{children}</AuthContext>
+  return <AuthContext value={{ user, loading, login, register, resendVerification, logout }}>{children}</AuthContext>
 }
 
 export function useAuth() {

@@ -96,12 +96,11 @@ describe('useAuth', () => {
     })
   })
 
-  it('register should call POST /auth/register and set user', async () => {
-    const mockUser = { id: '1', email: 'test@example.com', name: 'New User' }
+  it('register should call POST /auth/register and return RegisterResult', async () => {
     // First call: checkAuth
     mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
     // Second call: register
-    mockApiFetch.mockResolvedValueOnce({ user: mockUser })
+    mockApiFetch.mockResolvedValueOnce({ message: 'Verification email sent' })
 
     const { result } = renderHook(() => useAuth(), { wrapper })
 
@@ -110,11 +109,12 @@ describe('useAuth', () => {
     })
 
     await act(async () => {
-      const user = await result.current.register('test@example.com', 'password123', 'New User')
-      expect(user).toEqual(mockUser)
+      const registerResult = await result.current.register('test@example.com', 'password123', 'New User')
+      expect(registerResult).toEqual({ needsVerification: true, email: 'test@example.com' })
     })
 
-    expect(result.current.user).toEqual(mockUser)
+    // User should NOT be set after registration (needs email verification)
+    expect(result.current.user).toBeNull()
     expect(mockApiFetch).toHaveBeenCalledWith('/auth/register', {
       method: 'POST',
       body: JSON.stringify({
@@ -122,6 +122,28 @@ describe('useAuth', () => {
         password: 'password123',
         name: 'New User',
       }),
+    })
+  })
+
+  it('resendVerification should call POST /auth/resend-verification', async () => {
+    // First call: checkAuth
+    mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
+    // Second call: resendVerification
+    mockApiFetch.mockResolvedValueOnce({ message: 'Verification email resent' })
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    await act(async () => {
+      await result.current.resendVerification('test@example.com')
+    })
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'test@example.com' }),
     })
   })
 
