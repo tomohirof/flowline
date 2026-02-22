@@ -20,7 +20,14 @@ import type {
   FlowSavePayload,
   SaveStatus,
 } from './types'
-import { PALETTES, THEMES, NODE_COLORS, NODE_COLORS_DARK, LINE_COLORS, STROKE_STYLES } from './theme-constants'
+import {
+  PALETTES,
+  THEMES,
+  NODE_COLORS,
+  NODE_COLORS_DARK,
+  LINE_COLORS,
+  STROKE_STYLES,
+} from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
 
 const uid = (): string => crypto.randomUUID()
@@ -1028,9 +1035,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       borderRadius: 6,
                       cursor: 'pointer',
                       background: nc.fill || T.nodeFill,
-                      border: isActive
-                        ? `2px solid ${T.accent}`
-                        : `1.5px solid ${nc.dot}`,
+                      border: isActive ? `2px solid ${T.accent}` : `1.5px solid ${nc.dot}`,
                       transition: 'all 0.1s',
                       display: 'flex',
                       alignItems: 'center',
@@ -1048,9 +1053,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           <PanelSection label="枠の色" T={T}>
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {LINE_COLORS.map((lc) => {
-                const isActive = lc.color === null
-                  ? !selTaskData.strokeColor
-                  : selTaskData.strokeColor === lc.color
+                const isActive =
+                  lc.color === null
+                    ? !selTaskData.strokeColor
+                    : selTaskData.strokeColor === lc.color
                 return (
                   <div
                     key={lc.id}
@@ -1087,9 +1093,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           <PanelSection label="枠の種類" T={T}>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {STROKE_STYLES.map((ss) => {
-                const isActive = ss.dash === 'none'
-                  ? !selTaskData.dash
-                  : selTaskData.dash === ss.dash
+                const isActive =
+                  ss.dash === 'none' ? !selTaskData.dash : selTaskData.dash === ss.dash
                 return (
                   <div
                     key={ss.id}
@@ -1109,9 +1114,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       height: 30,
                       borderRadius: 6,
                       cursor: 'pointer',
-                      background: isActive
-                        ? isDark ? '#333' : '#F0EBFF'
-                        : 'transparent',
+                      background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
                       border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
                       display: 'flex',
                       alignItems: 'center',
@@ -1187,18 +1190,15 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           <PanelSection label="線の色" T={T}>
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {LINE_COLORS.map((lc) => {
-                const isActive = lc.color === null
-                  ? !selArrowData.color
-                  : selArrowData.color === lc.color
+                const isActive =
+                  lc.color === null ? !selArrowData.color : selArrowData.color === lc.color
                 return (
                   <div
                     key={lc.id}
                     onClick={() =>
                       setArrows((p) =>
                         p.map((a) =>
-                          a.id === selArrow
-                            ? { ...a, color: lc.color || undefined }
-                            : a,
+                          a.id === selArrow ? { ...a, color: lc.color || undefined } : a,
                         ),
                       )
                     }
@@ -1239,9 +1239,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           <PanelSection label="線の種類" T={T}>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {STROKE_STYLES.map((ss) => {
-                const isActive = ss.dash === 'none'
-                  ? !selArrowData.dash
-                  : selArrowData.dash === ss.dash
+                const isActive =
+                  ss.dash === 'none' ? !selArrowData.dash : selArrowData.dash === ss.dash
                 return (
                   <div
                     key={ss.id}
@@ -1261,9 +1260,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       height: 30,
                       borderRadius: 6,
                       cursor: 'pointer',
-                      background: isActive
-                        ? isDark ? '#333' : '#F0EBFF'
-                        : 'transparent',
+                      background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
                       border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
                       display: 'flex',
                       alignItems: 'center',
@@ -2047,7 +2044,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       y={c.y - TH / 2}
                       width={TW}
                       height={TH}
-                      fill={isConnTgt && isHov ? `${T.accent}0A` : (task.bg || T.nodeFill)}
+                      fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
                       stroke={
                         isConnSrc
                           ? T.accent
@@ -2055,10 +2052,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                             ? T.nodeSelStroke
                             : isConnTgt && isHov
                               ? T.accent
-                              : (task.strokeColor || T.nodeStroke)
+                              : task.strokeColor || T.nodeStroke
                       }
                       strokeWidth={isConnSrc || isSel ? 2 : 1.2}
-                      strokeDasharray={isConnSrc ? '4,3' : (task.dash || 'none')}
+                      strokeDasharray={isConnSrc ? '4,3' : task.dash || 'none'}
                       rx={10}
                       style={{
                         cursor: connectFrom ? 'pointer' : 'grab',
@@ -2236,7 +2233,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                       refY="4"
                       orient="auto"
                     >
-                      <polygon points="0 0.5, 9 4, 0 7.5" fill={isSel ? (arrow.color || T.accent) : ac} />
+                      <polygon
+                        points="0 0.5, 9 4, 0 7.5"
+                        fill={isSel ? arrow.color || T.accent : ac}
+                      />
                     </marker>
                   </defs>
                   <path
