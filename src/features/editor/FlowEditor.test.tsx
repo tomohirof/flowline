@@ -331,3 +331,57 @@ describe('arrow color and style rendering (#52)', () => {
     expect(arrowPath?.getAttribute('stroke-dasharray')).toBe('none')
   })
 })
+
+describe('right panel - node styling sections (#51, #52)', () => {
+  const createFlowWithNode = (): Flow => ({
+    ...createMinimalFlow(),
+    nodes: [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ],
+  })
+
+  it('should show background color section when node is selected', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithNode()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    if (nodeRect) await userEvent.click(nodeRect)
+    expect(screen.getAllByText('背景色').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should show stroke color section when node is selected', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithNode()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    if (nodeRect) await userEvent.click(nodeRect)
+    expect(screen.getAllByText('枠の色').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should show stroke style section when node is selected', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithNode()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    if (nodeRect) await userEvent.click(nodeRect)
+    expect(screen.getAllByText('枠の種類').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should render 10 background color swatches for light theme', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWithNode()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    if (nodeRect) await userEvent.click(nodeRect)
+    // Find the 背景色 section - search for element with title attributes (swatches)
+    const bgLabels = screen.getAllByText('背景色')
+    const bgLabel = bgLabels[0]
+    const bgSection = bgLabel.closest('div')?.parentElement
+    const swatches = bgSection?.querySelectorAll('[title]')
+    expect(swatches?.length).toBe(10)
+  })
+})

@@ -20,7 +20,7 @@ import type {
   FlowSavePayload,
   SaveStatus,
 } from './types'
-import { PALETTES, THEMES } from './theme-constants'
+import { PALETTES, THEMES, NODE_COLORS, NODE_COLORS_DARK, LINE_COLORS, STROKE_STYLES } from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
 
 const uid = (): string => crypto.randomUUID()
@@ -1007,6 +1007,133 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               onChange={(v: string) => setNotes((p2) => ({ ...p2, [selTask]: v }))}
               T={T}
             />
+          </PanelSection>
+          <PanelSection label="背景色" T={T}>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {(isDark ? NODE_COLORS_DARK : NODE_COLORS).map((nc) => {
+                const isActive = nc.fill === null ? !selTaskData.bg : selTaskData.bg === nc.fill
+                return (
+                  <div
+                    key={nc.id}
+                    onClick={() =>
+                      setTasks((p2) => ({
+                        ...p2,
+                        [selTask]: { ...p2[selTask], bg: nc.fill || undefined },
+                      }))
+                    }
+                    title={nc.label}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: nc.fill || T.nodeFill,
+                      border: isActive
+                        ? `2px solid ${T.accent}`
+                        : `1.5px solid ${nc.dot}`,
+                      transition: 'all 0.1s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {nc.fill === null && (
+                      <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
+          <PanelSection label="枠の色" T={T}>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {LINE_COLORS.map((lc) => {
+                const isActive = lc.color === null
+                  ? !selTaskData.strokeColor
+                  : selTaskData.strokeColor === lc.color
+                return (
+                  <div
+                    key={lc.id}
+                    onClick={() =>
+                      setTasks((p2) => ({
+                        ...p2,
+                        [selTask]: { ...p2[selTask], strokeColor: lc.color || undefined },
+                      }))
+                    }
+                    title={lc.label}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: isDark ? '#2A2A38' : '#fff',
+                      border: isActive
+                        ? `2px solid ${T.accent}`
+                        : `2px solid ${lc.color || T.nodeStroke}`,
+                      transition: 'all 0.1s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {lc.color === null && (
+                      <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </PanelSection>
+          <PanelSection label="枠の種類" T={T}>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {STROKE_STYLES.map((ss) => {
+                const isActive = ss.dash === 'none'
+                  ? !selTaskData.dash
+                  : selTaskData.dash === ss.dash
+                return (
+                  <div
+                    key={ss.id}
+                    onClick={() =>
+                      setTasks((p2) => ({
+                        ...p2,
+                        [selTask]: {
+                          ...p2[selTask],
+                          dash: ss.dash === 'none' ? undefined : ss.dash,
+                        },
+                      }))
+                    }
+                    title={ss.label}
+                    style={{
+                      flex: 1,
+                      minWidth: 42,
+                      height: 30,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: isActive
+                        ? isDark ? '#333' : '#F0EBFF'
+                        : 'transparent',
+                      border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.1s',
+                    }}
+                  >
+                    <svg width="32" height="2" viewBox="0 0 32 2">
+                      <line
+                        x1="0"
+                        y1="1"
+                        x2="32"
+                        y2="1"
+                        stroke={isActive ? T.accent : T.panelText}
+                        strokeWidth="2"
+                        strokeDasharray={ss.dash}
+                      />
+                    </svg>
+                  </div>
+                )
+              })}
+            </div>
           </PanelSection>
           <PanelSection label="情報" T={T}>
             <PanelRow label="レーン" T={T}>
