@@ -39,9 +39,9 @@ export const createFlowSchema = z.object({
 export const updateFlowSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   themeId: z.string().min(1).optional(),
-  lanes: z.array(laneSchema).optional().default([]),
-  nodes: z.array(nodeSchema).optional().default([]),
-  arrows: z.array(arrowSchema).optional().default([]),
+  lanes: z.array(laneSchema).optional(),
+  nodes: z.array(nodeSchema).optional(),
+  arrows: z.array(arrowSchema).optional(),
 })
 
 export type CreateFlowInput = z.infer<typeof createFlowSchema>

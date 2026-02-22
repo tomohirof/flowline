@@ -224,7 +224,18 @@ flows.put('/:id', async (c) => {
   }
 
   const { title, themeId, lanes, nodes, arrows } = parsed.data
-  const hasStructuralChanges = lanes.length > 0 || nodes.length > 0 || arrows.length > 0
+
+  // Structural data consistency check: all three must be provided or none
+  const structFields = [lanes, nodes, arrows]
+  const definedCount = structFields.filter((f) => f !== undefined).length
+  if (definedCount > 0 && definedCount < 3) {
+    return c.json(
+      { error: '構造データを更新する場合、lanes/nodes/arrowsをすべて含めてください' },
+      400,
+    )
+  }
+
+  const hasStructuralChanges = lanes !== undefined
 
   // UPDATE flow metadata
   const now = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
@@ -246,6 +257,11 @@ flows.put('/:id', async (c) => {
   try {
     if (hasStructuralChanges) {
       // Full update: DELETE old children -> UPDATE flow -> INSERT new children
+      // At this point, lanes/nodes/arrows are guaranteed to be defined (consistency check above)
+      const safeLanes = lanes!
+      const safeNodes = nodes!
+      const safeArrows = arrows!
+
       const statements: Array<ReturnType<D1Database['prepare']>> = []
 
       // DELETE old arrows, nodes, lanes (order matters due to FK)
@@ -259,7 +275,7 @@ flows.put('/:id', async (c) => {
       )
 
       // INSERT new lanes
-      for (const lane of lanes) {
+      for (const lane of safeLanes) {
         statements.push(
           db
             .prepare(
@@ -270,7 +286,7 @@ flows.put('/:id', async (c) => {
       }
 
       // INSERT new nodes
-      for (const node of nodes) {
+      for (const node of safeNodes) {
         statements.push(
           db
             .prepare(
@@ -292,7 +308,7 @@ flows.put('/:id', async (c) => {
       }
 
       // INSERT new arrows
-      for (const arrow of arrows) {
+      for (const arrow of safeArrows) {
         statements.push(
           db
             .prepare(
