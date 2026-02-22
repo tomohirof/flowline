@@ -198,6 +198,56 @@ describe('AuthModal', () => {
     expect(mockNavigate).not.toHaveBeenCalled()
   })
 
+  it('should show verify screen when login returns 403 (email not verified)', async () => {
+    const { ApiError } = await import('../../../lib/api')
+    mockLogin.mockRejectedValue(new ApiError(403, 'メールアドレスの確認が必要です'))
+    render(
+      <MemoryRouter>
+        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
+      </MemoryRouter>,
+    )
+    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      target: { value: 'unverified@example.com' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.click(screen.getByTestId('auth-submit'))
+
+    await waitFor(() => {
+      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+      expect(screen.getByText('unverified@example.com')).toBeInTheDocument()
+    })
+  })
+
+  it('should allow resend from verify screen after login 403', async () => {
+    const { ApiError } = await import('../../../lib/api')
+    mockLogin.mockRejectedValue(new ApiError(403, 'メールアドレスの確認が必要です'))
+    mockResendVerification.mockResolvedValue(undefined)
+    render(
+      <MemoryRouter>
+        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
+      </MemoryRouter>,
+    )
+    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      target: { value: 'unverified@example.com' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.click(screen.getByTestId('auth-submit'))
+
+    await waitFor(() => {
+      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText('確認メールを再送する'))
+
+    await waitFor(() => {
+      expect(mockResendVerification).toHaveBeenCalledWith('unverified@example.com')
+      expect(screen.getByText('確認メールを再送しました')).toBeInTheDocument()
+    })
+  })
+
   it('エラー時にエラーメッセージを表示する', async () => {
     mockLogin.mockRejectedValue(new Error('認証に失敗しました'))
     render(

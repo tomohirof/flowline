@@ -62,6 +62,11 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
           }
         }
       } catch (err: unknown) {
+        if (err instanceof ApiError && err.status === 403 && mode === 'login') {
+          setVerifyEmail(email)
+          setMode('verify')
+          return
+        }
         if (err instanceof ApiError) {
           setError(err.message)
         } else if (err instanceof Error) {
