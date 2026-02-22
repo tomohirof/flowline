@@ -2376,6 +2376,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                         setTimeout(() => inputRef.current?.focus(), 40)
                       }}
                       onMouseDown={(e: React.MouseEvent) => {
+                        if (e.shiftKey) return
                         if (!connectFrom && !editing) onDragStart(k, e)
                       }}
                     />

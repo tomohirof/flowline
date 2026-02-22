@@ -797,6 +797,24 @@ describe('Multi-select (#76)', () => {
     // Both nodes should be in multi-select: 2件選択
     expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
   })
+
+  it('should not start drag when Shift+mouseDown on node (#88)', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    expect(rects.length).toBe(2)
+
+    // Normal click to select first node
+    fireEvent.click(rects[0])
+
+    // Shift+mouseDown should NOT start drag, then Shift+click should trigger multi-select
+    fireEvent.mouseDown(rects[1], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    // Multi-select should work: "2件選択" should be visible
+    expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+  })
 })
 
 describe('logo navigation (#83)', () => {
