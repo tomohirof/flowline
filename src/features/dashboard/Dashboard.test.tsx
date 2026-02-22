@@ -527,12 +527,24 @@ describe('Dashboard', () => {
           { id: 'lane-2', name: '担当者B', colorIndex: 1, position: 1 },
         ],
         nodes: [
-          { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'タスク1', note: null, orderIndex: 0 },
-          { id: 'node-2', laneId: 'lane-2', rowIndex: 1, label: 'タスク2', note: '備考', orderIndex: 0 },
+          {
+            id: 'node-1',
+            laneId: 'lane-1',
+            rowIndex: 0,
+            label: 'タスク1',
+            note: null,
+            orderIndex: 0,
+          },
+          {
+            id: 'node-2',
+            laneId: 'lane-2',
+            rowIndex: 1,
+            label: 'タスク2',
+            note: '備考',
+            orderIndex: 0,
+          },
         ],
-        arrows: [
-          { id: 'arrow-1', fromNodeId: 'node-1', toNodeId: 'node-2', comment: '接続' },
-        ],
+        arrows: [{ id: 'arrow-1', fromNodeId: 'node-1', toNodeId: 'node-2', comment: '接続' }],
       },
     }
 
@@ -585,7 +597,8 @@ describe('Dashboard', () => {
 
       // Verify POST body
       const postCall = mockApiFetch.mock.calls.find(
-        (call) => call[0] === '/flows' && call[1] && (call[1] as { method?: string }).method === 'POST',
+        (call) =>
+          call[0] === '/flows' && call[1] && (call[1] as { method?: string }).method === 'POST',
       )
       expect(postCall).toBeDefined()
       const postBody = JSON.parse((postCall![1] as { body: string }).body)
@@ -733,7 +746,8 @@ describe('Dashboard', () => {
 
       // Verify POST body
       const postCall = mockApiFetch.mock.calls.find(
-        (call) => call[0] === '/flows' && call[1] && (call[1] as { method?: string }).method === 'POST',
+        (call) =>
+          call[0] === '/flows' && call[1] && (call[1] as { method?: string }).method === 'POST',
       )
       expect(postCall).toBeDefined()
       const postBody = JSON.parse((postCall![1] as { body: string }).body)
