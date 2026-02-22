@@ -707,7 +707,28 @@ describe('Auth API', () => {
       const res = await app.request(`/api/auth/verify?token=${fakeToken}`, {}, env)
       expect(res.status).toBe(400)
       const body = await res.json()
-      expect(body.error).toContain('ユーザー')
+      expect(body.error).toContain('無効')
+    })
+
+    it('should return 400 when token does not match DB', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'mismatch@example.com', password: 'password123', name: 'Mismatch' },
+        env,
+      )
+      const user1 = db
+        .prepare('SELECT verification_token FROM users WHERE email = ?')
+        .get('mismatch@example.com') as { verification_token: string }
+
+      // DBのトークンを別の値に変更（resend相当）
+      db.prepare('UPDATE users SET verification_token = ? WHERE email = ?').run(
+        'different-token-value',
+        'mismatch@example.com',
+      )
+
+      // 古いトークンはDB照合で弾かれる
+      const res = await app.request(`/api/auth/verify?token=${user1.verification_token}`, {}, env)
+      expect(res.status).toBe(400)
     })
   })
 

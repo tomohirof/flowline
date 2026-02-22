@@ -162,7 +162,11 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
             >
               {submitting ? '送信中...' : '確認メールを再送する'}
             </button>
-            <button type="button" className={styles.backLink} onClick={() => setMode('register')}>
+            <button
+              type="button"
+              className={styles.backLink}
+              onClick={() => switchMode('register')}
+            >
               ← メールアドレスを変更する
             </button>
           </div>

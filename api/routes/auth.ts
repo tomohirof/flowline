@@ -164,12 +164,24 @@ auth.get('/verify', async (c) => {
     return c.json({ error: '認証トークンが無効または期限切れです' }, 400)
   }
 
-  const user = await c.env.FLOWLINE_DB.prepare('SELECT id, email, name FROM users WHERE id = ?')
+  const user = await c.env.FLOWLINE_DB.prepare(
+    'SELECT id, email, name, email_verified, verification_token FROM users WHERE id = ?',
+  )
     .bind(payload.sub)
-    .first<{ id: string; email: string; name: string }>()
+    .first<{
+      id: string
+      email: string
+      name: string
+      email_verified: number
+      verification_token: string | null
+    }>()
 
-  if (!user) {
-    return c.json({ error: 'ユーザーが見つかりません' }, 400)
+  if (!user || user.verification_token !== token) {
+    return c.json({ error: '認証トークンが無効または期限切れです' }, 400)
+  }
+
+  if (user.email_verified === 1) {
+    return c.json({ verified: true, user: { id: user.id, email: user.email, name: user.name } })
   }
 
   await c.env.FLOWLINE_DB.prepare(
