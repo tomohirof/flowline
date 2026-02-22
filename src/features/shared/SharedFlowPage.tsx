@@ -22,6 +22,7 @@ export function SharedFlowPage() {
       .then((data) => {
         if (!cancelled) {
           setFlow(data.flow)
+          document.title = `Flowline - ${data.flow.title}`
           setLoading(false)
         }
       })
@@ -38,6 +39,7 @@ export function SharedFlowPage() {
 
     return () => {
       cancelled = true
+      document.title = 'Flowline'
     }
   }, [token])
 

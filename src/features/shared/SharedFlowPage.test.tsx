@@ -161,6 +161,32 @@ describe('SharedFlowPage', () => {
   })
 
   // ========================================
+  // Document title
+  // ========================================
+  it('should set document.title to "Flowline - {flow title}" when flow loads', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+    renderSharedPage()
+
+    await waitFor(() => {
+      expect(document.title).toBe('Flowline - Shared Test Flow')
+    })
+  })
+
+  it('should reset document.title to "Flowline" on unmount', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+    const { unmount } = renderSharedPage()
+
+    await waitFor(() => {
+      expect(document.title).toBe('Flowline - Shared Test Flow')
+    })
+
+    unmount()
+    expect(document.title).toBe('Flowline')
+  })
+
+  // ========================================
   // Edge cases
   // ========================================
   it('should handle flow with empty lanes, nodes, and arrows', async () => {
