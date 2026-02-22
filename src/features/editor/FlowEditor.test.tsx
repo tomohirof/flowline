@@ -797,6 +797,24 @@ describe('Multi-select (#76)', () => {
     // Both nodes should be in multi-select: 2件選択
     expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
   })
+
+  it('should not start drag when Shift+mouseDown on node (#88)', async () => {
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    expect(rects.length).toBe(2)
+
+    // Normal click to select first node
+    fireEvent.click(rects[0])
+
+    // Shift+mouseDown should NOT start drag, then Shift+click should trigger multi-select
+    fireEvent.mouseDown(rects[1], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    // Multi-select should work: "2件選択" should be visible
+    expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+  })
 })
 
 describe('logo navigation (#83)', () => {
@@ -827,6 +845,196 @@ describe('logo navigation (#83)', () => {
     const logoLink = logoLinks[0]
     expect(logoLink.textContent).toContain('F')
     expect(logoLink.textContent).toContain('Flowline')
+  })
+})
+
+describe('IME composition Enter (#87)', () => {
+  it('should keep title input open when Enter is pressed during IME composition (isComposing=true)', async () => {
+    const user = userEvent.setup()
+    const flow = createMinimalFlow()
+
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Click on the title text to enter edit mode
+    const titleSpan = container.querySelector('[class*="titleText"]') as HTMLElement
+    expect(titleSpan).toBeTruthy()
+    await user.click(titleSpan)
+
+    // Title input should be visible
+    const titleInput = document.querySelector('input[class*="titleInput"]') as HTMLInputElement
+    expect(titleInput).toBeTruthy()
+
+    // Press Enter with isComposing=true (simulating IME composition via React fireEvent)
+    // React's onKeyDown receives a SyntheticEvent; nativeEvent.isComposing comes from the DOM event
+    fireEvent.keyDown(titleInput, { key: 'Enter', isComposing: true })
+
+    // Title input should still be visible (IME composition should NOT close it)
+    const titleInputAfter = document.querySelector('input[class*="titleInput"]') as HTMLInputElement
+    expect(titleInputAfter).toBeTruthy()
+  })
+
+  it('should close title input when Enter is pressed normally (isComposing=false)', async () => {
+    const user = userEvent.setup()
+    const flow = createMinimalFlow()
+
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Click on the title text to enter edit mode
+    const titleSpan = container.querySelector('[class*="titleText"]') as HTMLElement
+    expect(titleSpan).toBeTruthy()
+    await user.click(titleSpan)
+
+    // Title input should be visible
+    const titleInput = document.querySelector('input[class*="titleInput"]') as HTMLInputElement
+    expect(titleInput).toBeTruthy()
+
+    // Press Enter normally (not composing) - should close the input
+    fireEvent.keyDown(titleInput, { key: 'Enter' })
+
+    // Title input should be gone (replaced by span)
+    const titleInputAfter = document.querySelector('input[class*="titleInput"]') as HTMLInputElement
+    expect(titleInputAfter).toBeNull()
+  })
+
+  it('should keep node label input open when Enter is pressed during IME composition', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Double-click on node rect to enter edit mode
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.dblClick(nodeRect!)
+
+    // Advance timers to allow the setTimeout for focus to fire
+    vi.advanceTimersByTime(50)
+
+    // Wait for the node edit input to appear
+    const nodeInput = document.querySelector('input[class*="nodeEditInput"]') as HTMLInputElement
+    expect(nodeInput).toBeTruthy()
+
+    // Press Enter with isComposing=true (simulating IME composition)
+    fireEvent.keyDown(nodeInput, { key: 'Enter', isComposing: true })
+
+    // Node edit input should still be visible
+    const nodeInputAfter = document.querySelector(
+      'input[class*="nodeEditInput"]',
+    ) as HTMLInputElement
+    expect(nodeInputAfter).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it('should keep note input open when Enter is pressed during IME composition', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: 'メモ内容', orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Find the note text element and click it to enter note edit mode
+    const noteTexts = container.querySelectorAll('text')
+    const noteText = Array.from(noteTexts).find((t) => t.textContent === 'メモ内容')
+    expect(noteText).toBeTruthy()
+    fireEvent.click(noteText!)
+
+    // Advance timers to allow the setTimeout for focus to fire
+    vi.advanceTimersByTime(50)
+
+    // Wait for the note edit input to appear
+    const noteInput = document.querySelector('input[class*="noteEditInput"]') as HTMLInputElement
+    expect(noteInput).toBeTruthy()
+
+    // Press Enter with isComposing=true (simulating IME composition)
+    fireEvent.keyDown(noteInput, { key: 'Enter', isComposing: true })
+
+    // Note edit input should still be visible
+    const noteInputAfter = document.querySelector(
+      'input[class*="noteEditInput"]',
+    ) as HTMLInputElement
+    expect(noteInputAfter).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it('should keep lane name input open when Enter is pressed during IME composition', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Find the transparent rect overlay on the lane header and double-click it
+    const allRects = container.querySelectorAll('rect')
+    const laneHeaderRect = Array.from(allRects).find(
+      (r) =>
+        r.getAttribute('fill') === 'transparent' && (r as HTMLElement).style.cursor === 'pointer',
+    )
+    expect(laneHeaderRect).toBeTruthy()
+    fireEvent.dblClick(laneHeaderRect!)
+
+    // Advance timers to allow the setTimeout for focus to fire
+    vi.advanceTimersByTime(50)
+
+    // Wait for the lane name input to appear
+    const laneInput = document.querySelector('input[class*="laneNameInput"]') as HTMLInputElement
+    expect(laneInput).toBeTruthy()
+
+    // Press Enter with isComposing=true (simulating IME composition)
+    fireEvent.keyDown(laneInput, { key: 'Enter', isComposing: true })
+
+    // Lane name input should still be visible
+    const laneInputAfter = document.querySelector(
+      'input[class*="laneNameInput"]',
+    ) as HTMLInputElement
+    expect(laneInputAfter).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it('should keep arrow comment input open when Enter is pressed during IME composition', async () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: 'テスト' }]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Click on arrow to select it
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+
+    // Click comment button on floating controls to enter edit mode
+    const controls = container.querySelector('[data-testid="arrow-floating-controls"]')
+    expect(controls).toBeTruthy()
+    const clickableGroups = Array.from(controls!.querySelectorAll(':scope > g')).filter(
+      (g) => (g as HTMLElement).style.cursor === 'pointer',
+    )
+    // Comment button is the 2nd button
+    fireEvent.click(clickableGroups[1])
+
+    // Wait for the arrow comment input to appear
+    await waitFor(() => {
+      const commentInput = container.querySelector(
+        'input[placeholder="コメント…"]',
+      ) as HTMLInputElement
+      expect(commentInput).toBeTruthy()
+    })
+
+    const commentInput = container.querySelector(
+      'input[placeholder="コメント…"]',
+    ) as HTMLInputElement
+
+    // Press Enter with isComposing=true (simulating IME composition)
+    fireEvent.keyDown(commentInput, { key: 'Enter', isComposing: true })
+
+    // Arrow comment input should still be visible
+    const commentInputAfter = container.querySelector(
+      'input[placeholder="コメント…"]',
+    ) as HTMLInputElement
+    expect(commentInputAfter).toBeTruthy()
   })
 })
 
