@@ -275,6 +275,7 @@ function buildOgpElement(title: string, authorName: string, laneCount: number, n
               fontSize: '16px',
               color: 'rgba(255,255,255,0.5)',
             },
+            // Branding text shown in the PNG image (intentionally static, not baseUrl)
             children: 'flowline.app',
           },
         },
@@ -297,21 +298,21 @@ ogp.get('/share/:tokenPng', async (c) => {
     return c.json({ error: 'Invalid token' }, 404)
   }
 
-  const db = c.env.FLOWLINE_DB
-
-  // Query flow with author name
-  const flow = await db
-    .prepare(
-      'SELECT f.*, u.name as author_name FROM flows f JOIN users u ON f.user_id = u.id WHERE f.share_token = ?',
-    )
-    .bind(token)
-    .first<FlowWithAuthor>()
-
-  if (!flow) {
-    return c.json({ error: '共有フローが見つかりません' }, 404)
-  }
-
   try {
+    const db = c.env.FLOWLINE_DB
+
+    // Query flow with author name
+    const flow = await db
+      .prepare(
+        'SELECT f.*, u.name as author_name FROM flows f JOIN users u ON f.user_id = u.id WHERE f.share_token = ?',
+      )
+      .bind(token)
+      .first<FlowWithAuthor>()
+
+    if (!flow) {
+      return c.json({ error: '共有フローが見つかりません' }, 404)
+    }
+
     const laneCount = await db
       .prepare('SELECT COUNT(*) as count FROM lanes WHERE flow_id = ?')
       .bind(flow.id)
