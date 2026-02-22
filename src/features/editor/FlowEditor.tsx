@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
@@ -1771,15 +1771,17 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
 
       {/* Title bar */}
       <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className={styles.titleBar}>
-        <div
-          className={styles.logoIcon}
-          style={{
-            background: `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`,
-          }}
-        >
-          F
-        </div>
-        <span className={styles.brandName}>Flowline</span>
+        <Link to="/flows" className={styles.logoLink} data-testid="logo-link">
+          <div
+            className={styles.logoIcon}
+            style={{
+              background: `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`,
+            }}
+          >
+            F
+          </div>
+          <span className={styles.brandName}>Flowline</span>
+        </Link>
         <div className={styles.divider} />
         {editTitle ? (
           <input

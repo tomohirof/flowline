@@ -9,6 +9,26 @@ import { NODE_COLORS, NODE_COLORS_DARK, LINE_COLORS, STROKE_STYLES } from './the
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  Link: ({
+    to,
+    children,
+    ...props
+  }: {
+    to: string
+    children: React.ReactNode
+    [key: string]: unknown
+  }) => (
+    <a
+      href={to}
+      onClick={(e: React.MouseEvent) => {
+        e.preventDefault()
+        mockNavigate(to)
+      }}
+      {...props}
+    >
+      {children}
+    </a>
+  ),
 }))
 
 const mockLogout = vi.fn()
@@ -776,5 +796,36 @@ describe('Multi-select (#76)', () => {
 
     // Both nodes should be in multi-select: 2件選択
     expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('logo navigation (#83)', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear()
+  })
+
+  it('should render logo as a link to /flows', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const logoLinks = screen.getAllByTestId('logo-link')
+    const logoLink = logoLinks[0]
+    expect(logoLink).toBeTruthy()
+    expect(logoLink.tagName).toBe('A')
+    expect(logoLink.getAttribute('href')).toBe('/flows')
+  })
+
+  it('should navigate to /flows when logo is clicked', async () => {
+    const user = userEvent.setup()
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const logoLinks = screen.getAllByTestId('logo-link')
+    await user.click(logoLinks[0])
+    expect(mockNavigate).toHaveBeenCalledWith('/flows')
+  })
+
+  it('should contain logo icon and brand name text', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const logoLinks = screen.getAllByTestId('logo-link')
+    const logoLink = logoLinks[0]
+    expect(logoLink.textContent).toContain('F')
+    expect(logoLink.textContent).toContain('Flowline')
   })
 })
