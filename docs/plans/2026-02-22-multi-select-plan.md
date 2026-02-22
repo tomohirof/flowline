@@ -188,24 +188,21 @@ line 2197 付近:
 緑ドットの直後（line 2199 の後）に追加:
 
 ```tsx
-{isMulti && (
-  <g>
-    <circle
-      cx={c.x + TW / 2 - 6}
-      cy={c.y - TH / 2 + 6}
-      r={8}
-      fill={T.accent}
-    />
-    <polyline
-      points={`${c.x + TW / 2 - 10},${c.y - TH / 2 + 6} ${c.x + TW / 2 - 7},${c.y - TH / 2 + 9} ${c.x + TW / 2 - 2},${c.y - TH / 2 + 3}`}
-      fill="none"
-      stroke="#fff"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </g>
-)}
+{
+  isMulti && (
+    <g>
+      <circle cx={c.x + TW / 2 - 6} cy={c.y - TH / 2 + 6} r={8} fill={T.accent} />
+      <polyline
+        points={`${c.x + TW / 2 - 10},${c.y - TH / 2 + 6} ${c.x + TW / 2 - 7},${c.y - TH / 2 + 9} ${c.x + TW / 2 - 2},${c.y - TH / 2 + 3}`}
+        fill="none"
+        stroke="#fff"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </g>
+  )
+}
 ```
 
 **Step 4: 接続ハンドルの表示条件に multiSel チェックを追加**
@@ -214,9 +211,12 @@ connection handles 描画部分（line 2543-2592 付近）で、`multiSel.size >
 
 ```typescript
 // 接続ハンドル部分の先頭で条件追加
-{multiSel.size === 0 && (() => {
-  // 既存のハンドル描画コード
-})()}
+{
+  multiSel.size === 0 &&
+    (() => {
+      // 既存のハンドル描画コード
+    })()
+}
 ```
 
 **Step 5: コミット**
@@ -245,14 +245,8 @@ if (multiSel.size > 0) {
     <>
       <PanelSection label="">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span
-            className={styles.multiSelBadge}
-          >
-            {multiSel.size}
-          </span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: T.panelText }}>
-            ノード選択中
-          </span>
+          <span className={styles.multiSelBadge}>{multiSel.size}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: T.panelText }}>ノード選択中</span>
         </div>
         <span style={{ fontSize: 10, color: T.panelLabel }}>
           Shift+クリックで追加/解除 · Delete で一括削除
@@ -286,9 +280,7 @@ if (multiSel.size > 0) {
                 justifyContent: 'center',
               }}
             >
-              {nc.fill === null && (
-                <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>
-              )}
+              {nc.fill === null && <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>}
             </div>
           ))}
         </div>
@@ -321,9 +313,7 @@ if (multiSel.size > 0) {
                 justifyContent: 'center',
               }}
             >
-              {lc.color === null && (
-                <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>
-              )}
+              {lc.color === null && <span style={{ fontSize: 10, color: T.panelLabel }}>⊘</span>}
             </div>
           ))}
         </div>
@@ -337,8 +327,7 @@ if (multiSel.size > 0) {
                 setTasks((p) => {
                   const n = { ...p }
                   multiSel.forEach((k) => {
-                    if (n[k])
-                      n[k] = { ...n[k], dash: ss.dash === 'none' ? undefined : ss.dash }
+                    if (n[k]) n[k] = { ...n[k], dash: ss.dash === 'none' ? undefined : ss.dash }
                   })
                   return n
                 })

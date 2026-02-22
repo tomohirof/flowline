@@ -1059,9 +1059,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         <>
           <PanelSection label="">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <span className={styles.multiSelBadge}>
-                {multiSel.size}
-              </span>
+              <span className={styles.multiSelBadge}>{multiSel.size}</span>
               <span style={{ fontSize: 12, fontWeight: 600, color: T.panelText }}>
                 ノード選択中
               </span>
@@ -1086,14 +1084,21 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   }
                   title={nc.label}
                   style={{
-                    width: 24, height: 24, borderRadius: 6, cursor: 'pointer',
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    cursor: 'pointer',
                     background: nc.fill || T.nodeFill,
                     border: `1.5px solid ${nc.dot}`,
                     transition: 'all 0.1s',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  {nc.fill === null && <span style={{ fontSize: 10, color: T.panelLabel }}>&#x2298;</span>}
+                  {nc.fill === null && (
+                    <span style={{ fontSize: 10, color: T.panelLabel }}>&#x2298;</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -1114,14 +1119,21 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   }
                   title={lc.label}
                   style={{
-                    width: 24, height: 24, borderRadius: 6, cursor: 'pointer',
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    cursor: 'pointer',
                     background: T.nodeFill,
                     border: `2px solid ${lc.color || T.nodeStroke}`,
                     transition: 'all 0.1s',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  {lc.color === null && <span style={{ fontSize: 10, color: T.panelLabel }}>&#x2298;</span>}
+                  {lc.color === null && (
+                    <span style={{ fontSize: 10, color: T.panelLabel }}>&#x2298;</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -1142,15 +1154,29 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   }
                   title={ss.label}
                   style={{
-                    flex: 1, minWidth: 42, height: 30, borderRadius: 6, cursor: 'pointer',
+                    flex: 1,
+                    minWidth: 42,
+                    height: 30,
+                    borderRadius: 6,
+                    cursor: 'pointer',
                     background: 'transparent',
                     border: `1px solid ${T.inputBorder}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     transition: 'all 0.1s',
                   }}
                 >
                   <svg width="32" height="2" viewBox="0 0 32 2">
-                    <line x1="0" y1="1" x2="32" y2="1" stroke={T.panelText} strokeWidth="2" strokeDasharray={ss.dash} />
+                    <line
+                      x1="0"
+                      y1="1"
+                      x2="32"
+                      y2="1"
+                      stroke={T.panelText}
+                      strokeWidth="2"
+                      strokeDasharray={ss.dash}
+                    />
                   </svg>
                 </div>
               ))}
@@ -2371,12 +2397,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     )}
                     {isMulti && (
                       <g>
-                        <circle
-                          cx={c.x + TW / 2 - 6}
-                          cy={c.y - TH / 2 + 6}
-                          r={8}
-                          fill={T.accent}
-                        />
+                        <circle cx={c.x + TW / 2 - 6} cy={c.y - TH / 2 + 6} r={8} fill={T.accent} />
                         <polyline
                           points={`${c.x + TW / 2 - 10},${c.y - TH / 2 + 6} ${c.x + TW / 2 - 7},${c.y - TH / 2 + 9} ${c.x + TW / 2 - 2},${c.y - TH / 2 + 3}`}
                           fill="none"

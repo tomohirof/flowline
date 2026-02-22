@@ -220,9 +220,7 @@ describe('connection drag handles (#47)', () => {
   it('should update status bar hint text', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     const statusHints = document.querySelectorAll('[class*="statusTextHint"]')
-    const hintText = Array.from(statusHints).find((el) =>
-      el.textContent?.includes('○:接続'),
-    )
+    const hintText = Array.from(statusHints).find((el) => el.textContent?.includes('○:接続'))
     expect(hintText).toBeTruthy()
   })
 })
