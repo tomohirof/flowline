@@ -252,9 +252,6 @@ export function UserMenuPanel({
               </button>
             )
           })}
-        </div>
-
-        <div className={styles.footer}>
           <div className={styles.separator} />
           <button data-testid="logout-button" onClick={onLogout} className={styles.logoutBtn}>
             <span className={styles.menuIcon}>
