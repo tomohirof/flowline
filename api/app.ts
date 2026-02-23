@@ -4,6 +4,7 @@ import { flows } from './routes/flows'
 import { shared } from './routes/shared'
 import { settings } from './routes/settings'
 import { ogp } from './routes/ogp'
+import { admin } from './routes/admin'
 
 type Bindings = {
   FLOWLINE_DB: D1Database
@@ -23,6 +24,7 @@ app.route('/flows', flows)
 app.route('/shared', shared)
 app.route('/settings', settings)
 app.route('/ogp', ogp)
+app.route('/admin', admin)
 
 export type AuthEnv = {
   Bindings: Bindings
