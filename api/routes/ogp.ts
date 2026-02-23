@@ -15,7 +15,7 @@ ogp.get('/share/:tokenPng', async (c) => {
     return new Response(res.body, {
       status: res.status,
       headers: {
-        'Content-Type': res.headers.get('Content-Type') || 'application/json',
+        'Content-Type': res.headers.get('Content-Type') || 'image/png',
         'Cache-Control': res.headers.get('Cache-Control') || 'public, max-age=86400',
       },
     })
