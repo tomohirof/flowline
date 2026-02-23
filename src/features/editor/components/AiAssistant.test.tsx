@@ -55,9 +55,7 @@ describe('AiAssistant', () => {
   // Conditional Rendering
   // ========================================
   it('should render nothing when aiEnabled is false', () => {
-    const { container } = render(
-      <AiAssistant {...defaultProps} aiEnabled={false} />,
-    )
+    const { container } = render(<AiAssistant {...defaultProps} aiEnabled={false} />)
     expect(container.innerHTML).toBe('')
   })
 
@@ -105,9 +103,7 @@ describe('AiAssistant', () => {
     const onFlowGenerated = vi.fn()
     mockApiFetch.mockResolvedValueOnce({ flow: mockFlowResult })
 
-    render(
-      <AiAssistant {...defaultProps} onFlowGenerated={onFlowGenerated} />,
-    )
+    render(<AiAssistant {...defaultProps} onFlowGenerated={onFlowGenerated} />)
 
     // Expand panel
     await user.click(screen.getByTestId('ai-assistant-toggle'))
@@ -132,9 +128,7 @@ describe('AiAssistant', () => {
     const user = userEvent.setup()
     mockApiFetch.mockResolvedValueOnce({ flow: mockFlowResult })
 
-    render(
-      <AiAssistant {...defaultProps} flowId={null} />,
-    )
+    render(<AiAssistant {...defaultProps} flowId={null} />)
 
     await user.click(screen.getByTestId('ai-assistant-toggle'))
     await user.type(screen.getByTestId('ai-prompt-input'), 'Generate a new flow')

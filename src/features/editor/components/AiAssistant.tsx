@@ -38,8 +38,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
     setError(null)
 
     try {
-      const endpoint =
-        flowId != null ? `/ai/${flowId}/edit` : '/ai/generate'
+      const endpoint = flowId != null ? `/ai/${flowId}/edit` : '/ai/generate'
 
       const data = await apiFetch<{ flow: AiFlowResult }>(endpoint, {
         method: 'POST',
@@ -68,16 +67,23 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
         aria-label={expanded ? 'AIアシスタントを閉じる' : 'AIアシスタントを開く'}
       >
         <span className={styles.toggleIcon}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.27A7 7 0 0 1 14 23h-4a7 7 0 0 1-6.73-4H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z" />
             <circle cx="9.5" cy="15.5" r="1" fill="currentColor" />
             <circle cx="14.5" cy="15.5" r="1" fill="currentColor" />
           </svg>
         </span>
         <span className={styles.toggleLabel}>AIアシスタント</span>
-        <span className={styles.toggleChevron}>
-          {expanded ? '\u25BC' : '\u25B2'}
-        </span>
+        <span className={styles.toggleChevron}>{expanded ? '\u25BC' : '\u25B2'}</span>
       </button>
 
       {expanded && (
@@ -123,9 +129,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
             </div>
           )}
 
-          <div className={styles.hint}>
-            Ctrl+Enter で送信
-          </div>
+          <div className={styles.hint}>Ctrl+Enter で送信</div>
         </div>
       )}
     </div>

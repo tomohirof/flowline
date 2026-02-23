@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
@@ -15,7 +15,6 @@ interface AdminUser {
 
 export function AdminPage() {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +51,9 @@ export function AdminPage() {
         method: 'PUT',
         body: JSON.stringify({ aiEnabled: !currentValue }),
       })
-      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, aiEnabled: data.user.aiEnabled } : u)))
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, aiEnabled: data.user.aiEnabled } : u)),
+      )
     } catch {
       setError('AI設定の更新に失敗しました')
     } finally {
