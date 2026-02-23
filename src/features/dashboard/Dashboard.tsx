@@ -442,7 +442,9 @@ export function Dashboard() {
                         : 'フローがまだありません。新規作成してみましょう！'}
                     </p>
                     {!searchQuery.trim() && (
-                      <p className={styles.emptySubtitle}>下のボタンから最初のフローを作成できます</p>
+                      <p className={styles.emptySubtitle}>
+                        下のボタンから最初のフローを作成できます
+                      </p>
                     )}
                     {!searchQuery.trim() && (
                       <button

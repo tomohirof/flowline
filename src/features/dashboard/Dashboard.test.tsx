@@ -982,9 +982,7 @@ describe('Dashboard', () => {
     })
 
     it('should show shared empty state when no shared flows', async () => {
-      const noSharedFlows = [
-        { ...mockFlows[1], shareToken: null },
-      ]
+      const noSharedFlows = [{ ...mockFlows[1], shareToken: null }]
       mockApiFetch.mockResolvedValueOnce({ flows: noSharedFlows })
 
       render(
