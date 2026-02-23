@@ -1,21 +1,35 @@
 import { Hono } from 'hono'
-import satori from 'satori'
-import { Resvg, initWasm } from '@resvg/resvg-wasm'
-// Static WASM import — wrangler bundles this as a pre-compiled WebAssembly.Module
+import satori, { init as initSatori } from 'satori/standalone'
+import { Resvg, initWasm as initResvg } from '@resvg/resvg-wasm'
+// Static WASM imports — wrangler bundles these as pre-compiled WebAssembly.Module
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm'
+import yogaWasm from './yoga.wasm'
+
+// Cloudflare Workers blocks async WebAssembly.instantiate().
+// Patch at module level to use synchronous WebAssembly.Instance constructor.
+const _origWasmInstantiate = WebAssembly.instantiate
+WebAssembly.instantiate = ((moduleOrBytes: unknown, imports?: WebAssembly.Imports) => {
+  if (moduleOrBytes instanceof WebAssembly.Module) {
+    const instance = new WebAssembly.Instance(moduleOrBytes, imports)
+    return Promise.resolve({ instance, module: moduleOrBytes })
+  }
+  return _origWasmInstantiate(moduleOrBytes as BufferSource, imports)
+}) as typeof WebAssembly.instantiate
 
 type Bindings = {
   FLOWLINE_DB: D1Database
 }
 
-// Initialize WASM once at module level (pre-compiled module, no dynamic compilation)
+// Initialize both WASM modules once (yoga for satori layout, resvg for SVG→PNG)
 let wasmInitPromise: Promise<void> | null = null
 function ensureWasmInitialized(): Promise<void> {
   if (!wasmInitPromise) {
-    wasmInitPromise = initWasm(resvgWasm).catch((e) => {
-      wasmInitPromise = null
-      throw e
-    })
+    wasmInitPromise = Promise.all([initSatori(yogaWasm), initResvg(resvgWasm)])
+      .then(() => undefined)
+      .catch((e) => {
+        wasmInitPromise = null
+        throw e
+      })
   }
   return wasmInitPromise
 }
@@ -98,6 +112,7 @@ function buildOgpElement(title: string, authorName: string, laneCount: number, n
                 type: 'div',
                 props: {
                   style: {
+                    display: 'flex',
                     fontSize: '20px',
                     fontWeight: 700,
                     color: '#FFFFFF',
@@ -110,13 +125,13 @@ function buildOgpElement(title: string, authorName: string, laneCount: number, n
                 type: 'div',
                 props: {
                   style: {
+                    display: 'flex',
                     width: '1px',
                     height: '24px',
                     backgroundColor: 'rgba(255,255,255,0.3)',
                     marginLeft: '8px',
                     marginRight: '8px',
                   },
-                  children: [],
                 },
               },
               // Author info
@@ -152,7 +167,7 @@ function buildOgpElement(title: string, authorName: string, laneCount: number, n
                     {
                       type: 'div',
                       props: {
-                        style: { fontSize: '16px' },
+                        style: { display: 'flex', fontSize: '16px' },
                         children: `by ${authorName}`,
                       },
                     },
@@ -181,14 +196,12 @@ function buildOgpElement(title: string, authorName: string, laneCount: number, n
                 type: 'div',
                 props: {
                   style: {
+                    display: 'flex',
                     fontSize: '48px',
                     fontWeight: 700,
                     textAlign: 'center',
                     maxWidth: '1000px',
                     overflow: 'hidden',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
                   },
                   children: title,
                 },
@@ -345,6 +358,8 @@ app.get('/share/:tokenPng', async (c) => {
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok' }))
+
+
 
 /** Reset internal caches — for testing only */
 export function _resetCacheForTesting() {

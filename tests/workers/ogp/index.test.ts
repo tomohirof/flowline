@@ -2,14 +2,18 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 import { createTestDb, createMockD1 } from '../../helpers/mock-d1'
 
-// Mock WASM module import
+// Mock WASM module imports (resvg + yoga)
 vi.mock('@resvg/resvg-wasm/index_bg.wasm', () => ({
   default: {},
 }))
+vi.mock('../../../workers/ogp/src/yoga.wasm', () => ({
+  default: {},
+}))
 
-// Mock satori — returns a fake SVG string
-vi.mock('satori', () => ({
+// Mock satori/standalone — returns a fake SVG string and no-op init
+vi.mock('satori/standalone', () => ({
   default: vi.fn(async () => '<svg></svg>'),
+  init: vi.fn(async () => {}),
 }))
 
 // Import Worker app after mocks are set up
@@ -214,7 +218,7 @@ describe('OGP Worker', () => {
     })
 
     it('should use flowline.six1.jp as branding text in generated image', async () => {
-      const satori = await import('satori')
+      const satori = await import('satori/standalone')
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'brand-check')
 
       await getRequest('/share/brand-check.png', env)
@@ -247,7 +251,7 @@ describe('OGP Worker', () => {
     })
 
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
-      const satori = await import('satori')
+      const satori = await import('satori/standalone')
       vi.mocked(satori.default).mockRejectedValueOnce(new Error('SVG generation failed'))
 
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'satori-fail')
