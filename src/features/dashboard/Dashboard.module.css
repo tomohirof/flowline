@@ -142,17 +142,6 @@
   font-size: 13px;
 }
 
-/* Loading */
-.loading {
-  color: #999;
-  text-align: center;
-  padding: 60px;
-}
-
-.loadingText {
-  font-size: 14px;
-}
-
 /* Empty state */
 .empty {
   text-align: center;
