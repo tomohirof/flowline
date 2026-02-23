@@ -167,7 +167,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             fill={T.titleColor}
             style={{ fontFamily: 'inherit' }}
           >
-            {flow.title}
+            {flow.title.length > 40 ? flow.title.slice(0, 40) + '…' : flow.title}
           </text>
 
           {/* Lanes */}

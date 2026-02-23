@@ -76,6 +76,18 @@ describe('SharedFlowViewer', () => {
     expect(emptyTitle).not.toBeNull()
   })
 
+  it('should truncate long flow title in SVG at 40 chars', () => {
+    const longTitle = 'あ'.repeat(50)
+    const longTitleFlow = { ...mockFlow, title: longTitle }
+    render(<SharedFlowViewer flow={longTitleFlow} />)
+    const svg = document.querySelector('svg')
+    expect(svg).not.toBeNull()
+    const titleTexts = svg!.querySelectorAll('text')
+    const truncated = Array.from(titleTexts).find((t) => t.textContent?.endsWith('…'))
+    expect(truncated).not.toBeNull()
+    expect(truncated!.textContent).toBe('あ'.repeat(40) + '…')
+  })
+
   it('should render brand logo in footer', () => {
     render(<SharedFlowViewer flow={mockFlow} />)
     const footer = screen.getByTestId('shared-flow-footer')
