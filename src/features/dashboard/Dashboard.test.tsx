@@ -143,6 +143,30 @@ describe('Dashboard', () => {
     expect(screen.getByText('新規作成')).toBeInTheDocument()
   })
 
+  it('should render create card with SVG icon', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+    renderDashboard()
+    await waitFor(() => {
+      expect(screen.getByTestId('create-flow-card')).toBeInTheDocument()
+    })
+    const createCard = screen.getByTestId('create-flow-card')
+    const svg = createCard.querySelector('svg')
+    expect(svg).not.toBeNull()
+    expect(createCard.querySelector('[class*="createCardIconBg"]')).not.toBeNull()
+  })
+
+  it('should render empty state create card with SVG icon', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flows: [] })
+    renderDashboard()
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-create-flow-button')).toBeInTheDocument()
+    })
+    const createCard = screen.getByTestId('empty-create-flow-button')
+    const svg = createCard.querySelector('svg')
+    expect(svg).not.toBeNull()
+    expect(createCard.querySelector('[class*="createCardIconBg"]')).not.toBeNull()
+  })
+
   it('should call POST /flows and navigate to editor on create', async () => {
     const user = userEvent.setup()
     mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
