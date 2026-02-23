@@ -57,12 +57,14 @@
 ## 対象ファイル
 
 ### バックエンド
+
 - `migrations/0005_soft_delete.sql`（新規）
 - `api/routes/flows.ts`
 - `api/lib/flow-transform.ts`
 - `tests/api/routes/flows.test.ts`
 
 ### フロントエンド
+
 - `src/features/editor/types.ts`
 - `src/features/dashboard/Dashboard.tsx`
 - `src/features/dashboard/Dashboard.test.tsx`

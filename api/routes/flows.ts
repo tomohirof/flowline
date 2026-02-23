@@ -96,7 +96,9 @@ flows.get('/', async (c) => {
     flowList = (result.results ?? []).map(toFlowSummary)
   } else {
     const result = await db
-      .prepare('SELECT * FROM flows WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC')
+      .prepare(
+        'SELECT * FROM flows WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC',
+      )
       .bind(userId)
       .all<FlowRow>()
     flowList = (result.results ?? []).map(toFlowSummary)

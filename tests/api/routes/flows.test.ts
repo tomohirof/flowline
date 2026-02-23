@@ -75,9 +75,9 @@ function insertArrow(
 }
 
 function softDeleteFlow(db: ReturnType<typeof Database>, flowId: string) {
-  db.prepare("UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?").run(
-    flowId,
-  )
+  db.prepare(
+    "UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+  ).run(flowId)
 }
 
 function postJson(path: string, body: unknown, env: object, cookie?: string) {

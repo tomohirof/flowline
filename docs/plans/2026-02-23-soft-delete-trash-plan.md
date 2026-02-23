@@ -13,6 +13,7 @@
 ### Task 1: DBマイグレーション + テストヘルパー更新
 
 **Files:**
+
 - Create: `migrations/0005_soft_delete.sql`
 - Modify: `tests/helpers/mock-d1.ts:8-13`
 
@@ -29,13 +30,13 @@ ALTER TABLE flows ADD COLUMN deleted_at TEXT DEFAULT NULL;
 `tests/helpers/mock-d1.ts` L8-13のmigrationFiles配列に追加:
 
 ```typescript
-  const migrationFiles = [
-    '0001_initial.sql',
-    '0002_node_arrow_styles.sql',
-    '0003_user_settings.sql',
-    '0004_email_verification.sql',
-    '0005_soft_delete.sql',
-  ]
+const migrationFiles = [
+  '0001_initial.sql',
+  '0002_node_arrow_styles.sql',
+  '0003_user_settings.sql',
+  '0004_email_verification.sql',
+  '0005_soft_delete.sql',
+]
 ```
 
 **Step 3: 既存テストが全パスすることを確認**
@@ -55,6 +56,7 @@ git commit -m "feat: deleted_atカラム追加マイグレーション + テス�
 ### Task 2: APIバックエンド — ソフトデリート + 既存エンドポイント修正（テスト）
 
 **Files:**
+
 - Modify: `tests/api/routes/flows.test.ts:761-819`
 - Modify: `api/routes/flows.ts:69-81,180-195,409-431`
 - Modify: `api/lib/flow-transform.ts:6-14,53-62`
@@ -97,82 +99,82 @@ export function toFlowSummary(row: FlowRow) {
 `tests/api/routes/flows.test.ts` の `describe('DELETE /api/flows/:id')` (L761-819) を以下に置換:
 
 ```typescript
-  describe('DELETE /api/flows/:id (soft delete)', () => {
-    beforeEach(() => {
-      insertFlow(db, 'flow-1', USER_ID, 'To Delete')
-      insertLane(db, 'lane-1', 'flow-1', 'Lane', 0, 0)
-      insertNode(db, 'node-1', 'flow-1', 'lane-1', 0, 'Task', null, 0)
-      insertNode(db, 'node-2', 'flow-1', 'lane-1', 1, 'Task 2', null, 1)
-      insertArrow(db, 'arrow-1', 'flow-1', 'node-1', 'node-2', null)
-    })
-
-    it('should soft-delete flow and return success message', async () => {
-      const res = await deleteWithCookie('/api/flows/flow-1', env, cookie)
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.message).toBe('フローをゴミ箱に移動しました')
-    })
-
-    it('should set deleted_at and clear share_token but keep related data', async () => {
-      // Set share_token first
-      db.prepare('UPDATE flows SET share_token = ? WHERE id = ?').run('token-1', 'flow-1')
-
-      await deleteWithCookie('/api/flows/flow-1', env, cookie)
-
-      const flow = db.prepare('SELECT * FROM flows WHERE id = ?').get('flow-1') as {
-        deleted_at: string | null
-        share_token: string | null
-      }
-      expect(flow.deleted_at).not.toBeNull()
-      expect(flow.share_token).toBeNull()
-
-      // Related data should still exist
-      const lanes = db.prepare('SELECT * FROM lanes WHERE flow_id = ?').all('flow-1')
-      expect(lanes).toHaveLength(1)
-      const nodes = db.prepare('SELECT * FROM nodes WHERE flow_id = ?').all('flow-1')
-      expect(nodes).toHaveLength(2)
-      const arrows = db.prepare('SELECT * FROM arrows WHERE flow_id = ?').all('flow-1')
-      expect(arrows).toHaveLength(1)
-    })
-
-    it('should exclude soft-deleted flows from GET /api/flows', async () => {
-      insertFlow(db, 'flow-2', USER_ID, 'Active Flow')
-      await deleteWithCookie('/api/flows/flow-1', env, cookie)
-
-      const res = await getWithCookie('/api/flows', env, cookie)
-      const body = await res.json()
-      expect(body.flows).toHaveLength(1)
-      expect(body.flows[0].id).toBe('flow-2')
-    })
-
-    it('should return 404 for soft-deleted flow on GET /api/flows/:id', async () => {
-      await deleteWithCookie('/api/flows/flow-1', env, cookie)
-      const res = await getWithCookie('/api/flows/flow-1', env, cookie)
-      expect(res.status).toBe(404)
-    })
-
-    it('should return 404 for soft-deleted flow on PUT /api/flows/:id', async () => {
-      await deleteWithCookie('/api/flows/flow-1', env, cookie)
-      const res = await putJson('/api/flows/flow-1', { title: 'Updated' }, env, cookie)
-      expect(res.status).toBe(404)
-    })
-
-    it('should return 404 for non-existent flow', async () => {
-      const res = await deleteWithCookie('/api/flows/nonexistent', env, cookie)
-      expect(res.status).toBe(404)
-    })
-
-    it('should return 403 for another users flow', async () => {
-      insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other Flow')
-      const res = await deleteWithCookie('/api/flows/flow-other', env, cookie)
-      expect(res.status).toBe(403)
-    })
-
-    it('should return 401 without auth', async () => {
-      const res = await deleteWithCookie('/api/flows/flow-1', env)
-      expect(res.status).toBe(401)
-    })
+describe('DELETE /api/flows/:id (soft delete)', () => {
+  beforeEach(() => {
+    insertFlow(db, 'flow-1', USER_ID, 'To Delete')
+    insertLane(db, 'lane-1', 'flow-1', 'Lane', 0, 0)
+    insertNode(db, 'node-1', 'flow-1', 'lane-1', 0, 'Task', null, 0)
+    insertNode(db, 'node-2', 'flow-1', 'lane-1', 1, 'Task 2', null, 1)
+    insertArrow(db, 'arrow-1', 'flow-1', 'node-1', 'node-2', null)
   })
+
+  it('should soft-delete flow and return success message', async () => {
+    const res = await deleteWithCookie('/api/flows/flow-1', env, cookie)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.message).toBe('フローをゴミ箱に移動しました')
+  })
+
+  it('should set deleted_at and clear share_token but keep related data', async () => {
+    // Set share_token first
+    db.prepare('UPDATE flows SET share_token = ? WHERE id = ?').run('token-1', 'flow-1')
+
+    await deleteWithCookie('/api/flows/flow-1', env, cookie)
+
+    const flow = db.prepare('SELECT * FROM flows WHERE id = ?').get('flow-1') as {
+      deleted_at: string | null
+      share_token: string | null
+    }
+    expect(flow.deleted_at).not.toBeNull()
+    expect(flow.share_token).toBeNull()
+
+    // Related data should still exist
+    const lanes = db.prepare('SELECT * FROM lanes WHERE flow_id = ?').all('flow-1')
+    expect(lanes).toHaveLength(1)
+    const nodes = db.prepare('SELECT * FROM nodes WHERE flow_id = ?').all('flow-1')
+    expect(nodes).toHaveLength(2)
+    const arrows = db.prepare('SELECT * FROM arrows WHERE flow_id = ?').all('flow-1')
+    expect(arrows).toHaveLength(1)
+  })
+
+  it('should exclude soft-deleted flows from GET /api/flows', async () => {
+    insertFlow(db, 'flow-2', USER_ID, 'Active Flow')
+    await deleteWithCookie('/api/flows/flow-1', env, cookie)
+
+    const res = await getWithCookie('/api/flows', env, cookie)
+    const body = await res.json()
+    expect(body.flows).toHaveLength(1)
+    expect(body.flows[0].id).toBe('flow-2')
+  })
+
+  it('should return 404 for soft-deleted flow on GET /api/flows/:id', async () => {
+    await deleteWithCookie('/api/flows/flow-1', env, cookie)
+    const res = await getWithCookie('/api/flows/flow-1', env, cookie)
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 for soft-deleted flow on PUT /api/flows/:id', async () => {
+    await deleteWithCookie('/api/flows/flow-1', env, cookie)
+    const res = await putJson('/api/flows/flow-1', { title: 'Updated' }, env, cookie)
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 for non-existent flow', async () => {
+    const res = await deleteWithCookie('/api/flows/nonexistent', env, cookie)
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 for another users flow', async () => {
+    insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other Flow')
+    const res = await deleteWithCookie('/api/flows/flow-other', env, cookie)
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 401 without auth', async () => {
+    const res = await deleteWithCookie('/api/flows/flow-1', env)
+    expect(res.status).toBe(401)
+  })
+})
 ```
 
 **Step 3: テストが失敗することを確認**
@@ -185,10 +187,10 @@ Expected: FAIL — メッセージが「フローを削除しました」、dele
 `api/routes/flows.ts` L73-74を変更:
 
 ```typescript
-  const result = await db
-    .prepare('SELECT * FROM flows WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC')
-    .bind(userId)
-    .all<FlowRow>()
+const result = await db
+  .prepare('SELECT * FROM flows WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC')
+  .bind(userId)
+  .all<FlowRow>()
 ```
 
 **Step 5: GET /api/flows/:idに削除済みチェックを追加**
@@ -228,14 +230,14 @@ flows.get('/:id', async (c) => {
 `api/routes/flows.ts` L201-213の`checkFlowOwnership`の後に同じ削除済みチェックを追加:
 
 ```typescript
-  // Check if soft-deleted
-  const flowCheck = await db
-    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
-    .bind(flowId)
-    .first<{ deleted_at: string | null }>()
-  if (flowCheck?.deleted_at) {
-    return c.json({ error: 'フローが見つかりません' }, 404)
-  }
+// Check if soft-deleted
+const flowCheck = await db
+  .prepare('SELECT deleted_at FROM flows WHERE id = ?')
+  .bind(flowId)
+  .first<{ deleted_at: string | null }>()
+if (flowCheck?.deleted_at) {
+  return c.json({ error: 'フローが見つかりません' }, 404)
+}
 ```
 
 **Step 7: DELETE /api/flows/:idをソフトデリートに変更**
@@ -285,6 +287,7 @@ git commit -m "feat: ソフトデリート実装 — DELETE→UPDATE, 既存エ�
 ### Task 3: APIバックエンド — trash/restore/permanentエンドポイント（テスト）
 
 **Files:**
+
 - Modify: `tests/api/routes/flows.test.ts`
 - Modify: `api/routes/flows.ts`
 
@@ -294,9 +297,9 @@ git commit -m "feat: ソフトデリート実装 — DELETE→UPDATE, 既存エ�
 
 ```typescript
 function softDeleteFlow(db: ReturnType<typeof Database>, flowId: string) {
-  db.prepare("UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?").run(
-    flowId,
-  )
+  db.prepare(
+    "UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+  ).run(flowId)
 }
 ```
 
@@ -305,148 +308,148 @@ function softDeleteFlow(db: ReturnType<typeof Database>, flowId: string) {
 `tests/api/routes/flows.test.ts`のDELETEテストの後（`describe('DELETE /api/flows/:id')` の閉じカッコの後）に追加:
 
 ```typescript
-  // ========================================
-  // GET /api/flows/trash (trash list)
-  // ========================================
-  describe('GET /api/flows/trash', () => {
-    it('should return only soft-deleted flows', async () => {
-      insertFlow(db, 'flow-1', USER_ID, 'Active')
-      insertFlow(db, 'flow-2', USER_ID, 'Deleted')
-      softDeleteFlow(db, 'flow-2')
+// ========================================
+// GET /api/flows/trash (trash list)
+// ========================================
+describe('GET /api/flows/trash', () => {
+  it('should return only soft-deleted flows', async () => {
+    insertFlow(db, 'flow-1', USER_ID, 'Active')
+    insertFlow(db, 'flow-2', USER_ID, 'Deleted')
+    softDeleteFlow(db, 'flow-2')
 
-      const res = await getWithCookie('/api/flows/trash', env, cookie)
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.flows).toHaveLength(1)
-      expect(body.flows[0].id).toBe('flow-2')
-      expect(body.flows[0].deletedAt).not.toBeNull()
-    })
-
-    it('should return empty array when no deleted flows', async () => {
-      insertFlow(db, 'flow-1', USER_ID, 'Active')
-
-      const res = await getWithCookie('/api/flows/trash', env, cookie)
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.flows).toHaveLength(0)
-    })
-
-    it('should not return other users deleted flows', async () => {
-      insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other Deleted')
-      softDeleteFlow(db, 'flow-other')
-
-      const res = await getWithCookie('/api/flows/trash', env, cookie)
-      const body = await res.json()
-      expect(body.flows).toHaveLength(0)
-    })
-
-    it('should return 401 without auth', async () => {
-      const res = await getWithCookie('/api/flows/trash', env)
-      expect(res.status).toBe(401)
-    })
+    const res = await getWithCookie('/api/flows/trash', env, cookie)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.flows).toHaveLength(1)
+    expect(body.flows[0].id).toBe('flow-2')
+    expect(body.flows[0].deletedAt).not.toBeNull()
   })
 
-  // ========================================
-  // POST /api/flows/:id/restore
-  // ========================================
-  describe('POST /api/flows/:id/restore', () => {
-    beforeEach(() => {
-      insertFlow(db, 'flow-1', USER_ID, 'Deleted Flow')
-      softDeleteFlow(db, 'flow-1')
-    })
+  it('should return empty array when no deleted flows', async () => {
+    insertFlow(db, 'flow-1', USER_ID, 'Active')
 
-    it('should restore soft-deleted flow', async () => {
-      const res = await postJson('/api/flows/flow-1/restore', {}, env, cookie)
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.message).toBe('フローを復元しました')
-
-      const flow = db.prepare('SELECT deleted_at FROM flows WHERE id = ?').get('flow-1') as {
-        deleted_at: string | null
-      }
-      expect(flow.deleted_at).toBeNull()
-    })
-
-    it('should make restored flow appear in GET /api/flows', async () => {
-      await postJson('/api/flows/flow-1/restore', {}, env, cookie)
-
-      const res = await getWithCookie('/api/flows', env, cookie)
-      const body = await res.json()
-      expect(body.flows).toHaveLength(1)
-      expect(body.flows[0].id).toBe('flow-1')
-    })
-
-    it('should return 404 for non-deleted flow', async () => {
-      insertFlow(db, 'flow-2', USER_ID, 'Active Flow')
-      const res = await postJson('/api/flows/flow-2/restore', {}, env, cookie)
-      expect(res.status).toBe(404)
-    })
-
-    it('should return 404 for non-existent flow', async () => {
-      const res = await postJson('/api/flows/nonexistent/restore', {}, env, cookie)
-      expect(res.status).toBe(404)
-    })
-
-    it('should return 403 for another users flow', async () => {
-      insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other')
-      softDeleteFlow(db, 'flow-other')
-      const res = await postJson('/api/flows/flow-other/restore', {}, env, cookie)
-      expect(res.status).toBe(403)
-    })
-
-    it('should return 401 without auth', async () => {
-      const res = await postJson('/api/flows/flow-1/restore', {}, env)
-      expect(res.status).toBe(401)
-    })
+    const res = await getWithCookie('/api/flows/trash', env, cookie)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.flows).toHaveLength(0)
   })
 
-  // ========================================
-  // DELETE /api/flows/:id/permanent
-  // ========================================
-  describe('DELETE /api/flows/:id/permanent', () => {
-    beforeEach(() => {
-      insertFlow(db, 'flow-1', USER_ID, 'To Permanently Delete')
-      insertLane(db, 'lane-1', 'flow-1', 'Lane', 0, 0)
-      insertNode(db, 'node-1', 'flow-1', 'lane-1', 0, 'Task', null, 0)
-      insertArrow(db, 'arrow-1', 'flow-1', 'node-1', 'node-1', null)
-      softDeleteFlow(db, 'flow-1')
-    })
+  it('should not return other users deleted flows', async () => {
+    insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other Deleted')
+    softDeleteFlow(db, 'flow-other')
 
-    it('should permanently delete flow and related data', async () => {
-      const res = await deleteWithCookie('/api/flows/flow-1/permanent', env, cookie)
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.message).toBe('フローを完全に削除しました')
-
-      expect(db.prepare('SELECT * FROM flows WHERE id = ?').all('flow-1')).toHaveLength(0)
-      expect(db.prepare('SELECT * FROM lanes WHERE flow_id = ?').all('flow-1')).toHaveLength(0)
-      expect(db.prepare('SELECT * FROM nodes WHERE flow_id = ?').all('flow-1')).toHaveLength(0)
-      expect(db.prepare('SELECT * FROM arrows WHERE flow_id = ?').all('flow-1')).toHaveLength(0)
-    })
-
-    it('should return 404 for non-deleted flow (not in trash)', async () => {
-      insertFlow(db, 'flow-2', USER_ID, 'Active Flow')
-      const res = await deleteWithCookie('/api/flows/flow-2/permanent', env, cookie)
-      expect(res.status).toBe(404)
-    })
-
-    it('should return 404 for non-existent flow', async () => {
-      const res = await deleteWithCookie('/api/flows/nonexistent/permanent', env, cookie)
-      expect(res.status).toBe(404)
-    })
-
-    it('should return 403 for another users flow', async () => {
-      insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other')
-      softDeleteFlow(db, 'flow-other')
-      const res = await deleteWithCookie('/api/flows/flow-other/permanent', env, cookie)
-      expect(res.status).toBe(403)
-    })
-
-    it('should return 401 without auth', async () => {
-      const res = await deleteWithCookie('/api/flows/flow-1/permanent', env)
-      expect(res.status).toBe(401)
-    })
+    const res = await getWithCookie('/api/flows/trash', env, cookie)
+    const body = await res.json()
+    expect(body.flows).toHaveLength(0)
   })
+
+  it('should return 401 without auth', async () => {
+    const res = await getWithCookie('/api/flows/trash', env)
+    expect(res.status).toBe(401)
+  })
+})
+
+// ========================================
+// POST /api/flows/:id/restore
+// ========================================
+describe('POST /api/flows/:id/restore', () => {
+  beforeEach(() => {
+    insertFlow(db, 'flow-1', USER_ID, 'Deleted Flow')
+    softDeleteFlow(db, 'flow-1')
+  })
+
+  it('should restore soft-deleted flow', async () => {
+    const res = await postJson('/api/flows/flow-1/restore', {}, env, cookie)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.message).toBe('フローを復元しました')
+
+    const flow = db.prepare('SELECT deleted_at FROM flows WHERE id = ?').get('flow-1') as {
+      deleted_at: string | null
+    }
+    expect(flow.deleted_at).toBeNull()
+  })
+
+  it('should make restored flow appear in GET /api/flows', async () => {
+    await postJson('/api/flows/flow-1/restore', {}, env, cookie)
+
+    const res = await getWithCookie('/api/flows', env, cookie)
+    const body = await res.json()
+    expect(body.flows).toHaveLength(1)
+    expect(body.flows[0].id).toBe('flow-1')
+  })
+
+  it('should return 404 for non-deleted flow', async () => {
+    insertFlow(db, 'flow-2', USER_ID, 'Active Flow')
+    const res = await postJson('/api/flows/flow-2/restore', {}, env, cookie)
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 for non-existent flow', async () => {
+    const res = await postJson('/api/flows/nonexistent/restore', {}, env, cookie)
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 for another users flow', async () => {
+    insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other')
+    softDeleteFlow(db, 'flow-other')
+    const res = await postJson('/api/flows/flow-other/restore', {}, env, cookie)
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 401 without auth', async () => {
+    const res = await postJson('/api/flows/flow-1/restore', {}, env)
+    expect(res.status).toBe(401)
+  })
+})
+
+// ========================================
+// DELETE /api/flows/:id/permanent
+// ========================================
+describe('DELETE /api/flows/:id/permanent', () => {
+  beforeEach(() => {
+    insertFlow(db, 'flow-1', USER_ID, 'To Permanently Delete')
+    insertLane(db, 'lane-1', 'flow-1', 'Lane', 0, 0)
+    insertNode(db, 'node-1', 'flow-1', 'lane-1', 0, 'Task', null, 0)
+    insertArrow(db, 'arrow-1', 'flow-1', 'node-1', 'node-1', null)
+    softDeleteFlow(db, 'flow-1')
+  })
+
+  it('should permanently delete flow and related data', async () => {
+    const res = await deleteWithCookie('/api/flows/flow-1/permanent', env, cookie)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.message).toBe('フローを完全に削除しました')
+
+    expect(db.prepare('SELECT * FROM flows WHERE id = ?').all('flow-1')).toHaveLength(0)
+    expect(db.prepare('SELECT * FROM lanes WHERE flow_id = ?').all('flow-1')).toHaveLength(0)
+    expect(db.prepare('SELECT * FROM nodes WHERE flow_id = ?').all('flow-1')).toHaveLength(0)
+    expect(db.prepare('SELECT * FROM arrows WHERE flow_id = ?').all('flow-1')).toHaveLength(0)
+  })
+
+  it('should return 404 for non-deleted flow (not in trash)', async () => {
+    insertFlow(db, 'flow-2', USER_ID, 'Active Flow')
+    const res = await deleteWithCookie('/api/flows/flow-2/permanent', env, cookie)
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 404 for non-existent flow', async () => {
+    const res = await deleteWithCookie('/api/flows/nonexistent/permanent', env, cookie)
+    expect(res.status).toBe(404)
+  })
+
+  it('should return 403 for another users flow', async () => {
+    insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other')
+    softDeleteFlow(db, 'flow-other')
+    const res = await deleteWithCookie('/api/flows/flow-other/permanent', env, cookie)
+    expect(res.status).toBe(403)
+  })
+
+  it('should return 401 without auth', async () => {
+    const res = await deleteWithCookie('/api/flows/flow-1/permanent', env)
+    expect(res.status).toBe(401)
+  })
+})
 ```
 
 **Step 3: テストが失敗することを確認**
@@ -585,6 +588,7 @@ git commit -m "feat: trash/restore/permanentエンドポイント追加"
 ### Task 4: フロントエンド型定義 + API呼び出し
 
 **Files:**
+
 - Modify: `src/features/editor/types.ts:105-116`
 
 **Step 1: FlowSummaryにdeletedAtを追加**
@@ -620,6 +624,7 @@ git commit -m "feat: FlowSummary型にdeletedAtフィールド追加"
 ### Task 5: ダッシュボードのゴミ箱ナビ＋ビュー切り替え（テスト）
 
 **Files:**
+
 - Modify: `src/features/dashboard/Dashboard.test.tsx`
 - Modify: `src/features/dashboard/Dashboard.tsx:37,50-61,112-125,260,306-330`
 
@@ -721,71 +726,69 @@ Expected: FAIL — `/flows/trash`が呼ばれない、trash-emptyが存在しな
 **3a. トラッシュフロー用state追加** (L26の後):
 
 ```typescript
-  const [trashFlows, setTrashFlows] = useState<FlowSummary[]>([])
+const [trashFlows, setTrashFlows] = useState<FlowSummary[]>([])
 ```
 
 **3b. loadTrashFlows関数追加** (loadFlowsの後):
 
 ```typescript
-  const loadTrashFlows = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await apiFetch<FlowListResponse>('/flows/trash')
-      setTrashFlows(data.flows)
-    } catch {
-      setError('ゴミ箱の取得に失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+const loadTrashFlows = useCallback(async () => {
+  try {
+    setLoading(true)
+    setError(null)
+    const data = await apiFetch<FlowListResponse>('/flows/trash')
+    setTrashFlows(data.flows)
+  } catch {
+    setError('ゴミ箱の取得に失敗しました')
+  } finally {
+    setLoading(false)
+  }
+}, [])
 ```
 
 **3c. selectedNavの変更時にゴミ箱を読み込む** (useEffectの後に追加):
 
 ```typescript
-  useEffect(() => {
-    if (selectedNav === 'trash') {
-      loadTrashFlows()
-    }
-  }, [selectedNav, loadTrashFlows])
+useEffect(() => {
+  if (selectedNav === 'trash') {
+    loadTrashFlows()
+  }
+}, [selectedNav, loadTrashFlows])
 ```
 
 **3d. handleDelete内の確認メッセージ変更** (L114):
 
 ```typescript
-    if (!window.confirm(`「${title}」をゴミ箱に移動しますか？`)) return
+if (!window.confirm(`「${title}」をゴミ箱に移動しますか？`)) return
 ```
 
 **3e. handleRestore関数追加** (handleDeleteの後):
 
 ```typescript
-  const handleRestore = async (id: string) => {
-    try {
-      await apiFetch(`/flows/${id}/restore`, { method: 'POST' })
-      setTrashFlows((prev) => prev.filter((f) => f.id !== id))
-    } catch {
-      setError('フローの復元に失敗しました')
-    }
+const handleRestore = async (id: string) => {
+  try {
+    await apiFetch(`/flows/${id}/restore`, { method: 'POST' })
+    setTrashFlows((prev) => prev.filter((f) => f.id !== id))
+  } catch {
+    setError('フローの復元に失敗しました')
   }
+}
 
-  const handlePermanentDelete = async (id: string, title: string) => {
-    if (!window.confirm(`「${title}」を完全に削除しますか？この操作は取り消せません。`)) return
-    try {
-      await apiFetch(`/flows/${id}/permanent`, { method: 'DELETE' })
-      setTrashFlows((prev) => prev.filter((f) => f.id !== id))
-    } catch {
-      setError('フローの完全削除に失敗しました')
-    }
+const handlePermanentDelete = async (id: string, title: string) => {
+  if (!window.confirm(`「${title}」を完全に削除しますか？この操作は取り消せません。`)) return
+  try {
+    await apiFetch(`/flows/${id}/permanent`, { method: 'DELETE' })
+    setTrashFlows((prev) => prev.filter((f) => f.id !== id))
+  } catch {
+    setError('フローの完全削除に失敗しました')
   }
+}
 ```
 
 **3f. タイトルをゴミ箱ビューで切り替え** (L260の`<h1>`):
 
 ```tsx
-            <h1 className={styles.title}>
-              {selectedNav === 'trash' ? 'ゴミ箱' : 'マイフロー'}
-            </h1>
+<h1 className={styles.title}>{selectedNav === 'trash' ? 'ゴミ箱' : 'マイフロー'}</h1>
 ```
 
 **3g. ゴミ箱ビューのレンダリング** — `{/* Content */}`セクション(L301)の`loading ?`分岐の後、`filteredAndSortedFlows.length === 0`の前に、ゴミ箱ビューの分岐を追加:
@@ -846,6 +849,7 @@ git commit -m "feat: ダッシュボードにゴミ箱ビュー追加 — ナビ
 ### Task 6: FlowCardのゴミ箱モード対応
 
 **Files:**
+
 - Modify: `src/features/dashboard/FlowCard.tsx:9-18,96-197`
 
 **Step 1: FlowCardPropsにゴミ箱用プロップを追加**
@@ -891,44 +895,46 @@ export function FlowCard({
 FlowCard内のホバーオーバーレイ（L112-122）を条件分岐に変更:
 
 ```tsx
-        {isHovered && (
-          <div className={styles.hoverOverlay}>
-            {isTrash ? (
-              <>
-                <button
-                  data-testid={`restore-flow-${flow.id}`}
-                  className={styles.openButton}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    onRestore?.(flow.id)
-                  }}
-                >
-                  復元
-                </button>
-                <button
-                  data-testid={`permanent-delete-${flow.id}`}
-                  className={`${styles.openButton} ${styles.dangerButton}`}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    onDelete(flow.id, flow.title)
-                  }}
-                >
-                  完全に削除
-                </button>
-              </>
-            ) : (
-              <Link
-                to={`/flows/${flow.id}`}
-                data-testid={`flow-link-${flow.id}`}
-                className={styles.openButton}
-              >
-                開く
-              </Link>
-            )}
-          </div>
-        )}
+{
+  isHovered && (
+    <div className={styles.hoverOverlay}>
+      {isTrash ? (
+        <>
+          <button
+            data-testid={`restore-flow-${flow.id}`}
+            className={styles.openButton}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onRestore?.(flow.id)
+            }}
+          >
+            復元
+          </button>
+          <button
+            data-testid={`permanent-delete-${flow.id}`}
+            className={`${styles.openButton} ${styles.dangerButton}`}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onDelete(flow.id, flow.title)
+            }}
+          >
+            完全に削除
+          </button>
+        </>
+      ) : (
+        <Link
+          to={`/flows/${flow.id}`}
+          data-testid={`flow-link-${flow.id}`}
+          className={styles.openButton}
+        >
+          開く
+        </Link>
+      )}
+    </div>
+  )
+}
 ```
 
 **Step 4: ゴミ箱モード時のメタ情報にdeletedAt表示**
@@ -936,11 +942,11 @@ FlowCard内のホバーオーバーレイ（L112-122）を条件分岐に変更:
 FlowCard内のメタ情報（L166付近の `<span className={styles.updatedAt}>` ）を条件分岐:
 
 ```tsx
-          <span className={styles.updatedAt}>
-            {isTrash && flow.deletedAt
-              ? `削除: ${formatRelativeTime(flow.deletedAt)}`
-              : `更新: ${formatRelativeTime(flow.updatedAt)}`}
-          </span>
+<span className={styles.updatedAt}>
+  {isTrash && flow.deletedAt
+    ? `削除: ${formatRelativeTime(flow.deletedAt)}`
+    : `更新: ${formatRelativeTime(flow.updatedAt)}`}
+</span>
 ```
 
 **Step 5: dangerButtonスタイルをFlowCard.module.cssに追加**
@@ -974,6 +980,7 @@ git commit -m "feat: FlowCardにゴミ箱モード追加 — 復元/完全削除
 ### Task 7: FlowContextMenuのゴミ箱モード対応
 
 **Files:**
+
 - Modify: `src/features/dashboard/FlowContextMenu.tsx:4-12,41-47`
 - Modify: `src/features/dashboard/Dashboard.tsx`
 
@@ -1018,19 +1025,19 @@ export function FlowContextMenu({
 L41-47を変更:
 
 ```typescript
-  const items: (MenuItem | 'sep')[] = isTrash
-    ? [
-        { label: '復元', action: () => onRestore?.() },
-        'sep',
-        { label: '完全に削除', action: () => onPermanentDelete?.(), danger: true },
-      ]
-    : [
-        { label: '開く', action: onOpen },
-        { label: '名前を変更', action: onRename },
-        { label: '複製', action: onDuplicate },
-        'sep',
-        { label: '削除', action: onDelete, danger: true },
-      ]
+const items: (MenuItem | 'sep')[] = isTrash
+  ? [
+      { label: '復元', action: () => onRestore?.() },
+      'sep',
+      { label: '完全に削除', action: () => onPermanentDelete?.(), danger: true },
+    ]
+  : [
+      { label: '開く', action: onOpen },
+      { label: '名前を変更', action: onRename },
+      { label: '複製', action: onDuplicate },
+      'sep',
+      { label: '削除', action: onDelete, danger: true },
+    ]
 ```
 
 **Step 4: Dashboard.tsxのコンテキストメニューにゴミ箱モードプロップを渡す**
@@ -1038,38 +1045,40 @@ L41-47を変更:
 `Dashboard.tsx`のFlowContextMenu使用箇所にゴミ箱関連ハンドラーを追加:
 
 ```tsx
-      {contextMenu && (
-        <FlowContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onOpen={handleContextOpen}
-          onRename={handleContextRename}
-          onDuplicate={handleContextDuplicate}
-          onDelete={handleContextDelete}
-          onClose={handleCloseContextMenu}
-          isTrash={selectedNav === 'trash'}
-          onRestore={() => {
-            if (contextMenu) {
-              handleRestore(contextMenu.flowId)
-              setContextMenu(null)
-            }
-          }}
-          onPermanentDelete={() => {
-            if (contextMenu && contextFlow) {
-              handlePermanentDelete(contextMenu.flowId, contextFlow.title)
-              setContextMenu(null)
-            }
-          }}
-        />
-      )}
+{
+  contextMenu && (
+    <FlowContextMenu
+      x={contextMenu.x}
+      y={contextMenu.y}
+      onOpen={handleContextOpen}
+      onRename={handleContextRename}
+      onDuplicate={handleContextDuplicate}
+      onDelete={handleContextDelete}
+      onClose={handleCloseContextMenu}
+      isTrash={selectedNav === 'trash'}
+      onRestore={() => {
+        if (contextMenu) {
+          handleRestore(contextMenu.flowId)
+          setContextMenu(null)
+        }
+      }}
+      onPermanentDelete={() => {
+        if (contextMenu && contextFlow) {
+          handlePermanentDelete(contextMenu.flowId, contextFlow.title)
+          setContextMenu(null)
+        }
+      }}
+    />
+  )
+}
 ```
 
 注意: ゴミ箱ビューではcontextFlowの検索対象を`trashFlows`にする必要がある。`contextFlow`の定義を変更:
 
 ```typescript
-  const contextFlow = contextMenu
-    ? (selectedNav === 'trash' ? trashFlows : flows).find((f) => f.id === contextMenu.flowId)
-    : null
+const contextFlow = contextMenu
+  ? (selectedNav === 'trash' ? trashFlows : flows).find((f) => f.id === contextMenu.flowId)
+  : null
 ```
 
 **Step 5: 全テスト実行**
@@ -1093,6 +1102,7 @@ git commit -m "feat: FlowContextMenuにゴミ箱モード追加 — 復元/完�
 Run: `npm run dev`
 
 ブラウザで以下を確認:
+
 1. ダッシュボードでフローの削除 → 「ゴミ箱に移動しますか？」確認ダイアログ
 2. 削除後、フローが一覧から消える
 3. サイドバーの「ごみ箱」をクリック → ゴミ箱ビュー表示
