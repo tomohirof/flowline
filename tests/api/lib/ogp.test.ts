@@ -226,5 +226,21 @@ describe('OGP Utility', () => {
         'name="description" content="業務プロセスを視覚化するスイムレーンエディタ。"',
       )
     })
+
+    it('should handle $ metacharacter in title without replacement pattern expansion', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
+        ...defaultParams,
+        title: '$& project',
+      })
+      expect(result).toContain('<title>$&amp; project — Flowline</title>')
+    })
+
+    it('should handle $1 in author name without capture group expansion', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
+        ...defaultParams,
+        author: '$1 予算チーム',
+      })
+      expect(result).toContain('$1 予算チームさんが作成したフロー図')
+    })
   })
 })
