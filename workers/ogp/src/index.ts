@@ -74,306 +74,7 @@ function getAuthorInitial(name: string): string {
 function buildOgpElement(title: string, authorName: string) {
   const authorInitial = getAuthorInitial(authorName)
 
-  // Simplified SVG swimlane preview elements for Satori
-  // 4 lanes x 5 rows of nodes + fading rows
-  const previewSvgChildren = [
-    // Lane backgrounds
-    {
-      type: 'rect',
-      props: { x: 10, y: 32, width: 178, height: 440, rx: 8, fill: '#F8F0EC', opacity: 0.4 },
-    },
-    {
-      type: 'rect',
-      props: { x: 196, y: 32, width: 178, height: 440, rx: 8, fill: '#ECF0F8', opacity: 0.4 },
-    },
-    {
-      type: 'rect',
-      props: { x: 382, y: 32, width: 178, height: 440, rx: 8, fill: '#F0ECF8', opacity: 0.4 },
-    },
-    {
-      type: 'rect',
-      props: { x: 568, y: 32, width: 178, height: 440, rx: 8, fill: '#ECF8F0', opacity: 0.4 },
-    },
-    // Lane header dots
-    { type: 'circle', props: { cx: 22, cy: 16, r: 4.5, fill: '#E8985A' } },
-    { type: 'circle', props: { cx: 208, cy: 16, r: 4.5, fill: '#5B8EC9' } },
-    { type: 'circle', props: { cx: 394, cy: 16, r: 4.5, fill: '#9B6BC9' } },
-    { type: 'circle', props: { cx: 580, cy: 16, r: 4.5, fill: '#5AC98A' } },
-    // Color bars
-    {
-      type: 'rect',
-      props: { x: 10, y: 28, width: 178, height: 2.5, rx: 1.25, fill: '#E8985A', opacity: 0.35 },
-    },
-    {
-      type: 'rect',
-      props: { x: 196, y: 28, width: 178, height: 2.5, rx: 1.25, fill: '#5B8EC9', opacity: 0.35 },
-    },
-    {
-      type: 'rect',
-      props: { x: 382, y: 28, width: 178, height: 2.5, rx: 1.25, fill: '#9B6BC9', opacity: 0.35 },
-    },
-    {
-      type: 'rect',
-      props: { x: 568, y: 28, width: 178, height: 2.5, rx: 1.25, fill: '#5AC98A', opacity: 0.35 },
-    },
-    // Row 1 nodes
-    {
-      type: 'rect',
-      props: {
-        x: 26,
-        y: 46,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 212,
-        y: 46,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    // Row 2 nodes
-    {
-      type: 'rect',
-      props: {
-        x: 212,
-        y: 106,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 398,
-        y: 106,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    // Row 3 nodes
-    {
-      type: 'rect',
-      props: {
-        x: 398,
-        y: 166,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 584,
-        y: 166,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    // Row 4 nodes
-    {
-      type: 'rect',
-      props: {
-        x: 26,
-        y: 226,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#EEF5FF',
-        stroke: '#B8D0F0',
-        strokeWidth: 0.7,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 212,
-        y: 226,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    // Row 5 nodes
-    {
-      type: 'rect',
-      props: {
-        x: 212,
-        y: 286,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 398,
-        y: 286,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 584,
-        y: 286,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-      },
-    },
-    // Fading rows
-    {
-      type: 'rect',
-      props: {
-        x: 26,
-        y: 346,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-        opacity: 0.4,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 212,
-        y: 346,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-        opacity: 0.4,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 398,
-        y: 346,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-        opacity: 0.25,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 212,
-        y: 406,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-        opacity: 0.15,
-      },
-    },
-    {
-      type: 'rect',
-      props: {
-        x: 398,
-        y: 406,
-        width: 146,
-        height: 42,
-        rx: 7,
-        fill: '#fff',
-        stroke: '#D0CED8',
-        strokeWidth: 0.7,
-        opacity: 0.1,
-      },
-    },
-    // Connection lines (simplified, no arrow markers)
-    {
-      type: 'line',
-      props: { x1: 172, y1: 67, x2: 210, y2: 67, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-    {
-      type: 'line',
-      props: { x1: 285, y1: 88, x2: 285, y2: 104, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-    {
-      type: 'line',
-      props: { x1: 358, y1: 127, x2: 396, y2: 127, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-    {
-      type: 'line',
-      props: { x1: 471, y1: 148, x2: 471, y2: 164, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-    {
-      type: 'line',
-      props: { x1: 544, y1: 187, x2: 582, y2: 187, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-    {
-      type: 'line',
-      props: { x1: 172, y1: 247, x2: 210, y2: 247, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-    {
-      type: 'line',
-      props: { x1: 285, y1: 268, x2: 285, y2: 284, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-    {
-      type: 'line',
-      props: { x1: 358, y1: 307, x2: 396, y2: 307, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-    {
-      type: 'line',
-      props: { x1: 544, y1: 307, x2: 582, y2: 307, stroke: '#8A889A', strokeWidth: 1.2 },
-    },
-  ]
-
+  // Lightweight design: ~20 elements to stay within Workers Free plan CPU limits
   return {
     type: 'div',
     props: {
@@ -384,40 +85,9 @@ function buildOgpElement(title: string, authorName: string) {
         height: '100%',
         backgroundColor: '#F4F4F8',
         fontFamily: 'Noto Sans JP',
-        position: 'relative',
       },
       children: [
-        // Gradient orbs (background decoration)
-        {
-          type: 'div',
-          props: {
-            style: {
-              position: 'absolute',
-              top: '-80px',
-              right: '-80px',
-              width: '400px',
-              height: '400px',
-              borderRadius: '200px',
-              background: 'radial-gradient(circle, rgba(124,92,252,0.06), transparent 70%)',
-            },
-          },
-        },
-        {
-          type: 'div',
-          props: {
-            style: {
-              position: 'absolute',
-              bottom: '-60px',
-              left: '40px',
-              width: '300px',
-              height: '300px',
-              borderRadius: '150px',
-              background: 'radial-gradient(circle, rgba(91,141,239,0.05), transparent 70%)',
-            },
-          },
-        },
-
-        // Top bar
+        // Top bar (white, 52px)
         {
           type: 'div',
           props: {
@@ -429,7 +99,6 @@ function buildOgpElement(title: string, authorName: string) {
               gap: '14px',
               backgroundColor: '#FFFFFF',
               borderBottom: '1px solid #E8E8EE',
-              zIndex: 2,
             },
             children: [
               // F logo
@@ -443,9 +112,9 @@ function buildOgpElement(title: string, authorName: string) {
                     width: '30px',
                     height: '30px',
                     borderRadius: '7px',
-                    background: 'linear-gradient(135deg, #7C5CFC, #5B8DEF)',
+                    backgroundColor: '#7C5CFC',
                     fontSize: '14px',
-                    fontWeight: 900,
+                    fontWeight: 700,
                     color: '#FFFFFF',
                   },
                   children: 'F',
@@ -458,9 +127,8 @@ function buildOgpElement(title: string, authorName: string) {
                   style: {
                     display: 'flex',
                     fontSize: '15px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     color: '#1a1a2e',
-                    letterSpacing: '-0.03em',
                   },
                   children: 'Flowline',
                 },
@@ -478,7 +146,7 @@ function buildOgpElement(title: string, authorName: string) {
                   },
                 },
               },
-              // Author avatar (top bar)
+              // Author avatar
               {
                 type: 'div',
                 props: {
@@ -489,7 +157,7 @@ function buildOgpElement(title: string, authorName: string) {
                     width: '24px',
                     height: '24px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #7C5CFC, #5B8DEF)',
+                    backgroundColor: '#7C5CFC',
                     fontSize: '10px',
                     fontWeight: 700,
                     color: '#FFFFFF',
@@ -497,7 +165,7 @@ function buildOgpElement(title: string, authorName: string) {
                   children: authorInitial,
                 },
               },
-              // Author name (top bar)
+              // Author name
               {
                 type: 'div',
                 props: {
@@ -514,7 +182,6 @@ function buildOgpElement(title: string, authorName: string) {
                   style: {
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
                     padding: '5px 12px',
                     borderRadius: '7px',
                     backgroundColor: '#F0EBFF',
@@ -529,326 +196,139 @@ function buildOgpElement(title: string, authorName: string) {
           },
         },
 
-        // Body
+        // Body: centered content
         {
           type: 'div',
           props: {
             style: {
               display: 'flex',
+              flexDirection: 'column',
               flex: 1,
-              position: 'relative',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '0 80px',
+              gap: '24px',
             },
             children: [
-              // Left column
+              // Title
               {
                 type: 'div',
                 props: {
                   style: {
                     display: 'flex',
-                    flexDirection: 'column',
-                    width: '420px',
-                    padding: '40px 40px',
-                    justifyContent: 'center',
-                    zIndex: 3,
+                    fontSize: '52px',
+                    fontWeight: 700,
+                    color: '#1a1a2e',
+                    textAlign: 'center',
+                    maxWidth: '1000px',
+                    overflow: 'hidden',
+                    maxLines: 2,
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.2,
+                  },
+                  children: title,
+                },
+              },
+              // Author sharing info
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
                   },
                   children: [
-                    // Author info
                     {
                       type: 'div',
                       props: {
                         style: {
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '20px',
+                          justifyContent: 'center',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '14px',
+                          backgroundColor: '#7C5CFC',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: '#FFFFFF',
                         },
-                        children: [
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '14px',
-                                background: 'linear-gradient(135deg, #7C5CFC, #5B8DEF)',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                color: '#FFFFFF',
-                              },
-                              children: authorInitial,
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                color: '#999',
-                              },
-                              children: `${authorName} が共有`,
-                            },
-                          },
-                        ],
+                        children: authorInitial,
                       },
                     },
-                    // Title band
                     {
                       type: 'div',
                       props: {
                         style: {
                           display: 'flex',
-                          fontSize: '46px',
-                          fontWeight: 900,
-                          color: '#1a1a2e',
-                          lineHeight: 1.2,
-                          letterSpacing: '-0.04em',
-                          backgroundColor: 'rgba(244,244,248,0.85)',
-                          padding: '8px 16px 6px',
-                          borderRadius: '8px 8px 0 0',
-                          overflow: 'hidden',
-                          maxLines: 2,
-                          textOverflow: 'ellipsis',
+                          fontSize: '18px',
+                          color: '#999',
                         },
-                        children: title,
-                      },
-                    },
-                    // Catchcopy band
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          backgroundColor: 'rgba(244,244,248,0.85)',
-                          padding: '4px 16px 10px',
-                          borderRadius: '0 0 8px 8px',
-                          marginBottom: '20px',
-                        },
-                        children: [
-                          // Mini F logo
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '20px',
-                                height: '20px',
-                                borderRadius: '5px',
-                                background: 'linear-gradient(135deg, #7C5CFC, #5B8DEF)',
-                                fontSize: '9px',
-                                fontWeight: 900,
-                                color: '#FFFFFF',
-                              },
-                              children: 'F',
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                fontSize: '18px',
-                                fontWeight: 700,
-                                color: '#888',
-                                letterSpacing: '-0.02em',
-                              },
-                              children: 'フローを描く。チームが動く。',
-                            },
-                          },
-                        ],
-                      },
-                    },
-                    // Lane color dots
-                    {
-                      type: 'div',
-                      props: {
-                        style: { display: 'flex', alignItems: 'center', gap: '4px' },
-                        children: [
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '4px',
-                                backgroundColor: '#E8985A',
-                              },
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '4px',
-                                backgroundColor: '#5B8EC9',
-                              },
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '4px',
-                                backgroundColor: '#9B6BC9',
-                              },
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '4px',
-                                backgroundColor: '#5AC98A',
-                              },
-                            },
-                          },
-                        ],
+                        children: `${authorName} が共有`,
                       },
                     },
                   ],
                 },
               },
+            ],
+          },
+        },
 
-              // Right column: Preview card
+        // Bottom bar
+        {
+          type: 'div',
+          props: {
+            style: {
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px 40px',
+              borderTop: '1px solid #E8E8EE',
+              gap: '16px',
+            },
+            children: [
+              // Catchcopy
               {
                 type: 'div',
                 props: {
                   style: {
                     display: 'flex',
-                    flex: 1,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '24px 36px 24px 0',
+                    fontSize: '14px',
+                    color: '#AAA',
                   },
-                  children: [
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          flexDirection: 'column',
-                          width: '100%',
-                          height: '100%',
-                          borderRadius: '14px',
-                          backgroundColor: '#FFFFFF',
-                          border: '1px solid #E8E8EE',
-                          boxShadow: '0 8px 40px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03)',
-                          overflow: 'hidden',
-                          position: 'relative',
-                        },
-                        children: [
-                          // Window chrome
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                alignItems: 'center',
-                                height: '36px',
-                                padding: '0 14px',
-                                gap: '6px',
-                                borderBottom: '1px solid #F0F0F4',
-                                backgroundColor: '#FAFAFC',
-                              },
-                              children: [
-                                {
-                                  type: 'div',
-                                  props: {
-                                    style: {
-                                      display: 'flex',
-                                      width: '8px',
-                                      height: '8px',
-                                      borderRadius: '4px',
-                                      backgroundColor: '#FF6058',
-                                    },
-                                  },
-                                },
-                                {
-                                  type: 'div',
-                                  props: {
-                                    style: {
-                                      display: 'flex',
-                                      width: '8px',
-                                      height: '8px',
-                                      borderRadius: '4px',
-                                      backgroundColor: '#FFBD2E',
-                                    },
-                                  },
-                                },
-                                {
-                                  type: 'div',
-                                  props: {
-                                    style: {
-                                      display: 'flex',
-                                      width: '8px',
-                                      height: '8px',
-                                      borderRadius: '4px',
-                                      backgroundColor: '#27CA40',
-                                    },
-                                  },
-                                },
-                                { type: 'div', props: { style: { display: 'flex', flex: 1 } } },
-                                {
-                                  type: 'div',
-                                  props: {
-                                    style: {
-                                      display: 'flex',
-                                      fontSize: '9px',
-                                      color: '#CCC',
-                                      fontWeight: 500,
-                                    },
-                                    children: 'flowline.app',
-                                  },
-                                },
-                              ],
-                            },
-                          },
-                          // SVG preview
-                          {
-                            type: 'svg',
-                            props: {
-                              width: '100%',
-                              height: '100%',
-                              viewBox: '0 0 760 490',
-                              children: previewSvgChildren,
-                            },
-                          },
-                          // Bottom gradient fade
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                position: 'absolute',
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                height: '80px',
-                                background: 'linear-gradient(transparent, #FFFFFF)',
-                              },
-                            },
-                          },
-                        ],
+                  children: 'フローを描く。チームが動く。',
+                },
+              },
+              // Lane color dots
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', alignItems: 'center', gap: '4px' },
+                  children: ['#E8985A', '#5B8EC9', '#9B6BC9', '#5AC98A'].map((color) => ({
+                    type: 'div',
+                    props: {
+                      style: {
+                        display: 'flex',
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '3px',
+                        backgroundColor: color,
                       },
                     },
-                  ],
+                  })),
+                },
+              },
+              // Domain
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    display: 'flex',
+                    fontSize: '14px',
+                    color: '#AAA',
+                  },
+                  children: 'flowline.app',
                 },
               },
             ],

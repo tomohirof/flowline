@@ -270,7 +270,7 @@ describe('OGP Worker', () => {
       expect(findText(lastCall[0] as Record<string, never>, '共有中')).toBe(true)
     })
 
-    it('should include flowline.app in preview window chrome', async () => {
+    it('should include flowline.app in bottom bar', async () => {
       const satori = await import('satori/standalone')
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'chrome-check')
 
