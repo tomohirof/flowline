@@ -432,7 +432,7 @@ export function Dashboard() {
                       onClick={handleCreate}
                       disabled={creating}
                       className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
-                      style={{ marginTop: '16px', width: '200px', height: '120px' }}
+                      style={{ marginTop: '16px', width: '200px' }}
                     >
                       <CreateCardIcon />
                       <span className={styles.createCardText}>
