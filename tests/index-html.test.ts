@@ -20,6 +20,8 @@ describe('index.html OGP meta tags', () => {
   })
 
   it('should have twitter:image pointing to flowline.pages.dev', () => {
-    expect(html).toContain('name="twitter:image" content="https://flowline.pages.dev/ogp/default.png"')
+    expect(html).toContain(
+      'name="twitter:image" content="https://flowline.pages.dev/ogp/default.png"',
+    )
   })
 })
