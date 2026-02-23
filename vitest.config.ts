@@ -4,7 +4,7 @@ import path from 'path'
 export default defineConfig({
   resolve: {
     alias: {
-      '../../node_modules/@resvg/resvg-wasm/index_bg.wasm': path.resolve(
+      '@resvg/resvg-wasm/index_bg.wasm': path.resolve(
         __dirname,
         'tests/helpers/mock-wasm.ts',
       ),

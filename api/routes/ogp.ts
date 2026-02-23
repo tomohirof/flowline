@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import type { Bindings } from '../app'
 import satori from 'satori'
 import { initWasm, Resvg } from '@resvg/resvg-wasm'
-import resvgWasm from '../../node_modules/@resvg/resvg-wasm/index_bg.wasm'
+import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm'
 
 let wasmInitPromise: Promise<void> | null = null
 
