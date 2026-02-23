@@ -99,17 +99,12 @@
   background: var(--theme-canvas-bg);
   background-image: radial-gradient(circle, var(--theme-dot-grid) 0.5px, transparent 0.5px);
   padding: 40px;
-  transition:
-    filter 0.4s,
-    opacity 0.4s,
-    transform 0.4s;
+  transition: filter 0.4s;
   position: relative;
 }
 
 .canvasBlurred {
-  filter: blur(6px);
-  opacity: 0.4;
-  transform: scale(1.05);
+  filter: blur(2px);
   overflow: hidden;
 }
 
