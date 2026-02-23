@@ -90,7 +90,9 @@
   font-family: inherit;
   box-shadow: 0 4px 16px rgba(124, 92, 252, 0.3);
   margin-bottom: 10px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 
 .ctaButton:hover {

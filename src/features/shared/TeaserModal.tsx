@@ -9,7 +9,13 @@ interface TeaserModalProps {
   onClose: () => void
 }
 
-export function TeaserModal({ flowTitle, laneCount, nodeCount, laneColors, onClose }: TeaserModalProps) {
+export function TeaserModal({
+  flowTitle,
+  laneCount,
+  nodeCount,
+  laneColors,
+  onClose,
+}: TeaserModalProps) {
   return (
     <div className={styles.overlay} data-testid="teaser-modal">
       <div className={styles.content}>
