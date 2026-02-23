@@ -1072,3 +1072,48 @@ describe('empty row at bottom on reload (#84)', () => {
     expect(rows.length).toBe(11)
   })
 })
+
+describe('row insertion UI (#91)', () => {
+  it('should render row gap hit areas for each row boundary', () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    // With 7+ rows (default), there should be 8+ row gap hit areas (between + after)
+    const rowGapHitAreas = document.querySelectorAll('[data-testid^="rowgap-hit-"]')
+    expect(rowGapHitAreas.length).toBeGreaterThanOrEqual(8)
+  })
+
+  it('should show row gap visual feedback on hover', async () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const hitArea = document.querySelector('[data-testid="rowgap-hit-0"]')
+    expect(hitArea).toBeTruthy()
+    await userEvent.hover(hitArea!)
+    const feedback = document.querySelector('[data-testid="rowgap-feedback-0"]')
+    expect(feedback).toBeTruthy()
+  })
+
+  it('should insert row at specified position when row gap is clicked', async () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    const hitArea = document.querySelector('[data-testid="rowgap-hit-1"]')
+    expect(hitArea).toBeTruthy()
+    await userEvent.click(hitArea!)
+    const newRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(newRowCount).toBe(initialRowCount + 1)
+  })
+})
+
+describe('lane gap UI header-only (#91)', () => {
+  it('should render lane gap hit area with header-only height', () => {
+    const flow = createMinimalFlow()
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    // Lane gap hit areas should exist (for 1 lane: 2 gaps, left and right)
+    const laneGapHitAreas = container.querySelectorAll('[data-testid^="lanegap-hit-"]')
+    expect(laneGapHitAreas.length).toBe(2)
+    // Hit area height should be TM + HH (24 + 46 = 70), not HH + rows * RH
+    const hitArea = laneGapHitAreas[0]
+    const height = hitArea.getAttribute('height')
+    expect(Number(height)).toBe(70) // TM + HH = 24 + 46 = 70
+  })
+})

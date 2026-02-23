@@ -446,6 +446,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [zoom, setZoom] = useState<number>(1)
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
+  const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
   const [connectFrom, setConnectFrom] = useState<string | null>(null)
   const [connectDragPt, setConnectDragPt] = useState<Point | null>(null)
   const [connectFromPt, setConnectFromPt] = useState<Point | null>(null)
@@ -743,6 +744,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       return n
     })
     setHoveredLaneGap(null)
+  }
+  const insertRowAt = (i: number): void => {
+    setRows((prev) => {
+      const n = [...prev]
+      n.splice(i, 0, { id: uid() })
+      return n
+    })
+    setHoveredRowGap(null)
   }
   const cellFromPos = (sx: number, sy: number): CellInfo | null => {
     for (let li = 0; li < lanes.length; li++)
@@ -2160,17 +2169,18 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   : gi === lanes.length
                     ? laneX(gi - 1) + LW + G / 2
                     : laneX(gi) - G / 2
-              const gy = TM + HH / 2 + (rows.length * RH) / 2
+              const gy = TM + HH / 2
               const isHov = hoveredLaneGap === gi
               const hitX =
                 gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
               return (
                 <g key={`gap-${gi}`}>
                   <rect
+                    data-testid={`lanegap-hit-${gi}`}
                     x={hitX}
-                    y={TM}
+                    y={0}
                     width={gi === 0 || gi === lanes.length ? 14 : G}
-                    height={HH + rows.length * RH}
+                    height={TM + HH}
                     fill="transparent"
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={() => setHoveredLaneGap(gi)}
@@ -2230,6 +2240,63 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                 {ri + 1}
               </text>
             ))}
+
+            {/* Row gap "+" — left side, between rows and at the end */}
+            {Array.from({ length: rows.length + 1 }, (_, ri) => {
+              const gy = TM + HH + ri * RH
+              const gx = LM / 2
+              const isHov = hoveredRowGap === ri
+              return (
+                <g key={`rowgap-${ri}`}>
+                  <rect
+                    data-testid={`rowgap-hit-${ri}`}
+                    x={0}
+                    y={gy - 6}
+                    width={LM}
+                    height={12}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredRowGap(ri)}
+                    onMouseLeave={() => setHoveredRowGap(null)}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      insertRowAt(ri)
+                    }}
+                  />
+                  {isHov && (
+                    <g data-testid={`rowgap-feedback-${ri}`} style={{ pointerEvents: 'none' }}>
+                      <line
+                        x1={LM}
+                        y1={gy}
+                        x2={laneX(lanes.length - 1) + LW}
+                        y2={gy}
+                        stroke={T.accent}
+                        strokeWidth={1.5}
+                        strokeDasharray="4,3"
+                        opacity={0.3}
+                      />
+                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
+                      <line
+                        x1={gx - 4}
+                        y1={gy}
+                        x2={gx + 4}
+                        y2={gy}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                      <line
+                        x1={gx}
+                        y1={gy - 4}
+                        x2={gx}
+                        y2={gy + 4}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                    </g>
+                  )}
+                </g>
+              )
+            })}
 
             {/* Empty cells */}
             {lanes.map((lane, li) =>
