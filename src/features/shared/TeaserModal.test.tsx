@@ -130,4 +130,25 @@ describe('TeaserModal', () => {
     expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
     expect(screen.getByText(/0 レーン/)).toBeInTheDocument()
   })
+
+  it('TeaserModal.module.css .content should have solid white background, not gradient', async () => {
+    const { readFileSync } = await import('fs')
+    const { resolve } = await import('path')
+    const css = readFileSync(resolve(__dirname, './TeaserModal.module.css'), 'utf-8')
+    const contentMatch = css.match(/\.content\s*\{[^}]*\}/s)
+    expect(contentMatch).not.toBeNull()
+    const contentBlock = contentMatch![0]
+    expect(contentBlock).not.toContain('radial-gradient')
+    expect(contentBlock).toMatch(/background:\s*#fff/)
+  })
+
+  it('TeaserModal.module.css .content should have box-shadow for card elevation', async () => {
+    const { readFileSync } = await import('fs')
+    const { resolve } = await import('path')
+    const css = readFileSync(resolve(__dirname, './TeaserModal.module.css'), 'utf-8')
+    const contentMatch = css.match(/\.content\s*\{[^}]*\}/s)
+    expect(contentMatch).not.toBeNull()
+    const contentBlock = contentMatch![0]
+    expect(contentBlock).toContain('box-shadow')
+  })
 })
