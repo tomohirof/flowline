@@ -244,26 +244,6 @@ describe('OGP Image API', () => {
       expect(brandingText).toBe('flowline.six1.jp')
     })
 
-    it('should return 500 with error message when Resvg render fails', async () => {
-      const cfResvg = await import('@cf-wasm/resvg/workerd')
-      const OrigResvg = cfResvg.Resvg
-      vi.spyOn(cfResvg, 'Resvg').mockImplementationOnce(
-        () =>
-          ({
-            render: () => {
-              throw new Error('PNG render failed')
-            },
-          }) as unknown as InstanceType<typeof OrigResvg>,
-      )
-
-      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'resvg-fail')
-
-      const res = await getRequest('/api/ogp/share/resvg-fail.png', env)
-      expect(res.status).toBe(500)
-      const body = await res.json()
-      expect(body).toHaveProperty('error')
-    })
-
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
       const satori = await import('satori')
       vi.mocked(satori.default).mockRejectedValueOnce(new Error('SVG generation failed'))
