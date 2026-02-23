@@ -241,6 +241,39 @@ describe('OGP Image API', () => {
       expect(body).toHaveProperty('error')
     })
 
+    it('should use flowline.pages.dev as branding text in generated image', async () => {
+      const satori = await import('satori')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'brand-check')
+
+      await getRequest('/api/ogp/share/brand-check.png', env)
+
+      // satori が呼ばれた時の引数を検証
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      // 要素ツリーからブランディングテキスト（文字列childrenを持つ末尾要素）を再帰的に探索
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function findBrandingText(node: Record<string, any>): string | null {
+        if (!node?.props) return null
+        const { children } = node.props
+        if (Array.isArray(children)) {
+          // 末尾の子要素から探索（ボトムバーは最後にある）
+          for (let i = children.length - 1; i >= 0; i--) {
+            const result = findBrandingText(children[i])
+            if (result) return result
+          }
+        }
+        // borderTop を持つ div の直接テキスト children がブランディングテキスト
+        if (node.props.style?.borderTop && typeof children === 'string') {
+          return children
+        }
+        return null
+      }
+
+      const brandingText = findBrandingText(lastCall[0] as Record<string, never>)
+      expect(brandingText).toBe('flowline.pages.dev')
+    })
+
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
       const satori = await import('satori')
       vi.mocked(satori.default).mockRejectedValueOnce(new Error('SVG generation failed'))
