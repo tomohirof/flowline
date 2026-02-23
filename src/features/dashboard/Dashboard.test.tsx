@@ -71,10 +71,11 @@ function renderDashboard() {
 
 describe('Dashboard', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     cleanup()
   })
 
@@ -359,11 +360,14 @@ describe('Dashboard', () => {
   })
 
   // =============================================
-  // 新機能テスト: 検索フィルタリング
+  // 新機能テスト: API検索フィルタリング
   // =============================================
-  it('should filter flows by search query', async () => {
+  it('should call API with search query after debounce', async () => {
     const user = userEvent.setup()
+    // Initial load
     mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+    // Search API call - returns only flow-1
+    mockApiFetch.mockResolvedValueOnce({ flows: [mockFlows[0]] })
 
     renderDashboard()
 
@@ -371,19 +375,29 @@ describe('Dashboard', () => {
       expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
     })
 
-    // Type search query that matches only flow-1
+    // Type search query
     const searchInput = screen.getByTestId('search-input')
     await user.type(searchInput, '業務')
 
-    // flow-1 (業務フロー) should be visible
-    expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
-    // flow-2 (申請処理フロー) should be hidden
+    // Verify API was called with search query after debounce
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/flows?q=%E6%A5%AD%E5%8B%99')
+    })
+
+    // flow-1 should be visible (returned by API)
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+    // flow-2 should not be visible (not returned by API)
     expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
   })
 
   it('should show empty state when search matches nothing', async () => {
     const user = userEvent.setup()
+    // Initial load
     mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+    // Search API call - returns empty
+    mockApiFetch.mockResolvedValueOnce({ flows: [] })
 
     renderDashboard()
 
@@ -394,12 +408,47 @@ describe('Dashboard', () => {
     const searchInput = screen.getByTestId('search-input')
     await user.type(searchInput, '存在しないフロー名')
 
+    // Should show empty state after debounced API returns empty
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument()
+    })
+
     // No cards should be visible
     expect(screen.queryByTestId('flow-card-flow-1')).not.toBeInTheDocument()
     expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
+  })
 
-    // Should show empty state
-    expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument()
+  it('should re-fetch without query param when search is cleared', async () => {
+    const user = userEvent.setup()
+    // Initial load
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+    // Search API call
+    mockApiFetch.mockResolvedValueOnce({ flows: [mockFlows[0]] })
+    // Clear search - re-fetch all
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+
+    const searchInput = screen.getByTestId('search-input')
+    await user.type(searchInput, '業務')
+
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/flows?q=%E6%A5%AD%E5%8B%99')
+    })
+
+    // Clear search
+    await user.clear(searchInput)
+
+    // Should call /flows without query param after debounce
+    await waitFor(() => {
+      const calls = mockApiFetch.mock.calls
+      const lastCall = calls[calls.length - 1]
+      expect(lastCall[0]).toBe('/flows')
+    })
   })
 
   // =============================================
@@ -844,7 +893,7 @@ describe('Dashboard', () => {
     expect(screen.queryByTestId('user-menu-panel')).not.toBeInTheDocument()
   })
 
-  it('should filter flows case-insensitively', async () => {
+  it('should send search query to API (case handling is server-side)', async () => {
     const user = userEvent.setup()
     const flowsWithAscii = [
       ...mockFlows,
@@ -857,7 +906,12 @@ describe('Dashboard', () => {
         updatedAt: '2026-01-13T08:00:00Z',
       },
     ]
+    // Initial load
     mockApiFetch.mockResolvedValueOnce({ flows: flowsWithAscii })
+    // API returns only flow-3 for "my test" search
+    mockApiFetch.mockResolvedValueOnce({
+      flows: [flowsWithAscii[2]],
+    })
 
     renderDashboard()
 
@@ -868,7 +922,15 @@ describe('Dashboard', () => {
     const searchInput = screen.getByTestId('search-input')
     await user.type(searchInput, 'my test')
 
-    expect(screen.getByTestId('flow-card-flow-3')).toBeInTheDocument()
+    // Verify API was called with search query
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/flows?q=my%20test')
+    })
+
+    // Only flow-3 should be visible (returned by API)
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-3')).toBeInTheDocument()
+    })
     expect(screen.queryByTestId('flow-card-flow-1')).not.toBeInTheDocument()
     expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
   })

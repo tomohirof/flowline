@@ -69,13 +69,37 @@ async function checkFlowOwnership(db: D1Database, flowId: string, userId: string
 flows.get('/', async (c) => {
   const userId = c.get('userId')
   const db = c.env.FLOWLINE_DB
+  const q = c.req.query('q')?.trim() ?? ''
 
-  const result = await db
-    .prepare('SELECT * FROM flows WHERE user_id = ? ORDER BY updated_at DESC')
-    .bind(userId)
-    .all<FlowRow>()
+  let flowList: ReturnType<typeof toFlowSummary>[]
 
-  const flowList = (result.results ?? []).map(toFlowSummary)
+  if (q) {
+    const escaped = q.replace(/[%_\\]/g, '\\$&')
+    const likePattern = `%${escaped}%`
+    const result = await db
+      .prepare(
+        `SELECT DISTINCT f.* FROM flows f
+         LEFT JOIN nodes n ON n.flow_id = f.id
+         LEFT JOIN lanes l ON l.flow_id = f.id
+         LEFT JOIN arrows a ON a.flow_id = f.id
+         WHERE f.user_id = ?
+           AND (f.title LIKE ? ESCAPE '\\' COLLATE NOCASE
+             OR n.label LIKE ? ESCAPE '\\' COLLATE NOCASE
+             OR n.note LIKE ? ESCAPE '\\' COLLATE NOCASE
+             OR l.name LIKE ? ESCAPE '\\' COLLATE NOCASE
+             OR a.comment LIKE ? ESCAPE '\\' COLLATE NOCASE)
+         ORDER BY f.updated_at DESC`,
+      )
+      .bind(userId, likePattern, likePattern, likePattern, likePattern, likePattern)
+      .all<FlowRow>()
+    flowList = (result.results ?? []).map(toFlowSummary)
+  } else {
+    const result = await db
+      .prepare('SELECT * FROM flows WHERE user_id = ? ORDER BY updated_at DESC')
+      .bind(userId)
+      .all<FlowRow>()
+    flowList = (result.results ?? []).map(toFlowSummary)
+  }
 
   return c.json({ flows: flowList })
 })
