@@ -202,6 +202,116 @@ describe('Flows API', () => {
   })
 
   // ========================================
+  // GET /api/flows?q= (search)
+  // ========================================
+  describe('GET /api/flows?q= (search)', () => {
+    // Setup: create flows with various searchable content
+    beforeEach(() => {
+      // Flow A: has node label "受注処理", lane "営業部", node note "重要な手順", arrow comment "承認後"
+      insertFlow(db, 'flow-a', USER_ID, 'プロジェクト管理')
+      insertLane(db, 'lane-a1', 'flow-a', '営業部', 0, 0)
+      insertNode(db, 'node-a1', 'flow-a', 'lane-a1', 0, '受注処理', '重要な手順', 0)
+      insertNode(db, 'node-a2', 'flow-a', 'lane-a1', 1, '出荷準備', null, 1)
+      insertArrow(db, 'arrow-a1', 'flow-a', 'node-a1', 'node-a2', '承認後')
+
+      // Flow B: has node label "Invoice Review", lane "Finance", node note "Check amounts"
+      insertFlow(db, 'flow-b', USER_ID, 'Billing Workflow')
+      insertLane(db, 'lane-b1', 'flow-b', 'Finance', 0, 0)
+      insertNode(db, 'node-b1', 'flow-b', 'lane-b1', 0, 'Invoice Review', 'Check amounts', 0)
+      insertNode(db, 'node-b2', 'flow-b', 'lane-b1', 1, 'Payment', null, 1)
+      insertArrow(db, 'arrow-b1', 'flow-b', 'node-b1', 'node-b2', 'approved')
+
+      // Flow C: belongs to OTHER user (should never appear in results)
+      insertFlow(db, 'flow-c', OTHER_USER_ID, '受注処理フロー')
+      insertLane(db, 'lane-c1', 'flow-c', '営業部', 0, 0)
+      insertNode(db, 'node-c1', 'flow-c', 'lane-c1', 0, '受注処理', '重要な手順', 0)
+    })
+
+    it('should filter flows by node label', async () => {
+      const res = await getWithCookie('/api/flows?q=受注処理', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-a')
+    })
+
+    it('should filter flows by lane name', async () => {
+      const res = await getWithCookie('/api/flows?q=営業部', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-a')
+    })
+
+    it('should filter flows by node note', async () => {
+      const res = await getWithCookie('/api/flows?q=重要な手順', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-a')
+    })
+
+    it('should filter flows by arrow comment', async () => {
+      const res = await getWithCookie('/api/flows?q=承認後', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-a')
+    })
+
+    it('should filter flows by title', async () => {
+      const res = await getWithCookie('/api/flows?q=Billing', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-b')
+    })
+
+    it('should return all flows when query is empty', async () => {
+      const res = await getWithCookie('/api/flows?q=', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      // user owns flow-a and flow-b (flow-c belongs to OTHER_USER)
+      expect(body.flows).toHaveLength(2)
+    })
+
+    it('should deduplicate when query matches multiple fields in same flow', async () => {
+      // "受注" matches node label "受注処理" in flow-a
+      // flow-a also has lane "営業部" but that doesn't match
+      // Insert another node with "受注" in note to create potential duplicate
+      insertNode(db, 'node-a3', 'flow-a', 'lane-a1', 2, '確認', '受注データの確認', 2)
+
+      const res = await getWithCookie('/api/flows?q=受注', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      // flow-a matches via node label AND node note, but should appear only once
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-a')
+    })
+
+    it('should ignore ASCII case when searching', async () => {
+      const res = await getWithCookie('/api/flows?q=billing', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      // "billing" should match "Billing Workflow" (title of flow-b)
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-b')
+    })
+
+    it('should not return other users flows even when query matches', async () => {
+      // flow-c has title "受注処理フロー" and node label "受注処理", owned by OTHER_USER
+      const res = await getWithCookie('/api/flows?q=受注処理', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      // Only flow-a (owned by USER) should be returned
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-a')
+      const ids = body.flows.map((f: { id: string }) => f.id)
+      expect(ids).not.toContain('flow-c')
+    })
+  })
+
+  // ========================================
   // POST /api/flows (create)
   // ========================================
   describe('POST /api/flows', () => {
