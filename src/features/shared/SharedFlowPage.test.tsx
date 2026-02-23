@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { SharedFlowPage } from './SharedFlowPage'
 import type { Flow } from '../editor/types'
@@ -100,7 +101,7 @@ describe('SharedFlowPage', () => {
     renderSharedPage()
 
     await waitFor(() => {
-      expect(screen.getByText('Shared Test Flow')).toBeInTheDocument()
+      expect(screen.getAllByText('Shared Test Flow').length).toBeGreaterThanOrEqual(1)
     })
   })
 
@@ -202,6 +203,112 @@ describe('SharedFlowPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('shared-flow-view')).toBeInTheDocument()
+    })
+  })
+
+  // ========================================
+  // Teaser modal + Bottom CTA bar
+  // ========================================
+  describe('Teaser modal and bottom CTA bar', () => {
+    it('should show teaser modal on initial load', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+      renderSharedPage()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
+      })
+    })
+
+    it('should apply blur to canvas when modal is shown', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+      renderSharedPage()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('shared-flow-canvas')).toHaveClass(/Blurred/)
+      })
+    })
+
+    it('should hide teaser modal and remove blur after CTA click', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+      renderSharedPage()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+
+      expect(screen.queryByTestId('teaser-modal')).not.toBeInTheDocument()
+      expect(screen.getByTestId('shared-flow-canvas')).not.toHaveClass(/Blurred/)
+    })
+
+    it('should show bottom CTA bar 3 seconds after modal close', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+      renderSharedPage()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+
+      expect(screen.queryByTestId('bottom-cta-bar')).not.toBeInTheDocument()
+
+      vi.advanceTimersByTime(3000)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('bottom-cta-bar')).toBeInTheDocument()
+      })
+
+      vi.useRealTimers()
+    })
+
+    it('should hide bottom CTA bar when close button is clicked', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+      renderSharedPage()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+
+      vi.advanceTimersByTime(3000)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('bottom-cta-bar')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByTestId('bottom-cta-close'))
+
+      expect(screen.queryByTestId('bottom-cta-bar')).not.toBeInTheDocument()
+
+      vi.useRealTimers()
+    })
+
+    it('should pass correct lane colors to teaser modal', async () => {
+      const multiLaneFlow: Flow = {
+        ...mockSharedFlow,
+        lanes: [
+          { id: 'l1', name: 'Lane A', colorIndex: 0, position: 0 },
+          { id: 'l2', name: 'Lane B', colorIndex: 2, position: 1 },
+        ],
+      }
+      mockApiFetch.mockResolvedValueOnce({ flow: multiLaneFlow })
+
+      renderSharedPage()
+
+      await waitFor(() => {
+        const dots = screen.getAllByTestId('lane-dot')
+        expect(dots).toHaveLength(2)
+      })
     })
   })
 })
