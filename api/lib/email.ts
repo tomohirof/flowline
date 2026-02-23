@@ -42,11 +42,12 @@ function escapeHtml(s: string): string {
 
 function formatDateJa(): string {
   const now = new Date()
-  return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
+  const jst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
+  return `${jst.getFullYear()}年${jst.getMonth() + 1}月${jst.getDate()}日`
 }
 
 function buildEmailHtml(_email: string, verifyUrl: string): string {
-  void escapeHtml
+  const safeVerifyUrl = escapeHtml(verifyUrl)
   return `<!DOCTYPE html>
 <html lang="ja" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -153,7 +154,7 @@ function buildEmailHtml(_email: string, verifyUrl: string): string {
             <tr><td align="center">
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr><td style="background:linear-gradient(135deg,#7C5CFC,#6246EA);border-radius:12px;padding:15px 40px;text-align:center;">
-                  <a href="${verifyUrl}" target="_blank" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;display:inline-block;letter-spacing:-0.01em;">
+                  <a href="${safeVerifyUrl}" target="_blank" style="color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;display:inline-block;letter-spacing:-0.01em;">
                     メールを認証して最初のフローを作成する →
                   </a>
                 </td></tr>
@@ -283,6 +284,7 @@ function buildEmailHtml(_email: string, verifyUrl: string): string {
         <tr><td align="center" style="font-size:11px;color:#B0ADBA;line-height:1.6;padding-bottom:8px;">
           業務フローをもっとシンプルに。
         </td></tr>
+        <!-- TODO: フッターリンクのURLを実際のページに差し替える -->
         <tr><td align="center" style="font-size:11px;color:#CCCAD4;line-height:1.8;">
           <a href="#" style="color:#999;text-decoration:underline;">ヘルプセンター</a>
           &nbsp;&nbsp;·&nbsp;&nbsp;
