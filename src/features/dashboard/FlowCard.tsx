@@ -15,6 +15,8 @@ interface FlowCardProps {
   isHovered: boolean
   onHover: (id: string | null) => void
   renamingId: string | null
+  isTrash?: boolean
+  onRestore?: (id: string) => void
 }
 
 const DEFAULT_LANE_COUNT = 3
@@ -29,6 +31,8 @@ export function FlowCard({
   isHovered,
   onHover,
   renamingId,
+  isTrash = false,
+  onRestore,
 }: FlowCardProps) {
   const isRenaming = renamingId === flow.id
   const renameInputRef = useRef<HTMLInputElement>(null)
@@ -111,13 +115,40 @@ export function FlowCard({
         {/* ホバーオーバーレイ */}
         {isHovered && (
           <div className={styles.hoverOverlay}>
-            <Link
-              to={`/flows/${flow.id}`}
-              data-testid={`flow-link-${flow.id}`}
-              className={styles.openButton}
-            >
-              開く
-            </Link>
+            {isTrash ? (
+              <>
+                <button
+                  data-testid={`restore-flow-${flow.id}`}
+                  className={styles.openButton}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onRestore?.(flow.id)
+                  }}
+                >
+                  復元
+                </button>
+                <button
+                  data-testid={`permanent-delete-${flow.id}`}
+                  className={`${styles.openButton} ${styles.dangerButton}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onDelete(flow.id, flow.title)
+                  }}
+                >
+                  完全に削除
+                </button>
+              </>
+            ) : (
+              <Link
+                to={`/flows/${flow.id}`}
+                data-testid={`flow-link-${flow.id}`}
+                className={styles.openButton}
+              >
+                開く
+              </Link>
+            )}
           </div>
         )}
 
@@ -163,7 +194,11 @@ export function FlowCard({
               />
             ))}
           </div>
-          <span className={styles.updatedAt}>更新: {formatRelativeTime(flow.updatedAt)}</span>
+          <span className={styles.updatedAt}>
+            {isTrash && flow.deletedAt
+              ? `削除: ${formatRelativeTime(flow.deletedAt)}`
+              : `更新: ${formatRelativeTime(flow.updatedAt)}`}
+          </span>
           {flow.shareToken && (
             <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>
               共有中

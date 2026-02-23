@@ -204,7 +204,7 @@ describe('Dashboard', () => {
 
     // モーダルが表示される
     expect(screen.getByTestId('confirm-dialog-overlay')).toBeInTheDocument()
-    expect(screen.getByText('フローを削除')).toBeInTheDocument()
+    expect(screen.getByText('ゴミ箱に移動')).toBeInTheDocument()
 
     // 確認ボタンをクリック
     await user.click(screen.getByTestId('confirm-dialog-confirm'))
@@ -276,7 +276,7 @@ describe('Dashboard', () => {
     await waitFor(() => {
       expect(screen.getByTestId('toast')).toBeInTheDocument()
     })
-    expect(screen.getByText('削除しました')).toBeInTheDocument()
+    expect(screen.getByText('ゴミ箱に移動しました')).toBeInTheDocument()
   })
 
   // === APIエラー ===
@@ -933,5 +933,84 @@ describe('Dashboard', () => {
     })
     expect(screen.queryByTestId('flow-card-flow-1')).not.toBeInTheDocument()
     expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
+  })
+
+  describe('trash view (#95)', () => {
+    it('should load trash flows when trash nav is selected', async () => {
+      const trashFlows = [
+        {
+          id: 'flow-deleted',
+          title: '削除済みフロー',
+          themeId: 'cloud',
+          shareToken: null,
+          deletedAt: '2026-02-20T10:00:00Z',
+          createdAt: '2026-01-15T10:00:00Z',
+          updatedAt: '2026-01-15T10:00:00Z',
+        },
+      ]
+      mockApiFetch.mockResolvedValueOnce({ flows: [] }) // initial load
+      mockApiFetch.mockResolvedValueOnce({ flows: trashFlows }) // trash load
+
+      render(
+        <MemoryRouter>
+          <Dashboard />
+        </MemoryRouter>,
+      )
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument()
+      })
+
+      const trashNav = screen.getByTestId('nav-item-trash')
+      await userEvent.click(trashNav)
+
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith('/flows/trash')
+      })
+    })
+
+    it('should show trash empty state when no deleted flows', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flows: [] }) // initial load
+      mockApiFetch.mockResolvedValueOnce({ flows: [] }) // trash load
+
+      render(
+        <MemoryRouter>
+          <Dashboard />
+        </MemoryRouter>,
+      )
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument()
+      })
+
+      const trashNav = screen.getByTestId('nav-item-trash')
+      await userEvent.click(trashNav)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('trash-empty')).toBeInTheDocument()
+      })
+    })
+
+    it('should show trash title when in trash view', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flows: [] })
+      mockApiFetch.mockResolvedValueOnce({ flows: [] })
+
+      render(
+        <MemoryRouter>
+          <Dashboard />
+        </MemoryRouter>,
+      )
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument()
+      })
+
+      const trashNav = screen.getByTestId('nav-item-trash')
+      await userEvent.click(trashNav)
+
+      await waitFor(() => {
+        expect(screen.getByText('ゴミ箱')).toBeInTheDocument()
+      })
+    })
   })
 })
