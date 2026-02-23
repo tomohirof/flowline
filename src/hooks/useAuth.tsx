@@ -5,6 +5,8 @@ interface User {
   id: string
   email: string
   name: string
+  role: string
+  aiEnabled: boolean
 }
 
 interface RegisterResult {
@@ -44,12 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [checkAuth])
 
   const login = async (email: string, password: string) => {
-    const data = await apiFetch<{ user: User }>('/auth/login', {
+    await apiFetch<{ user: { id: string; email: string; name: string } }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
-    setUser(data.user)
-    return data.user
+    // Login endpoint sets cookie; fetch full user data including role/aiEnabled from /auth/me
+    const meData = await apiFetch<{ user: User }>('/auth/me')
+    setUser(meData.user)
+    return meData.user
   }
 
   const register = async (

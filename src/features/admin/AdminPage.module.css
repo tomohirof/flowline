@@ -1,0 +1,259 @@
+/* =============================================
+   Admin Page layout
+   TopBar (56px) + Content
+   ============================================= */
+
+.layout {
+  min-height: 100vh;
+  background: #fafafd;
+  font-family:
+    'Noto Sans JP',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  color: #1a1a2e;
+}
+
+/* Top bar */
+.topbar {
+  height: 56px;
+  border-bottom: 1px solid #ececf0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logoIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.logoText {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.pageTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  margin-left: 8px;
+  padding-left: 16px;
+  border-left: 1px solid #e0e0e0;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.avatar:hover {
+  opacity: 0.85;
+}
+
+/* Content */
+.content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.heading {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 24px;
+}
+
+.loading {
+  text-align: center;
+  padding: 48px 0;
+  color: #888;
+  font-size: 14px;
+}
+
+.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* Table */
+.tableWrapper {
+  background: #fff;
+  border: 1px solid #ececf0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: #f8f8fc;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  border-bottom: 1px solid #ececf0;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f4;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: #fafafd;
+}
+
+/* Role badge */
+.roleBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.roleAdmin {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.roleUser {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+/* Toggle */
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.toggleOn {
+  background: #7c5cfc;
+}
+
+.toggleOff {
+  background: #d1d5db;
+}
+
+.toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s;
+}
+
+.toggleOn .toggleKnob {
+  left: 20px;
+}
+
+.toggleOff .toggleKnob {
+  left: 2px;
+}
+
+/* Access Denied */
+.accessDenied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+}
+
+.accessDenied h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.accessDenied p {
+  color: #666;
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+
+.backLink {
+  color: #7c5cfc;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 32px 0;
+  color: #888;
+  font-size: 14px;
+}

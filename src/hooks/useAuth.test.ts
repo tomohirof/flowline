@@ -36,8 +36,14 @@ describe('useAuth', () => {
     expect(result.current.user).toBeNull()
   })
 
-  it('should set user when /auth/me returns user data', async () => {
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+  it('should set user when /auth/me returns user data with role and aiEnabled', async () => {
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'user',
+      aiEnabled: false,
+    }
     mockApiFetch.mockResolvedValueOnce({ user: mockUser })
 
     const { result } = renderHook(() => useAuth(), { wrapper })
@@ -47,6 +53,8 @@ describe('useAuth', () => {
     })
 
     expect(result.current.user).toEqual(mockUser)
+    expect(result.current.user?.role).toBe('user')
+    expect(result.current.user?.aiEnabled).toBe(false)
   })
 
   it('should set user to null when /auth/me fails', async () => {
@@ -71,11 +79,21 @@ describe('useAuth', () => {
     })
   })
 
-  it('login should call POST /auth/login and set user', async () => {
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
-    // First call: checkAuth
+  it('login should call POST /auth/login then GET /auth/me and set user', async () => {
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'user',
+      aiEnabled: true,
+    }
+    // First call: checkAuth on mount
     mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
-    // Second call: login
+    // Second call: POST /auth/login
+    mockApiFetch.mockResolvedValueOnce({
+      user: { id: '1', email: 'test@example.com', name: 'Test User' },
+    })
+    // Third call: GET /auth/me (after login to get full user data)
     mockApiFetch.mockResolvedValueOnce({ user: mockUser })
 
     const { result } = renderHook(() => useAuth(), { wrapper })
@@ -94,6 +112,8 @@ describe('useAuth', () => {
       method: 'POST',
       body: JSON.stringify({ email: 'test@example.com', password: 'password123' }),
     })
+    // Verify /auth/me was called after login
+    expect(mockApiFetch).toHaveBeenLastCalledWith('/auth/me')
   })
 
   it('register should call POST /auth/register and return RegisterResult', async () => {
@@ -152,7 +172,13 @@ describe('useAuth', () => {
   })
 
   it('logout should call POST /auth/logout and clear user', async () => {
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'user',
+      aiEnabled: false,
+    }
     // First call: checkAuth returns user
     mockApiFetch.mockResolvedValueOnce({ user: mockUser })
     // Second call: logout
@@ -176,7 +202,13 @@ describe('useAuth', () => {
     // First call: checkAuth - no user
     mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
     // Second call: refreshAuth - user now exists (e.g. after verify set cookie)
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'admin',
+      aiEnabled: true,
+    }
     mockApiFetch.mockResolvedValueOnce({ user: mockUser })
 
     const { result } = renderHook(() => useAuth(), { wrapper })
@@ -191,6 +223,8 @@ describe('useAuth', () => {
     })
 
     expect(result.current.user).toEqual(mockUser)
+    expect(result.current.user?.role).toBe('admin')
+    expect(result.current.user?.aiEnabled).toBe(true)
     expect(mockApiFetch).toHaveBeenLastCalledWith('/auth/me')
   })
 

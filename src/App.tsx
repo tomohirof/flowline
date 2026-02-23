@@ -5,6 +5,7 @@ import { Dashboard } from './features/dashboard/Dashboard'
 import { SharedFlowPage } from './features/shared/SharedFlowPage'
 import { LandingPage } from './features/landing/LandingPage'
 import { SettingsPage } from './features/settings/SettingsPage'
+import { AdminPage } from './features/admin/AdminPage'
 import { VerifyPage } from './features/auth/VerifyPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 
@@ -17,6 +18,7 @@ function Header() {
     location.pathname === '/' ||
     location.pathname === '/flows' ||
     location.pathname === '/settings' ||
+    location.pathname === '/admin' ||
     location.pathname === '/verify' ||
     location.pathname.match(/^\/flows\/[^/]+$/) ||
     location.pathname.match(/^\/shared\/[^/]+$/)
@@ -98,6 +100,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminPage />
                 </ProtectedRoute>
               }
             />
