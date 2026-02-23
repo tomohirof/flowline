@@ -562,6 +562,40 @@ describe('Auth API', () => {
       const body = await res.json()
       expect(body.user.email).toBe('me@example.com')
       expect(body.user.name).toBe('Me User')
+      expect(body.user.role).toBe('user')
+      expect(body.user.aiEnabled).toBe(false)
+    })
+
+    it('should return role and aiEnabled for admin user with AI enabled', async () => {
+      await postJson(
+        '/api/auth/register',
+        {
+          email: 'admin-me@example.com',
+          password: 'password123',
+          name: 'Admin User',
+        },
+        env,
+      )
+      db.prepare('UPDATE users SET email_verified = 1, role = ?, ai_enabled = ? WHERE email = ?').run(
+        'admin',
+        1,
+        'admin-me@example.com',
+      )
+      const loginRes = await postJson(
+        '/api/auth/login',
+        {
+          email: 'admin-me@example.com',
+          password: 'password123',
+        },
+        env,
+      )
+      const cookie = extractCookie(loginRes)
+
+      const res = await getWithCookie('/api/auth/me', env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.user.role).toBe('admin')
+      expect(body.user.aiEnabled).toBe(true)
     })
 
     it('should not include password_hash in me response', async () => {
