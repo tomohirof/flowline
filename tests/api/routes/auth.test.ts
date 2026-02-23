@@ -576,11 +576,9 @@ describe('Auth API', () => {
         },
         env,
       )
-      db.prepare('UPDATE users SET email_verified = 1, role = ?, ai_enabled = ? WHERE email = ?').run(
-        'admin',
-        1,
-        'admin-me@example.com',
-      )
+      db.prepare(
+        'UPDATE users SET email_verified = 1, role = ?, ai_enabled = ? WHERE email = ?',
+      ).run('admin', 1, 'admin-me@example.com')
       const loginRes = await postJson(
         '/api/auth/login',
         {

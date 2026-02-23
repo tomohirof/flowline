@@ -82,9 +82,7 @@ describe('ai-prompt', () => {
             name: 'generate_flow',
             input: {
               title: 'テストフロー',
-              lanes: [
-                { tempId: 'lane_0', name: '営業部', colorIndex: 0, position: 0 },
-              ],
+              lanes: [{ tempId: 'lane_0', name: '営業部', colorIndex: 0, position: 0 }],
               nodes: [
                 {
                   tempId: 'node_0',
@@ -151,9 +149,7 @@ describe('ai-prompt', () => {
             name: 'generate_flow',
             input: {
               title: 'Arrow Test',
-              lanes: [
-                { tempId: 'lane_0', name: 'A', colorIndex: 0, position: 0 },
-              ],
+              lanes: [{ tempId: 'lane_0', name: 'A', colorIndex: 0, position: 0 }],
               nodes: [
                 {
                   tempId: 'node_0',

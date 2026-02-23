@@ -84,9 +84,7 @@ describe('Admin API', () => {
       const body = await res.json()
       expect(body.users).toHaveLength(3)
       // Should contain id, email, name, role, aiEnabled
-      const user = body.users.find(
-        (u: { id: string }) => u.id === USER_ID,
-      )
+      const user = body.users.find((u: { id: string }) => u.id === USER_ID)
       expect(user).toBeDefined()
       expect(user.email).toBe(USER_EMAIL)
       expect(user.role).toBe('user')
@@ -117,9 +115,7 @@ describe('Admin API', () => {
     it('should return aiEnabled as boolean true for ai_enabled=1', async () => {
       const res = await getWithCookie('/api/admin/users', env, adminCookie)
       const body = await res.json()
-      const aiUser = body.users.find(
-        (u: { id: string }) => u.id === USER2_ID,
-      )
+      const aiUser = body.users.find((u: { id: string }) => u.id === USER2_ID)
       expect(aiUser.aiEnabled).toBe(true)
     })
   })
@@ -140,9 +136,9 @@ describe('Admin API', () => {
       expect(body.user.aiEnabled).toBe(true)
 
       // Verify in DB
-      const row = db
-        .prepare('SELECT ai_enabled FROM users WHERE id = ?')
-        .get(USER_ID) as { ai_enabled: number }
+      const row = db.prepare('SELECT ai_enabled FROM users WHERE id = ?').get(USER_ID) as {
+        ai_enabled: number
+      }
       expect(row.ai_enabled).toBe(1)
     })
 
@@ -157,26 +153,19 @@ describe('Admin API', () => {
       const body = await res.json()
       expect(body.user.aiEnabled).toBe(false)
 
-      const row = db
-        .prepare('SELECT ai_enabled FROM users WHERE id = ?')
-        .get(USER2_ID) as { ai_enabled: number }
+      const row = db.prepare('SELECT ai_enabled FROM users WHERE id = ?').get(USER2_ID) as {
+        ai_enabled: number
+      }
       expect(row.ai_enabled).toBe(0)
     })
 
     it('should allow admin to change user role', async () => {
-      const res = await putJson(
-        `/api/admin/users/${USER_ID}`,
-        { role: 'admin' },
-        env,
-        adminCookie,
-      )
+      const res = await putJson(`/api/admin/users/${USER_ID}`, { role: 'admin' }, env, adminCookie)
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.user.role).toBe('admin')
 
-      const row = db
-        .prepare('SELECT role FROM users WHERE id = ?')
-        .get(USER_ID) as { role: string }
+      const row = db.prepare('SELECT role FROM users WHERE id = ?').get(USER_ID) as { role: string }
       expect(row.role).toBe('admin')
     })
 
@@ -216,21 +205,12 @@ describe('Admin API', () => {
     })
 
     it('should return 401 without auth', async () => {
-      const res = await putJson(
-        `/api/admin/users/${USER_ID}`,
-        { aiEnabled: true },
-        env,
-      )
+      const res = await putJson(`/api/admin/users/${USER_ID}`, { aiEnabled: true }, env)
       expect(res.status).toBe(401)
     })
 
     it('should return 400 for empty body', async () => {
-      const res = await putJson(
-        `/api/admin/users/${USER_ID}`,
-        {},
-        env,
-        adminCookie,
-      )
+      const res = await putJson(`/api/admin/users/${USER_ID}`, {}, env, adminCookie)
       expect(res.status).toBe(400)
     })
 

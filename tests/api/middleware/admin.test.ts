@@ -24,9 +24,13 @@ function registerUser(
   email: string,
   role: string = 'user',
 ) {
-  db.prepare(
-    'INSERT INTO users (id, email, password_hash, name, role) VALUES (?, ?, ?, ?, ?)',
-  ).run(id, email, 'hash', 'Test User', role)
+  db.prepare('INSERT INTO users (id, email, password_hash, name, role) VALUES (?, ?, ?, ?, ?)').run(
+    id,
+    email,
+    'hash',
+    'Test User',
+    role,
+  )
 }
 
 describe('adminMiddleware', () => {
@@ -51,11 +55,7 @@ describe('adminMiddleware', () => {
     registerUser(db, 'admin-1', 'admin@example.com', 'admin')
     const cookie = await authCookie('admin-1', 'admin@example.com')
 
-    const res = await testApp.request(
-      '/test',
-      { headers: { Cookie: cookie } },
-      env,
-    )
+    const res = await testApp.request('/test', { headers: { Cookie: cookie } }, env)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.ok).toBe(true)
@@ -65,11 +65,7 @@ describe('adminMiddleware', () => {
     registerUser(db, 'user-1', 'user@example.com', 'user')
     const cookie = await authCookie('user-1', 'user@example.com')
 
-    const res = await testApp.request(
-      '/test',
-      { headers: { Cookie: cookie } },
-      env,
-    )
+    const res = await testApp.request('/test', { headers: { Cookie: cookie } }, env)
     expect(res.status).toBe(403)
     const body = await res.json()
     expect(body.error).toContain('管理者権限')
@@ -77,16 +73,15 @@ describe('adminMiddleware', () => {
 
   it('should return 403 for user with default role (no explicit role set)', async () => {
     // Insert user without specifying role (defaults to "user")
-    db.prepare(
-      'INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)',
-    ).run('default-1', 'default@example.com', 'hash', 'Default User')
+    db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(
+      'default-1',
+      'default@example.com',
+      'hash',
+      'Default User',
+    )
     const cookie = await authCookie('default-1', 'default@example.com')
 
-    const res = await testApp.request(
-      '/test',
-      { headers: { Cookie: cookie } },
-      env,
-    )
+    const res = await testApp.request('/test', { headers: { Cookie: cookie } }, env)
     expect(res.status).toBe(403)
   })
 
@@ -100,11 +95,7 @@ describe('adminMiddleware', () => {
     // createToken generates a valid JWT but the user doesn't exist in DB
     const cookie = await authCookie('nonexistent-1', 'ghost@example.com')
 
-    const res = await testApp.request(
-      '/test',
-      { headers: { Cookie: cookie } },
-      env,
-    )
+    const res = await testApp.request('/test', { headers: { Cookie: cookie } }, env)
     // userRole defaults to 'user' when user not found
     expect(res.status).toBe(403)
   })

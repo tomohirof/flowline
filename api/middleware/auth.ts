@@ -11,9 +11,7 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
   try {
     const payload = await verifyToken(token, c.env.JWT_SECRET)
     c.set('userId', payload.sub)
-    const userRow = await c.env.FLOWLINE_DB.prepare(
-      'SELECT role FROM users WHERE id = ?',
-    )
+    const userRow = await c.env.FLOWLINE_DB.prepare('SELECT role FROM users WHERE id = ?')
       .bind(payload.sub)
       .first<{ role: string }>()
     c.set('userRole', userRow?.role ?? 'user')

@@ -14,9 +14,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
             name: 'generate_flow',
             input: {
               title: 'テストフロー',
-              lanes: [
-                { tempId: 'lane_0', name: '営業部', colorIndex: 0, position: 0 },
-              ],
+              lanes: [{ tempId: 'lane_0', name: '営業部', colorIndex: 0, position: 0 }],
               nodes: [
                 {
                   tempId: 'node_0',
@@ -66,15 +64,13 @@ function registerUser(
   ).run(id, email, 'hash', 'Test User', aiEnabled)
 }
 
-function insertFlow(
-  db: ReturnType<typeof Database>,
-  id: string,
-  userId: string,
-  title: string,
-) {
-  db.prepare(
-    'INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)',
-  ).run(id, userId, title, 'cloud')
+function insertFlow(db: ReturnType<typeof Database>, id: string, userId: string, title: string) {
+  db.prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)').run(
+    id,
+    userId,
+    title,
+    'cloud',
+  )
 }
 
 function insertLane(
@@ -172,12 +168,7 @@ describe('AI API', () => {
 
     it('should return 403 for ai_enabled=0 user', async () => {
       const cookie = await authCookie(NORMAL_USER_ID, NORMAL_USER_EMAIL)
-      const res = await postJson(
-        '/api/ai/generate',
-        { prompt: 'テスト' },
-        env,
-        cookie,
-      )
+      const res = await postJson('/api/ai/generate', { prompt: 'テスト' }, env, cookie)
       expect(res.status).toBe(403)
       const body = await res.json()
       expect(body.error).toContain('AI機能')
@@ -185,12 +176,7 @@ describe('AI API', () => {
 
     it('should return 400 for empty prompt', async () => {
       const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
-      const res = await postJson(
-        '/api/ai/generate',
-        { prompt: '' },
-        env,
-        cookie,
-      )
+      const res = await postJson('/api/ai/generate', { prompt: '' }, env, cookie)
       expect(res.status).toBe(400)
       const body = await res.json()
       expect(body.error).toContain('プロンプト')
@@ -203,11 +189,7 @@ describe('AI API', () => {
     })
 
     it('should return 401 without auth', async () => {
-      const res = await postJson(
-        '/api/ai/generate',
-        { prompt: 'テスト' },
-        env,
-      )
+      const res = await postJson('/api/ai/generate', { prompt: 'テスト' }, env)
       expect(res.status).toBe(401)
     })
 
@@ -242,12 +224,7 @@ describe('AI API', () => {
 
     it('should edit flow for owner with ai_enabled=1', async () => {
       const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
-      const res = await postJson(
-        '/api/ai/flow-1/edit',
-        { prompt: 'ノードを追加して' },
-        env,
-        cookie,
-      )
+      const res = await postJson('/api/ai/flow-1/edit', { prompt: 'ノードを追加して' }, env, cookie)
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.flow).toBeDefined()
@@ -256,12 +233,7 @@ describe('AI API', () => {
 
     it('should return 403 for other users flow', async () => {
       const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
-      const res = await postJson(
-        '/api/ai/flow-other/edit',
-        { prompt: 'edit' },
-        env,
-        cookie,
-      )
+      const res = await postJson('/api/ai/flow-other/edit', { prompt: 'edit' }, env, cookie)
       expect(res.status).toBe(403)
       const body = await res.json()
       expect(body.error).toContain('アクセス権限')
@@ -269,12 +241,7 @@ describe('AI API', () => {
 
     it('should return 404 for non-existent flow', async () => {
       const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
-      const res = await postJson(
-        '/api/ai/nonexistent/edit',
-        { prompt: 'edit' },
-        env,
-        cookie,
-      )
+      const res = await postJson('/api/ai/nonexistent/edit', { prompt: 'edit' }, env, cookie)
       expect(res.status).toBe(404)
     })
 
@@ -282,32 +249,18 @@ describe('AI API', () => {
       // Register normal user as owner of a flow
       insertFlow(db, 'flow-normal', NORMAL_USER_ID, 'Normal Flow')
       const cookie = await authCookie(NORMAL_USER_ID, NORMAL_USER_EMAIL)
-      const res = await postJson(
-        '/api/ai/flow-normal/edit',
-        { prompt: 'edit' },
-        env,
-        cookie,
-      )
+      const res = await postJson('/api/ai/flow-normal/edit', { prompt: 'edit' }, env, cookie)
       expect(res.status).toBe(403)
     })
 
     it('should return 400 for empty prompt', async () => {
       const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
-      const res = await postJson(
-        '/api/ai/flow-1/edit',
-        { prompt: '' },
-        env,
-        cookie,
-      )
+      const res = await postJson('/api/ai/flow-1/edit', { prompt: '' }, env, cookie)
       expect(res.status).toBe(400)
     })
 
     it('should return 401 without auth', async () => {
-      const res = await postJson(
-        '/api/ai/flow-1/edit',
-        { prompt: 'edit' },
-        env,
-      )
+      const res = await postJson('/api/ai/flow-1/edit', { prompt: 'edit' }, env)
       expect(res.status).toBe(401)
     })
   })

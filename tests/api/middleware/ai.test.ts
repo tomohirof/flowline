@@ -51,11 +51,7 @@ describe('aiMiddleware', () => {
     registerUser(db, 'ai-user-1', 'ai@example.com', 1)
     const cookie = await authCookie('ai-user-1', 'ai@example.com')
 
-    const res = await testApp.request(
-      '/test',
-      { headers: { Cookie: cookie } },
-      env,
-    )
+    const res = await testApp.request('/test', { headers: { Cookie: cookie } }, env)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.ok).toBe(true)
@@ -65,11 +61,7 @@ describe('aiMiddleware', () => {
     registerUser(db, 'user-1', 'user@example.com', 0)
     const cookie = await authCookie('user-1', 'user@example.com')
 
-    const res = await testApp.request(
-      '/test',
-      { headers: { Cookie: cookie } },
-      env,
-    )
+    const res = await testApp.request('/test', { headers: { Cookie: cookie } }, env)
     expect(res.status).toBe(403)
     const body = await res.json()
     expect(body.error).toContain('AI機能')
@@ -77,16 +69,15 @@ describe('aiMiddleware', () => {
 
   it('should return 403 for user with default ai_enabled (not set)', async () => {
     // Insert user without specifying ai_enabled (defaults to 0)
-    db.prepare(
-      'INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)',
-    ).run('default-1', 'default@example.com', 'hash', 'Default User')
+    db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(
+      'default-1',
+      'default@example.com',
+      'hash',
+      'Default User',
+    )
     const cookie = await authCookie('default-1', 'default@example.com')
 
-    const res = await testApp.request(
-      '/test',
-      { headers: { Cookie: cookie } },
-      env,
-    )
+    const res = await testApp.request('/test', { headers: { Cookie: cookie } }, env)
     expect(res.status).toBe(403)
   })
 
@@ -98,11 +89,7 @@ describe('aiMiddleware', () => {
   it('should return 403 for non-existent user', async () => {
     const cookie = await authCookie('nonexistent-1', 'ghost@example.com')
 
-    const res = await testApp.request(
-      '/test',
-      { headers: { Cookie: cookie } },
-      env,
-    )
+    const res = await testApp.request('/test', { headers: { Cookie: cookie } }, env)
     expect(res.status).toBe(403)
   })
 })

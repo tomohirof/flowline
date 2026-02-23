@@ -171,8 +171,7 @@ export function buildFlowTool() {
  */
 export function parseAiResponse(response: {
   content: Array<
-    | { type: 'text'; text: string }
-    | { type: 'tool_use'; id: string; name: string; input: unknown }
+    { type: 'text'; text: string } | { type: 'tool_use'; id: string; name: string; input: unknown }
   >
 }): FlowToolInput {
   const toolUse = response.content.find((block) => block.type === 'tool_use')
