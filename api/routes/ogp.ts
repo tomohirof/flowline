@@ -2,46 +2,21 @@ import { Hono } from 'hono'
 import type { Bindings } from '../app'
 import satori from 'satori'
 import { initWasm, Resvg } from '@resvg/resvg-wasm'
+import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm'
 
-let wasmInitialized = false
+let wasmInitPromise: Promise<void> | null = null
 
-async function ensureWasmInitialized() {
-  if (wasmInitialized) return
-  try {
-    const wasmModule = await import(
-      // @ts-expect-error -- wasm module import for Cloudflare Workers
-      '../../node_modules/@resvg/resvg-wasm/index_bg.wasm'
-    )
-    await initWasm(wasmModule.default || wasmModule)
-    wasmInitialized = true
-  } catch (e) {
-    if (e instanceof Error && e.message.includes('Already initialized')) {
-      wasmInitialized = true
-      return
-    }
-    // If the wasm module import fails (e.g. test/Node.js environment), try initWasm without args
-    const isModuleError =
-      e instanceof Error &&
-      (e.message.includes('Cannot find module') ||
-        e.message.includes('Unknown file extension') ||
-        (e as { code?: string }).code === 'ERR_MODULE_NOT_FOUND' ||
-        (e as { code?: string }).code === 'ERR_UNKNOWN_FILE_EXTENSION')
-    if (isModuleError) {
-      try {
-        // @ts-expect-error -- in test environment, initWasm is mocked and doesn't require args
-        await initWasm()
-        wasmInitialized = true
+function ensureWasmInitialized(): Promise<void> {
+  if (!wasmInitPromise) {
+    wasmInitPromise = initWasm(resvgWasm).catch((e) => {
+      if (e instanceof Error && e.message.includes('Already initialized')) {
         return
-      } catch (retryError) {
-        if (retryError instanceof Error && retryError.message.includes('Already initialized')) {
-          wasmInitialized = true
-          return
-        }
-        throw retryError
       }
-    }
-    throw e
+      wasmInitPromise = null
+      throw e
+    })
   }
+  return wasmInitPromise
 }
 
 /** Cached font data to avoid re-fetching on every request */
@@ -367,7 +342,7 @@ ogp.get('/share/:tokenPng', async (c) => {
 
 /** Reset internal caches — for testing only */
 function _resetOgpCacheForTesting() {
-  wasmInitialized = false
+  wasmInitPromise = null
   cachedFontData = null
 }
 
