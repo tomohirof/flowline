@@ -54,12 +54,12 @@ async function getFlowDetail(db: D1Database, flowId: string) {
 
 async function checkFlowOwnership(db: D1Database, flowId: string, userId: string) {
   const flow = await db
-    .prepare('SELECT id, user_id FROM flows WHERE id = ?')
+    .prepare('SELECT id, user_id, deleted_at FROM flows WHERE id = ?')
     .bind(flowId)
-    .first<{ id: string; user_id: string }>()
-  if (!flow) return { error: 'not_found' as const }
-  if (flow.user_id !== userId) return { error: 'forbidden' as const }
-  return { error: null }
+    .first<{ id: string; user_id: string; deleted_at: string | null }>()
+  if (!flow) return { error: 'not_found' as const, deletedAt: null }
+  if (flow.user_id !== userId) return { error: 'forbidden' as const, deletedAt: flow.deleted_at }
+  return { error: null, deletedAt: flow.deleted_at }
 }
 
 // =============================================
@@ -238,11 +238,7 @@ flows.get('/:id', async (c) => {
   }
 
   // Check if soft-deleted
-  const flowCheck = await db
-    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
-    .bind(flowId)
-    .first<{ deleted_at: string | null }>()
-  if (flowCheck?.deleted_at) {
+  if (ownership.deletedAt) {
     return c.json({ error: 'フローが見つかりません' }, 404)
   }
 
@@ -268,11 +264,7 @@ flows.put('/:id', async (c) => {
   }
 
   // Check if soft-deleted
-  const flowCheck = await db
-    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
-    .bind(flowId)
-    .first<{ deleted_at: string | null }>()
-  if (flowCheck?.deleted_at) {
+  if (ownership.deletedAt) {
     return c.json({ error: 'フローが見つかりません' }, 404)
   }
 
@@ -423,14 +415,17 @@ flows.post('/:id/share', async (c) => {
   const flowId = c.req.param('id')
 
   const flow = await db
-    .prepare('SELECT id, user_id, share_token FROM flows WHERE id = ?')
+    .prepare('SELECT id, user_id, share_token, deleted_at FROM flows WHERE id = ?')
     .bind(flowId)
-    .first<{ id: string; user_id: string; share_token: string | null }>()
+    .first<{ id: string; user_id: string; share_token: string | null; deleted_at: string | null }>()
   if (!flow) {
     return c.json({ error: 'フローが見つかりません' }, 404)
   }
   if (flow.user_id !== userId) {
     return c.json({ error: 'アクセス権限がありません' }, 403)
+  }
+  if (flow.deleted_at) {
+    return c.json({ error: 'フローが見つかりません' }, 404)
   }
 
   // If already shared, return existing token
@@ -484,12 +479,8 @@ flows.post('/:id/restore', async (c) => {
     return c.json({ error: 'アクセス権限がありません' }, 403)
   }
 
-  const flow = await db
-    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
-    .bind(flowId)
-    .first<{ deleted_at: string | null }>()
-  if (!flow?.deleted_at) {
-    return c.json({ error: 'フローが見つかりません' }, 404)
+  if (!ownership.deletedAt) {
+    return c.json({ error: 'このフローはゴミ箱にありません' }, 404)
   }
 
   await db.prepare('UPDATE flows SET deleted_at = NULL WHERE id = ?').bind(flowId).run()
@@ -514,11 +505,7 @@ flows.delete('/:id/permanent', async (c) => {
     return c.json({ error: 'アクセス権限がありません' }, 403)
   }
 
-  const flow = await db
-    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
-    .bind(flowId)
-    .first<{ deleted_at: string | null }>()
-  if (!flow?.deleted_at) {
+  if (!ownership.deletedAt) {
     return c.json({ error: 'フローが見つかりません' }, 404)
   }
 
@@ -549,13 +536,17 @@ flows.delete('/:id', async (c) => {
     return c.json({ error: 'アクセス権限がありません' }, 403)
   }
 
-  // Soft delete: set deleted_at, clear share_token
-  await db
+  // Soft delete: set deleted_at, clear share_token (only if not already trashed)
+  const result = await db
     .prepare(
-      "UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), share_token = NULL WHERE id = ?",
+      "UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), share_token = NULL WHERE id = ? AND deleted_at IS NULL",
     )
     .bind(flowId)
     .run()
+
+  if (!result.meta?.changes) {
+    return c.json({ error: 'フローが見つかりません' }, 404)
+  }
 
   return c.json({ message: 'フローをゴミ箱に移動しました' })
 })

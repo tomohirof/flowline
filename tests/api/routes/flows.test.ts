@@ -947,6 +947,16 @@ describe('Flows API', () => {
       const res = await deleteWithCookie('/api/flows/flow-1', env)
       expect(res.status).toBe(401)
     })
+
+    it('should return 404 when re-deleting an already trashed flow', async () => {
+      // First delete
+      const res1 = await deleteWithCookie('/api/flows/flow-1', env, cookie)
+      expect(res1.status).toBe(200)
+
+      // Second delete should return 404
+      const res2 = await deleteWithCookie('/api/flows/flow-1', env, cookie)
+      expect(res2.status).toBe(404)
+    })
   })
 
   // ========================================
@@ -1020,10 +1030,12 @@ describe('Flows API', () => {
       expect(body.flows[0].id).toBe('flow-1')
     })
 
-    it('should return 404 for non-deleted flow', async () => {
+    it('should return 404 with appropriate message for non-deleted (active) flow', async () => {
       insertFlow(db, 'flow-2', USER_ID, 'Active Flow')
       const res = await postJson('/api/flows/flow-2/restore', {}, env, cookie)
       expect(res.status).toBe(404)
+      const body = await res.json()
+      expect(body.error).toBe('このフローはゴミ箱にありません')
     })
 
     it('should return 404 for non-existent flow', async () => {

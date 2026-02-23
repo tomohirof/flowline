@@ -31,9 +31,9 @@ shared.get('/:token', async (c) => {
   const token = c.req.param('token')
   const db = c.env.FLOWLINE_DB
 
-  // Find flow by share_token
+  // Find flow by share_token (exclude soft-deleted flows)
   const flow = await db
-    .prepare('SELECT * FROM flows WHERE share_token = ?')
+    .prepare('SELECT * FROM flows WHERE share_token = ? AND deleted_at IS NULL')
     .bind(token)
     .first<FlowRow>()
   if (!flow) {

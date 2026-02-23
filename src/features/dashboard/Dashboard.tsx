@@ -163,19 +163,28 @@ export function Dashboard() {
     try {
       await apiFetch(`/flows/${id}/restore`, { method: 'POST' })
       setTrashFlows((prev) => prev.filter((f) => f.id !== id))
+      setToast({ message: 'フローを復元しました', icon: '♻️' })
     } catch {
       setError('フローの復元に失敗しました')
     }
   }
 
-  const handlePermanentDelete = async (id: string, title: string) => {
-    if (!window.confirm(`「${title}」を完全に削除しますか？この操作は取り消せません。`)) return
-    try {
-      await apiFetch(`/flows/${id}/permanent`, { method: 'DELETE' })
-      setTrashFlows((prev) => prev.filter((f) => f.id !== id))
-    } catch {
-      setError('フローの完全削除に失敗しました')
-    }
+  const handlePermanentDelete = (id: string, title: string) => {
+    setModal({
+      title: '完全に削除',
+      message: `完全に削除すると復元できません。「${title}」を本当に削除しますか？`,
+      confirmLabel: '完全に削除',
+      danger: true,
+      onConfirm: async () => {
+        setModal(null)
+        try {
+          await apiFetch(`/flows/${id}/permanent`, { method: 'DELETE' })
+          setTrashFlows((prev) => prev.filter((f) => f.id !== id))
+        } catch {
+          setError('フローの完全削除に失敗しました')
+        }
+      },
+    })
   }
 
   const handleRename = async (id: string, newTitle: string) => {
@@ -315,36 +324,38 @@ export function Dashboard() {
           {/* Sub-header: nav label + sort + view toggle */}
           <div className={styles.subheader}>
             <h1 className={styles.title}>{selectedNav === 'trash' ? 'ゴミ箱' : 'マイフロー'}</h1>
-            <div className={styles.controls}>
-              <select
-                data-testid="sort-select"
-                value={sortMode}
-                onChange={(e) => setSortMode(e.target.value as SortMode)}
-                className={styles.sortSelect}
-              >
-                <option value="updated">更新日</option>
-                <option value="name">名前</option>
-              </select>
+            {selectedNav !== 'trash' && (
+              <div className={styles.controls}>
+                <select
+                  data-testid="sort-select"
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as SortMode)}
+                  className={styles.sortSelect}
+                >
+                  <option value="updated">更新日</option>
+                  <option value="name">名前</option>
+                </select>
 
-              <div className={styles.viewToggle}>
-                <button
-                  data-testid="view-grid-button"
-                  onClick={() => setViewMode('grid')}
-                  className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-                  aria-label="グリッド表示"
-                >
-                  ▦
-                </button>
-                <button
-                  data-testid="view-list-button"
-                  onClick={() => setViewMode('list')}
-                  className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-                  aria-label="リスト表示"
-                >
-                  ☰
-                </button>
+                <div className={styles.viewToggle}>
+                  <button
+                    data-testid="view-grid-button"
+                    onClick={() => setViewMode('grid')}
+                    className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
+                    aria-label="グリッド表示"
+                  >
+                    ▦
+                  </button>
+                  <button
+                    data-testid="view-list-button"
+                    onClick={() => setViewMode('list')}
+                    className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
+                    aria-label="リスト表示"
+                  >
+                    ☰
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Error */}
