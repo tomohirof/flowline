@@ -74,7 +74,8 @@ flows.get('/', async (c) => {
   let flowList: ReturnType<typeof toFlowSummary>[]
 
   if (q) {
-    const likePattern = `%${q}%`
+    const escaped = q.replace(/[%_\\]/g, '\\$&')
+    const likePattern = `%${escaped}%`
     const result = await db
       .prepare(
         `SELECT DISTINCT f.* FROM flows f
@@ -82,11 +83,11 @@ flows.get('/', async (c) => {
          LEFT JOIN lanes l ON l.flow_id = f.id
          LEFT JOIN arrows a ON a.flow_id = f.id
          WHERE f.user_id = ?
-           AND (f.title LIKE ? COLLATE NOCASE
-             OR n.label LIKE ? COLLATE NOCASE
-             OR n.note LIKE ? COLLATE NOCASE
-             OR l.name LIKE ? COLLATE NOCASE
-             OR a.comment LIKE ? COLLATE NOCASE)
+           AND (f.title LIKE ? ESCAPE '\\' COLLATE NOCASE
+             OR n.label LIKE ? ESCAPE '\\' COLLATE NOCASE
+             OR n.note LIKE ? ESCAPE '\\' COLLATE NOCASE
+             OR l.name LIKE ? ESCAPE '\\' COLLATE NOCASE
+             OR a.comment LIKE ? ESCAPE '\\' COLLATE NOCASE)
          ORDER BY f.updated_at DESC`,
       )
       .bind(userId, likePattern, likePattern, likePattern, likePattern, likePattern)

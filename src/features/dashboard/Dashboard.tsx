@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import type { FlowListResponse, FlowSummary, FlowDetailResponse } from '../editor/types'
@@ -58,13 +58,18 @@ export function Dashboard() {
   const { user, logout } = useAuth()
   const userName = user?.name ?? ''
 
+  const initialLoadDone = useRef(false)
+
   const loadFlows = useCallback(async (query?: string) => {
     try {
-      setLoading(true)
+      if (!initialLoadDone.current) {
+        setLoading(true)
+      }
       setError(null)
       const url = query ? `/flows?q=${encodeURIComponent(query)}` : '/flows'
       const data = await apiFetch<FlowListResponse>(url)
       setFlows(data.flows)
+      initialLoadDone.current = true
     } catch {
       setError('フロー一覧の取得に失敗しました')
     } finally {
@@ -146,7 +151,8 @@ export function Dashboard() {
     } catch {
       setError('フロー名の変更に失敗しました')
       // Revert on failure
-      loadFlows()
+      const trimmed = searchQuery.trim()
+      loadFlows(trimmed || undefined)
     }
   }
 
