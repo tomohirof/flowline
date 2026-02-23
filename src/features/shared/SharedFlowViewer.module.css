@@ -107,9 +107,7 @@
 }
 
 .canvasBlurred {
-  filter: blur(6px);
-  opacity: 0.4;
-  transform: scale(1.05);
+  filter: blur(2px);
   overflow: hidden;
 }
 
