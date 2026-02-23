@@ -300,11 +300,11 @@ describe('SettingsPage', () => {
     await user.click(editorNav)
 
     await waitFor(() => {
-      const toggles = screen.getAllByRole('checkbox')
+      const toggles = screen.getAllByRole('switch')
       expect(toggles.length).toBeGreaterThan(0)
     })
 
-    const firstToggle = screen.getAllByRole('checkbox')[0]
+    const firstToggle = screen.getAllByRole('switch')[0]
     await user.click(firstToggle)
 
     // Wait for debounce (800ms) + some buffer
@@ -336,11 +336,11 @@ describe('SettingsPage', () => {
     await user.click(editorNav)
 
     await waitFor(() => {
-      const toggles = screen.getAllByRole('checkbox')
+      const toggles = screen.getAllByRole('switch')
       expect(toggles.length).toBeGreaterThan(0)
     })
 
-    const firstToggle = screen.getAllByRole('checkbox')[0]
+    const firstToggle = screen.getAllByRole('switch')[0]
     await user.click(firstToggle)
 
     // Wait for auto-save to complete and show status
@@ -369,11 +369,11 @@ describe('SettingsPage', () => {
     await user.click(editorNav)
 
     await waitFor(() => {
-      const toggles = screen.getAllByRole('checkbox')
+      const toggles = screen.getAllByRole('switch')
       expect(toggles.length).toBeGreaterThan(0)
     })
 
-    const firstToggle = screen.getAllByRole('checkbox')[0]
+    const firstToggle = screen.getAllByRole('switch')[0]
     await user.click(firstToggle)
 
     await waitFor(
