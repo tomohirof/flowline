@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
-import Anthropic from '@anthropic-ai/sdk'
 import type { AuthEnv } from '../app'
 import { authMiddleware } from '../middleware/auth'
 import { aiMiddleware } from '../middleware/ai'
 import { generateId } from '../lib/id'
+import { createMessage } from '../lib/anthropic-client'
 import {
   buildSystemPrompt,
   buildFlowTool,
@@ -87,10 +87,9 @@ ai.post('/generate', async (c) => {
   }
 
   try {
-    const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY })
     const tool = buildFlowTool()
 
-    const response = await client.messages.create({
+    const response = await createMessage(c.env.ANTHROPIC_API_KEY, {
       model: AI_MODEL,
       max_tokens: 4096,
       system: buildSystemPrompt(),
@@ -105,7 +104,7 @@ ai.post('/generate', async (c) => {
     return c.json({ flow })
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e)
-    console.error('AI generation failed:', detail, e)
+    console.error('AI generation failed:', detail)
     return c.json({ error: 'AI生成に失敗しました。しばらく後に再試行してください。', detail }, 502)
   }
 })
@@ -181,10 +180,9 @@ ai.post('/:flowId/edit', async (c) => {
   )
 
   try {
-    const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY })
     const tool = buildFlowTool()
 
-    const response = await client.messages.create({
+    const response = await createMessage(c.env.ANTHROPIC_API_KEY, {
       model: AI_MODEL,
       max_tokens: 4096,
       system: buildSystemPrompt(),
@@ -204,7 +202,7 @@ ai.post('/:flowId/edit', async (c) => {
     return c.json({ flow })
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e)
-    console.error('AI edit failed:', detail, e)
+    console.error('AI edit failed:', detail)
     return c.json({ error: 'AI生成に失敗しました。しばらく後に再試行してください。', detail }, 502)
   }
 })
