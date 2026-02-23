@@ -3,35 +3,30 @@ import Database from 'better-sqlite3'
 import { createTestDb, createMockD1 } from '../../helpers/mock-d1'
 import { createToken } from '../../../api/lib/jwt'
 
-vi.mock('@anthropic-ai/sdk', () => ({
-  default: class MockAnthropic {
-    messages = {
-      create: vi.fn().mockResolvedValue({
-        content: [
-          {
-            type: 'tool_use',
-            id: 'call_1',
-            name: 'generate_flow',
-            input: {
-              title: 'テストフロー',
-              lanes: [{ tempId: 'lane_0', name: '営業部', colorIndex: 0, position: 0 }],
-              nodes: [
-                {
-                  tempId: 'node_0',
-                  laneId: 'lane_0',
-                  rowIndex: 0,
-                  label: '開始',
-                  orderIndex: 0,
-                },
-              ],
-              arrows: [],
+vi.mock('../../../api/lib/anthropic-client', () => ({
+  createMessage: vi.fn().mockResolvedValue({
+    content: [
+      {
+        type: 'tool_use',
+        id: 'call_1',
+        name: 'generate_flow',
+        input: {
+          title: 'テストフロー',
+          lanes: [{ tempId: 'lane_0', name: '営業部', colorIndex: 0, position: 0 }],
+          nodes: [
+            {
+              tempId: 'node_0',
+              laneId: 'lane_0',
+              rowIndex: 0,
+              label: '開始',
+              orderIndex: 0,
             },
-          },
-        ],
-      }),
-    }
-    constructor() {}
-  },
+          ],
+          arrows: [],
+        },
+      },
+    ],
+  }),
 }))
 
 // Must import app AFTER vi.mock
