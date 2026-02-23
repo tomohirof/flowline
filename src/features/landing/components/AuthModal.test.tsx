@@ -301,7 +301,7 @@ describe('AuthModal', () => {
     expect(screen.getByText(/準備中/)).toBeInTheDocument()
   })
 
-  it('オーバーレイクリックでonCloseが呼ばれる', () => {
+  it('オーバーレイクリックでonCloseが呼ばれない', () => {
     const onClose = vi.fn()
     render(
       <MemoryRouter>
@@ -309,6 +309,26 @@ describe('AuthModal', () => {
       </MemoryRouter>,
     )
     fireEvent.click(screen.getByTestId('auth-modal-overlay'))
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('✕ボタンクリックでonCloseが呼ばれる', () => {
+    const onClose = vi.fn()
+    render(
+      <MemoryRouter>
+        <AuthModal isOpen={true} onClose={onClose} initialMode="login" />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByLabelText('閉じる'))
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('✕ボタンが表示されている', () => {
+    render(
+      <MemoryRouter>
+        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
+      </MemoryRouter>,
+    )
+    expect(screen.getByLabelText('閉じる')).toBeInTheDocument()
   })
 })

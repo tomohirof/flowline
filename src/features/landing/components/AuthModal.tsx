@@ -112,8 +112,11 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className={styles.overlay} data-testid="auth-modal-overlay" onClick={onClose}>
-      <div className={styles.modal} data-testid="auth-modal" onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay} data-testid="auth-modal-overlay">
+      <div className={styles.modal} data-testid="auth-modal">
+        <button className={styles.closeBtn} onClick={onClose} aria-label="閉じる">
+          &#x2715;
+        </button>
         {mode !== 'verify' && (
           <div className={styles.tabs}>
             <button
