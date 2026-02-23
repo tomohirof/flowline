@@ -209,6 +209,15 @@ describe('AI API', () => {
       )
       expect(res.status).toBe(400)
     })
+
+    it('should return 400 for prompt exceeding 2000 characters', async () => {
+      const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
+      const longPrompt = 'あ'.repeat(2001)
+      const res = await postJson('/api/ai/generate', { prompt: longPrompt }, env, cookie)
+      expect(res.status).toBe(400)
+      const body = await res.json()
+      expect(body.error).toContain('2000')
+    })
   })
 
   // ========================================

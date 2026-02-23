@@ -3,6 +3,8 @@ import type { AuthEnv } from '../app'
 import { authMiddleware } from '../middleware/auth'
 import { adminMiddleware } from '../middleware/admin'
 
+const ALLOWED_ROLES = ['user', 'admin']
+
 const admin = new Hono<AuthEnv>()
 
 admin.use('*', authMiddleware)
@@ -58,6 +60,11 @@ admin.put('/users/:id', async (c) => {
     return c.json({ error: '更新するフィールドを指定してください' }, 400)
   }
 
+  // Validate role
+  if (body.role !== undefined && !ALLOWED_ROLES.includes(body.role)) {
+    return c.json({ error: '無効なroleです' }, 400)
+  }
+
   // Check user exists
   const existing = await db
     .prepare('SELECT id FROM users WHERE id = ?')
@@ -79,6 +86,7 @@ admin.put('/users/:id', async (c) => {
     updateParts.push('ai_enabled = ?')
     updateParams.push(body.aiEnabled ? 1 : 0)
   }
+  updateParts.push("updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')")
 
   updateParams.push(targetUserId)
 
@@ -98,13 +106,17 @@ admin.put('/users/:id', async (c) => {
       ai_enabled: number
     }>()
 
+  if (!updated) {
+    return c.json({ error: 'ユーザーが見つかりません' }, 404)
+  }
+
   return c.json({
     user: {
-      id: updated!.id,
-      email: updated!.email,
-      name: updated!.name,
-      role: updated!.role,
-      aiEnabled: updated!.ai_enabled === 1,
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      aiEnabled: updated.ai_enabled === 1,
     },
   })
 })

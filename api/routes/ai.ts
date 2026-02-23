@@ -13,6 +13,9 @@ import {
 import type { LaneRow, NodeRow, ArrowRow } from '../lib/flow-transform'
 import { toLane, toNode, toArrow } from '../lib/flow-transform'
 
+const AI_MODEL = 'claude-sonnet-4-20250514'
+const MAX_PROMPT_LENGTH = 2000
+
 const ai = new Hono<AuthEnv>()
 
 ai.use('*', authMiddleware)
@@ -78,22 +81,32 @@ ai.post('/generate', async (c) => {
     return c.json({ error: 'プロンプトを入力してください' }, 400)
   }
 
-  const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY })
-  const tool = buildFlowTool()
+  const prompt = body.prompt.trim()
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    return c.json({ error: `プロンプトは${MAX_PROMPT_LENGTH}文字以内で入力してください` }, 400)
+  }
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: buildSystemPrompt(),
-    tools: [tool],
-    tool_choice: { type: 'tool', name: 'generate_flow' },
-    messages: [{ role: 'user', content: body.prompt.trim() }],
-  })
+  try {
+    const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY })
+    const tool = buildFlowTool()
 
-  const flowData = parseAiResponse(response)
-  const flow = replaceTempIds(flowData)
+    const response = await client.messages.create({
+      model: AI_MODEL,
+      max_tokens: 4096,
+      system: buildSystemPrompt(),
+      tools: [tool],
+      tool_choice: { type: 'tool', name: 'generate_flow' },
+      messages: [{ role: 'user', content: prompt }],
+    })
 
-  return c.json({ flow })
+    const flowData = parseAiResponse(response)
+    const flow = replaceTempIds(flowData)
+
+    return c.json({ flow })
+  } catch (e) {
+    console.error('AI generation failed:', e)
+    return c.json({ error: 'AI生成に失敗しました。しばらく後に再試行してください。' }, 502)
+  }
 })
 
 // =============================================
@@ -132,6 +145,11 @@ ai.post('/:flowId/edit', async (c) => {
     return c.json({ error: 'プロンプトを入力してください' }, 400)
   }
 
+  const prompt = body.prompt.trim()
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    return c.json({ error: `プロンプトは${MAX_PROMPT_LENGTH}文字以内で入力してください` }, 400)
+  }
+
   // Fetch current flow data
   const lanesResult = await db
     .prepare('SELECT * FROM lanes WHERE flow_id = ? ORDER BY position ASC')
@@ -161,27 +179,32 @@ ai.post('/:flowId/edit', async (c) => {
     2,
   )
 
-  const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY })
-  const tool = buildFlowTool()
+  try {
+    const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY })
+    const tool = buildFlowTool()
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: buildSystemPrompt(),
-    tools: [tool],
-    tool_choice: { type: 'tool', name: 'generate_flow' },
-    messages: [
-      {
-        role: 'user',
-        content: `以下は現在のフローデータです:\n\n${currentFlowJson}\n\n以下の編集を適用してください:\n${body.prompt.trim()}`,
-      },
-    ],
-  })
+    const response = await client.messages.create({
+      model: AI_MODEL,
+      max_tokens: 4096,
+      system: buildSystemPrompt(),
+      tools: [tool],
+      tool_choice: { type: 'tool', name: 'generate_flow' },
+      messages: [
+        {
+          role: 'user',
+          content: `以下は現在のフローデータです:\n\n${currentFlowJson}\n\n以下の編集を適用してください:\n${prompt}`,
+        },
+      ],
+    })
 
-  const flowData = parseAiResponse(response)
-  const flow = replaceTempIds(flowData)
+    const flowData = parseAiResponse(response)
+    const flow = replaceTempIds(flowData)
 
-  return c.json({ flow })
+    return c.json({ flow })
+  } catch (e) {
+    console.error('AI edit failed:', e)
+    return c.json({ error: 'AI生成に失敗しました。しばらく後に再試行してください。' }, 502)
+  }
 })
 
 export { ai }

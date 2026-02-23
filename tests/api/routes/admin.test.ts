@@ -229,5 +229,30 @@ describe('Admin API', () => {
       )
       expect(res.status).toBe(400)
     })
+
+    it('should return 400 for invalid role value', async () => {
+      const res = await putJson(
+        `/api/admin/users/${USER_ID}`,
+        { role: 'superadmin' },
+        env,
+        adminCookie,
+      )
+      expect(res.status).toBe(400)
+      const body = await res.json()
+      expect(body.error).toContain('無効なrole')
+    })
+
+    it('should return 400 for empty string role', async () => {
+      const res = await putJson(`/api/admin/users/${USER_ID}`, { role: '' }, env, adminCookie)
+      expect(res.status).toBe(400)
+    })
+
+    it('should accept valid role values: user and admin', async () => {
+      const res1 = await putJson(`/api/admin/users/${USER_ID}`, { role: 'admin' }, env, adminCookie)
+      expect(res1.status).toBe(200)
+
+      const res2 = await putJson(`/api/admin/users/${USER_ID}`, { role: 'user' }, env, adminCookie)
+      expect(res2.status).toBe(200)
+    })
   })
 })
