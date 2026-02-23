@@ -959,6 +959,71 @@ describe('Dashboard', () => {
     expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
   })
 
+  describe('shared view (#120)', () => {
+    it('should show only shared flows when shared nav is selected', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
+      })
+
+      const sharedNav = screen.getByTestId('nav-item-shared')
+      await userEvent.click(sharedNav)
+
+      // flow-1 has shareToken='abc123', flow-2 has shareToken=null
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      expect(screen.queryByTestId('flow-card-flow-2')).not.toBeInTheDocument()
+    })
+
+    it('should show shared empty state when no shared flows', async () => {
+      const noSharedFlows = [{ ...mockFlows[1], shareToken: null }]
+      mockApiFetch.mockResolvedValueOnce({ flows: noSharedFlows })
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
+      })
+
+      const sharedNav = screen.getByTestId('nav-item-shared')
+      await userEvent.click(sharedNav)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('shared-empty')).toBeInTheDocument()
+      })
+    })
+
+    it('should show shared title when in shared view', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
+      })
+
+      const sharedNav = screen.getByTestId('nav-item-shared')
+      await userEvent.click(sharedNav)
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: '共有ファイル' })).toBeInTheDocument()
+      })
+    })
+
+    it('should not show create card in shared grid view', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
+      })
+
+      const sharedNav = screen.getByTestId('nav-item-shared')
+      await userEvent.click(sharedNav)
+
+      expect(screen.queryByTestId('create-flow-card')).not.toBeInTheDocument()
+    })
+  })
+
   describe('trash view (#95)', () => {
     it('should load trash flows when trash nav is selected', async () => {
       const trashFlows = [
