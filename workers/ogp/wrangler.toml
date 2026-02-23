@@ -1,0 +1,9 @@
+name = "flowline-ogp"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "FLOWLINE_DB"
+database_name = "flowline-db"
+database_id = "72efa8e9-41bf-4f66-a678-84b9eea3685b"
