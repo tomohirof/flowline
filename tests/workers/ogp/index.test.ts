@@ -108,6 +108,19 @@ describe('OGP Worker', () => {
   // GET /share/:tokenPng
   // ========================================
   describe('GET /share/:tokenPng', () => {
+    // Shared helper: recursively search element tree for text
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function findText(node: Record<string, any>, target: string): boolean {
+      if (!node?.props) return false
+      const { children } = node.props
+      if (typeof children === 'string' && children.includes(target)) return true
+      if (children === target) return true
+      if (Array.isArray(children)) {
+        return children.some((child: Record<string, never>) => findText(child, target))
+      }
+      return false
+    }
+
     it('should return 200 with content-type image/png for valid share token', async () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'abc123')
 
@@ -227,18 +240,6 @@ describe('OGP Worker', () => {
       const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
 
       // 要素ツリーから「フローを描く。チームが動く。」テキストを再帰探索
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      function findText(node: Record<string, any>, target: string): boolean {
-        if (!node?.props) return false
-        const { children } = node.props
-        if (typeof children === 'string' && children.includes(target)) return true
-        if (children === target) return true
-        if (Array.isArray(children)) {
-          return children.some((child: Record<string, never>) => findText(child, target))
-        }
-        return false
-      }
-
       expect(findText(lastCall[0] as Record<string, never>, 'フローを描く。チームが動く。')).toBe(
         true,
       )
@@ -254,17 +255,6 @@ describe('OGP Worker', () => {
       const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
 
       // 要素ツリーから author initial 'T' (Test Author の頭文字) を探す
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      function findText(node: Record<string, any>, target: string): boolean {
-        if (!node?.props) return false
-        const { children } = node.props
-        if (children === target) return true
-        if (Array.isArray(children)) {
-          return children.some((child: Record<string, never>) => findText(child, target))
-        }
-        return false
-      }
-
       expect(findText(lastCall[0] as Record<string, never>, 'T')).toBe(true)
     })
 
@@ -277,18 +267,6 @@ describe('OGP Worker', () => {
       const satoriMock = vi.mocked(satori.default)
       const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      function findText(node: Record<string, any>, target: string): boolean {
-        if (!node?.props) return false
-        const { children } = node.props
-        if (typeof children === 'string' && children.includes(target)) return true
-        if (children === target) return true
-        if (Array.isArray(children)) {
-          return children.some((child: Record<string, never>) => findText(child, target))
-        }
-        return false
-      }
-
       expect(findText(lastCall[0] as Record<string, never>, '共有中')).toBe(true)
     })
 
@@ -300,18 +278,6 @@ describe('OGP Worker', () => {
 
       const satoriMock = vi.mocked(satori.default)
       const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      function findText(node: Record<string, any>, target: string): boolean {
-        if (!node?.props) return false
-        const { children } = node.props
-        if (typeof children === 'string' && children.includes(target)) return true
-        if (children === target) return true
-        if (Array.isArray(children)) {
-          return children.some((child: Record<string, never>) => findText(child, target))
-        }
-        return false
-      }
 
       expect(findText(lastCall[0] as Record<string, never>, 'flowline.app')).toBe(true)
     })
