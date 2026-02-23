@@ -83,6 +83,7 @@ flows.get('/', async (c) => {
          LEFT JOIN lanes l ON l.flow_id = f.id
          LEFT JOIN arrows a ON a.flow_id = f.id
          WHERE f.user_id = ?
+           AND f.deleted_at IS NULL
            AND (f.title LIKE ? ESCAPE '\\' COLLATE NOCASE
              OR n.label LIKE ? ESCAPE '\\' COLLATE NOCASE
              OR n.note LIKE ? ESCAPE '\\' COLLATE NOCASE
@@ -95,7 +96,7 @@ flows.get('/', async (c) => {
     flowList = (result.results ?? []).map(toFlowSummary)
   } else {
     const result = await db
-      .prepare('SELECT * FROM flows WHERE user_id = ? ORDER BY updated_at DESC')
+      .prepare('SELECT * FROM flows WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC')
       .bind(userId)
       .all<FlowRow>()
     flowList = (result.results ?? []).map(toFlowSummary)
@@ -214,6 +215,15 @@ flows.get('/:id', async (c) => {
     return c.json({ error: 'アクセス権限がありません' }, 403)
   }
 
+  // Check if soft-deleted
+  const flowCheck = await db
+    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ deleted_at: string | null }>()
+  if (flowCheck?.deleted_at) {
+    return c.json({ error: 'フローが見つかりません' }, 404)
+  }
+
   const detail = await getFlowDetail(db, flowId)
   return c.json({ flow: detail })
 })
@@ -233,6 +243,15 @@ flows.put('/:id', async (c) => {
   }
   if (ownership.error === 'forbidden') {
     return c.json({ error: 'アクセス権限がありません' }, 403)
+  }
+
+  // Check if soft-deleted
+  const flowCheck = await db
+    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ deleted_at: string | null }>()
+  if (flowCheck?.deleted_at) {
+    return c.json({ error: 'フローが見つかりません' }, 404)
   }
 
   let rawBody: unknown
@@ -443,15 +462,15 @@ flows.delete('/:id', async (c) => {
     return c.json({ error: 'アクセス権限がありません' }, 403)
   }
 
-  // Explicitly delete related data first (D1 may not enforce ON DELETE CASCADE)
-  await db.batch([
-    db.prepare('DELETE FROM arrows WHERE flow_id = ?').bind(flowId),
-    db.prepare('DELETE FROM nodes WHERE flow_id = ?').bind(flowId),
-    db.prepare('DELETE FROM lanes WHERE flow_id = ?').bind(flowId),
-    db.prepare('DELETE FROM flows WHERE id = ?').bind(flowId),
-  ])
+  // Soft delete: set deleted_at, clear share_token
+  await db
+    .prepare(
+      "UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), share_token = NULL WHERE id = ?",
+    )
+    .bind(flowId)
+    .run()
 
-  return c.json({ message: 'フローを削除しました' })
+  return c.json({ message: 'フローをゴミ箱に移動しました' })
 })
 
 export { flows }

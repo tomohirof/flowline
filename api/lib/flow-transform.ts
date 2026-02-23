@@ -9,6 +9,7 @@ export interface FlowRow {
   title: string
   theme_id: string
   share_token: string | null
+  deleted_at: string | null
   created_at: string
   updated_at: string
 }
@@ -56,6 +57,7 @@ export function toFlowSummary(row: FlowRow) {
     title: row.title,
     themeId: row.theme_id,
     shareToken: row.share_token,
+    deletedAt: row.deleted_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

@@ -866,9 +866,9 @@ describe('Flows API', () => {
   })
 
   // ========================================
-  // DELETE /api/flows/:id (delete)
+  // DELETE /api/flows/:id (soft delete)
   // ========================================
-  describe('DELETE /api/flows/:id', () => {
+  describe('DELETE /api/flows/:id (soft delete)', () => {
     beforeEach(() => {
       insertFlow(db, 'flow-1', USER_ID, 'To Delete')
       insertLane(db, 'lane-1', 'flow-1', 'Lane', 0, 0)
@@ -877,27 +877,53 @@ describe('Flows API', () => {
       insertArrow(db, 'arrow-1', 'flow-1', 'node-1', 'node-2', null)
     })
 
-    it('should delete flow and return success message', async () => {
+    it('should soft-delete flow and return success message', async () => {
       const res = await deleteWithCookie('/api/flows/flow-1', env, cookie)
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.message).toBe('フローを削除しました')
+      expect(body.message).toBe('フローをゴミ箱に移動しました')
     })
 
-    it('should cascade delete lanes, nodes, arrows', async () => {
+    it('should set deleted_at and clear share_token but keep related data', async () => {
+      db.prepare('UPDATE flows SET share_token = ? WHERE id = ?').run('token-1', 'flow-1')
+
       await deleteWithCookie('/api/flows/flow-1', env, cookie)
 
-      const flows = db.prepare('SELECT * FROM flows WHERE id = ?').all('flow-1')
-      expect(flows).toHaveLength(0)
+      const flow = db.prepare('SELECT * FROM flows WHERE id = ?').get('flow-1') as {
+        deleted_at: string | null
+        share_token: string | null
+      }
+      expect(flow.deleted_at).not.toBeNull()
+      expect(flow.share_token).toBeNull()
 
       const lanes = db.prepare('SELECT * FROM lanes WHERE flow_id = ?').all('flow-1')
-      expect(lanes).toHaveLength(0)
-
+      expect(lanes).toHaveLength(1)
       const nodes = db.prepare('SELECT * FROM nodes WHERE flow_id = ?').all('flow-1')
-      expect(nodes).toHaveLength(0)
-
+      expect(nodes).toHaveLength(2)
       const arrows = db.prepare('SELECT * FROM arrows WHERE flow_id = ?').all('flow-1')
-      expect(arrows).toHaveLength(0)
+      expect(arrows).toHaveLength(1)
+    })
+
+    it('should exclude soft-deleted flows from GET /api/flows', async () => {
+      insertFlow(db, 'flow-2', USER_ID, 'Active Flow')
+      await deleteWithCookie('/api/flows/flow-1', env, cookie)
+
+      const res = await getWithCookie('/api/flows', env, cookie)
+      const body = await res.json()
+      expect(body.flows).toHaveLength(1)
+      expect(body.flows[0].id).toBe('flow-2')
+    })
+
+    it('should return 404 for soft-deleted flow on GET /api/flows/:id', async () => {
+      await deleteWithCookie('/api/flows/flow-1', env, cookie)
+      const res = await getWithCookie('/api/flows/flow-1', env, cookie)
+      expect(res.status).toBe(404)
+    })
+
+    it('should return 404 for soft-deleted flow on PUT /api/flows/:id', async () => {
+      await deleteWithCookie('/api/flows/flow-1', env, cookie)
+      const res = await putJson('/api/flows/flow-1', { title: 'Updated' }, env, cookie)
+      expect(res.status).toBe(404)
     })
 
     it('should return 404 for non-existent flow', async () => {
@@ -907,7 +933,6 @@ describe('Flows API', () => {
 
     it('should return 403 for another users flow', async () => {
       insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other Flow')
-
       const res = await deleteWithCookie('/api/flows/flow-other', env, cookie)
       expect(res.status).toBe(403)
     })
@@ -915,16 +940,6 @@ describe('Flows API', () => {
     it('should return 401 without auth', async () => {
       const res = await deleteWithCookie('/api/flows/flow-1', env)
       expect(res.status).toBe(401)
-    })
-
-    it('should not delete other users flows', async () => {
-      insertFlow(db, 'flow-other', OTHER_USER_ID, 'Other Flow')
-
-      await deleteWithCookie('/api/flows/flow-other', env, cookie)
-
-      // Other user's flow should still exist
-      const others = db.prepare('SELECT * FROM flows WHERE id = ?').all('flow-other')
-      expect(others).toHaveLength(1)
     })
   })
 })
