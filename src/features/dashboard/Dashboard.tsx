@@ -131,6 +131,13 @@ export function Dashboard() {
     return flows
   }, [flows, sortMode])
 
+  const displayedFlows = useMemo(() => {
+    if (selectedNav === 'shared') {
+      return sortedFlows.filter((f) => f.shareToken !== null)
+    }
+    return sortedFlows
+  }, [selectedNav, sortedFlows])
+
   const handleCreate = async () => {
     if (creating) return
     setCreating(true)
@@ -345,7 +352,11 @@ export function Dashboard() {
               {/* Sub-header: nav label + sort + view toggle */}
               <div className={styles.subheader}>
                 <h1 className={styles.title}>
-                  {selectedNav === 'trash' ? 'ゴミ箱' : 'マイフロー'}
+                  {selectedNav === 'trash'
+                    ? 'ゴミ箱'
+                    : selectedNav === 'shared'
+                      ? '共有ファイル'
+                      : 'マイフロー'}
                 </h1>
                 {selectedNav !== 'trash' && (
                   <div className={styles.controls}>
@@ -415,32 +426,40 @@ export function Dashboard() {
                     ))}
                   </div>
                 )
-              ) : sortedFlows.length === 0 ? (
-                <div data-testid="dashboard-empty" className={styles.empty}>
-                  <div className={styles.emptyIcon}>+</div>
-                  <p className={styles.emptyTitle}>
-                    {searchQuery.trim()
-                      ? '検索条件に一致するフローがありません'
-                      : 'フローがまだありません。新規作成してみましょう！'}
-                  </p>
-                  {!searchQuery.trim() && (
-                    <p className={styles.emptySubtitle}>下のボタンから最初のフローを作成できます</p>
-                  )}
-                  {!searchQuery.trim() && (
-                    <button
-                      data-testid="empty-create-flow-button"
-                      onClick={handleCreate}
-                      disabled={creating}
-                      className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
-                      style={{ marginTop: '16px', width: '200px' }}
-                    >
-                      <CreateCardIcon />
-                      <span className={styles.createCardText}>
-                        {creating ? '作成中...' : '新規作成'}
-                      </span>
-                    </button>
-                  )}
-                </div>
+              ) : displayedFlows.length === 0 ? (
+                selectedNav === 'shared' ? (
+                  <div data-testid="shared-empty" className={styles.empty}>
+                    <div className={styles.emptyIcon}>⊡</div>
+                    <p className={styles.emptyTitle}>共有中のフローはありません</p>
+                    <p className={styles.emptySubtitle}>フローを共有するとここに表示されます</p>
+                  </div>
+                ) : (
+                  <div data-testid="dashboard-empty" className={styles.empty}>
+                    <div className={styles.emptyIcon}>+</div>
+                    <p className={styles.emptyTitle}>
+                      {searchQuery.trim()
+                        ? '検索条件に一致するフローがありません'
+                        : 'フローがまだありません。新規作成してみましょう！'}
+                    </p>
+                    {!searchQuery.trim() && (
+                      <p className={styles.emptySubtitle}>下のボタンから最初のフローを作成できます</p>
+                    )}
+                    {!searchQuery.trim() && (
+                      <button
+                        data-testid="empty-create-flow-button"
+                        onClick={handleCreate}
+                        disabled={creating}
+                        className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
+                        style={{ marginTop: '16px', width: '200px' }}
+                      >
+                        <CreateCardIcon />
+                        <span className={styles.createCardText}>
+                          {creating ? '作成中...' : '新規作成'}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )
               ) : viewMode === 'grid' ? (
                 <div data-testid="dashboard-grid" className={styles.grid}>
                   <button
@@ -454,7 +473,7 @@ export function Dashboard() {
                       {creating ? '作成中...' : '新規作成'}
                     </span>
                   </button>
-                  {sortedFlows.map((flow) => (
+                  {displayedFlows.map((flow) => (
                     <FlowCard
                       key={flow.id}
                       flow={flow}
@@ -477,7 +496,7 @@ export function Dashboard() {
                     <span className={styles.listHeaderLanes}>レーン</span>
                     <span className={styles.listHeaderActions} />
                   </div>
-                  {sortedFlows.map((flow) => (
+                  {displayedFlows.map((flow) => (
                     <div
                       key={flow.id}
                       data-testid={`flow-card-${flow.id}`}
