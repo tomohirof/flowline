@@ -9,6 +9,9 @@ interface FlowContextMenuProps {
   onDuplicate: () => void
   onDelete: () => void
   onClose: () => void
+  isTrash?: boolean
+  onRestore?: () => void
+  onPermanentDelete?: () => void
 }
 
 interface MenuItem {
@@ -25,6 +28,9 @@ export function FlowContextMenu({
   onDuplicate,
   onDelete,
   onClose,
+  isTrash = false,
+  onRestore,
+  onPermanentDelete,
 }: FlowContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -38,13 +44,19 @@ export function FlowContextMenu({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose])
 
-  const items: (MenuItem | 'sep')[] = [
-    { label: '開く', action: onOpen },
-    { label: '名前を変更', action: onRename },
-    { label: '複製', action: onDuplicate },
-    'sep',
-    { label: '削除', action: onDelete, danger: true },
-  ]
+  const items: (MenuItem | 'sep')[] = isTrash
+    ? [
+        { label: '復元', action: () => onRestore?.() },
+        'sep',
+        { label: '完全に削除', action: () => onPermanentDelete?.(), danger: true },
+      ]
+    : [
+        { label: '開く', action: onOpen },
+        { label: '名前を変更', action: onRename },
+        { label: '複製', action: onDuplicate },
+        'sep',
+        { label: '削除', action: onDelete, danger: true },
+      ]
 
   return (
     <div

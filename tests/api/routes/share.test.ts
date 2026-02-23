@@ -188,6 +188,17 @@ describe('Share API', () => {
       expect(res.status).toBe(401)
     })
 
+    it('should return 404 for soft-deleted flow', async () => {
+      insertFlow(db, 'flow-1', USER_ID, 'My Flow')
+      // Soft delete the flow
+      db.prepare(
+        "UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+      ).run('flow-1')
+
+      const res = await postWithCookie('/api/flows/flow-1/share', env, cookie)
+      expect(res.status).toBe(404)
+    })
+
     it('should generate unique tokens for different flows', async () => {
       insertFlow(db, 'flow-1', USER_ID, 'Flow 1')
       insertFlow(db, 'flow-2', USER_ID, 'Flow 2')
@@ -339,6 +350,17 @@ describe('Share API', () => {
       // This tests the route with an empty-ish token
       const res = await getRequest('/api/shared/', env)
       // Should be 404 (no matching route or empty param)
+      expect(res.status).toBe(404)
+    })
+
+    it('should return 404 for soft-deleted flow even with valid share token', async () => {
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'Shared Flow', 'valid-token')
+      // Soft delete the flow (keep share_token for this test scenario)
+      db.prepare(
+        "UPDATE flows SET deleted_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+      ).run('flow-1')
+
+      const res = await getRequest('/api/shared/valid-token', env)
       expect(res.status).toBe(404)
     })
 

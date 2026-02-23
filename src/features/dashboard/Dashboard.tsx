@@ -26,6 +26,7 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState<boolean>(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [trashFlows, setTrashFlows] = useState<FlowSummary[]>([])
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -77,6 +78,19 @@ export function Dashboard() {
     }
   }, [])
 
+  const loadTrashFlows = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await apiFetch<FlowListResponse>('/flows/trash')
+      setTrashFlows(data.flows)
+    } catch {
+      setError('ゴミ箱の取得に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   // Debounced search
   useEffect(() => {
     const trimmed = searchQuery.trim()
@@ -85,6 +99,12 @@ export function Dashboard() {
     }, 300)
     return () => clearTimeout(timer)
   }, [searchQuery, loadFlows])
+
+  useEffect(() => {
+    if (selectedNav === 'trash') {
+      loadTrashFlows()
+    }
+  }, [selectedNav, loadTrashFlows])
 
   const sortedFlows = useMemo(() => {
     if (sortMode === 'name') {
@@ -119,9 +139,9 @@ export function Dashboard() {
   const handleDelete = (id: string, title: string) => {
     if (deletingId) return
     setModal({
-      title: 'フローを削除',
-      message: `「${title}」を削除しますか？この操作は取り消せません。`,
-      confirmLabel: '削除する',
+      title: 'ゴミ箱に移動',
+      message: `「${title}」をゴミ箱に移動しますか？`,
+      confirmLabel: '移動する',
       danger: true,
       onConfirm: async () => {
         setModal(null)
@@ -129,11 +149,39 @@ export function Dashboard() {
         try {
           await apiFetch(`/flows/${id}`, { method: 'DELETE' })
           setFlows((prev) => prev.filter((f) => f.id !== id))
-          setToast({ message: '削除しました', icon: '🗑' })
+          setToast({ message: 'ゴミ箱に移動しました', icon: '🗑' })
         } catch {
           setError('フローの削除に失敗しました')
         } finally {
           setDeletingId(null)
+        }
+      },
+    })
+  }
+
+  const handleRestore = async (id: string) => {
+    try {
+      await apiFetch(`/flows/${id}/restore`, { method: 'POST' })
+      setTrashFlows((prev) => prev.filter((f) => f.id !== id))
+      setToast({ message: 'フローを復元しました', icon: '♻️' })
+    } catch {
+      setError('フローの復元に失敗しました')
+    }
+  }
+
+  const handlePermanentDelete = (id: string, title: string) => {
+    setModal({
+      title: '完全に削除',
+      message: `完全に削除すると復元できません。「${title}」を本当に削除しますか？`,
+      confirmLabel: '完全に削除',
+      danger: true,
+      onConfirm: async () => {
+        setModal(null)
+        try {
+          await apiFetch(`/flows/${id}/permanent`, { method: 'DELETE' })
+          setTrashFlows((prev) => prev.filter((f) => f.id !== id))
+        } catch {
+          setError('フローの完全削除に失敗しました')
         }
       },
     })
@@ -165,7 +213,9 @@ export function Dashboard() {
   }
 
   // Context menu actions
-  const contextFlow = contextMenu ? flows.find((f) => f.id === contextMenu.flowId) : null
+  const contextFlow = contextMenu
+    ? (selectedNav === 'trash' ? trashFlows : flows).find((f) => f.id === contextMenu.flowId)
+    : null
 
   const handleContextOpen = () => {
     if (contextMenu) {
@@ -273,37 +323,39 @@ export function Dashboard() {
         <div className={styles.main}>
           {/* Sub-header: nav label + sort + view toggle */}
           <div className={styles.subheader}>
-            <h1 className={styles.title}>マイフロー</h1>
-            <div className={styles.controls}>
-              <select
-                data-testid="sort-select"
-                value={sortMode}
-                onChange={(e) => setSortMode(e.target.value as SortMode)}
-                className={styles.sortSelect}
-              >
-                <option value="updated">更新日</option>
-                <option value="name">名前</option>
-              </select>
+            <h1 className={styles.title}>{selectedNav === 'trash' ? 'ゴミ箱' : 'マイフロー'}</h1>
+            {selectedNav !== 'trash' && (
+              <div className={styles.controls}>
+                <select
+                  data-testid="sort-select"
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as SortMode)}
+                  className={styles.sortSelect}
+                >
+                  <option value="updated">更新日</option>
+                  <option value="name">名前</option>
+                </select>
 
-              <div className={styles.viewToggle}>
-                <button
-                  data-testid="view-grid-button"
-                  onClick={() => setViewMode('grid')}
-                  className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-                  aria-label="グリッド表示"
-                >
-                  ▦
-                </button>
-                <button
-                  data-testid="view-list-button"
-                  onClick={() => setViewMode('list')}
-                  className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-                  aria-label="リスト表示"
-                >
-                  ☰
-                </button>
+                <div className={styles.viewToggle}>
+                  <button
+                    data-testid="view-grid-button"
+                    onClick={() => setViewMode('grid')}
+                    className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
+                    aria-label="グリッド表示"
+                  >
+                    ▦
+                  </button>
+                  <button
+                    data-testid="view-list-button"
+                    onClick={() => setViewMode('list')}
+                    className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
+                    aria-label="リスト表示"
+                  >
+                    ☰
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Error */}
@@ -318,6 +370,32 @@ export function Dashboard() {
             <div data-testid="dashboard-loading" className={styles.loading}>
               <p className={styles.loadingText}>読み込み中...</p>
             </div>
+          ) : selectedNav === 'trash' ? (
+            trashFlows.length === 0 ? (
+              <div data-testid="trash-empty" className={styles.empty}>
+                <div className={styles.emptyIcon}>▢</div>
+                <p className={styles.emptyTitle}>ゴミ箱は空です</p>
+                <p className={styles.emptySubtitle}>削除したフローはここに表示されます</p>
+              </div>
+            ) : (
+              <div data-testid="trash-grid" className={styles.grid}>
+                {trashFlows.map((flow) => (
+                  <FlowCard
+                    key={flow.id}
+                    flow={flow}
+                    onDelete={handlePermanentDelete}
+                    onRename={handleRename}
+                    onContextMenu={handleContextMenu}
+                    deleting={deletingId === flow.id}
+                    isHovered={hoveredId === flow.id}
+                    onHover={setHoveredId}
+                    renamingId={renamingId}
+                    isTrash
+                    onRestore={handleRestore}
+                  />
+                ))}
+              </div>
+            )
           ) : sortedFlows.length === 0 ? (
             <div data-testid="dashboard-empty" className={styles.empty}>
               <div className={styles.emptyIcon}>+</div>
@@ -430,6 +508,19 @@ export function Dashboard() {
           onDuplicate={handleContextDuplicate}
           onDelete={handleContextDelete}
           onClose={handleCloseContextMenu}
+          isTrash={selectedNav === 'trash'}
+          onRestore={() => {
+            if (contextMenu) {
+              handleRestore(contextMenu.flowId)
+              setContextMenu(null)
+            }
+          }}
+          onPermanentDelete={() => {
+            if (contextMenu && contextFlow) {
+              handlePermanentDelete(contextMenu.flowId, contextFlow.title)
+              setContextMenu(null)
+            }
+          }}
         />
       )}
 

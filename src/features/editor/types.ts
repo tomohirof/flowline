@@ -107,6 +107,7 @@ export interface FlowSummary {
   title: string
   themeId: string
   shareToken: string | null
+  deletedAt: string | null
   createdAt: string
   updatedAt: string
 }
