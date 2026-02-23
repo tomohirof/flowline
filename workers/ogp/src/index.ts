@@ -3,10 +3,14 @@ import satori, { init as initSatori } from 'satori/standalone'
 import { Resvg, initWasm as initResvg } from '@resvg/resvg-wasm'
 // Static WASM imports — wrangler bundles these as pre-compiled WebAssembly.Module
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm'
+// Extracted from yoga-layout v3.2.1 (see scripts/extract-yoga-wasm.mjs)
 import yogaWasm from './yoga.wasm'
 
-// Cloudflare Workers blocks async WebAssembly.instantiate().
-// Patch at module level to use synchronous WebAssembly.Instance constructor.
+// Workaround: yoga-layout (Emscripten) calls WebAssembly.instantiate() internally,
+// which Cloudflare Workers blocks for dynamic compilation.
+// This module-level patch intercepts calls with pre-compiled WebAssembly.Module
+// and uses the synchronous WebAssembly.Instance constructor instead.
+// Note: Returns {instance, module} format expected by Emscripten, not bare Instance.
 const _origWasmInstantiate = WebAssembly.instantiate
 WebAssembly.instantiate = ((moduleOrBytes: unknown, imports?: WebAssembly.Imports) => {
   if (moduleOrBytes instanceof WebAssembly.Module) {
@@ -362,6 +366,7 @@ app.get('/health', (c) => c.json({ status: 'ok' }))
 /** Reset internal caches — for testing only */
 export function _resetCacheForTesting() {
   cachedFontData = null
+  wasmInitPromise = null
 }
 
 export default app
