@@ -1,23 +1,7 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../app'
 import satori from 'satori'
-import { initWasm, Resvg } from '@resvg/resvg-wasm'
-import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm'
-
-let wasmInitPromise: Promise<void> | null = null
-
-function ensureWasmInitialized(): Promise<void> {
-  if (!wasmInitPromise) {
-    wasmInitPromise = initWasm(resvgWasm).catch((e) => {
-      if (e instanceof Error && e.message.includes('Already initialized')) {
-        return
-      }
-      wasmInitPromise = null
-      throw e
-    })
-  }
-  return wasmInitPromise
-}
+import { Resvg } from '@cf-wasm/resvg/workerd'
 
 /** Cached font data to avoid re-fetching on every request */
 let cachedFontData: ArrayBuffer | null = null
@@ -298,7 +282,6 @@ ogp.get('/share/:tokenPng', async (c) => {
       .bind(flow.id)
       .first<{ count: number }>('count')
 
-    await ensureWasmInitialized()
     const fontData = await loadFont()
 
     const element = buildOgpElement(
@@ -342,7 +325,6 @@ ogp.get('/share/:tokenPng', async (c) => {
 
 /** Reset internal caches — for testing only */
 function _resetOgpCacheForTesting() {
-  wasmInitPromise = null
   cachedFontData = null
 }
 
