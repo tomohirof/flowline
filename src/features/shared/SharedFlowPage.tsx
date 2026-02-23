@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
+import { BRAND } from '../../constants/brand'
 import { apiFetch, ApiError } from '../../lib/api'
 import type { Flow, FlowDetailResponse } from '../editor/types'
 import { SharedFlowViewer } from './SharedFlowViewer'
@@ -22,7 +23,7 @@ export function SharedFlowPage() {
       .then((data) => {
         if (!cancelled) {
           setFlow(data.flow)
-          document.title = `Flowline - ${data.flow.title}`
+          document.title = `${BRAND.name} - ${data.flow.title}`
           setLoading(false)
         }
       })
@@ -39,7 +40,7 @@ export function SharedFlowPage() {
 
     return () => {
       cancelled = true
-      document.title = 'Flowline'
+      document.title = BRAND.name
     }
   }, [token])
 
@@ -51,7 +52,7 @@ export function SharedFlowPage() {
       >
         <p className={styles.errorMessage}>共有トークンが指定されていません</p>
         <a href="/" className={styles.topLink}>
-          Flowline トップへ
+          {BRAND.sharedTopLink}
         </a>
       </div>
     )
@@ -73,7 +74,7 @@ export function SharedFlowPage() {
       >
         <p className={styles.errorMessage}>{error}</p>
         <a href="/" className={styles.topLink}>
-          Flowline トップへ
+          {BRAND.sharedTopLink}
         </a>
       </div>
     )

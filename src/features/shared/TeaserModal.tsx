@@ -1,3 +1,4 @@
+import { BRAND } from '../../constants/brand'
 import { PALETTES } from '../editor/theme-constants'
 import styles from './TeaserModal.module.css'
 
@@ -24,14 +25,14 @@ export function TeaserModal({
       data-testid="teaser-modal"
     >
       <div className={styles.content}>
-        <div className={styles.logo}>F</div>
+        <div className={styles.logo}>{BRAND.logoInitial}</div>
         <div className={`${styles.brandName}${isDark ? ` ${styles.brandNameDark}` : ''}`}>
-          Flowline
+          {BRAND.name}
         </div>
         <h2 className={`${styles.flowTitle}${isDark ? ` ${styles.flowTitleDark}` : ''}`}>
           {flowTitle}
         </h2>
-        <p className={styles.subtitle}>Flowline で作成されたフロー</p>
+        <p className={styles.subtitle}>{BRAND.sharedCreatedBy}</p>
         <div className={styles.meta}>
           {laneColors.map((colorIndex, i) => (
             <div
@@ -46,9 +47,9 @@ export function TeaserModal({
           </span>
         </div>
         <button className={styles.ctaButton} onClick={onClose}>
-          フロー図を表示する
+          {BRAND.sharedViewButton}
         </button>
-        <p className={styles.freeText}>閲覧は無料 · ログイン不要</p>
+        <p className={styles.freeText}>{BRAND.sharedFreeText}</p>
       </div>
     </div>
   )

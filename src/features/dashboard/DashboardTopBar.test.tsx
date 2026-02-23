@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { BRAND } from '../../constants/brand'
 import { DashboardTopBar } from './DashboardTopBar'
 
 describe('DashboardTopBar', () => {
@@ -18,7 +19,7 @@ describe('DashboardTopBar', () => {
 
   it('should render Flowline logo', () => {
     render(<DashboardTopBar {...defaultProps} />)
-    expect(screen.getByText('Flowline')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.name)).toBeInTheDocument()
   })
 
   it('should render search input', () => {

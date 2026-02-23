@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import userEvent from '@testing-library/user-event'
 import FlowEditor from './FlowEditor'
 import type { Flow } from './types'
+import { BRAND } from '../../constants/brand'
 import { NODE_COLORS, NODE_COLORS_DARK, LINE_COLORS, STROKE_STYLES } from './theme-constants'
 import { apiFetch } from '../../lib/api'
 
@@ -869,8 +870,8 @@ describe('logo navigation (#83)', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     const logoLinks = screen.getAllByTestId('logo-link')
     const logoLink = logoLinks[0]
-    expect(logoLink.textContent).toContain('F')
-    expect(logoLink.textContent).toContain('Flowline')
+    expect(logoLink.textContent).toContain(BRAND.logoInitial)
+    expect(logoLink.textContent).toContain(BRAND.name)
   })
 })
 

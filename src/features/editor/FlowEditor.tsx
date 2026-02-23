@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
+import { BRAND } from '../../constants/brand'
 import { useNavigate, Link } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
 import { useAuth } from '../../hooks/useAuth'
@@ -1864,9 +1865,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
               background: `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`,
             }}
           >
-            F
+            {BRAND.logoInitial}
           </div>
-          <span className={styles.brandName}>Flowline</span>
+          <span className={styles.brandName}>{BRAND.name}</span>
         </Link>
         <div className={styles.divider} />
         {editTitle ? (

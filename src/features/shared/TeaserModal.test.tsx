@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { BRAND } from '../../constants/brand'
 import { TeaserModal } from './TeaserModal'
 
 describe('TeaserModal', () => {
@@ -45,7 +46,7 @@ describe('TeaserModal', () => {
         onClose={vi.fn()}
       />,
     )
-    expect(screen.getByText('Flowline')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.name)).toBeInTheDocument()
   })
 
   it('should display lane and node count metadata', () => {
@@ -86,7 +87,7 @@ describe('TeaserModal', () => {
         onClose={vi.fn()}
       />,
     )
-    expect(screen.getByRole('button', { name: 'フロー図を表示する' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: BRAND.sharedViewButton })).toBeInTheDocument()
   })
 
   it('should call onClose when CTA button is clicked', async () => {
@@ -100,7 +101,7 @@ describe('TeaserModal', () => {
         onClose={onClose}
       />,
     )
-    await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+    await userEvent.click(screen.getByRole('button', { name: BRAND.sharedViewButton }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
@@ -114,7 +115,7 @@ describe('TeaserModal', () => {
         onClose={vi.fn()}
       />,
     )
-    expect(screen.getByText('閲覧は無料 · ログイン不要')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.sharedFreeText)).toBeInTheDocument()
   })
 
   it('should render with zero lanes and nodes', () => {

@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { BRAND } from '../../../constants/brand'
 import { HeroSection } from './HeroSection'
 
 describe('HeroSection', () => {
@@ -14,29 +15,31 @@ describe('HeroSection', () => {
     expect(screen.getByTestId('hero-section')).toBeInTheDocument()
   })
 
-  it('should render heading "フローを描く。"', () => {
+  it('should render heading tagline part 1', () => {
     render(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(/フローを描く。/)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(BRAND.taglinePart1))).toBeInTheDocument()
   })
 
-  it('should render gradient text "チームが動く。"', () => {
+  it('should render gradient text tagline part 2', () => {
     render(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(/チームが動く。/)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(BRAND.taglinePart2))).toBeInTheDocument()
   })
 
   it('should render subtext about 業務フロー', () => {
     render(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(/業務フローの設計・可視化・共有/)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(BRAND.heroSubtext))).toBeInTheDocument()
   })
 
-  it('should render badge with "無料で使える"', () => {
+  it('should render badge with hero badge text', () => {
     render(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(/無料で使える/)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(BRAND.heroBadge))).toBeInTheDocument()
   })
 
-  it('should render CTA button "無料で始める →"', () => {
+  it('should render CTA button with primary CTA text', () => {
     render(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByRole('button', { name: /無料で始める/ })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }),
+    ).toBeInTheDocument()
   })
 
   it('should call onCtaClick when CTA button is clicked', async () => {
@@ -44,7 +47,9 @@ describe('HeroSection', () => {
     const onCtaClick = vi.fn()
     render(<HeroSection onCtaClick={onCtaClick} />)
 
-    await user.click(screen.getByRole('button', { name: /無料で始める/ }))
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }),
+    )
     expect(onCtaClick).toHaveBeenCalledTimes(1)
   })
 })

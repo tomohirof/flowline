@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { BRAND } from '../../../constants/brand'
 import styles from './Navbar.module.css'
 
 interface NavbarProps {
@@ -30,8 +31,8 @@ export function Navbar({ onLoginClick, onSignupClick }: NavbarProps) {
     >
       <div className={styles.inner}>
         <Link to="/" className={styles.logo}>
-          <span className={styles.logoIcon}>F</span>
-          <span className={styles.logoText}>Flowline</span>
+          <span className={styles.logoIcon}>{BRAND.logoInitial}</span>
+          <span className={styles.logoText}>{BRAND.name}</span>
         </Link>
 
         <div className={styles.navLinks}>
@@ -48,7 +49,7 @@ export function Navbar({ onLoginClick, onSignupClick }: NavbarProps) {
             ログイン
           </button>
           <button className={styles.signupBtn} onClick={onSignupClick}>
-            無料で始める
+            {BRAND.ctaButtonNav}
           </button>
         </div>
       </div>

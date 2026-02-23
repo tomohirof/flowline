@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
+import { BRAND } from './constants/brand'
 import { FlowEditorPage } from './features/editor/pages/FlowEditorPage'
 import { Dashboard } from './features/dashboard/Dashboard'
 import { SharedFlowPage } from './features/shared/SharedFlowPage'
@@ -33,7 +34,7 @@ function Header() {
   return (
     <header data-testid="app-header">
       <nav>
-        <Link to="/">Flowline</Link>
+        <Link to="/">{BRAND.name}</Link>
         {user ? (
           <div>
             <span data-testid="user-name">{user.name}</span>

@@ -1,3 +1,4 @@
+import { BRAND } from '../../../constants/brand'
 import styles from './FeaturesSection.module.css'
 import landingStyles from '../landing.module.css'
 
@@ -38,8 +39,8 @@ export function FeaturesSection() {
   return (
     <section id="features" className={styles.section}>
       <div className={landingStyles.container}>
-        <h2 className={landingStyles.sectionTitle}>すべての機能を、ひとつに</h2>
-        <p className={landingStyles.sectionSub}>業務フロー設計に必要な機能をすべて備えています</p>
+        <h2 className={landingStyles.sectionTitle}>{BRAND.featuresTitle}</h2>
+        <p className={landingStyles.sectionSub}>{BRAND.featuresSubtitle}</p>
       </div>
 
       <div className={styles.grid}>

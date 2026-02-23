@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { BRAND } from '../../constants/brand'
 import { BottomCTABar } from './BottomCTABar'
 
 describe('BottomCTABar', () => {
@@ -21,22 +22,22 @@ describe('BottomCTABar', () => {
 
   it('should display Flowline logo', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
-    expect(screen.getByText('F')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.logoInitial)).toBeInTheDocument()
   })
 
   it('should display CTA heading text', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
-    expect(screen.getByText('Flowline でフロー図を作成')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.sharedCreateCta)).toBeInTheDocument()
   })
 
   it('should display sub text', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
-    expect(screen.getByText('無料で始める · チームで共有 · Mermaid対応')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.sharedCtaFeatures)).toBeInTheDocument()
   })
 
   it('should have CTA link pointing to /?auth=register', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
-    const link = screen.getByRole('link', { name: '無料で試す →' })
+    const link = screen.getByRole('link', { name: BRAND.ctaButtonShared })
     expect(link).toHaveAttribute('href', '/?auth=register')
   })
 
