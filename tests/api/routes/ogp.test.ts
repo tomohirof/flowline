@@ -250,10 +250,12 @@ describe('OGP Image API', () => {
       // satori が呼ばれた時の引数を検証
       const satoriMock = vi.mocked(satori.default)
       const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
-      const element = lastCall[0] as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const element = lastCall[0] as Record<string, any>
 
       // Bottom bar の children がブランディングテキスト
-      const bottomBar = element.props.children[2]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bottomBar = element.props.children[2] as Record<string, any>
       expect(bottomBar.props.children).toBe('flowline.pages.dev')
     })
 
