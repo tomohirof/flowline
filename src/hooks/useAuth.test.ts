@@ -90,7 +90,9 @@ describe('useAuth', () => {
     // First call: checkAuth on mount
     mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
     // Second call: POST /auth/login
-    mockApiFetch.mockResolvedValueOnce({ user: { id: '1', email: 'test@example.com', name: 'Test User' } })
+    mockApiFetch.mockResolvedValueOnce({
+      user: { id: '1', email: 'test@example.com', name: 'Test User' },
+    })
     // Third call: GET /auth/me (after login to get full user data)
     mockApiFetch.mockResolvedValueOnce({ user: mockUser })
 
