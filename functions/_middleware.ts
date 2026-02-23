@@ -1,4 +1,4 @@
-import { isBotUserAgent, generateOgpHtml } from '../api/lib/ogp'
+import { injectOgpMeta } from '../api/lib/ogp'
 
 interface Env {
   FLOWLINE_DB: D1Database
@@ -16,8 +16,7 @@ interface CountResult {
   count: number
 }
 
-async function serveIndexHtml(context: EventContext<Env, string, unknown>): Promise<Response> {
-  // Serve the SPA index.html for non-bot users accessing /shared/* routes
+async function fetchIndexHtml(context: EventContext<Env, string, unknown>): Promise<Response> {
   const url = new URL(context.request.url)
   url.pathname = '/'
   return context.env.ASSETS.fetch(new Request(url.toString(), context.request))
@@ -32,10 +31,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (!match) return context.next()
 
   const token = match[1]
-  const ua = context.request.headers.get('user-agent') || ''
-
-  // Normal users get the SPA (index.html)
-  if (!isBotUserAgent(ua)) return serveIndexHtml(context)
 
   try {
     const db = context.env.FLOWLINE_DB
@@ -47,7 +42,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .bind(token)
       .first<FlowWithAuthor>()
 
-    if (!flow) return serveIndexHtml(context)
+    if (!flow) return fetchIndexHtml(context)
 
     const [lanesResult, nodesResult] = await db.batch([
       db.prepare('SELECT COUNT(*) as count FROM lanes WHERE flow_id = ?').bind(flow.id),
@@ -57,7 +52,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const laneCount = (lanesResult as { results: CountResult[] }).results?.[0]?.count ?? 0
     const nodeCount = (nodesResult as { results: CountResult[] }).results?.[0]?.count ?? 0
 
-    const html = generateOgpHtml({
+    // Fetch the SPA index.html and inject dynamic OGP meta tags
+    const indexResponse = await fetchIndexHtml(context)
+    const indexHtml = await indexResponse.text()
+
+    const html = injectOgpMeta(indexHtml, {
       title: flow.title,
       author: flow.author_name,
       laneCount,
@@ -74,6 +73,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     })
   } catch {
     // On error, fall through to SPA
-    return serveIndexHtml(context)
+    return fetchIndexHtml(context)
   }
 }

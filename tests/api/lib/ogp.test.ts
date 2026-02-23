@@ -1,87 +1,37 @@
 import { describe, it, expect } from 'vitest'
-import { BOT_USER_AGENTS, isBotUserAgent, escapeHtml, generateOgpHtml } from '../../../api/lib/ogp'
+import { escapeHtml, injectOgpMeta } from '../../../api/lib/ogp'
+
+// Minimal index.html template matching the real structure
+const SAMPLE_INDEX_HTML = `<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Flowline — フローを描く。チームが動く。</title>
+    <meta name="description" content="業務プロセスを視覚化するスイムレーンエディタ。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://flowline.six1.jp" />
+    <meta property="og:title" content="Flowline — フローを描く。チームが動く。" />
+    <meta property="og:description" content="業務プロセスを視覚化するスイムレーンエディタ。" />
+    <meta property="og:image" content="https://flowline.six1.jp/ogp/default.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Flowline" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Flowline — フローを描く。チームが動く。" />
+    <meta name="twitter:description" content="業務プロセスを視覚化するスイムレーンエディタ" />
+    <meta name="twitter:image" content="https://flowline.six1.jp/ogp/default.png" />
+    <meta name="theme-color" content="#7C5CFC" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>`
 
 describe('OGP Utility', () => {
-  // ========================================
-  // BOT_USER_AGENTS
-  // ========================================
-  describe('BOT_USER_AGENTS', () => {
-    it('should contain known bot user agent substrings', () => {
-      expect(BOT_USER_AGENTS).toContain('twitterbot')
-      expect(BOT_USER_AGENTS).toContain('facebookexternalhit')
-      expect(BOT_USER_AGENTS).toContain('linkedinbot')
-      expect(BOT_USER_AGENTS).toContain('discordbot')
-      expect(BOT_USER_AGENTS).toContain('slackbot')
-      expect(BOT_USER_AGENTS).toContain('googlebot')
-      expect(BOT_USER_AGENTS).toContain('line/')
-    })
-
-    it('should store all substrings in lowercase', () => {
-      for (const ua of BOT_USER_AGENTS) {
-        expect(ua).toBe(ua.toLowerCase())
-      }
-    })
-  })
-
-  // ========================================
-  // isBotUserAgent
-  // ========================================
-  describe('isBotUserAgent', () => {
-    it('should return true when UA contains Twitterbot', () => {
-      expect(isBotUserAgent('Twitterbot/1.0')).toBe(true)
-    })
-
-    it('should return true when UA contains facebookexternalhit', () => {
-      expect(isBotUserAgent('facebookexternalhit/1.1')).toBe(true)
-    })
-
-    it('should return true when UA contains LinkedInBot', () => {
-      expect(isBotUserAgent('LinkedInBot/1.0 (compatible; Mozilla/5.0)')).toBe(true)
-    })
-
-    it('should return true when UA contains Discordbot', () => {
-      expect(isBotUserAgent('Mozilla/5.0 (compatible; Discordbot/2.0)')).toBe(true)
-    })
-
-    it('should return true when UA contains Slackbot', () => {
-      expect(isBotUserAgent('Slackbot-LinkExpanding 1.0')).toBe(true)
-    })
-
-    it('should return true when UA contains Googlebot', () => {
-      expect(isBotUserAgent('Mozilla/5.0 (compatible; Googlebot/2.1)')).toBe(true)
-    })
-
-    it('should return true when UA contains LINE/', () => {
-      expect(isBotUserAgent('Line/2.0')).toBe(true)
-    })
-
-    it('should return false when UA is a normal browser', () => {
-      expect(
-        isBotUserAgent(
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0',
-        ),
-      ).toBe(false)
-    })
-
-    it('should return false when UA is empty string', () => {
-      expect(isBotUserAgent('')).toBe(false)
-    })
-
-    it('should return false when UA is null', () => {
-      expect(isBotUserAgent(null)).toBe(false)
-    })
-
-    it('should return false when UA is undefined', () => {
-      expect(isBotUserAgent(undefined)).toBe(false)
-    })
-
-    it('should perform case-insensitive matching', () => {
-      expect(isBotUserAgent('TWITTERBOT/1.0')).toBe(true)
-      expect(isBotUserAgent('twitterbot/1.0')).toBe(true)
-      expect(isBotUserAgent('TwitterBot/1.0')).toBe(true)
-    })
-  })
-
   // ========================================
   // escapeHtml
   // ========================================
@@ -126,9 +76,9 @@ describe('OGP Utility', () => {
   })
 
   // ========================================
-  // generateOgpHtml
+  // injectOgpMeta
   // ========================================
-  describe('generateOgpHtml', () => {
+  describe('injectOgpMeta', () => {
     const defaultParams = {
       title: 'テストフロー',
       author: '田中太郎',
@@ -138,156 +88,159 @@ describe('OGP Utility', () => {
       baseUrl: 'https://flowline.six1.jp',
     }
 
-    it('should include correct og:title meta tag', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<meta property="og:title" content="テストフロー — Flowline">')
+    it('should replace title tag with flow title', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('<title>テストフロー — Flowline</title>')
+      expect(result).not.toContain('フローを描く。チームが動く。</title>')
     })
 
-    it('should include correct HTML title tag', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<title>テストフロー — Flowline</title>')
+    it('should replace og:title with flow title', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('og:title" content="テストフロー — Flowline"')
     })
 
-    it('should include og:type article', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<meta property="og:type" content="article">')
-    })
-
-    it('should include og:url with share token', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        '<meta property="og:url" content="https://flowline.six1.jp/shared/abc123">',
+    it('should replace og:description with author and stats', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain(
+        'og:description" content="田中太郎さんが作成したフロー図（3レーン、10ノード）"',
       )
     })
 
-    it('should include og:description with author, lane count and node count', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        '<meta property="og:description" content="田中太郎さんが作成したフロー図（3レーン、10ノード）">',
+    it('should replace og:url with shared URL', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('og:url" content="https://flowline.six1.jp/shared/abc123"')
+    })
+
+    it('should replace og:image with dynamic OGP image URL', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain(
+        'og:image" content="https://flowline.six1.jp/api/ogp/share/abc123.png"',
       )
     })
 
-    it('should include dynamic og:image URL with share token', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        '<meta property="og:image" content="https://flowline.six1.jp/api/ogp/share/abc123.png">',
+    it('should change og:type from website to article', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('og:type" content="article"')
+      expect(result).not.toContain('og:type" content="website"')
+    })
+
+    it('should replace twitter:title with flow title', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('twitter:title" content="テストフロー — Flowline"')
+    })
+
+    it('should replace twitter:description with author info', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('twitter:description" content="田中太郎さんが作成したフロー図"')
+    })
+
+    it('should replace twitter:image with dynamic OGP image URL', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain(
+        'twitter:image" content="https://flowline.six1.jp/api/ogp/share/abc123.png"',
       )
     })
 
-    it('should include og:image dimensions 1200x630', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<meta property="og:image:width" content="1200">')
-      expect(html).toContain('<meta property="og:image:height" content="630">')
+    it('should preserve og:image:width and og:image:height', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('og:image:width" content="1200"')
+      expect(result).toContain('og:image:height" content="630"')
     })
 
-    it('should include og:site_name Flowline', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<meta property="og:site_name" content="Flowline">')
+    it('should preserve og:site_name and og:locale', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('og:site_name" content="Flowline"')
+      expect(result).toContain('og:locale" content="ja_JP"')
     })
 
-    it('should include og:locale ja_JP', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<meta property="og:locale" content="ja_JP">')
+    it('should preserve SPA script tag and root div', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain('<div id="root"></div>')
+      expect(result).toContain('<script type="module" src="/src/main.tsx"></script>')
     })
 
-    it('should include twitter:card summary_large_image', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<meta name="twitter:card" content="summary_large_image">')
-    })
-
-    it('should include twitter:title', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<meta name="twitter:title" content="テストフロー — Flowline">')
-    })
-
-    it('should include twitter:description', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        '<meta name="twitter:description" content="田中太郎さんが作成したフロー図">',
-      )
-    })
-
-    it('should include twitter:image', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain(
-        '<meta name="twitter:image" content="https://flowline.six1.jp/api/ogp/share/abc123.png">',
-      )
-    })
-
-    it('should include theme-color meta tag', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<meta name="theme-color" content="#7C5CFC">')
-    })
-
-    it('should include redirect script to shared page', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain("<script>window.location.href = '/shared/abc123';</script>")
+    it('should NOT contain redirect script', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).not.toContain('window.location.href')
+      expect(result).not.toContain('リダイレクト中')
     })
 
     it('should HTML-escape title to prevent XSS', () => {
-      const html = generateOgpHtml({
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
         ...defaultParams,
         title: '<script>alert("xss")</script>',
       })
-      expect(html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;')
-      expect(html).not.toContain('<script>alert("xss")</script> — Flowline</title>')
+      expect(result).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; — Flowline')
+      expect(result).not.toContain('<script>alert("xss")</script> — Flowline')
     })
 
     it('should HTML-escape author to prevent XSS', () => {
-      const html = generateOgpHtml({
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
         ...defaultParams,
         author: '"><img src=x onerror=alert(1)>',
       })
-      expect(html).not.toContain('"><img src=x onerror=alert(1)>')
-      expect(html).toContain('&quot;&gt;&lt;img src=x onerror=alert(1)&gt;')
+      expect(result).toContain('&quot;&gt;&lt;img src=x onerror=alert(1)&gt;さんが作成したフロー図')
     })
 
-    it('should use different share token in URLs', () => {
-      const html = generateOgpHtml({
-        ...defaultParams,
-        shareToken: 'xyz789',
-      })
-      expect(html).toContain('https://flowline.six1.jp/shared/xyz789')
-      expect(html).toContain('https://flowline.six1.jp/api/ogp/share/xyz789.png')
-      expect(html).toContain("'/shared/xyz789'")
-    })
-
-    it('should handle zero counts in description', () => {
-      const html = generateOgpHtml({
+    it('should handle zero lane and node counts', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
         ...defaultParams,
         laneCount: 0,
         nodeCount: 0,
       })
-      expect(html).toContain('（0レーン、0ノード）')
+      expect(result).toContain('（0レーン、0ノード）')
     })
 
-    it('should use provided baseUrl for og:url and og:image', () => {
-      const html = generateOgpHtml({
+    it('should use provided baseUrl for URLs', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
         ...defaultParams,
         baseUrl: 'https://custom.example.com',
       })
-      expect(html).toContain('https://custom.example.com/shared/abc123')
-      expect(html).toContain('https://custom.example.com/api/ogp/share/abc123.png')
+      expect(result).toContain('https://custom.example.com/shared/abc123')
+      expect(result).toContain('https://custom.example.com/api/ogp/share/abc123.png')
     })
 
     it('should handle baseUrl with trailing slash', () => {
-      const html = generateOgpHtml({
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
         ...defaultParams,
         baseUrl: 'https://example.com/',
       })
-      expect(html).toContain('https://example.com/shared/abc123')
-      expect(html).not.toContain('https://example.com//shared/')
+      expect(result).toContain('https://example.com/shared/abc123')
+      expect(result).not.toContain('https://example.com//shared/')
     })
 
-    it('should be a complete HTML document', () => {
-      const html = generateOgpHtml(defaultParams)
-      expect(html).toContain('<!DOCTYPE html>')
-      expect(html).toContain('<html')
-      expect(html).toContain('</html>')
-      expect(html).toContain('<head>')
-      expect(html).toContain('</head>')
-      expect(html).toContain('<body>')
-      expect(html).toContain('</body>')
+    it('should encode special characters in shareToken for URLs', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
+        ...defaultParams,
+        shareToken: 'token with spaces&special',
+      })
+      expect(result).toContain('token%20with%20spaces%26special')
+    })
+
+    it('should replace meta description tag', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toContain(
+        'name="description" content="田中太郎さんが作成したフロー図（3レーン、10ノード）"',
+      )
+      expect(result).not.toContain(
+        'name="description" content="業務プロセスを視覚化するスイムレーンエディタ。"',
+      )
+    })
+
+    it('should handle $ metacharacter in title without replacement pattern expansion', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
+        ...defaultParams,
+        title: '$& project',
+      })
+      expect(result).toContain('<title>$&amp; project — Flowline</title>')
+    })
+
+    it('should handle $1 in author name without capture group expansion', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, {
+        ...defaultParams,
+        author: '$1 予算チーム',
+      })
+      expect(result).toContain('$1 予算チームさんが作成したフロー図')
     })
   })
 })
