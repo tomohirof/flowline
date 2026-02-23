@@ -168,14 +168,14 @@ export function buildFlowTool() {
 
 /**
  * Parse Claude API response and extract flow data from tool_use block.
+ * Accepts the response object from Anthropic SDK's messages.create().
  */
-export function parseAiResponse(response: {
-  content: Array<
-    { type: 'text'; text: string } | { type: 'tool_use'; id: string; name: string; input: unknown }
-  >
-}): FlowToolInput {
-  const toolUse = response.content.find((block) => block.type === 'tool_use')
-  if (!toolUse || toolUse.type !== 'tool_use') {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function parseAiResponse(response: { content: readonly any[] }): FlowToolInput {
+  const toolUse = response.content.find((block: { type: string }) => block.type === 'tool_use') as
+    | { type: 'tool_use'; input: unknown }
+    | undefined
+  if (!toolUse) {
     throw new Error('AIレスポンスにtool_useブロックが含まれていません')
   }
   return toolUse.input as FlowToolInput
