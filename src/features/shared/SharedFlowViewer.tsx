@@ -4,6 +4,8 @@ import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
 import { exitPt, entryPt, buildArrowPath, type Point } from '../../lib/arrow-routing'
+import { TeaserModal } from './TeaserModal'
+import { BottomCTABar } from './BottomCTABar'
 
 interface SharedFlowViewerProps {
   flow: Flow
@@ -15,6 +17,20 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   const isDark = themeId === 'midnight'
 
   const [zoom, setZoom] = useState(1)
+  const [showModal, setShowModal] = useState(true)
+  const [showBottomBar, setShowBottomBar] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
+
+  const closeModal = () => {
+    setShowModal(false)
+    timerRef.current = setTimeout(() => setShowBottomBar(true), 3000)
+  }
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
@@ -144,7 +160,8 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       {/* Canvas */}
       <div
         ref={containerRef}
-        className={styles.canvas}
+        className={`${styles.canvas}${showModal ? ` ${styles.canvasBlurred}` : ''}`}
+        data-testid="shared-flow-canvas"
         style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}
       >
         <svg
@@ -371,6 +388,17 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         </div>
         <span className={styles.footerText}>Flowlineで作成</span>
       </div>
+      {showModal && (
+        <TeaserModal
+          flowTitle={flow.title}
+          laneCount={sortedLanes.length}
+          nodeCount={flow.nodes.length}
+          laneColors={sortedLanes.map((l) => l.colorIndex)}
+          isDark={isDark}
+          onClose={closeModal}
+        />
+      )}
+      <BottomCTABar visible={showBottomBar} onClose={() => setShowBottomBar(false)} />
     </div>
   )
 }
