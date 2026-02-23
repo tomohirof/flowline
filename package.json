@@ -18,7 +18,7 @@
     "deploy": "npm run build && wrangler pages deploy dist"
   },
   "dependencies": {
-    "@resvg/resvg-wasm": "^2.6.2",
+    "@cf-wasm/resvg": "^0.3.3",
     "bcryptjs": "^3.0.3",
     "hono": "^4.11.9",
     "react": "^19.2.0",

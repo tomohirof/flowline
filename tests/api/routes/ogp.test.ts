@@ -2,27 +2,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 import { createTestDb, createMockD1 } from '../../helpers/mock-d1'
 
-// Valid PNG signature bytes for mock
-const VALID_PNG_HEADER = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
-
 // Mock satori — returns a fake SVG string
 vi.mock('satori', () => ({
   default: vi.fn(async () => '<svg></svg>'),
 }))
-
-// Mock @resvg/resvg-wasm with a proper class for Resvg
-vi.mock('@resvg/resvg-wasm', () => {
-  return {
-    initWasm: vi.fn(async () => {}),
-    Resvg: class MockResvg {
-      render() {
-        return {
-          asPng: () => VALID_PNG_HEADER,
-        }
-      }
-    },
-  }
-})
 
 // Import app after mocks are set up
 import { app } from '../../../api/app'
@@ -223,19 +206,6 @@ describe('OGP Image API', () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'font-404')
 
       const res = await getRequest('/api/ogp/share/font-404.png', env)
-      expect(res.status).toBe(500)
-      const body = await res.json()
-      expect(body).toHaveProperty('error')
-    })
-
-    it('should return 500 with error message when WASM initialization fails', async () => {
-      _resetOgpCacheForTesting()
-      const { initWasm } = await import('@resvg/resvg-wasm')
-      vi.mocked(initWasm).mockRejectedValueOnce(new Error('WASM load failed'))
-
-      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'wasm-fail')
-
-      const res = await getRequest('/api/ogp/share/wasm-fail.png', env)
       expect(res.status).toBe(500)
       const body = await res.json()
       expect(body).toHaveProperty('error')
