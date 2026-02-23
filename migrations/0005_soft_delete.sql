@@ -1,0 +1,1 @@
+ALTER TABLE flows ADD COLUMN deleted_at TEXT DEFAULT NULL;

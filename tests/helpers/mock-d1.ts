@@ -10,6 +10,7 @@ export function createTestDb(): ReturnType<typeof Database> {
     '0002_node_arrow_styles.sql',
     '0003_user_settings.sql',
     '0004_email_verification.sql',
+    '0005_soft_delete.sql',
   ]
   for (const file of migrationFiles) {
     const sql = readFileSync(resolve(__dirname, '../../migrations/', file), 'utf-8')
