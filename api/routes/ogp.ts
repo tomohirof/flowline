@@ -2,7 +2,6 @@ import { Hono } from 'hono'
 import type { Bindings } from '../app'
 import satori from 'satori'
 import { initWasm, Resvg } from '@resvg/resvg-wasm'
-// @ts-expect-error -- wasm binary import for Cloudflare Workers bundler
 import resvgWasm from '../../node_modules/@resvg/resvg-wasm/index_bg.wasm'
 
 let wasmInitPromise: Promise<void> | null = null
