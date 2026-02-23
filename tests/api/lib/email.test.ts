@@ -3,23 +3,23 @@ import { sendVerificationEmail, buildVerificationUrl } from '../../../api/lib/em
 
 describe('buildVerificationUrl', () => {
   it('should return URL with token parameter', () => {
-    const url = buildVerificationUrl('abc123', 'https://flowline.pages.dev')
-    expect(url).toBe('https://flowline.pages.dev/verify?token=abc123')
+    const url = buildVerificationUrl('abc123', 'https://flowline.six1.jp')
+    expect(url).toBe('https://flowline.six1.jp/verify?token=abc123')
   })
 
   it('should handle empty token string', () => {
-    const url = buildVerificationUrl('', 'https://flowline.pages.dev')
-    expect(url).toBe('https://flowline.pages.dev/verify?token=')
+    const url = buildVerificationUrl('', 'https://flowline.six1.jp')
+    expect(url).toBe('https://flowline.six1.jp/verify?token=')
   })
 
   it('should handle base URL with trailing slash', () => {
-    const url = buildVerificationUrl('abc123', 'https://flowline.pages.dev/')
+    const url = buildVerificationUrl('abc123', 'https://flowline.six1.jp/')
     // Should not produce double slash in path
     expect(url).toContain('verify?token=abc123')
   })
 
   it('should encode special characters in token', () => {
-    const url = buildVerificationUrl('abc+123&foo=bar', 'https://flowline.pages.dev')
+    const url = buildVerificationUrl('abc+123&foo=bar', 'https://flowline.six1.jp')
     expect(url).toContain('verify?token=')
     // Token should be included (encoding is implementation detail)
     expect(url).toContain('abc')
@@ -43,7 +43,7 @@ describe('sendVerificationEmail', () => {
       'test@example.com',
       'token123',
       'resend-key',
-      'https://flowline.pages.dev',
+      'https://flowline.six1.jp',
     )
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -66,7 +66,7 @@ describe('sendVerificationEmail', () => {
   it('should throw error when Resend API returns error', async () => {
     mockFetch.mockResolvedValue({ ok: false, status: 422, text: async () => 'Bad request' })
     await expect(
-      sendVerificationEmail('bad@example.com', 'token', 'key', 'https://flowline.pages.dev'),
+      sendVerificationEmail('bad@example.com', 'token', 'key', 'https://flowline.six1.jp'),
     ).rejects.toThrow()
   })
 
@@ -83,33 +83,33 @@ describe('sendVerificationEmail', () => {
       text: async () => 'Internal Server Error',
     })
     await expect(
-      sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.pages.dev'),
+      sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.six1.jp'),
     ).rejects.toThrow(/500/)
   })
 
   it('should throw error when Resend API returns 404', async () => {
     mockFetch.mockResolvedValue({ ok: false, status: 404, text: async () => 'Not Found' })
     await expect(
-      sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.pages.dev'),
+      sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.six1.jp'),
     ).rejects.toThrow()
   })
 
   it('should throw error when fetch rejects (network error)', async () => {
     mockFetch.mockRejectedValue(new Error('Network timeout'))
     await expect(
-      sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.pages.dev'),
+      sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.six1.jp'),
     ).rejects.toThrow('Network timeout')
   })
 
   it('should include from address in request body', async () => {
-    await sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.pages.dev')
+    await sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.six1.jp')
     const body = JSON.parse(mockFetch.mock.calls[0][1].body)
     expect(body.from).toBeDefined()
     expect(body.from).toContain('Flowline')
   })
 
   it('should send valid HTML content', async () => {
-    await sendVerificationEmail('user@test.com', 'tok', 'key', 'https://flowline.pages.dev')
+    await sendVerificationEmail('user@test.com', 'tok', 'key', 'https://flowline.six1.jp')
     const body = JSON.parse(mockFetch.mock.calls[0][1].body)
     expect(body.html).toContain('<!DOCTYPE html>')
     expect(body.html).toContain('</html>')

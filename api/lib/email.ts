@@ -18,7 +18,7 @@ export async function sendVerificationEmail(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Flowline <noreply@flowline.pages.dev>',
+      from: 'Flowline <flowline@six1.jp>',
       to: [email],
       subject: 'Flowline へようこそ！ メールアドレスを確認してください',
       html: buildEmailHtml(email, verifyUrl),

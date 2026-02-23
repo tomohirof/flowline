@@ -11,17 +11,17 @@ describe('index.html OGP meta tags', () => {
     expect(matches).toBeNull()
   })
 
-  it('should have og:url pointing to flowline.pages.dev', () => {
-    expect(html).toContain('content="https://flowline.pages.dev"')
+  it('should have og:url pointing to flowline.six1.jp', () => {
+    expect(html).toContain('content="https://flowline.six1.jp"')
   })
 
-  it('should have og:image pointing to flowline.pages.dev', () => {
-    expect(html).toContain('content="https://flowline.pages.dev/ogp/default.png"')
+  it('should have og:image pointing to flowline.six1.jp', () => {
+    expect(html).toContain('content="https://flowline.six1.jp/ogp/default.png"')
   })
 
-  it('should have twitter:image pointing to flowline.pages.dev', () => {
+  it('should have twitter:image pointing to flowline.six1.jp', () => {
     expect(html).toContain(
-      'name="twitter:image" content="https://flowline.pages.dev/ogp/default.png"',
+      'name="twitter:image" content="https://flowline.six1.jp/ogp/default.png"',
     )
   })
 })

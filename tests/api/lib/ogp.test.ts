@@ -135,7 +135,7 @@ describe('OGP Utility', () => {
       laneCount: 3,
       nodeCount: 10,
       shareToken: 'abc123',
-      baseUrl: 'https://flowline.pages.dev',
+      baseUrl: 'https://flowline.six1.jp',
     }
 
     it('should include correct og:title meta tag', () => {
@@ -156,7 +156,7 @@ describe('OGP Utility', () => {
     it('should include og:url with share token', () => {
       const html = generateOgpHtml(defaultParams)
       expect(html).toContain(
-        '<meta property="og:url" content="https://flowline.pages.dev/shared/abc123">',
+        '<meta property="og:url" content="https://flowline.six1.jp/shared/abc123">',
       )
     })
 
@@ -170,7 +170,7 @@ describe('OGP Utility', () => {
     it('should include dynamic og:image URL with share token', () => {
       const html = generateOgpHtml(defaultParams)
       expect(html).toContain(
-        '<meta property="og:image" content="https://flowline.pages.dev/api/ogp/share/abc123.png">',
+        '<meta property="og:image" content="https://flowline.six1.jp/api/ogp/share/abc123.png">',
       )
     })
 
@@ -210,7 +210,7 @@ describe('OGP Utility', () => {
     it('should include twitter:image', () => {
       const html = generateOgpHtml(defaultParams)
       expect(html).toContain(
-        '<meta name="twitter:image" content="https://flowline.pages.dev/api/ogp/share/abc123.png">',
+        '<meta name="twitter:image" content="https://flowline.six1.jp/api/ogp/share/abc123.png">',
       )
     })
 
@@ -247,8 +247,8 @@ describe('OGP Utility', () => {
         ...defaultParams,
         shareToken: 'xyz789',
       })
-      expect(html).toContain('https://flowline.pages.dev/shared/xyz789')
-      expect(html).toContain('https://flowline.pages.dev/api/ogp/share/xyz789.png')
+      expect(html).toContain('https://flowline.six1.jp/shared/xyz789')
+      expect(html).toContain('https://flowline.six1.jp/api/ogp/share/xyz789.png')
       expect(html).toContain("'/shared/xyz789'")
     })
 
