@@ -7,7 +7,7 @@ function wasmMockPlugin(): Plugin {
   return {
     name: 'wasm-mock',
     enforce: 'pre',
-    resolveId(source, importer) {
+    resolveId(source) {
       if (source.endsWith('.wasm')) {
         return mockPath
       }
