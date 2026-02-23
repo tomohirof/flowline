@@ -106,6 +106,26 @@ flows.get('/', async (c) => {
 })
 
 // =============================================
+// GET /trash - List user's deleted flows
+// =============================================
+
+flows.get('/trash', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+
+  const result = await db
+    .prepare(
+      'SELECT * FROM flows WHERE user_id = ? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
+    )
+    .bind(userId)
+    .all<FlowRow>()
+
+  const flowList = (result.results ?? []).map(toFlowSummary)
+
+  return c.json({ flows: flowList })
+})
+
+// =============================================
 // POST / - Create flow
 // =============================================
 
@@ -443,6 +463,71 @@ flows.delete('/:id/share', async (c) => {
   await db.prepare('UPDATE flows SET share_token = NULL WHERE id = ?').bind(flowId).run()
 
   return c.json({ message: '共有を解除しました' })
+})
+
+// =============================================
+// POST /:id/restore - Restore soft-deleted flow
+// =============================================
+
+flows.post('/:id/restore', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const flowId = c.req.param('id')
+
+  const ownership = await checkFlowOwnership(db, flowId, userId)
+  if (ownership.error === 'not_found') {
+    return c.json({ error: 'フローが見つかりません' }, 404)
+  }
+  if (ownership.error === 'forbidden') {
+    return c.json({ error: 'アクセス権限がありません' }, 403)
+  }
+
+  const flow = await db
+    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ deleted_at: string | null }>()
+  if (!flow?.deleted_at) {
+    return c.json({ error: 'フローが見つかりません' }, 404)
+  }
+
+  await db.prepare('UPDATE flows SET deleted_at = NULL WHERE id = ?').bind(flowId).run()
+
+  return c.json({ message: 'フローを復元しました' })
+})
+
+// =============================================
+// DELETE /:id/permanent - Permanently delete flow
+// =============================================
+
+flows.delete('/:id/permanent', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const flowId = c.req.param('id')
+
+  const ownership = await checkFlowOwnership(db, flowId, userId)
+  if (ownership.error === 'not_found') {
+    return c.json({ error: 'フローが見つかりません' }, 404)
+  }
+  if (ownership.error === 'forbidden') {
+    return c.json({ error: 'アクセス権限がありません' }, 403)
+  }
+
+  const flow = await db
+    .prepare('SELECT deleted_at FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ deleted_at: string | null }>()
+  if (!flow?.deleted_at) {
+    return c.json({ error: 'フローが見つかりません' }, 404)
+  }
+
+  await db.batch([
+    db.prepare('DELETE FROM arrows WHERE flow_id = ?').bind(flowId),
+    db.prepare('DELETE FROM nodes WHERE flow_id = ?').bind(flowId),
+    db.prepare('DELETE FROM lanes WHERE flow_id = ?').bind(flowId),
+    db.prepare('DELETE FROM flows WHERE id = ?').bind(flowId),
+  ])
+
+  return c.json({ message: 'フローを完全に削除しました' })
 })
 
 // =============================================
