@@ -12,10 +12,8 @@
   transition: transform 0.3s ease;
 }
 
-.collapsed {
-  transform: translateY(0);
-}
-
+/* collapsed/expanded exist for conditional class application */
+.collapsed,
 .expanded {
   transform: translateY(0);
 }

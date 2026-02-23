@@ -3075,6 +3075,15 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         flowId={flow.id}
         aiEnabled={user?.aiEnabled ?? false}
         onFlowGenerated={(aiFlow) => {
+          const hasExistingContent = order.length > 0
+          if (
+            hasExistingContent &&
+            !window.confirm(
+              'AIが生成したフローを適用すると、現在のフローが上書きされます。よろしいですか？',
+            )
+          ) {
+            return
+          }
           const tempFlow: Flow = {
             id: flow.id,
             title: aiFlow.title,

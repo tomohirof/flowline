@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { apiFetch } from '../../../lib/api'
 import type { Lane, Node, Arrow } from '../types'
 import styles from './AiAssistant.module.css'
@@ -22,6 +22,13 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-focus textarea when panel expands
+  useEffect(() => {
+    if (expanded) {
+      textareaRef.current?.focus()
+    }
+  }, [expanded])
 
   if (!aiEnabled) {
     return null
