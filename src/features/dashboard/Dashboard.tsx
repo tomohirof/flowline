@@ -7,6 +7,8 @@ import { FlowContextMenu } from './FlowContextMenu'
 import { DashboardTopBar } from './DashboardTopBar'
 import { DashboardSidebar } from './DashboardSidebar'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { Toast } from '../../components/Toast'
 import { PALETTES } from '../editor/theme-constants'
 import { formatRelativeTime } from '../../utils/formatRelativeTime'
 import { DEFAULT_FLOW_TITLE, DEFAULT_FLOW_THEME_ID, createDefaultLanes } from './constants'
@@ -27,6 +29,15 @@ export function Dashboard() {
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
+
+  const [modal, setModal] = useState<{
+    title: string
+    message: string
+    onConfirm: () => void
+    danger?: boolean
+    confirmLabel?: string
+  } | null>(null)
+  const [toast, setToast] = useState<{ message: string; icon?: string } | null>(null)
 
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -109,19 +120,27 @@ export function Dashboard() {
     }
   }
 
-  const handleDelete = async (id: string, title: string) => {
+  const handleDelete = (id: string, title: string) => {
     if (deletingId) return
-    if (!window.confirm(`「${title}」を削除しますか？`)) return
-
-    setDeletingId(id)
-    try {
-      await apiFetch(`/flows/${id}`, { method: 'DELETE' })
-      setFlows((prev) => prev.filter((f) => f.id !== id))
-    } catch {
-      setError('フローの削除に失敗しました')
-    } finally {
-      setDeletingId(null)
-    }
+    setModal({
+      title: 'フローを削除',
+      message: `「${title}」を削除しますか？この操作は取り消せません。`,
+      confirmLabel: '削除する',
+      danger: true,
+      onConfirm: async () => {
+        setModal(null)
+        setDeletingId(id)
+        try {
+          await apiFetch(`/flows/${id}`, { method: 'DELETE' })
+          setFlows((prev) => prev.filter((f) => f.id !== id))
+          setToast({ message: '削除しました', icon: '🗑' })
+        } catch {
+          setError('フローの削除に失敗しました')
+        } finally {
+          setDeletingId(null)
+        }
+      },
+    })
   }
 
   const handleRename = async (id: string, newTitle: string) => {
@@ -440,6 +459,18 @@ export function Dashboard() {
         userEmail={user?.email ?? ''}
         onLogout={logout}
       />
+
+      {modal && (
+        <ConfirmDialog
+          title={modal.title}
+          message={modal.message}
+          onConfirm={modal.onConfirm}
+          onCancel={() => setModal(null)}
+          danger={modal.danger}
+          confirmLabel={modal.confirmLabel}
+        />
+      )}
+      {toast && <Toast message={toast.message} icon={toast.icon} onClose={() => setToast(null)} />}
     </div>
   )
 }
