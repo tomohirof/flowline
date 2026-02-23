@@ -21,6 +21,12 @@ vi.mock('../../lib/api', () => ({
   apiFetch: (...args: unknown[]) => mockApiFetch(...args),
 }))
 
+// Mock useAuth
+const mockRefreshAuth = vi.fn()
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({ refreshAuth: mockRefreshAuth }),
+}))
+
 function renderWithRouter(initialEntries: string[] = ['/verify']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
@@ -173,6 +179,19 @@ describe('VerifyPage', () => {
       expect(screen.getByText('メール認証が完了しました！')).toBeInTheDocument()
     })
     expect(screen.queryByText('トップに戻る')).not.toBeInTheDocument()
+  })
+
+  // --- refreshAuth ---
+  it('should call refreshAuth after successful verification', async () => {
+    mockRefreshAuth.mockResolvedValue(undefined)
+    mockApiFetch.mockResolvedValue({ verified: true })
+    renderWithRouter(['/verify?token=valid-token'])
+
+    await waitFor(() => {
+      expect(screen.getByText('メール認証が完了しました！')).toBeInTheDocument()
+    })
+
+    expect(mockRefreshAuth).toHaveBeenCalledTimes(1)
   })
 
   // --- チェックアイコン表示 ---
