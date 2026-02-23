@@ -1208,3 +1208,219 @@ describe('editorSettings API sync (#89)', () => {
     })
   })
 })
+
+describe('Mermaid flowchart TD export (#mermaid)', () => {
+  beforeEach(() => {
+    cleanup()
+  })
+
+  /**
+   * Helper: mock navigator.clipboard.writeText and return spy.
+   * Each test sets up its own mock for independence.
+   */
+  const setupClipboardMock = () => {
+    const writeTextSpy = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextSpy },
+      writable: true,
+      configurable: true,
+    })
+    return writeTextSpy
+  }
+
+  /**
+   * Helper: click "Mermaid コードをコピー" button and return clipboard text.
+   * The button is in the right panel (default state, nothing selected).
+   */
+  const clickMermaidCopyButton = async (writeTextSpy: ReturnType<typeof vi.fn>) => {
+    const btns = screen.getAllByText('Mermaid コードをコピー')
+    await userEvent.click(btns[0])
+    await waitFor(() => {
+      expect(writeTextSpy).toHaveBeenCalled()
+    })
+    return writeTextSpy.mock.calls[0][0] as string
+  }
+
+  it('exportMermaid should output flowchart TD with subgraph per lane when flow has multiple lanes, nodes, and arrows', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [
+        { id: 'lane-1', name: '企画', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: '開発', colorIndex: 1, position: 1 },
+      ],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '要件定義', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: '設計', note: null, orderIndex: 1 },
+        { id: 'n3', laneId: 'lane-2', rowIndex: 2, label: '実装', note: null, orderIndex: 2 },
+      ],
+      arrows: [
+        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null },
+        { id: 'a2', fromNodeId: 'n2', toNodeId: 'n3', comment: null },
+      ],
+    }
+
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+
+    // Should start with flowchart TD
+    expect(mermaid).toMatch(/^flowchart TD\n/)
+
+    // Should contain subgraph for each lane
+    expect(mermaid).toContain('subgraph 企画')
+    expect(mermaid).toContain('subgraph 開発')
+    expect(mermaid).toContain('end')
+
+    // Should contain node definitions with double-quoted labels in brackets
+    expect(mermaid).toMatch(/n1\["要件定義"\]/)
+    expect(mermaid).toMatch(/n2\["設計"\]/)
+    expect(mermaid).toMatch(/n3\["実装"\]/)
+
+    // Should contain arrow connections
+    expect(mermaid).toContain('n1 --> n2')
+    expect(mermaid).toContain('n2 --> n3')
+  })
+
+  it('exportMermaid should include isolated nodes inside subgraph when node has no arrows', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 }],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '孤立ノード', note: null, orderIndex: 0 },
+      ],
+      arrows: [],
+    }
+
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+
+    // Should start with flowchart TD
+    expect(mermaid).toMatch(/^flowchart TD\n/)
+
+    // Isolated node should be inside subgraph
+    expect(mermaid).toContain('subgraph レーン1')
+    expect(mermaid).toMatch(/n1\["孤立ノード"\]/)
+
+    // No arrows in output
+    expect(mermaid).not.toContain('-->')
+  })
+
+  it('exportMermaid should escape double quotes in node labels as #quot;', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 }],
+      nodes: [
+        {
+          id: 'n1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'テスト"ラベル"です',
+          note: null,
+          orderIndex: 0,
+        },
+      ],
+      arrows: [],
+    }
+
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+
+    // Double quotes in labels should be escaped as #quot; inside the quoted brackets
+    expect(mermaid).toContain('#quot;')
+    expect(mermaid).toMatch(/n1\["テスト#quot;ラベル#quot;です"\]/)
+  })
+
+  it('exportMermaid should output arrow comments with -->|comment| format', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 }],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+      ],
+      arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: '承認後' }],
+    }
+
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+
+    // Arrow with comment should use -->|comment| format
+    expect(mermaid).toContain('-->|承認後|')
+  })
+
+  it('exportMermaid should output only flowchart TD without error when flow has no nodes', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 }],
+      nodes: [],
+      arrows: [],
+    }
+
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+
+    // Should start with flowchart TD
+    expect(mermaid).toMatch(/^flowchart TD\n/)
+
+    // Should not contain any arrow connections
+    expect(mermaid).not.toContain('-->')
+
+    // Should not throw error - the fact we get here means no error
+    expect(typeof mermaid).toBe('string')
+    expect(mermaid.length).toBeGreaterThan(0)
+  })
+
+  it('exportMermaid should escape brackets and pipe characters in labels', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 }],
+      nodes: [
+        {
+          id: 'n1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'テスト[注釈]',
+          note: null,
+          orderIndex: 0,
+        },
+      ],
+      arrows: [],
+    }
+
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+
+    // Brackets should be escaped
+    expect(mermaid).toContain('#lsqb;')
+    expect(mermaid).toContain('#rsqb;')
+    expect(mermaid).not.toContain('[注釈]')
+  })
+
+  it('exportMermaid should escape pipe characters in arrow comments', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [
+        { id: 'lane-1', name: 'A', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'B', colorIndex: 1, position: 1 },
+      ],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'ノード1', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-2', rowIndex: 1, label: 'ノード2', note: null, orderIndex: 1 },
+      ],
+      arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: 'A|B選択' }],
+    }
+
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+
+    // Pipe in comment should be escaped
+    expect(mermaid).toContain('#vert;')
+    expect(mermaid).toContain('A#vert;B選択')
+  })
+})

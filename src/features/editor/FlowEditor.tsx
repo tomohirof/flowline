@@ -1021,32 +1021,67 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   }
 
   const exportMermaid = (): string => {
-    let m = 'sequenceDiagram\n'
-    lanes.forEach((l) => {
-      m += `    participant ${l.name}\n`
-    })
-    m += '\n'
-    arrows.forEach((a) => {
-      const ft = tasks[a.from],
-        tt = tasks[a.to]
-      if (!ft || !tt) return
-      const fl = lanes.find((l) => l.id === ft.lid),
-        tl = lanes.find((l) => l.id === tt.lid)
-      if (!fl || !tl) return
-      if (fl.id === tl.id) m += `    Note over ${fl.name}: ${ft.label}\n`
-      else m += `    ${fl.name}->>${tl.name}: ${a.comment || ft.label}\n`
-    })
-    const used = new Set<string>()
-    arrows.forEach((a) => {
-      used.add(a.from)
-      used.add(a.to)
-    })
-    order.forEach((k) => {
-      if (!used.has(k) && tasks[k]) {
-        const l = lanes.find((x) => x.id === tasks[k].lid)
-        if (l) m += `    Note over ${l.name}: ${tasks[k].label}\n`
+    // Collect all task entries with their row index for sorting
+    const taskEntries: { key: string; task: TaskData; rowIdx: number }[] = []
+    for (const key of order) {
+      const t = tasks[key]
+      if (!t) continue
+      const ri = rows.findIndex((r) => r.id === t.rid)
+      taskEntries.push({ key, task: t, rowIdx: ri >= 0 ? ri : Infinity })
+    }
+    // Also include any tasks not in order
+    const includedKeys = new Set(taskEntries.map((e) => e.key))
+    Object.keys(tasks).forEach((key) => {
+      if (!includedKeys.has(key)) {
+        const t = tasks[key]
+        const ri = rows.findIndex((r) => r.id === t.rid)
+        taskEntries.push({ key, task: t, rowIdx: ri >= 0 ? ri : Infinity })
       }
     })
+    taskEntries.sort((a, b) => a.rowIdx - b.rowIdx)
+
+    // Assign sequential Mermaid-safe node IDs
+    const nodeIdMap = new Map<string, string>()
+    taskEntries.forEach((e, i) => {
+      nodeIdMap.set(e.key, `n${i + 1}`)
+    })
+
+    // Escape helper for Mermaid labels
+    const esc = (s: string): string =>
+      s
+        .replace(/"/g, '#quot;')
+        .replace(/\[/g, '#lsqb;')
+        .replace(/\]/g, '#rsqb;')
+        .replace(/\|/g, '#vert;')
+        .replace(/\n/g, ' ')
+
+    let m = 'flowchart TD\n'
+
+    // Group tasks by lane and output subgraphs
+    lanes.forEach((lane) => {
+      const laneTasks = taskEntries.filter((e) => e.task.lid === lane.id)
+      if (laneTasks.length === 0) return
+      m += `    subgraph ${esc(lane.name)}\n`
+      laneTasks.forEach((e) => {
+        const nid = nodeIdMap.get(e.key)!
+        m += `        ${nid}["${esc(e.task.label)}"]\n`
+      })
+      m += '    end\n'
+    })
+
+    // Output connections
+    m += '\n'
+    arrows.forEach((a) => {
+      const fromId = nodeIdMap.get(a.from)
+      const toId = nodeIdMap.get(a.to)
+      if (!fromId || !toId) return
+      if (a.comment) {
+        m += `    ${fromId} -->|${esc(a.comment)}| ${toId}\n`
+      } else {
+        m += `    ${fromId} --> ${toId}\n`
+      }
+    })
+
     return m
   }
 
