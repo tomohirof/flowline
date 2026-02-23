@@ -81,7 +81,6 @@ export function Dashboard() {
 
   const loadTrashFlows = useCallback(async () => {
     try {
-      setLoading(true)
       setError(null)
       const data = await apiFetch<FlowListResponse>('/flows/trash')
       setTrashFlows(data.flows)

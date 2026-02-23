@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
-import { DashboardSkeleton } from './DashboardSkeleton'
+import { DashboardSkeleton, SKELETON_CARD_COUNT } from './DashboardSkeleton'
 
 describe('DashboardSkeleton', () => {
   afterEach(() => {
@@ -27,7 +27,7 @@ describe('DashboardSkeleton', () => {
   it('should render main area with 6 card skeletons', () => {
     render(<DashboardSkeleton />)
     const cards = screen.getAllByTestId('skeleton-card')
-    expect(cards).toHaveLength(6)
+    expect(cards).toHaveLength(SKELETON_CARD_COUNT)
   })
 
   it('should render title and tab skeletons in main area', () => {

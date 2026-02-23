@@ -1,6 +1,6 @@
 import styles from './DashboardSkeleton.module.css'
 
-const SKELETON_CARD_COUNT = 6
+export const SKELETON_CARD_COUNT = 6
 const NAV_WIDTHS = [130, 110, 95, 80, 90]
 const TEAM_WIDTHS = [120, 100]
 const TAB_WIDTHS = [60, 70, 80]
