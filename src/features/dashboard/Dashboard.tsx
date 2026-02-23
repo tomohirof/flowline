@@ -416,22 +416,6 @@ export function Dashboard() {
                       &#x22EF;
                     </button>
                   </div>
-
-                  {/* Hidden delete button for test compatibility */}
-                  <button
-                    data-testid={`delete-flow-${flow.id}`}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleDelete(flow.id, flow.title)
-                    }}
-                    disabled={deletingId === flow.id}
-                    className={styles.hiddenDelete}
-                    tabIndex={-1}
-                    aria-hidden="true"
-                  >
-                    {deletingId === flow.id ? '削除中...' : '削除'}
-                  </button>
                 </div>
               ))}
             </div>

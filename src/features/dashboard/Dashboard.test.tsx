@@ -492,9 +492,9 @@ describe('Dashboard', () => {
     const link2 = screen.getByTestId('flow-link-flow-2')
     expect(link2).toHaveAttribute('href', '/flows/flow-2')
 
-    // Delete buttons should exist
-    expect(screen.getByTestId('delete-flow-flow-1')).toBeInTheDocument()
-    expect(screen.getByTestId('delete-flow-flow-2')).toBeInTheDocument()
+    // Menu buttons should exist for each flow in list view
+    const menuBtns = screen.getAllByLabelText('メニュー')
+    expect(menuBtns.length).toBeGreaterThanOrEqual(2)
   })
 
   // =============================================
