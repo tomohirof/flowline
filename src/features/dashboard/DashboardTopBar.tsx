@@ -1,3 +1,4 @@
+import { BRAND } from '../../constants/brand'
 import styles from './DashboardTopBar.module.css'
 
 interface DashboardTopBarProps {
@@ -19,8 +20,8 @@ export function DashboardTopBar({
     <div data-testid="dashboard-topbar" className={styles.topbar}>
       {/* Logo */}
       <div className={styles.logo}>
-        <div className={styles.logoIcon}>F</div>
-        <span className={styles.logoText}>Flowline</span>
+        <div className={styles.logoIcon}>{BRAND.logoInitial}</div>
+        <span className={styles.logoText}>{BRAND.name}</span>
       </div>
 
       <div className={styles.divider} />

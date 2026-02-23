@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import { BRAND } from '../../constants/brand'
 import { DashboardSkeleton, SKELETON_CARD_COUNT } from './DashboardSkeleton'
 
 describe('DashboardSkeleton', () => {
@@ -15,8 +16,8 @@ describe('DashboardSkeleton', () => {
 
   it('should render topbar skeleton with logo', () => {
     render(<DashboardSkeleton />)
-    expect(screen.getByText('Flowline')).toBeInTheDocument()
-    expect(screen.getByText('F')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.name)).toBeInTheDocument()
+    expect(screen.getByText(BRAND.logoInitial)).toBeInTheDocument()
   })
 
   it('should render sidebar skeleton bones', () => {

@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { BRAND } from '../../../constants/brand'
 import { CtaSection } from './CtaSection'
 
 describe('CtaSection', () => {
@@ -9,19 +10,19 @@ describe('CtaSection', () => {
     cleanup()
   })
 
-  it('should render heading "業務フローの可視化を、今日から。"', () => {
+  it('should render CTA heading', () => {
     render(<CtaSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText('業務フローの可視化を、今日から。')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.ctaHeading)).toBeInTheDocument()
   })
 
-  it('should render sub text "アカウント登録で無料で始められます"', () => {
+  it('should render CTA subtext', () => {
     render(<CtaSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText('アカウント登録で無料で始められます')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.ctaSubtext)).toBeInTheDocument()
   })
 
-  it('should render CTA button "無料で始める →"', () => {
+  it('should render CTA button with primary CTA text', () => {
     render(<CtaSection onCtaClick={vi.fn()} />)
-    expect(screen.getByRole('button', { name: /無料で始める/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) })).toBeInTheDocument()
   })
 
   it('should call onCtaClick when CTA button is clicked', async () => {
@@ -29,7 +30,7 @@ describe('CtaSection', () => {
     const onCtaClick = vi.fn()
     render(<CtaSection onCtaClick={onCtaClick} />)
 
-    await user.click(screen.getByRole('button', { name: /無料で始める/ }))
+    await user.click(screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }))
     expect(onCtaClick).toHaveBeenCalledTimes(1)
   })
 })

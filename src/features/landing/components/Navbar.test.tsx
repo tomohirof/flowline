@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { BRAND } from '../../../constants/brand'
 import { Navbar } from './Navbar'
 
 describe('Navbar', () => {
@@ -30,12 +31,12 @@ describe('Navbar', () => {
 
   it('should render logo text "Flowline"', () => {
     renderNavbar()
-    expect(screen.getByText('Flowline')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.name)).toBeInTheDocument()
   })
 
   it('should render logo icon "F"', () => {
     renderNavbar()
-    expect(screen.getByText('F')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.logoInitial)).toBeInTheDocument()
   })
 
   it('should render nav links "機能" and "使い方"', () => {
@@ -51,7 +52,7 @@ describe('Navbar', () => {
 
   it('should render "無料で始める" button', () => {
     renderNavbar()
-    expect(screen.getByText('無料で始める')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.ctaButtonNav)).toBeInTheDocument()
   })
 
   it('should call onLoginClick when "ログイン" is clicked', async () => {
@@ -68,7 +69,7 @@ describe('Navbar', () => {
     const onSignupClick = vi.fn()
     renderNavbar({ ...defaultProps, onSignupClick })
 
-    await user.click(screen.getByText('無料で始める'))
+    await user.click(screen.getByText(BRAND.ctaButtonNav))
     expect(onSignupClick).toHaveBeenCalledTimes(1)
   })
 

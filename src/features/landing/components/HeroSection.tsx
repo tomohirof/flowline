@@ -1,3 +1,4 @@
+import { BRAND } from '../../../constants/brand'
 import styles from './HeroSection.module.css'
 import landingStyles from '../landing.module.css'
 
@@ -15,23 +16,23 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
       <div className={styles.content}>
         <div className={styles.badge}>
           <span className={styles.badgeDot} />
-          無料で使える業務フローエディタ
+          {BRAND.heroBadge}
         </div>
 
         <h1 className={styles.heading}>
-          フローを描く。
+          {BRAND.taglinePart1}
           <br />
-          <span className={styles.gradientText}>チームが動く。</span>
+          <span className={styles.gradientText}>{BRAND.taglinePart2}</span>
         </h1>
 
         <p className={styles.subtext}>
-          業務フローの設計・可視化・共有をひとつのツールで。
+          {BRAND.heroSubtext}
           <br />
-          直感的なエディタで、誰でもすぐに始められます。
+          {BRAND.heroSubtext2}
         </p>
 
         <button className={landingStyles.btnPrimary} onClick={onCtaClick}>
-          無料で始める →
+          {BRAND.ctaButtonPrimary}
         </button>
       </div>
     </section>

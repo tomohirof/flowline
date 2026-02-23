@@ -1,3 +1,4 @@
+import { BRAND } from '../../constants/brand'
 import styles from './DashboardSkeleton.module.css'
 
 export const SKELETON_CARD_COUNT = 6
@@ -15,8 +16,8 @@ export function DashboardSkeleton() {
     >
       {/* Topbar */}
       <div className={styles.topbar}>
-        <div className={styles.logo}>F</div>
-        <span className={styles.logoText}>Flowline</span>
+        <div className={styles.logo}>{BRAND.logoInitial}</div>
+        <span className={styles.logoText}>{BRAND.name}</span>
         <div className={styles.topbarSpacer} />
         <div className={styles.bone} style={{ width: 200, height: 32 }} />
         <div className={styles.topbarSpacer} />

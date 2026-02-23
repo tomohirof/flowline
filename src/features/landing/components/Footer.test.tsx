@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import { BRAND } from '../../../constants/brand'
 import { Footer } from './Footer'
 
 describe('Footer', () => {
@@ -15,12 +16,12 @@ describe('Footer', () => {
 
   it('should render logo "Flowline"', () => {
     render(<Footer />)
-    expect(screen.getByText('Flowline')).toBeInTheDocument()
+    expect(screen.getByText(BRAND.name)).toBeInTheDocument()
   })
 
   it('should render copyright text', () => {
     render(<Footer />)
-    expect(screen.getByText(/2026 Flowline/)).toBeInTheDocument()
+    expect(screen.getByText(BRAND.copyright)).toBeInTheDocument()
   })
 
   it('should render link "プライバシーポリシー"', () => {

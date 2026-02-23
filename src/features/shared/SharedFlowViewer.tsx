@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
+import { BRAND } from '../../constants/brand'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
@@ -139,13 +140,13 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       {/* Title bar */}
       <div className={styles.titleBar}>
         <div className={styles.logoIcon} style={{ background: logoGradient }}>
-          F
+          {BRAND.logoInitial}
         </div>
-        <span className={styles.brandName}>Flowline</span>
+        <span className={styles.brandName}>{BRAND.name}</span>
         <div className={styles.divider} />
         <span className={styles.flowTitle}>{flow.title}</span>
         <div className={styles.spacer} />
-        <span className={styles.viewModeBadge}>閲覧モード</span>
+        <span className={styles.viewModeBadge}>{BRAND.sharedViewBadge}</span>
         <div className={styles.zoomControls}>
           <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.min(2, z + 0.1))}>
             +
@@ -384,9 +385,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       {/* Footer */}
       <div className={styles.footer} data-testid="shared-flow-footer">
         <div className={styles.footerIcon} style={{ background: logoGradient }}>
-          F
+          {BRAND.logoInitial}
         </div>
-        <span className={styles.footerText}>Flowlineで作成</span>
+        <span className={styles.footerText}>{BRAND.sharedFooter}</span>
       </div>
       {showModal && (
         <TeaserModal

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { BRAND } from '../../constants/brand'
 import { SharedFlowPage } from './SharedFlowPage'
 import type { Flow } from '../editor/types'
 
@@ -112,7 +113,7 @@ describe('SharedFlowPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('shared-flow-footer')).toBeInTheDocument()
-      expect(screen.getByText('Flowlineで作成')).toBeInTheDocument()
+      expect(screen.getByText(BRAND.sharedFooter)).toBeInTheDocument()
     })
   })
 
@@ -170,7 +171,7 @@ describe('SharedFlowPage', () => {
     renderSharedPage()
 
     await waitFor(() => {
-      expect(document.title).toBe('Flowline - Shared Test Flow')
+      expect(document.title).toBe(`${BRAND.name} - Shared Test Flow`)
     })
   })
 
@@ -180,11 +181,11 @@ describe('SharedFlowPage', () => {
     const { unmount } = renderSharedPage()
 
     await waitFor(() => {
-      expect(document.title).toBe('Flowline - Shared Test Flow')
+      expect(document.title).toBe(`${BRAND.name} - Shared Test Flow`)
     })
 
     unmount()
-    expect(document.title).toBe('Flowline')
+    expect(document.title).toBe(BRAND.name)
   })
 
   // ========================================
@@ -239,7 +240,7 @@ describe('SharedFlowPage', () => {
         expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+      await userEvent.click(screen.getByRole('button', { name: BRAND.sharedViewButton }))
 
       expect(screen.queryByTestId('teaser-modal')).not.toBeInTheDocument()
       expect(screen.getByTestId('shared-flow-canvas')).not.toHaveClass(/Blurred/)
@@ -255,7 +256,7 @@ describe('SharedFlowPage', () => {
         expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+      await userEvent.click(screen.getByRole('button', { name: BRAND.sharedViewButton }))
 
       expect(screen.queryByTestId('bottom-cta-bar')).not.toBeInTheDocument()
 
@@ -278,7 +279,7 @@ describe('SharedFlowPage', () => {
         expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+      await userEvent.click(screen.getByRole('button', { name: BRAND.sharedViewButton }))
 
       vi.advanceTimersByTime(3000)
 

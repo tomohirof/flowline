@@ -1,3 +1,4 @@
+import { BRAND } from '../../../constants/brand'
 import styles from './Footer.module.css'
 import landingStyles from '../landing.module.css'
 
@@ -7,8 +8,8 @@ export function Footer() {
       <div className={landingStyles.container}>
         <div className={styles.inner}>
           <div className={styles.logo}>
-            <span className={styles.logoIcon}>F</span>
-            <span className={styles.logoText}>Flowline</span>
+            <span className={styles.logoIcon}>{BRAND.logoInitial}</span>
+            <span className={styles.logoText}>{BRAND.name}</span>
           </div>
 
           <div className={styles.links}>
@@ -17,7 +18,7 @@ export function Footer() {
             <button className={styles.link}>お問い合わせ</button>
           </div>
 
-          <span className={styles.copyright}>&copy; 2026 Flowline</span>
+          <span className={styles.copyright}>{BRAND.copyright}</span>
         </div>
       </div>
     </footer>
