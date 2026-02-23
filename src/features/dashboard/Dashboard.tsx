@@ -314,9 +314,7 @@ export function Dashboard() {
         <div className={styles.main}>
           {/* Sub-header: nav label + sort + view toggle */}
           <div className={styles.subheader}>
-            <h1 className={styles.title}>
-              {selectedNav === 'trash' ? 'ゴミ箱' : 'マイフロー'}
-            </h1>
+            <h1 className={styles.title}>{selectedNav === 'trash' ? 'ゴミ箱' : 'マイフロー'}</h1>
             <div className={styles.controls}>
               <select
                 data-testid="sort-select"
