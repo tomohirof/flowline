@@ -13,6 +13,7 @@
 ## Task 1: TeaserModal コンポーネント
 
 **Files:**
+
 - Create: `src/features/shared/TeaserModal.tsx`
 - Create: `src/features/shared/TeaserModal.module.css`
 - Create: `src/features/shared/TeaserModal.test.tsx`
@@ -176,7 +177,13 @@ interface TeaserModalProps {
   onClose: () => void
 }
 
-export function TeaserModal({ flowTitle, laneCount, nodeCount, laneColors, onClose }: TeaserModalProps) {
+export function TeaserModal({
+  flowTitle,
+  laneCount,
+  nodeCount,
+  laneColors,
+  onClose,
+}: TeaserModalProps) {
   return (
     <div className={styles.overlay} data-testid="teaser-modal">
       <div className={styles.content}>
@@ -301,7 +308,9 @@ export function TeaserModal({ flowTitle, laneCount, nodeCount, laneColors, onClo
   font-family: inherit;
   box-shadow: 0 4px 16px rgba(124, 92, 252, 0.3);
   margin-bottom: 10px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 
 .ctaButton:hover {
@@ -352,6 +361,7 @@ git commit -m "feat: add TeaserModal component for shared view #106"
 ## Task 2: BottomCTABar コンポーネント
 
 **Files:**
+
 - Create: `src/features/shared/BottomCTABar.tsx`
 - Create: `src/features/shared/BottomCTABar.module.css`
 - Create: `src/features/shared/BottomCTABar.test.tsx`
@@ -531,7 +541,9 @@ export function BottomCTABar({ visible, onClose }: BottomCTABarProps) {
   text-decoration: none;
   display: flex;
   align-items: center;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 
 .ctaLink:hover {
@@ -586,6 +598,7 @@ git commit -m "feat: add BottomCTABar component for shared view #106"
 ## Task 3: SharedFlowViewer にモーダル + バーを統合
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`
 - Modify: `src/features/shared/SharedFlowViewer.module.css`
 - Modify: `src/features/shared/SharedFlowPage.test.tsx`
@@ -595,114 +608,115 @@ git commit -m "feat: add BottomCTABar component for shared view #106"
 以下のテストを `SharedFlowPage.test.tsx` の最後の `describe` ブロックの後に追加:
 
 ```tsx
-  // ========================================
-  // Teaser modal + Bottom CTA bar
-  // ========================================
-  describe('Teaser modal and bottom CTA bar', () => {
-    it('should show teaser modal on initial load', async () => {
-      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+// ========================================
+// Teaser modal + Bottom CTA bar
+// ========================================
+describe('Teaser modal and bottom CTA bar', () => {
+  it('should show teaser modal on initial load', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
 
-      renderSharedPage()
+    renderSharedPage()
 
-      await waitFor(() => {
-        expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
-      })
-    })
-
-    it('should apply blur to canvas when modal is shown', async () => {
-      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
-
-      renderSharedPage()
-
-      await waitFor(() => {
-        expect(screen.getByTestId('shared-flow-canvas')).toHaveClass(/blurred/)
-      })
-    })
-
-    it('should hide teaser modal and remove blur after CTA click', async () => {
-      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
-
-      renderSharedPage()
-
-      await waitFor(() => {
-        expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
-      })
-
-      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
-
-      expect(screen.queryByTestId('teaser-modal')).not.toBeInTheDocument()
-      expect(screen.getByTestId('shared-flow-canvas')).not.toHaveClass(/blurred/)
-    })
-
-    it('should show bottom CTA bar 3 seconds after modal close', async () => {
-      vi.useFakeTimers({ shouldAdvanceTime: true })
-      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
-
-      renderSharedPage()
-
-      await waitFor(() => {
-        expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
-      })
-
-      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
-
-      expect(screen.queryByTestId('bottom-cta-bar')).not.toBeInTheDocument()
-
-      vi.advanceTimersByTime(3000)
-
-      await waitFor(() => {
-        expect(screen.getByTestId('bottom-cta-bar')).toBeInTheDocument()
-      })
-
-      vi.useRealTimers()
-    })
-
-    it('should hide bottom CTA bar when close button is clicked', async () => {
-      vi.useFakeTimers({ shouldAdvanceTime: true })
-      mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
-
-      renderSharedPage()
-
-      await waitFor(() => {
-        expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
-      })
-
-      await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
-
-      vi.advanceTimersByTime(3000)
-
-      await waitFor(() => {
-        expect(screen.getByTestId('bottom-cta-bar')).toBeInTheDocument()
-      })
-
-      await userEvent.click(screen.getByTestId('bottom-cta-close'))
-
-      expect(screen.queryByTestId('bottom-cta-bar')).not.toBeInTheDocument()
-
-      vi.useRealTimers()
-    })
-
-    it('should pass correct lane colors to teaser modal', async () => {
-      const multiLaneFlow: Flow = {
-        ...mockSharedFlow,
-        lanes: [
-          { id: 'l1', name: 'Lane A', colorIndex: 0, position: 0 },
-          { id: 'l2', name: 'Lane B', colorIndex: 2, position: 1 },
-        ],
-      }
-      mockApiFetch.mockResolvedValueOnce({ flow: multiLaneFlow })
-
-      renderSharedPage()
-
-      await waitFor(() => {
-        const dots = screen.getAllByTestId('lane-dot')
-        expect(dots).toHaveLength(2)
-      })
+    await waitFor(() => {
+      expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
     })
   })
+
+  it('should apply blur to canvas when modal is shown', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+    renderSharedPage()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('shared-flow-canvas')).toHaveClass(/blurred/)
+    })
+  })
+
+  it('should hide teaser modal and remove blur after CTA click', async () => {
+    mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+    renderSharedPage()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+
+    expect(screen.queryByTestId('teaser-modal')).not.toBeInTheDocument()
+    expect(screen.getByTestId('shared-flow-canvas')).not.toHaveClass(/blurred/)
+  })
+
+  it('should show bottom CTA bar 3 seconds after modal close', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+    renderSharedPage()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+
+    expect(screen.queryByTestId('bottom-cta-bar')).not.toBeInTheDocument()
+
+    vi.advanceTimersByTime(3000)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('bottom-cta-bar')).toBeInTheDocument()
+    })
+
+    vi.useRealTimers()
+  })
+
+  it('should hide bottom CTA bar when close button is clicked', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
+
+    renderSharedPage()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: 'フロー図を表示する' }))
+
+    vi.advanceTimersByTime(3000)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('bottom-cta-bar')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByTestId('bottom-cta-close'))
+
+    expect(screen.queryByTestId('bottom-cta-bar')).not.toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('should pass correct lane colors to teaser modal', async () => {
+    const multiLaneFlow: Flow = {
+      ...mockSharedFlow,
+      lanes: [
+        { id: 'l1', name: 'Lane A', colorIndex: 0, position: 0 },
+        { id: 'l2', name: 'Lane B', colorIndex: 2, position: 1 },
+      ],
+    }
+    mockApiFetch.mockResolvedValueOnce({ flow: multiLaneFlow })
+
+    renderSharedPage()
+
+    await waitFor(() => {
+      const dots = screen.getAllByTestId('lane-dot')
+      expect(dots).toHaveLength(2)
+    })
+  })
+})
 ```
 
 `userEvent` の import が必要:
+
 ```tsx
 import userEvent from '@testing-library/user-event'
 ```
@@ -717,12 +731,14 @@ Expected: FAIL (teaser-modal not found, shared-flow-canvas not found, etc.)
 SharedFlowViewer.tsx に以下の変更を加える:
 
 1. import追加:
+
 ```tsx
 import { TeaserModal } from './TeaserModal'
 import { BottomCTABar } from './BottomCTABar'
 ```
 
 2. 状態管理追加（`const [zoom, setZoom] = useState(1)` の後に）:
+
 ```tsx
 const [showModal, setShowModal] = useState(true)
 const [showBottomBar, setShowBottomBar] = useState(false)
@@ -734,6 +750,7 @@ const closeModal = () => {
 ```
 
 3. canvas div に data-testid と blur制御追加:
+
 ```tsx
 <div
   ref={containerRef}
@@ -744,17 +761,20 @@ const closeModal = () => {
 ```
 
 4. フッターの後に TeaserModal と BottomCTABar を追加:
+
 ```tsx
-{showModal && (
-  <TeaserModal
-    flowTitle={flow.title}
-    laneCount={sortedLanes.length}
-    nodeCount={flow.nodes.length}
-    laneColors={sortedLanes.map((l) => l.colorIndex)}
-    onClose={closeModal}
-  />
-)}
-<BottomCTABar visible={showBottomBar} onClose={() => setShowBottomBar(false)} />
+{
+  showModal && (
+    <TeaserModal
+      flowTitle={flow.title}
+      laneCount={sortedLanes.length}
+      nodeCount={flow.nodes.length}
+      laneColors={sortedLanes.map((l) => l.colorIndex)}
+      onClose={closeModal}
+    />
+  )
+}
+;<BottomCTABar visible={showBottomBar} onClose={() => setShowBottomBar(false)} />
 ```
 
 **Step 4: Modify SharedFlowViewer.module.css**
@@ -768,7 +788,10 @@ canvasクラスに transition を追加し、canvasBlurred クラスを新設:
   background: var(--theme-canvas-bg);
   background-image: radial-gradient(circle, var(--theme-dot-grid) 0.5px, transparent 0.5px);
   padding: 40px;
-  transition: filter 0.4s, opacity 0.4s, transform 0.4s;
+  transition:
+    filter 0.4s,
+    opacity 0.4s,
+    transform 0.4s;
   position: relative;
 }
 
