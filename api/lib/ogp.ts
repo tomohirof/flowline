@@ -51,28 +51,16 @@ export function injectOgpMeta(indexHtml: string, params: OgpParams): string {
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${ogTitle}</title>`)
 
   // Replace meta description
-  html = html.replace(
-    /(<meta\s+name="description"\s+content=")[^"]*(")/,
-    `$1${ogDescription}$2`,
-  )
+  html = html.replace(/(<meta\s+name="description"\s+content=")[^"]*(")/, `$1${ogDescription}$2`)
 
   // Replace og:type from website to article
-  html = html.replace(
-    /(<meta\s+property="og:type"\s+content=")[^"]*(")/,
-    '$1article$2',
-  )
+  html = html.replace(/(<meta\s+property="og:type"\s+content=")[^"]*(")/, '$1article$2')
 
   // Replace og:url
-  html = html.replace(
-    /(<meta\s+property="og:url"\s+content=")[^"]*(")/,
-    `$1${ogUrl}$2`,
-  )
+  html = html.replace(/(<meta\s+property="og:url"\s+content=")[^"]*(")/, `$1${ogUrl}$2`)
 
   // Replace og:title
-  html = html.replace(
-    /(<meta\s+property="og:title"\s+content=")[^"]*(")/,
-    `$1${ogTitle}$2`,
-  )
+  html = html.replace(/(<meta\s+property="og:title"\s+content=")[^"]*(")/, `$1${ogTitle}$2`)
 
   // Replace og:description
   html = html.replace(
@@ -81,16 +69,10 @@ export function injectOgpMeta(indexHtml: string, params: OgpParams): string {
   )
 
   // Replace og:image (but not og:image:width or og:image:height)
-  html = html.replace(
-    /(<meta\s+property="og:image"\s+content=")[^"]*(")/,
-    `$1${ogImage}$2`,
-  )
+  html = html.replace(/(<meta\s+property="og:image"\s+content=")[^"]*(")/, `$1${ogImage}$2`)
 
   // Replace twitter:title
-  html = html.replace(
-    /(<meta\s+name="twitter:title"\s+content=")[^"]*(")/,
-    `$1${ogTitle}$2`,
-  )
+  html = html.replace(/(<meta\s+name="twitter:title"\s+content=")[^"]*(")/, `$1${ogTitle}$2`)
 
   // Replace twitter:description
   html = html.replace(
@@ -99,10 +81,7 @@ export function injectOgpMeta(indexHtml: string, params: OgpParams): string {
   )
 
   // Replace twitter:image
-  html = html.replace(
-    /(<meta\s+name="twitter:image"\s+content=")[^"]*(")/,
-    `$1${ogImage}$2`,
-  )
+  html = html.replace(/(<meta\s+name="twitter:image"\s+content=")[^"]*(")/, `$1${ogImage}$2`)
 
   return html
 }

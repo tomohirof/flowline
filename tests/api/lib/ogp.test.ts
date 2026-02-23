@@ -108,9 +108,7 @@ describe('OGP Utility', () => {
 
     it('should replace og:url with shared URL', () => {
       const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
-      expect(result).toContain(
-        'og:url" content="https://flowline.six1.jp/shared/abc123"',
-      )
+      expect(result).toContain('og:url" content="https://flowline.six1.jp/shared/abc123"')
     })
 
     it('should replace og:image with dynamic OGP image URL', () => {
@@ -133,9 +131,7 @@ describe('OGP Utility', () => {
 
     it('should replace twitter:description with author info', () => {
       const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
-      expect(result).toContain(
-        'twitter:description" content="田中太郎さんが作成したフロー図"',
-      )
+      expect(result).toContain('twitter:description" content="田中太郎さんが作成したフロー図"')
     })
 
     it('should replace twitter:image with dynamic OGP image URL', () => {

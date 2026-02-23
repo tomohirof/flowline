@@ -163,7 +163,8 @@ describe('Shared page middleware logic', () => {
       }
     ).count
 
-    const indexHtml = '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
+    const indexHtml =
+      '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
 
     const html = injectOgpMeta(indexHtml, {
       title: flow.title,
@@ -216,7 +217,8 @@ describe('Shared page middleware logic', () => {
     expect(laneCount).toBe(0)
     expect(nodeCount).toBe(0)
 
-    const indexHtml = '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
+    const indexHtml =
+      '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
 
     const html = injectOgpMeta(indexHtml, {
       title: flow.title,
@@ -262,7 +264,8 @@ describe('Shared page middleware logic', () => {
     expect(laneCount).toBe(1)
     expect(nodeCount).toBe(1)
 
-    const indexHtml = '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
+    const indexHtml =
+      '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
 
     const html = injectOgpMeta(indexHtml, {
       title: flow.title,
@@ -294,7 +297,8 @@ describe('Shared page middleware logic', () => {
       )
       .get('xss-token') as { id: string; title: string; share_token: string; author_name: string }
 
-    const indexHtml = '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
+    const indexHtml =
+      '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
 
     const html = injectOgpMeta(indexHtml, {
       title: flow.title,
