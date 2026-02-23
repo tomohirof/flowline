@@ -258,15 +258,13 @@ describe('OGP Image API', () => {
 
     it('should return 500 with error message when Resvg render fails', async () => {
       const cfResvg = await import('@cf-wasm/resvg/workerd')
-      vi.spyOn(cfResvg, 'Resvg').mockImplementationOnce(
-        function () {
-          return {
-            render() {
-              throw new Error('PNG render failed')
-            },
-          } as unknown as InstanceType<typeof cfResvg.Resvg>
-        } as unknown as typeof cfResvg.Resvg,
-      )
+      vi.spyOn(cfResvg, 'Resvg').mockImplementationOnce(function () {
+        return {
+          render() {
+            throw new Error('PNG render failed')
+          },
+        } as unknown as InstanceType<typeof cfResvg.Resvg>
+      } as unknown as typeof cfResvg.Resvg)
 
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'resvg-fail')
 
