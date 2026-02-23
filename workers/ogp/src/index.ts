@@ -1,9 +1,23 @@
 import { Hono } from 'hono'
 import satori from 'satori'
-import { Resvg } from '@cf-wasm/resvg/workerd'
+import { Resvg, initWasm } from '@resvg/resvg-wasm'
+// Static WASM import — wrangler bundles this as a pre-compiled WebAssembly.Module
+import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm'
 
 type Bindings = {
   FLOWLINE_DB: D1Database
+}
+
+// Initialize WASM once at module level (pre-compiled module, no dynamic compilation)
+let wasmInitPromise: Promise<void> | null = null
+function ensureWasmInitialized(): Promise<void> {
+  if (!wasmInitPromise) {
+    wasmInitPromise = initWasm(resvgWasm).catch((e) => {
+      wasmInitPromise = null
+      throw e
+    })
+  }
+  return wasmInitPromise
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -287,6 +301,7 @@ app.get('/share/:tokenPng', async (c) => {
       .bind(flow.id)
       .first<{ count: number }>('count')
 
+    await ensureWasmInitialized()
     const fontData = await loadFont()
 
     const element = buildOgpElement(

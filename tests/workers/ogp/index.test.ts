@@ -2,6 +2,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 import { createTestDb, createMockD1 } from '../../helpers/mock-d1'
 
+// Mock WASM module import
+vi.mock('@resvg/resvg-wasm/index_bg.wasm', () => ({
+  default: {},
+}))
+
 // Mock satori — returns a fake SVG string
 vi.mock('satori', () => ({
   default: vi.fn(async () => '<svg></svg>'),
@@ -254,14 +259,14 @@ describe('OGP Worker', () => {
     })
 
     it('should return 500 with error message when Resvg render fails', async () => {
-      const cfResvg = await import('@cf-wasm/resvg/workerd')
-      vi.spyOn(cfResvg, 'Resvg').mockImplementationOnce(function () {
+      const resvgModule = await import('@resvg/resvg-wasm')
+      vi.spyOn(resvgModule, 'Resvg').mockImplementationOnce(function () {
         return {
           render() {
             throw new Error('PNG render failed')
           },
-        } as unknown as InstanceType<typeof cfResvg.Resvg>
-      } as unknown as typeof cfResvg.Resvg)
+        } as unknown as InstanceType<typeof resvgModule.Resvg>
+      } as unknown as typeof resvgModule.Resvg)
 
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'resvg-fail')
 

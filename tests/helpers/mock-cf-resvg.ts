@@ -1,4 +1,4 @@
-/** Mock for @cf-wasm/resvg/workerd in test environment */
+/** Mock for @resvg/resvg-wasm in test environment */
 const VALID_PNG_HEADER = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
 
 export class Resvg {
@@ -7,4 +7,8 @@ export class Resvg {
       asPng: () => VALID_PNG_HEADER,
     }
   }
+}
+
+export async function initWasm() {
+  // no-op in test environment
 }
