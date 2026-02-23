@@ -4,11 +4,14 @@ import { flows } from './routes/flows'
 import { shared } from './routes/shared'
 import { settings } from './routes/settings'
 import { ogp } from './routes/ogp'
+import { admin } from './routes/admin'
+import { ai } from './routes/ai'
 
 type Bindings = {
   FLOWLINE_DB: D1Database
   JWT_SECRET: string
   RESEND_API_KEY: string
+  ANTHROPIC_API_KEY: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>().basePath('/api')
@@ -22,10 +25,12 @@ app.route('/flows', flows)
 app.route('/shared', shared)
 app.route('/settings', settings)
 app.route('/ogp', ogp)
+app.route('/admin', admin)
+app.route('/ai', ai)
 
 export type AuthEnv = {
   Bindings: Bindings
-  Variables: { userId: string }
+  Variables: { userId: string; userRole: string }
 }
 
 export { app }

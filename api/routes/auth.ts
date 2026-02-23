@@ -139,15 +139,25 @@ auth.post('/logout', (c) => {
 auth.get('/me', authMiddleware, async (c) => {
   const userId = c.get('userId')
 
-  const user = await c.env.FLOWLINE_DB.prepare('SELECT id, email, name FROM users WHERE id = ?')
+  const user = await c.env.FLOWLINE_DB.prepare(
+    'SELECT id, email, name, role, ai_enabled FROM users WHERE id = ?',
+  )
     .bind(userId)
-    .first<{ id: string; email: string; name: string }>()
+    .first<{ id: string; email: string; name: string; role: string; ai_enabled: number }>()
 
   if (!user) {
     return c.json({ error: 'ユーザーが見つかりません' }, 404)
   }
 
-  return c.json({ user })
+  return c.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      aiEnabled: user.ai_enabled === 1,
+    },
+  })
 })
 
 // GET /verify - メール認証
