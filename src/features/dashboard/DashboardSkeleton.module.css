@@ -1,0 +1,124 @@
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f8f8fa;
+  font-family: 'DM Sans', 'Noto Sans JP', 'Helvetica Neue', sans-serif;
+}
+
+.bone {
+  background: linear-gradient(90deg, #f0f0f4 25%, #e8e8ee 37%, #f0f0f4 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s ease infinite;
+  border-radius: 6px;
+}
+
+.topbar {
+  height: 52px;
+  border-bottom: 1px solid #f0f0f4;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.logoText {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1a2e;
+  letter-spacing: -0.03em;
+}
+
+.topbarSpacer {
+  flex: 1;
+}
+
+.avatarBone {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 220px;
+  border-right: 1px solid #f0f0f4;
+  padding: 20px 16px;
+}
+
+.main {
+  flex: 1;
+  padding: 28px 36px;
+}
+
+.titleBone {
+  width: 140px;
+  height: 24px;
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #f0f0f4;
+}
+
+.cardThumb {
+  height: 140px;
+  border-radius: 0;
+}
+
+.cardInfo {
+  padding: 14px 16px;
+}
+
+.cardTitle {
+  width: 70%;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.cardMeta {
+  width: 45%;
+  height: 10px;
+}

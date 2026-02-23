@@ -80,13 +80,13 @@ describe('Dashboard', () => {
   })
 
   // === ローディング状態 ===
-  it('should show loading state while fetching flows', () => {
+  it('should show skeleton loading while fetching flows', () => {
     mockApiFetch.mockImplementation(() => new Promise(() => {})) // never resolves
 
     renderDashboard()
 
-    expect(screen.getByTestId('dashboard-loading')).toBeInTheDocument()
-    expect(screen.getByText('読み込み中...')).toBeInTheDocument()
+    expect(screen.getByTestId('dashboard-skeleton')).toBeInTheDocument()
+    expect(screen.queryByTestId('dashboard-grid')).not.toBeInTheDocument()
   })
 
   // === フロー一覧表示 ===
@@ -958,7 +958,7 @@ describe('Dashboard', () => {
       )
 
       await waitFor(() => {
-        expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
       })
 
       const trashNav = screen.getByTestId('nav-item-trash')
@@ -980,7 +980,7 @@ describe('Dashboard', () => {
       )
 
       await waitFor(() => {
-        expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
       })
 
       const trashNav = screen.getByTestId('nav-item-trash')
@@ -1002,7 +1002,7 @@ describe('Dashboard', () => {
       )
 
       await waitFor(() => {
-        expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument()
+        expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
       })
 
       const trashNav = screen.getByTestId('nav-item-trash')
