@@ -46,7 +46,8 @@ function formatDateJa(): string {
   return `${jst.getFullYear()}年${jst.getMonth() + 1}月${jst.getDate()}日`
 }
 
-function buildEmailHtml(_email: string, verifyUrl: string): string {
+function buildEmailHtml(email: string, verifyUrl: string): string {
+  const safeEmail = escapeHtml(email)
   const safeVerifyUrl = escapeHtml(verifyUrl)
   return `<!DOCTYPE html>
 <html lang="ja" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -130,10 +131,11 @@ function buildEmailHtml(_email: string, verifyUrl: string): string {
           <h1 class="hero-title" style="margin:0 0 12px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.25;letter-spacing:-0.03em;">
             ようこそ。<br>あなたのフロー、<br>お待ちしてました
           </h1>
-          <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.8);line-height:1.6;font-weight:400;">
+          <p style="margin:0 0 12px;font-size:14px;color:rgba(255,255,255,0.8);line-height:1.6;font-weight:400;">
             アカウントの作成が完了しました。<br>
             さっそく業務フローを描きはじめましょう。
           </p>
+          <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.55);font-weight:400;">${safeEmail}</p>
         </td></tr>
 
         <!-- Body -->

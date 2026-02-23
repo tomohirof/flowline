@@ -166,7 +166,7 @@ describe('sendVerificationEmail', () => {
   it('should include footer with copyright and links', async () => {
     await sendVerificationEmail('test@example.com', 'token', 'key', 'https://flowline.six1.jp')
     const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(body.html).toContain('© 2026 Flowline')
+    expect(body.html).toContain(`© ${new Date().getFullYear()} Flowline`)
     expect(body.html).toContain('ヘルプセンター')
     expect(body.html).toContain('プライバシー')
     expect(body.html).toContain('配信停止')
