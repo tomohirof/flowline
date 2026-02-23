@@ -108,6 +108,19 @@ describe('OGP Worker', () => {
   // GET /share/:tokenPng
   // ========================================
   describe('GET /share/:tokenPng', () => {
+    // Shared helper: recursively search element tree for text
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function findText(node: Record<string, any>, target: string): boolean {
+      if (!node?.props) return false
+      const { children } = node.props
+      if (typeof children === 'string' && children.includes(target)) return true
+      if (children === target) return true
+      if (Array.isArray(children)) {
+        return children.some((child: Record<string, never>) => findText(child, target))
+      }
+      return false
+    }
+
     it('should return 200 with content-type image/png for valid share token', async () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'abc123')
 
@@ -217,37 +230,56 @@ describe('OGP Worker', () => {
       expect(body).toHaveProperty('error')
     })
 
-    it('should use flowline.six1.jp as branding text in generated image', async () => {
+    it('should include catchcopy text in generated image', async () => {
       const satori = await import('satori/standalone')
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'brand-check')
 
       await getRequest('/share/brand-check.png', env)
 
-      // satori が呼ばれた時の引数を検証
       const satoriMock = vi.mocked(satori.default)
       const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
 
-      // 要素ツリーからブランディングテキスト（文字列childrenを持つ末尾要素）を再帰的に探索
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      function findBrandingText(node: Record<string, any>): string | null {
-        if (!node?.props) return null
-        const { children } = node.props
-        if (Array.isArray(children)) {
-          // 末尾の子要素から探索（ボトムバーは最後にある）
-          for (let i = children.length - 1; i >= 0; i--) {
-            const result = findBrandingText(children[i])
-            if (result) return result
-          }
-        }
-        // borderTop を持つ div の直接テキスト children がブランディングテキスト
-        if (node.props.style?.borderTop && typeof children === 'string') {
-          return children
-        }
-        return null
-      }
+      // 要素ツリーから「フローを描く。チームが動く。」テキストを再帰探索
+      expect(findText(lastCall[0] as Record<string, never>, 'フローを描く。チームが動く。')).toBe(
+        true,
+      )
+    })
 
-      const brandingText = findBrandingText(lastCall[0] as Record<string, never>)
-      expect(brandingText).toBe('flowline.six1.jp')
+    it('should include author initial in avatar', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'initial-check')
+
+      await getRequest('/share/initial-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      // 要素ツリーから author initial 'T' (Test Author の頭文字) を探す
+      expect(findText(lastCall[0] as Record<string, never>, 'T')).toBe(true)
+    })
+
+    it('should include sharing badge in top bar', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'badge-check')
+
+      await getRequest('/share/badge-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      expect(findText(lastCall[0] as Record<string, never>, '共有中')).toBe(true)
+    })
+
+    it('should include flowline.app in preview window chrome', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'chrome-check')
+
+      await getRequest('/share/chrome-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      expect(findText(lastCall[0] as Record<string, never>, 'flowline.app')).toBe(true)
     })
 
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
