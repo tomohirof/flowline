@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
+import { useAuth } from '../../hooks/useAuth'
 import styles from './VerifyPage.module.css'
 
 export function VerifyPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { refreshAuth } = useAuth()
   const token = searchParams.get('token')
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(
     token ? 'verifying' : 'error',
@@ -16,15 +18,16 @@ export function VerifyPage() {
     if (!token) return
 
     apiFetch<{ verified: boolean }>(`/auth/verify?token=${token}`)
-      .then(() => {
+      .then(async () => {
         setStatus('success')
+        await refreshAuth()
         setTimeout(() => navigate('/flows', { replace: true }), 2000)
       })
       .catch((err) => {
         setStatus('error')
         setError(err instanceof Error ? err.message : '認証に失敗しました')
       })
-  }, [token, navigate])
+  }, [token, navigate, refreshAuth])
 
   return (
     <div className={styles.container}>

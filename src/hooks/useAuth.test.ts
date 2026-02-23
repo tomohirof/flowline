@@ -172,6 +172,28 @@ describe('useAuth', () => {
     expect(mockApiFetch).toHaveBeenCalledWith('/auth/logout', { method: 'POST' })
   })
 
+  it('refreshAuth should re-fetch /auth/me and update user', async () => {
+    // First call: checkAuth - no user
+    mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
+    // Second call: refreshAuth - user now exists (e.g. after verify set cookie)
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User' }
+    mockApiFetch.mockResolvedValueOnce({ user: mockUser })
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+    expect(result.current.user).toBeNull()
+
+    await act(async () => {
+      await result.current.refreshAuth()
+    })
+
+    expect(result.current.user).toEqual(mockUser)
+    expect(mockApiFetch).toHaveBeenLastCalledWith('/auth/me')
+  })
+
   it('login should throw when API returns error', async () => {
     // First call: checkAuth
     mockApiFetch.mockRejectedValueOnce(new Error('Unauthorized'))
