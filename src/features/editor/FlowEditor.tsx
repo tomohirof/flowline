@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { BRAND } from '../../constants/brand'
 import { useNavigate, Link } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
+import { AiAssistant } from './components/AiAssistant'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
 import { apiFetch } from '../../lib/api'
@@ -3067,6 +3068,37 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         userName={user?.name ?? ''}
         userEmail={user?.email ?? ''}
         onLogout={logout}
+      />
+
+      {/* AI Assistant */}
+      <AiAssistant
+        flowId={flow.id}
+        aiEnabled={user?.aiEnabled ?? false}
+        onFlowGenerated={(aiFlow) => {
+          const tempFlow: Flow = {
+            id: flow.id,
+            title: aiFlow.title,
+            themeId: themeId,
+            shareToken: shareToken,
+            createdAt: flow.createdAt,
+            updatedAt: flow.updatedAt,
+            lanes: aiFlow.lanes,
+            nodes: aiFlow.nodes,
+            arrows: aiFlow.arrows,
+          }
+          const state = flowToInternalState(tempFlow)
+          setLanes(state.lanes)
+          setRows(state.rows)
+          setTasks(state.tasks)
+          setOrder(state.order)
+          setArrows(state.arrows)
+          setNotes(state.notes)
+          setTitle(state.title)
+          setSelTask(null)
+          setSelArrow(null)
+          setSelLane(null)
+          setEditing(null)
+        }}
       />
     </div>
   )
