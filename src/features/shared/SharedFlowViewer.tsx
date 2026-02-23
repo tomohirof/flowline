@@ -143,19 +143,6 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           {BRAND.logoInitial}
         </div>
         <span className={styles.brandName}>{BRAND.name}</span>
-        <div className={styles.divider} />
-        <span className={styles.flowTitle}>{flow.title}</span>
-        <div className={styles.spacer} />
-        <span className={styles.viewModeBadge}>{BRAND.sharedViewBadge}</span>
-        <div className={styles.zoomControls}>
-          <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.min(2, z + 0.1))}>
-            +
-          </button>
-          <span className={styles.zoomText}>{Math.round(zoom * 100)}%</span>
-          <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}>
-            -
-          </button>
-        </div>
       </div>
 
       {/* Canvas */}
@@ -171,6 +158,18 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           height={(totalH + 30) * zoom}
           viewBox={`0 -30 ${totalW} ${totalH + 30}`}
         >
+          {/* Flow title */}
+          <text
+            x={LM}
+            y={TM - 8}
+            fontSize={16}
+            fontWeight={700}
+            fill={T.titleColor}
+            style={{ fontFamily: 'inherit' }}
+          >
+            {flow.title}
+          </text>
+
           {/* Lanes */}
           {sortedLanes.map((lane, li) => {
             const p = PALETTES[lane.colorIndex % PALETTES.length]
@@ -384,10 +383,21 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
       {/* Footer */}
       <div className={styles.footer} data-testid="shared-flow-footer">
-        <div className={styles.footerIcon} style={{ background: logoGradient }}>
-          {BRAND.logoInitial}
+        <div className={styles.footerLeft}>
+          <div className={styles.footerIcon} style={{ background: logoGradient }}>
+            {BRAND.logoInitial}
+          </div>
+          <span className={styles.footerText}>{BRAND.sharedFooter}</span>
         </div>
-        <span className={styles.footerText}>{BRAND.sharedFooter}</span>
+        <div className={styles.zoomControls}>
+          <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.min(2, z + 0.1))}>
+            +
+          </button>
+          <span className={styles.zoomText}>{Math.round(zoom * 100)}%</span>
+          <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}>
+            -
+          </button>
+        </div>
       </div>
       {showModal && (
         <TeaserModal
