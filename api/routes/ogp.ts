@@ -251,7 +251,7 @@ function buildOgpElement(title: string, authorName: string, laneCount: number, n
               color: 'rgba(255,255,255,0.5)',
             },
             // Branding text shown in the PNG image (intentionally static, not baseUrl)
-            children: 'flowline.pages.dev',
+            children: 'flowline.six1.jp',
           },
         },
       ],

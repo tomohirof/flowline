@@ -241,7 +241,7 @@ describe('OGP Image API', () => {
       expect(body).toHaveProperty('error')
     })
 
-    it('should use flowline.pages.dev as branding text in generated image', async () => {
+    it('should use flowline.six1.jp as branding text in generated image', async () => {
       const satori = await import('satori')
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'brand-check')
 
@@ -271,7 +271,7 @@ describe('OGP Image API', () => {
       }
 
       const brandingText = findBrandingText(lastCall[0] as Record<string, never>)
-      expect(brandingText).toBe('flowline.pages.dev')
+      expect(brandingText).toBe('flowline.six1.jp')
     })
 
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
