@@ -28,12 +28,20 @@ export function DashboardSkeleton() {
         <div data-testid="skeleton-sidebar" className={styles.sidebar}>
           <div className={styles.bone} style={{ width: 100, height: 22, marginBottom: 28 }} />
           {NAV_WIDTHS.map((w, i) => (
-            <div key={i} className={styles.bone} style={{ width: w, height: 14, marginBottom: 12 }} />
+            <div
+              key={i}
+              className={styles.bone}
+              style={{ width: w, height: 14, marginBottom: 12 }}
+            />
           ))}
           <div style={{ height: 24 }} />
           <div className={styles.bone} style={{ width: 60, height: 10, marginBottom: 12 }} />
           {TEAM_WIDTHS.map((w, i) => (
-            <div key={`t${i}`} className={styles.bone} style={{ width: w, height: 14, marginBottom: 12 }} />
+            <div
+              key={`t${i}`}
+              className={styles.bone}
+              style={{ width: w, height: 14, marginBottom: 12 }}
+            />
           ))}
         </div>
 

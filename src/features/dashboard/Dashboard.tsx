@@ -484,9 +484,7 @@ export function Dashboard() {
                           </span>
                         )}
                       </div>
-                      <div className={styles.listUpdated}>
-                        {formatRelativeTime(flow.updatedAt)}
-                      </div>
+                      <div className={styles.listUpdated}>{formatRelativeTime(flow.updatedAt)}</div>
                       <div className={styles.listLanes}>
                         {laneColors.map((color, i) => (
                           <span

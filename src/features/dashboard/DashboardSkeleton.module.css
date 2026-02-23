@@ -1,6 +1,10 @@
 @keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
 }
 
 .skeleton {
@@ -12,7 +16,7 @@
 }
 
 .bone {
-  background: linear-gradient(90deg, #F0F0F4 25%, #E8E8EE 37%, #F0F0F4 63%);
+  background: linear-gradient(90deg, #f0f0f4 25%, #e8e8ee 37%, #f0f0f4 63%);
   background-size: 800px 100%;
   animation: shimmer 1.5s ease infinite;
   border-radius: 6px;
@@ -20,7 +24,7 @@
 
 .topbar {
   height: 52px;
-  border-bottom: 1px solid #F0F0F4;
+  border-bottom: 1px solid #f0f0f4;
   display: flex;
   align-items: center;
   padding: 0 20px;
@@ -32,7 +36,7 @@
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: linear-gradient(135deg, #7C5CFC, #5B8DEF);
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,7 +70,7 @@
 
 .sidebar {
   width: 220px;
-  border-right: 1px solid #F0F0F4;
+  border-right: 1px solid #f0f0f4;
   padding: 20px 16px;
 }
 
@@ -96,7 +100,7 @@
 .card {
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #F0F0F4;
+  border: 1px solid #f0f0f4;
 }
 
 .cardThumb {
