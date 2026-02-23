@@ -962,12 +962,7 @@ describe('Dashboard', () => {
   describe('shared view (#120)', () => {
     it('should show only shared flows when shared nav is selected', async () => {
       mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
-
-      render(
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>,
-      )
+      renderDashboard()
 
       await waitFor(() => {
         expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
@@ -984,12 +979,7 @@ describe('Dashboard', () => {
     it('should show shared empty state when no shared flows', async () => {
       const noSharedFlows = [{ ...mockFlows[1], shareToken: null }]
       mockApiFetch.mockResolvedValueOnce({ flows: noSharedFlows })
-
-      render(
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>,
-      )
+      renderDashboard()
 
       await waitFor(() => {
         expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
@@ -1005,12 +995,7 @@ describe('Dashboard', () => {
 
     it('should show shared title when in shared view', async () => {
       mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
-
-      render(
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>,
-      )
+      renderDashboard()
 
       await waitFor(() => {
         expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
@@ -1022,6 +1007,20 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: '共有ファイル' })).toBeInTheDocument()
       })
+    })
+
+    it('should not show create card in shared grid view', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('dashboard-skeleton')).not.toBeInTheDocument()
+      })
+
+      const sharedNav = screen.getByTestId('nav-item-shared')
+      await userEvent.click(sharedNav)
+
+      expect(screen.queryByTestId('create-flow-card')).not.toBeInTheDocument()
     })
   })
 

@@ -430,8 +430,14 @@ export function Dashboard() {
                 selectedNav === 'shared' ? (
                   <div data-testid="shared-empty" className={styles.empty}>
                     <div className={styles.emptyIcon}>⊡</div>
-                    <p className={styles.emptyTitle}>共有中のフローはありません</p>
-                    <p className={styles.emptySubtitle}>フローを共有するとここに表示されます</p>
+                    <p className={styles.emptyTitle}>
+                      {searchQuery.trim()
+                        ? '検索条件に一致する共有フローがありません'
+                        : '共有中のフローはありません'}
+                    </p>
+                    {!searchQuery.trim() && (
+                      <p className={styles.emptySubtitle}>フローを共有するとここに表示されます</p>
+                    )}
                   </div>
                 ) : (
                   <div data-testid="dashboard-empty" className={styles.empty}>
@@ -464,17 +470,19 @@ export function Dashboard() {
                 )
               ) : viewMode === 'grid' ? (
                 <div data-testid="dashboard-grid" className={styles.grid}>
-                  <button
-                    data-testid="create-flow-card"
-                    onClick={handleCreate}
-                    disabled={creating}
-                    className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
-                  >
-                    <CreateCardIcon />
-                    <span className={styles.createCardText}>
-                      {creating ? '作成中...' : '新規作成'}
-                    </span>
-                  </button>
+                  {selectedNav !== 'shared' && (
+                    <button
+                      data-testid="create-flow-card"
+                      onClick={handleCreate}
+                      disabled={creating}
+                      className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
+                    >
+                      <CreateCardIcon />
+                      <span className={styles.createCardText}>
+                        {creating ? '作成中...' : '新規作成'}
+                      </span>
+                    </button>
+                  )}
                   {displayedFlows.map((flow) => (
                     <FlowCard
                       key={flow.id}
