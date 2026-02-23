@@ -9,6 +9,7 @@ type Bindings = {
   FLOWLINE_DB: D1Database
   JWT_SECRET: string
   RESEND_API_KEY: string
+  ANTHROPIC_API_KEY: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>().basePath('/api')
@@ -25,7 +26,7 @@ app.route('/ogp', ogp)
 
 export type AuthEnv = {
   Bindings: Bindings
-  Variables: { userId: string }
+  Variables: { userId: string; userRole: string }
 }
 
 export { app }

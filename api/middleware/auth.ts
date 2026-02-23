@@ -11,6 +11,12 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
   try {
     const payload = await verifyToken(token, c.env.JWT_SECRET)
     c.set('userId', payload.sub)
+    const userRow = await c.env.FLOWLINE_DB.prepare(
+      'SELECT role FROM users WHERE id = ?',
+    )
+      .bind(payload.sub)
+      .first<{ role: string }>()
+    c.set('userRole', userRow?.role ?? 'user')
     await next()
   } catch {
     return c.json({ error: '認証が必要です' }, 401)
