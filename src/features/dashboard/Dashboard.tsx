@@ -58,11 +58,12 @@ export function Dashboard() {
   const { user, logout } = useAuth()
   const userName = user?.name ?? ''
 
-  const loadFlows = useCallback(async () => {
+  const loadFlows = useCallback(async (query?: string) => {
     try {
       setLoading(true)
       setError(null)
-      const data = await apiFetch<FlowListResponse>('/flows')
+      const url = query ? `/flows?q=${encodeURIComponent(query)}` : '/flows'
+      const data = await apiFetch<FlowListResponse>(url)
       setFlows(data.flows)
     } catch {
       setError('フロー一覧の取得に失敗しました')
@@ -71,32 +72,22 @@ export function Dashboard() {
     }
   }, [])
 
+  // Debounced search
   useEffect(() => {
-    loadFlows()
-  }, [loadFlows])
+    const trimmed = searchQuery.trim()
+    const timer = setTimeout(() => {
+      loadFlows(trimmed || undefined)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery, loadFlows])
 
-  // Client-side filtering + sorting
-  const filteredAndSortedFlows = useMemo(() => {
-    let result = flows
-
-    // Filter by search query (case-insensitive)
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      result = result.filter((f) => f.title.toLowerCase().includes(q))
-    }
-
-    // Sort
+  const sortedFlows = useMemo(() => {
     if (sortMode === 'name') {
-      result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'ja'))
-    } else {
-      // 'updated' = newest first
-      result = [...result].sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-      )
+      return [...flows].sort((a, b) => a.title.localeCompare(b.title, 'ja'))
     }
-
-    return result
-  }, [flows, searchQuery, sortMode])
+    // 'updated' = newest first (API default order)
+    return flows
+  }, [flows, sortMode])
 
   const handleCreate = async () => {
     if (creating) return
@@ -321,7 +312,7 @@ export function Dashboard() {
             <div data-testid="dashboard-loading" className={styles.loading}>
               <p className={styles.loadingText}>読み込み中...</p>
             </div>
-          ) : filteredAndSortedFlows.length === 0 ? (
+          ) : sortedFlows.length === 0 ? (
             <div data-testid="dashboard-empty" className={styles.empty}>
               <div className={styles.emptyIcon}>+</div>
               <p className={styles.emptyTitle}>
@@ -358,7 +349,7 @@ export function Dashboard() {
                 <span className={styles.createCardIcon}>+</span>
                 <span className={styles.createCardText}>{creating ? '作成中...' : '新規作成'}</span>
               </button>
-              {filteredAndSortedFlows.map((flow) => (
+              {sortedFlows.map((flow) => (
                 <FlowCard
                   key={flow.id}
                   flow={flow}
@@ -381,7 +372,7 @@ export function Dashboard() {
                 <span className={styles.listHeaderLanes}>レーン</span>
                 <span className={styles.listHeaderActions} />
               </div>
-              {filteredAndSortedFlows.map((flow) => (
+              {sortedFlows.map((flow) => (
                 <div key={flow.id} data-testid={`flow-card-${flow.id}`} className={styles.listRow}>
                   <div className={styles.listName}>
                     <Link
