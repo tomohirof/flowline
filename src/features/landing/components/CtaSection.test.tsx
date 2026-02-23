@@ -22,7 +22,9 @@ describe('CtaSection', () => {
 
   it('should render CTA button with primary CTA text', () => {
     render(<CtaSection onCtaClick={vi.fn()} />)
-    expect(screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }),
+    ).toBeInTheDocument()
   })
 
   it('should call onCtaClick when CTA button is clicked', async () => {
@@ -30,7 +32,9 @@ describe('CtaSection', () => {
     const onCtaClick = vi.fn()
     render(<CtaSection onCtaClick={onCtaClick} />)
 
-    await user.click(screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }))
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }),
+    )
     expect(onCtaClick).toHaveBeenCalledTimes(1)
   })
 })
