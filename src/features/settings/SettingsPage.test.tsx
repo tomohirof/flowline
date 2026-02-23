@@ -384,6 +384,39 @@ describe('SettingsPage', () => {
     )
   })
 
+  // === 自動保存: エラー時のtopbar表示 ===
+  it('should show error status in topbar when auto-save fails', async () => {
+    mockApiFetch.mockResolvedValueOnce(mockSettingsResponse)
+    renderSettingsPage()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('settings-content')).toBeInTheDocument()
+    })
+
+    mockApiFetch.mockClear()
+    mockApiFetch.mockRejectedValue(new Error('Network error'))
+
+    const user = userEvent.setup()
+    const editorNav = screen.getByTestId('nav-editor')
+    await user.click(editorNav)
+
+    await waitFor(() => {
+      const toggles = screen.getAllByRole('switch')
+      expect(toggles.length).toBeGreaterThan(0)
+    })
+
+    const firstToggle = screen.getAllByRole('switch')[0]
+    await user.click(firstToggle)
+
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('save-status-error')).toBeInTheDocument()
+        expect(screen.getByTestId('save-status-error')).toHaveTextContent('保存失敗')
+      },
+      { timeout: 3000 },
+    )
+  })
+
   // === UserMenuPanel: アバタークリックでメニュー表示 ===
   it('should open UserMenuPanel when avatar is clicked', async () => {
     mockApiFetch.mockResolvedValueOnce(mockSettingsResponse)
@@ -413,10 +446,8 @@ describe('SettingsPage', () => {
     expect(screen.getByTestId('settings-avatar')).toHaveAttribute('aria-label', 'メニュー')
   })
 
-  // === 空のユーザー名: フォールバック ===
-  it('should display U as fallback avatar initial when user name is empty', async () => {
-    // This tests the fallback behavior handled at JSX level
-    // We test it indirectly — the current mock has a name so it shows テ
+  // === アバターの頭文字表示 ===
+  it('should display first character of user name in avatar', async () => {
     mockApiFetch.mockResolvedValueOnce(mockSettingsResponse)
     renderSettingsPage()
 
@@ -424,7 +455,7 @@ describe('SettingsPage', () => {
       expect(screen.getByTestId('settings-avatar')).toBeInTheDocument()
     })
 
-    // With name 'テストユーザー', first char upper is 'テ'
+    // mockUser name is 'テストユーザー', first char upper is 'テ'
     expect(screen.getByTestId('settings-avatar')).toHaveTextContent('テ')
   })
 })

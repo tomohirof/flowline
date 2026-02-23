@@ -89,6 +89,12 @@
   margin-right: 8px;
 }
 
+.saveStatusError {
+  font-size: 12px;
+  color: #c62828;
+  margin-right: 8px;
+}
+
 /* Body */
 .body {
   display: flex;

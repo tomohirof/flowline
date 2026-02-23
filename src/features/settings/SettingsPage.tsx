@@ -90,6 +90,7 @@ export function SettingsPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInitialLoadRef = useRef(true)
+  const userNameRef = useRef(user?.name)
 
   const loadSettings = useCallback(async () => {
     try {
@@ -116,7 +117,11 @@ export function SettingsPage() {
         setProfileName(user.name)
         setProfileEmail(user.email)
       }
-      isInitialLoadRef.current = false
+      // Use setTimeout(0) to match success path — prevents auto-save from firing
+      // with DEFAULT_SETTINGS when initial load fails
+      setTimeout(() => {
+        isInitialLoadRef.current = false
+      }, 0)
     } finally {
       setLoading(false)
     }
@@ -125,6 +130,11 @@ export function SettingsPage() {
   useEffect(() => {
     loadSettings()
   }, [loadSettings])
+
+  // Keep userNameRef in sync with user.name
+  useEffect(() => {
+    userNameRef.current = user?.name
+  }, [user?.name])
 
   const toggle = (key: keyof Settings) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -148,7 +158,7 @@ export function SettingsPage() {
           method: 'PUT',
           body: JSON.stringify(settings),
         })
-        if (profileName !== user?.name) {
+        if (profileName !== userNameRef.current) {
           await apiFetch('/settings/profile', {
             method: 'PUT',
             body: JSON.stringify({ name: profileName }),
@@ -166,7 +176,7 @@ export function SettingsPage() {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
-  }, [settings, profileName, user?.name])
+  }, [settings, profileName])
 
   const handlePasswordChange = async (
     currentPassword: string,
@@ -254,6 +264,11 @@ export function SettingsPage() {
         {saveStatus === 'saved' && (
           <span className={styles.saveStatusDone} data-testid="save-status">
             &#10003; 保存済み
+          </span>
+        )}
+        {saveStatus === 'error' && (
+          <span className={styles.saveStatusError} data-testid="save-status-error">
+            保存失敗
           </span>
         )}
         <button
