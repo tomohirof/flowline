@@ -241,6 +241,22 @@ describe('OGP Image API', () => {
       expect(body).toHaveProperty('error')
     })
 
+    it('should use flowline.pages.dev as branding text in generated image', async () => {
+      const satori = await import('satori')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'brand-check')
+
+      await getRequest('/api/ogp/share/brand-check.png', env)
+
+      // satori が呼ばれた時の引数を検証
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+      const element = lastCall[0] as any
+
+      // Bottom bar の children がブランディングテキスト
+      const bottomBar = element.props.children[2]
+      expect(bottomBar.props.children).toBe('flowline.pages.dev')
+    })
+
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
       const satori = await import('satori')
       vi.mocked(satori.default).mockRejectedValueOnce(new Error('SVG generation failed'))
