@@ -39,38 +39,10 @@
   letter-spacing: -0.02em;
 }
 
-.divider {
-  width: 1px;
-  height: 18px;
-  background: var(--theme-title-bar-border);
-  margin: 0 10px;
-}
-
-.flowTitle {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--theme-title-sub);
-  padding: 2px 8px;
-}
-
-.spacer {
-  flex: 1;
-}
-
-.viewModeBadge {
-  font-size: 11px;
-  color: var(--theme-accent);
-  background: var(--theme-accent-alpha);
-  padding: 3px 10px;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
 .zoomControls {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-left: 12px;
 }
 
 .zoomBtn {
@@ -114,14 +86,20 @@
 }
 
 .footer {
-  height: 32px;
+  height: 36px;
   background: var(--theme-status-bg);
   border-top: 1px solid var(--theme-status-border);
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 0 12px;
   flex-shrink: 0;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .footerIcon {
