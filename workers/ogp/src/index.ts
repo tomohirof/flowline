@@ -359,8 +359,6 @@ app.get('/share/:tokenPng', async (c) => {
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
-
-
 /** Reset internal caches — for testing only */
 export function _resetCacheForTesting() {
   cachedFontData = null
