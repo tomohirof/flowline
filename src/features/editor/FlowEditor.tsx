@@ -2715,7 +2715,15 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     style={{ pointerEvents: 'none' }}
                   />
                   {arrow.comment && (
-                    <g style={{ pointerEvents: 'none' }}>
+                    <g
+                      style={{ cursor: 'pointer' }}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setSelArrow(selArrow === arrow.id ? null : arrow.id)
+                        setSelTask(null)
+                        setSelLane(null)
+                      }}
+                    >
                       <rect
                         x={mx - Math.max(arrow.comment.length * 4, 14) - 12}
                         y={my - 22}
