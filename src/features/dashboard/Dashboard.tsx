@@ -21,6 +21,23 @@ type ViewMode = 'grid' | 'list'
 
 const DEFAULT_LANE_COUNT = 3
 
+const CreateCardIcon = () => (
+  <span className={styles.createCardIconBg}>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#7C5CFC"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  </span>
+)
+
 export function Dashboard() {
   const [flows, setFlows] = useState<FlowSummary[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -417,7 +434,7 @@ export function Dashboard() {
                       className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
                       style={{ marginTop: '16px', width: '200px', height: '120px' }}
                     >
-                      <span className={styles.createCardIcon}>+</span>
+                      <CreateCardIcon />
                       <span className={styles.createCardText}>
                         {creating ? '作成中...' : '新規作成'}
                       </span>
@@ -432,7 +449,7 @@ export function Dashboard() {
                     disabled={creating}
                     className={`${styles.createCard} ${creating ? styles.createCardDisabled : ''}`}
                   >
-                    <span className={styles.createCardIcon}>+</span>
+                    <CreateCardIcon />
                     <span className={styles.createCardText}>
                       {creating ? '作成中...' : '新規作成'}
                     </span>
