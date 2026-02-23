@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { createTestDb } from '../helpers/mock-d1'
-import { isBotUserAgent, generateOgpHtml } from '../../api/lib/ogp'
+import { injectOgpMeta } from '../../api/lib/ogp'
 
 describe('Shared page middleware logic', () => {
   let db: ReturnType<typeof Database>
@@ -56,29 +56,77 @@ describe('Shared page middleware logic', () => {
     expect(match![1]).toBe('550e8400-e29b-41d4-a716-446655440000')
   })
 
-  // --- Bot detection (verify middleware integrates correctly with isBotUserAgent) ---
+  // --- Middleware now serves OGP to ALL users (no bot check) ---
 
-  it('should correctly determine bot vs normal user', () => {
-    expect(isBotUserAgent('Twitterbot/1.0')).toBe(true)
-    expect(isBotUserAgent('facebookexternalhit/1.1')).toBe(true)
-    expect(isBotUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)')).toBe(false)
+  it('should serve OGP meta tags to normal browser user agents', () => {
+    db.prepare(
+      'INSERT INTO flows (id, user_id, title, theme_id, share_token) VALUES (?, ?, ?, ?, ?)',
+    ).run('flow-1', 'user-1', 'テストフロー', 'cloud', 'test-token')
+    db.prepare(
+      'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+    ).run('lane-1', 'flow-1', 'Lane 1', 0, 0)
+    db.prepare(
+      'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, NULL, ?)',
+    ).run('node-1', 'flow-1', 'lane-1', 0, 'Task 1', 0)
+
+    const flow = db
+      .prepare(
+        'SELECT f.id, f.title, f.share_token, u.name as author_name FROM flows f JOIN users u ON f.user_id = u.id WHERE f.share_token = ?',
+      )
+      .get('test-token') as { id: string; title: string; share_token: string; author_name: string }
+
+    const laneCount = (
+      db.prepare('SELECT COUNT(*) as count FROM lanes WHERE flow_id = ?').get(flow.id) as {
+        count: number
+      }
+    ).count
+    const nodeCount = (
+      db.prepare('SELECT COUNT(*) as count FROM nodes WHERE flow_id = ?').get(flow.id) as {
+        count: number
+      }
+    ).count
+
+    const indexHtml = `<!doctype html>
+<html lang="ja">
+<head>
+<title>Flowline — フローを描く。チームが動く。</title>
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://flowline.six1.jp" />
+<meta property="og:title" content="Flowline — フローを描く。チームが動く。" />
+<meta property="og:description" content="業務プロセスを視覚化するスイムレーンエディタ。" />
+<meta property="og:image" content="https://flowline.six1.jp/ogp/default.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Flowline — フローを描く。チームが動く。" />
+<meta name="twitter:description" content="業務プロセスを視覚化するスイムレーンエディタ" />
+<meta name="twitter:image" content="https://flowline.six1.jp/ogp/default.png" />
+</head>
+<body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
+</html>`
+
+    const html = injectOgpMeta(indexHtml, {
+      title: flow.title,
+      author: flow.author_name,
+      laneCount,
+      nodeCount,
+      shareToken: flow.share_token,
+      baseUrl: 'https://flowline.six1.jp',
+    })
+
+    // OGP meta tags should be injected
+    expect(html).toContain('テストフロー — Flowline')
+    expect(html).toContain('テスト太郎さんが作成したフロー図（1レーン、1ノード）')
+    expect(html).toContain('/api/ogp/share/test-token.png')
+    expect(html).toContain('og:type" content="article"')
+    expect(html).toContain('twitter:card')
+    // SPA should still be present (no redirect)
+    expect(html).toContain('<div id="root"></div>')
+    expect(html).toContain('src="/src/main.tsx"')
+    expect(html).not.toContain('window.location.href')
   })
 
-  it('should treat empty user-agent as non-bot', () => {
-    expect(isBotUserAgent('')).toBe(false)
-  })
+  // --- Database query + OGP injection (simulating middleware logic) ---
 
-  it('should treat null user-agent as non-bot', () => {
-    expect(isBotUserAgent(null)).toBe(false)
-  })
-
-  it('should treat undefined user-agent as non-bot', () => {
-    expect(isBotUserAgent(undefined)).toBe(false)
-  })
-
-  // --- Database query + OGP HTML generation (simulating middleware logic) ---
-
-  it('should generate correct OGP HTML for bot with DB data', () => {
+  it('should inject correct OGP meta for flow with DB data', () => {
     db.prepare(
       'INSERT INTO flows (id, user_id, title, theme_id, share_token) VALUES (?, ?, ?, ?, ?)',
     ).run('flow-1', 'user-1', '受注管理フロー', 'cloud', 'test-token')
@@ -98,14 +146,12 @@ describe('Shared page middleware logic', () => {
       'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index) VALUES (?, ?, ?, ?, ?, NULL, ?)',
     ).run('node-3', 'flow-1', 'lane-2', 0, 'Task 3', 0)
 
-    // Simulate middleware logic: query flow with author
     const flow = db
       .prepare(
         'SELECT f.id, f.title, f.share_token, u.name as author_name FROM flows f JOIN users u ON f.user_id = u.id WHERE f.share_token = ?',
       )
       .get('test-token') as { id: string; title: string; share_token: string; author_name: string }
 
-    // Simulate middleware logic: count lanes and nodes
     const laneCount = (
       db.prepare('SELECT COUNT(*) as count FROM lanes WHERE flow_id = ?').get(flow.id) as {
         count: number
@@ -117,7 +163,9 @@ describe('Shared page middleware logic', () => {
       }
     ).count
 
-    const html = generateOgpHtml({
+    const indexHtml = '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
+
+    const html = injectOgpMeta(indexHtml, {
       title: flow.title,
       author: flow.author_name,
       laneCount,
@@ -129,8 +177,7 @@ describe('Shared page middleware logic', () => {
     expect(html).toContain('受注管理フロー — Flowline')
     expect(html).toContain('テスト太郎さんが作成したフロー図（2レーン、3ノード）')
     expect(html).toContain('/api/ogp/share/test-token.png')
-    expect(html).toContain('og:type')
-    expect(html).toContain('twitter:card')
+    expect(html).toContain('og:type" content="article"')
   })
 
   it('should return undefined for non-existent share token', () => {
@@ -169,7 +216,9 @@ describe('Shared page middleware logic', () => {
     expect(laneCount).toBe(0)
     expect(nodeCount).toBe(0)
 
-    const html = generateOgpHtml({
+    const indexHtml = '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
+
+    const html = injectOgpMeta(indexHtml, {
       title: flow.title,
       author: flow.author_name,
       laneCount,
@@ -213,7 +262,9 @@ describe('Shared page middleware logic', () => {
     expect(laneCount).toBe(1)
     expect(nodeCount).toBe(1)
 
-    const html = generateOgpHtml({
+    const indexHtml = '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
+
+    const html = injectOgpMeta(indexHtml, {
       title: flow.title,
       author: flow.author_name,
       laneCount,
@@ -243,7 +294,9 @@ describe('Shared page middleware logic', () => {
       )
       .get('xss-token') as { id: string; title: string; share_token: string; author_name: string }
 
-    const html = generateOgpHtml({
+    const indexHtml = '<title>Flowline</title><meta property="og:title" content="Flowline" /><meta property="og:description" content="default" /><meta property="og:image" content="default.png" /><meta property="og:url" content="https://flowline.six1.jp" /><meta property="og:type" content="website" /><meta name="twitter:title" content="Flowline" /><meta name="twitter:description" content="default" /><meta name="twitter:image" content="default.png" /><meta name="description" content="default" />'
+
+    const html = injectOgpMeta(indexHtml, {
       title: flow.title,
       author: flow.author_name,
       laneCount: 0,
@@ -252,12 +305,8 @@ describe('Shared page middleware logic', () => {
       baseUrl: 'https://flowline.six1.jp',
     })
 
-    // User-supplied content should be escaped (not raw HTML injection)
-    // Note: the page has a legitimate <script> for redirect, so we check
-    // that user input is escaped in the meta tag content
     expect(html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;')
     expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;')
-    // The og:description meta tag should use the escaped author name
     expect(html).toContain(
       '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;さんが作成したフロー図',
     )
