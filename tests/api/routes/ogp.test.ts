@@ -250,13 +250,28 @@ describe('OGP Image API', () => {
       // satori が呼ばれた時の引数を検証
       const satoriMock = vi.mocked(satori.default)
       const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const element = lastCall[0] as Record<string, any>
 
-      // Bottom bar の children がブランディングテキスト
+      // 要素ツリーからブランディングテキスト（文字列childrenを持つ末尾要素）を再帰的に探索
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bottomBar = element.props.children[2] as Record<string, any>
-      expect(bottomBar.props.children).toBe('flowline.pages.dev')
+      function findBrandingText(node: Record<string, any>): string | null {
+        if (!node?.props) return null
+        const { children } = node.props
+        if (Array.isArray(children)) {
+          // 末尾の子要素から探索（ボトムバーは最後にある）
+          for (let i = children.length - 1; i >= 0; i--) {
+            const result = findBrandingText(children[i])
+            if (result) return result
+          }
+        }
+        // borderTop を持つ div の直接テキスト children がブランディングテキスト
+        if (node.props.style?.borderTop && typeof children === 'string') {
+          return children
+        }
+        return null
+      }
+
+      const brandingText = findBrandingText(lastCall[0] as Record<string, never>)
+      expect(brandingText).toBe('flowline.pages.dev')
     })
 
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
