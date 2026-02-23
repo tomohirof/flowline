@@ -144,6 +144,18 @@ describe('UserMenuPanel', () => {
     expect(panel).toHaveAttribute('aria-label', 'アカウントメニュー')
   })
 
+  it('should render logout button inside menu list (not in separate footer)', () => {
+    render(
+      <MemoryRouter>
+        <UserMenuPanel {...defaultProps} />
+      </MemoryRouter>,
+    )
+    const menuList = screen.getByTestId('user-menu-panel').querySelector('[class*="menuList"]')
+    expect(menuList).not.toBeNull()
+    const logoutButton = screen.getByTestId('logout-button')
+    expect(menuList!.contains(logoutButton)).toBe(true)
+  })
+
   describe('navigation to settings page', () => {
     it('should navigate to /settings when プロフィール設定 is clicked', async () => {
       const user = userEvent.setup()
