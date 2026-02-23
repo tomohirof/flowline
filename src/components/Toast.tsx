@@ -1,0 +1,28 @@
+import { useEffect, useRef } from 'react'
+import styles from './Toast.module.css'
+
+interface ToastProps {
+  message: string
+  icon?: string
+  onClose: () => void
+}
+
+export function Toast({ message, icon, onClose }: ToastProps) {
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  useEffect(() => {
+    const timer = setTimeout(() => onCloseRef.current(), 2500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  return (
+    <div data-testid="toast" className={styles.toast}>
+      {icon && <span className={styles.icon}>{icon}</span>}
+      <span>{message}</span>
+    </div>
+  )
+}

@@ -343,13 +343,3 @@
 .createCard:hover .createCardText {
   color: #7c5cfc;
 }
-
-/* Hidden delete button (for test compatibility in list view) */
-.hiddenDelete {
-  position: absolute;
-  opacity: 0;
-  pointer-events: all;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}

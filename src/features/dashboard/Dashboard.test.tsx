@@ -189,85 +189,93 @@ describe('Dashboard', () => {
   })
 
   // === 削除機能 ===
-  it('should show confirm dialog and delete flow when confirmed', async () => {
+  it('should show confirm modal and delete flow when confirmed', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
-    // DELETE call
-    mockApiFetch.mockResolvedValueOnce({})
+    mockApiFetch.mockResolvedValueOnce({}) // DELETE
 
     renderDashboard()
-
     await waitFor(() => {
       expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
     })
 
     await user.click(screen.getByTestId('delete-flow-flow-1'))
 
-    expect(confirmSpy).toHaveBeenCalledWith('「業務フロー」を削除しますか？')
+    // モーダルが表示される
+    expect(screen.getByTestId('confirm-dialog-overlay')).toBeInTheDocument()
+    expect(screen.getByText('フローを削除')).toBeInTheDocument()
+
+    // 確認ボタンをクリック
+    await user.click(screen.getByTestId('confirm-dialog-confirm'))
 
     await waitFor(() => {
       expect(mockApiFetch).toHaveBeenCalledWith('/flows/flow-1', { method: 'DELETE' })
     })
-
-    // flow-1 should be removed from the list
     await waitFor(() => {
       expect(screen.queryByTestId('flow-card-flow-1')).not.toBeInTheDocument()
     })
-
-    // flow-2 should still be visible
     expect(screen.getByTestId('flow-card-flow-2')).toBeInTheDocument()
-
-    confirmSpy.mockRestore()
   })
 
-  it('should not delete flow when confirm is cancelled', async () => {
+  it('should not delete flow when modal is cancelled', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
     mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
 
     renderDashboard()
-
     await waitFor(() => {
       expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
     })
 
     await user.click(screen.getByTestId('delete-flow-flow-1'))
+    expect(screen.getByTestId('confirm-dialog-overlay')).toBeInTheDocument()
 
-    expect(confirmSpy).toHaveBeenCalled()
-    // DELETE should NOT have been called (only the initial GET was called)
+    // キャンセル
+    await user.click(screen.getByTestId('confirm-dialog-cancel'))
+
+    // モーダルが閉じる
+    expect(screen.queryByTestId('confirm-dialog-overlay')).not.toBeInTheDocument()
+    // DELETEは呼ばれない
     expect(mockApiFetch).toHaveBeenCalledTimes(1)
-
-    // Flow should still be visible
     expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
-
-    confirmSpy.mockRestore()
   })
 
   it('should show error when delete fails', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
     mockApiFetch.mockRejectedValueOnce(new Error('Delete failed'))
 
     renderDashboard()
-
     await waitFor(() => {
       expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
     })
 
     await user.click(screen.getByTestId('delete-flow-flow-1'))
+    await user.click(screen.getByTestId('confirm-dialog-confirm'))
 
     await waitFor(() => {
       expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
     })
-
     expect(screen.getByText('フローの削除に失敗しました')).toBeInTheDocument()
-
-    // Flow should still be visible since delete failed
     expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+  })
 
-    confirmSpy.mockRestore()
+  it('should show toast after successful delete', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+    mockApiFetch.mockResolvedValueOnce({})
+
+    renderDashboard()
+    await waitFor(() => {
+      expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByTestId('delete-flow-flow-1'))
+    await user.click(screen.getByTestId('confirm-dialog-confirm'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('toast')).toBeInTheDocument()
+    })
+    expect(screen.getByText('削除しました')).toBeInTheDocument()
   })
 
   // === APIエラー ===
@@ -314,7 +322,6 @@ describe('Dashboard', () => {
   // === 重複削除の防止 ===
   it('should handle rapid delete clicks gracefully', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
     // Only one DELETE call should go through
     mockApiFetch.mockResolvedValueOnce({})
@@ -325,14 +332,14 @@ describe('Dashboard', () => {
       expect(screen.getByTestId('delete-flow-flow-1')).toBeInTheDocument()
     })
 
-    // Click delete
+    // Click delete to open modal
     await user.click(screen.getByTestId('delete-flow-flow-1'))
+    // Confirm the modal
+    await user.click(screen.getByTestId('confirm-dialog-confirm'))
 
     await waitFor(() => {
       expect(screen.queryByTestId('flow-card-flow-1')).not.toBeInTheDocument()
     })
-
-    confirmSpy.mockRestore()
   })
 
   // =============================================
@@ -485,9 +492,9 @@ describe('Dashboard', () => {
     const link2 = screen.getByTestId('flow-link-flow-2')
     expect(link2).toHaveAttribute('href', '/flows/flow-2')
 
-    // Delete buttons should exist
-    expect(screen.getByTestId('delete-flow-flow-1')).toBeInTheDocument()
-    expect(screen.getByTestId('delete-flow-flow-2')).toBeInTheDocument()
+    // Menu buttons should exist for each flow in list view
+    const menuBtns = screen.getAllByLabelText('メニュー')
+    expect(menuBtns.length).toBeGreaterThanOrEqual(2)
   })
 
   // =============================================
