@@ -7,14 +7,11 @@ vi.mock('satori', () => ({
   default: vi.fn(async () => '<svg></svg>'),
 }))
 
-// Import app after mocks are set up
-import { app } from '../../../api/app'
-import { _resetOgpCacheForTesting } from '../../../api/routes/ogp'
-
-const JWT_SECRET = 'test-secret-key'
+// Import Worker app after mocks are set up
+import app, { _resetCacheForTesting } from '../../../workers/ogp/src/index'
 
 function createEnv(sqliteDb: ReturnType<typeof Database>) {
-  return { FLOWLINE_DB: createMockD1(sqliteDb), JWT_SECRET }
+  return { FLOWLINE_DB: createMockD1(sqliteDb) }
 }
 
 function registerUser(
@@ -75,7 +72,7 @@ function getRequest(path: string, env: object) {
   return app.request(path, {}, env)
 }
 
-describe('OGP Image API', () => {
+describe('OGP Worker', () => {
   let db: ReturnType<typeof Database>
   let env: ReturnType<typeof createEnv>
 
@@ -99,13 +96,13 @@ describe('OGP Image API', () => {
   })
 
   // ========================================
-  // GET /api/ogp/share/:tokenPng
+  // GET /share/:tokenPng
   // ========================================
-  describe('GET /api/ogp/share/:tokenPng', () => {
+  describe('GET /share/:tokenPng', () => {
     it('should return 200 with content-type image/png for valid share token', async () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'abc123')
 
-      const res = await getRequest('/api/ogp/share/abc123.png', env)
+      const res = await getRequest('/share/abc123.png', env)
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toBe('image/png')
     })
@@ -113,7 +110,7 @@ describe('OGP Image API', () => {
     it('should set cache-control header for valid response', async () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'abc123')
 
-      const res = await getRequest('/api/ogp/share/abc123.png', env)
+      const res = await getRequest('/share/abc123.png', env)
       expect(res.status).toBe(200)
       expect(res.headers.get('cache-control')).toBe('public, max-age=86400')
     })
@@ -121,7 +118,7 @@ describe('OGP Image API', () => {
     it('should return valid PNG data with correct PNG signature bytes', async () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'abc123')
 
-      const res = await getRequest('/api/ogp/share/abc123.png', env)
+      const res = await getRequest('/share/abc123.png', env)
       expect(res.status).toBe(200)
 
       const arrayBuffer = await res.arrayBuffer()
@@ -134,14 +131,14 @@ describe('OGP Image API', () => {
     })
 
     it('should return 404 for non-existent share token', async () => {
-      const res = await getRequest('/api/ogp/share/nonexistent.png', env)
+      const res = await getRequest('/share/nonexistent.png', env)
       expect(res.status).toBe(404)
     })
 
     it('should handle flow with no lanes and no nodes (0 lanes, 0 nodes)', async () => {
       insertFlowWithShareToken(db, 'flow-empty', USER_ID, 'Empty Flow', 'empty-token')
 
-      const res = await getRequest('/api/ogp/share/empty-token.png', env)
+      const res = await getRequest('/share/empty-token.png', env)
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toBe('image/png')
     })
@@ -150,7 +147,7 @@ describe('OGP Image API', () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'Public Flow', 'public-token')
 
       // No auth cookie provided — should still succeed
-      const res = await app.request('/api/ogp/share/public-token.png', {}, env)
+      const res = await app.request('/share/public-token.png', {}, env)
       expect(res.status).toBe(200)
     })
 
@@ -162,7 +159,7 @@ describe('OGP Image API', () => {
       insertNode(db, 'node-2', 'flow-1', 'lane-1', 1, 'Task 2', 'Note', 1)
       insertNode(db, 'node-3', 'flow-1', 'lane-2', 0, 'Task 3', null, 0)
 
-      const res = await getRequest('/api/ogp/share/detail-token.png', env)
+      const res = await getRequest('/share/detail-token.png', env)
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toBe('image/png')
     })
@@ -172,24 +169,24 @@ describe('OGP Image API', () => {
 
       // Without .png suffix, the route still matches (Hono :tokenPng captures any string)
       // .replace(/\.png$/, '') on 'abc123' returns 'abc123' — which is a valid token
-      const res = await getRequest('/api/ogp/share/abc123', env)
+      const res = await getRequest('/share/abc123', env)
       expect(res.status).toBe(200)
     })
 
     it('should return 404 for empty token (.png only)', async () => {
-      const res = await getRequest('/api/ogp/share/.png', env)
+      const res = await getRequest('/share/.png', env)
       expect(res.status).toBe(404)
     })
 
     it('should return 500 with error message when font loading fails', async () => {
       // Reset caches so loadFont actually calls fetch
-      _resetOgpCacheForTesting()
+      _resetCacheForTesting()
       vi.restoreAllMocks()
       vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network error'))
 
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'font-fail')
 
-      const res = await getRequest('/api/ogp/share/font-fail.png', env)
+      const res = await getRequest('/share/font-fail.png', env)
       expect(res.status).toBe(500)
       const body = await res.json()
       expect(body).toHaveProperty('error')
@@ -197,7 +194,7 @@ describe('OGP Image API', () => {
 
     it('should return 500 with error message when font fetch returns non-OK status', async () => {
       // Reset caches so loadFont actually calls fetch
-      _resetOgpCacheForTesting()
+      _resetCacheForTesting()
       vi.restoreAllMocks()
       vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
         new Response('Not Found', { status: 404 }),
@@ -205,7 +202,7 @@ describe('OGP Image API', () => {
 
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'font-404')
 
-      const res = await getRequest('/api/ogp/share/font-404.png', env)
+      const res = await getRequest('/share/font-404.png', env)
       expect(res.status).toBe(500)
       const body = await res.json()
       expect(body).toHaveProperty('error')
@@ -215,7 +212,7 @@ describe('OGP Image API', () => {
       const satori = await import('satori')
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'brand-check')
 
-      await getRequest('/api/ogp/share/brand-check.png', env)
+      await getRequest('/share/brand-check.png', env)
 
       // satori が呼ばれた時の引数を検証
       const satoriMock = vi.mocked(satori.default)
@@ -250,7 +247,7 @@ describe('OGP Image API', () => {
 
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'satori-fail')
 
-      const res = await getRequest('/api/ogp/share/satori-fail.png', env)
+      const res = await getRequest('/share/satori-fail.png', env)
       expect(res.status).toBe(500)
       const body = await res.json()
       expect(body).toHaveProperty('error')
@@ -268,10 +265,22 @@ describe('OGP Image API', () => {
 
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'resvg-fail')
 
-      const res = await getRequest('/api/ogp/share/resvg-fail.png', env)
+      const res = await getRequest('/share/resvg-fail.png', env)
       expect(res.status).toBe(500)
       const body = await res.json()
       expect(body).toHaveProperty('error')
+    })
+  })
+
+  // ========================================
+  // GET /health
+  // ========================================
+  describe('GET /health', () => {
+    it('should return 200 with status ok', async () => {
+      const res = await app.request('/health', {}, env)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body).toEqual({ status: 'ok' })
     })
   })
 })

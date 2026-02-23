@@ -1,7 +1,12 @@
 import { Hono } from 'hono'
-import type { Bindings } from '../app'
 import satori from 'satori'
 import { Resvg } from '@cf-wasm/resvg/workerd'
+
+type Bindings = {
+  FLOWLINE_DB: D1Database
+}
+
+const app = new Hono<{ Bindings: Bindings }>()
 
 /** Cached font data to avoid re-fetching on every request */
 let cachedFontData: ArrayBuffer | null = null
@@ -243,12 +248,10 @@ function buildOgpElement(title: string, authorName: string, laneCount: number, n
   }
 }
 
-const ogp = new Hono<{ Bindings: Bindings }>()
-
 // =============================================
 // GET /share/:tokenPng - Generate OGP image
 // =============================================
-ogp.get('/share/:tokenPng', async (c) => {
+app.get('/share/:tokenPng', async (c) => {
   const tokenPng = c.req.param('tokenPng')
 
   // Strip .png extension to get share token
@@ -323,9 +326,12 @@ ogp.get('/share/:tokenPng', async (c) => {
   }
 })
 
+// Health check
+app.get('/health', (c) => c.json({ status: 'ok' }))
+
 /** Reset internal caches — for testing only */
-function _resetOgpCacheForTesting() {
+export function _resetCacheForTesting() {
   cachedFontData = null
 }
 
-export { ogp, _resetOgpCacheForTesting }
+export default app
