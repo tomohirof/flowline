@@ -216,10 +216,10 @@ function buildOgpElement(title: string, authorName: string) {
                 props: {
                   style: {
                     display: 'flex',
+                    justifyContent: 'center',
                     fontSize: '52px',
                     fontWeight: 700,
                     color: '#1a1a2e',
-                    textAlign: 'center',
                     maxWidth: '1000px',
                     overflow: 'hidden',
                     maxLines: 2,
