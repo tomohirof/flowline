@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import styles from './ConfirmDialog.module.css'
 
 interface ConfirmDialogProps {
@@ -26,9 +26,21 @@ export function ConfirmDialog({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onCancel])
 
+  const confirmBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    confirmBtnRef.current?.focus()
+  }, [])
+
   return (
     <div data-testid="confirm-dialog-overlay" className={styles.overlay} onClick={onCancel}>
-      <div className={styles.card} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.card}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className={`${styles.iconWrap} ${danger ? styles.iconDanger : styles.iconInfo}`}>
           {danger ? (
             <svg
@@ -61,7 +73,9 @@ export function ConfirmDialog({
             </svg>
           )}
         </div>
-        <h3 className={styles.title}>{title}</h3>
+        <h3 id="confirm-dialog-title" className={styles.title}>
+          {title}
+        </h3>
         <p className={styles.message}>{message}</p>
         <div className={styles.buttons}>
           <button
@@ -72,6 +86,7 @@ export function ConfirmDialog({
             キャンセル
           </button>
           <button
+            ref={confirmBtnRef}
             data-testid="confirm-dialog-confirm"
             className={`${styles.confirmBtn} ${danger ? styles.danger : ''}`}
             onClick={onConfirm}

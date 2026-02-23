@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import styles from './Toast.module.css'
 
 interface ToastProps {
@@ -8,10 +8,13 @@ interface ToastProps {
 }
 
 export function Toast({ message, icon, onClose }: ToastProps) {
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
-    const timer = setTimeout(onClose, 2500)
+    const timer = setTimeout(() => onCloseRef.current(), 2500)
     return () => clearTimeout(timer)
-  }, [onClose])
+  }, [])
 
   return (
     <div data-testid="toast" className={styles.toast}>
