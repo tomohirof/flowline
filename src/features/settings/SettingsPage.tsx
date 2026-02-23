@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
+import { UserMenuPanel } from '../../components/UserMenuPanel'
 import type { Settings } from './types'
 import {
   ProfileSection,
@@ -25,7 +26,6 @@ const NAV_ITEMS: { id: NavId; label: string; icon: string }[] = [
 ]
 
 const ICON_PATHS: Record<string, string> = {
-  arrowLeft: 'M19 12H5M12 19l-7-7 7-7',
   user: 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 3a4 4 0 100 8 4 4 0 000-8z',
   sliders: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
   mouse: 'M12 2a6 6 0 00-6 6v8a6 6 0 0012 0V8a6 6 0 00-6-6zM12 2v6',
@@ -86,7 +86,11 @@ export function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isInitialLoadRef = useRef(true)
+  const userNameRef = useRef(user?.name)
 
   const loadSettings = useCallback(async () => {
     try {
@@ -100,6 +104,11 @@ export function SettingsPage() {
       setSettings(data.settings)
       setProfileName(data.profile.name)
       setProfileEmail(data.profile.email)
+      // Mark initial load complete after setting state
+      // Use setTimeout(0) to ensure state updates are batched before auto-save can trigger
+      setTimeout(() => {
+        isInitialLoadRef.current = false
+      }, 0)
     } catch {
       setError('設定の取得に失敗しました')
       setLoadFailed(true)
@@ -108,6 +117,11 @@ export function SettingsPage() {
         setProfileName(user.name)
         setProfileEmail(user.email)
       }
+      // Use setTimeout(0) to match success path — prevents auto-save from firing
+      // with DEFAULT_SETTINGS when initial load fails
+      setTimeout(() => {
+        isInitialLoadRef.current = false
+      }, 0)
     } finally {
       setLoading(false)
     }
@@ -117,6 +131,11 @@ export function SettingsPage() {
     loadSettings()
   }, [loadSettings])
 
+  // Keep userNameRef in sync with user.name
+  useEffect(() => {
+    userNameRef.current = user?.name
+  }, [user?.name])
+
   const toggle = (key: keyof Settings) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }))
   }
@@ -125,27 +144,39 @@ export function SettingsPage() {
     setSettings((prev) => ({ ...prev, [key]: value }))
   }
 
-  const handleSave = async () => {
-    try {
-      await apiFetch('/settings', {
-        method: 'PUT',
-        body: JSON.stringify(settings),
-      })
+  // Auto-save when settings or profileName change (debounce 800ms)
+  useEffect(() => {
+    // Skip auto-save on initial load
+    if (isInitialLoadRef.current) return
 
-      // Also save profile name if changed
-      if (profileName !== user?.name) {
-        await apiFetch('/settings/profile', {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+
+    saveTimerRef.current = setTimeout(async () => {
+      setSaveStatus('saving')
+      try {
+        await apiFetch('/settings', {
           method: 'PUT',
-          body: JSON.stringify({ name: profileName }),
+          body: JSON.stringify(settings),
         })
+        if (profileName !== userNameRef.current) {
+          await apiFetch('/settings/profile', {
+            method: 'PUT',
+            body: JSON.stringify({ name: profileName }),
+          })
+        }
+        setSaveStatus('saved')
+        setTimeout(() => setSaveStatus('idle'), 2000)
+      } catch {
+        setSaveStatus('error')
+        setError('設定の保存に失敗しました')
+        setTimeout(() => setSaveStatus('idle'), 3000)
       }
+    }, 800)
 
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch {
-      setError('設定の保存に失敗しました')
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
-  }
+  }, [settings, profileName])
 
   const handlePasswordChange = async (
     currentPassword: string,
@@ -220,25 +251,43 @@ export function SettingsPage() {
     <div className={styles.layout}>
       {/* Top bar */}
       <div className={styles.topbar} data-testid="settings-topbar">
-        <Link to="/flows" className={styles.backButton} data-testid="settings-back">
-          <Icon d={ICON_PATHS.arrowLeft} />
+        <Link to="/flows" className={styles.logoLink} data-testid="settings-logo-link">
+          <div className={styles.logoIcon}>F</div>
+          <span className={styles.logoText}>Flowline</span>
         </Link>
-        <div className={styles.logoGroup}>
-          <div className={styles.logo}>F</div>
-          <span className={styles.pageTitle}>設定</span>
-        </div>
         <div className={styles.spacer} />
-        <div className={styles.saveWrapper}>
-          <button className={styles.saveButton} onClick={handleSave} data-testid="settings-save">
-            保存する
-          </button>
-          {saved && (
-            <div className={styles.savedBadge} data-testid="settings-saved-badge">
-              &#10003; 保存済み
-            </div>
-          )}
-        </div>
+        {saveStatus === 'saving' && (
+          <span className={styles.saveStatus} data-testid="save-status">
+            保存中...
+          </span>
+        )}
+        {saveStatus === 'saved' && (
+          <span className={styles.saveStatusDone} data-testid="save-status">
+            &#10003; 保存済み
+          </span>
+        )}
+        {saveStatus === 'error' && (
+          <span className={styles.saveStatusError} data-testid="save-status-error">
+            保存失敗
+          </span>
+        )}
+        <button
+          className={styles.avatar}
+          onClick={() => setMenuOpen((p) => !p)}
+          data-testid="settings-avatar"
+          aria-label="メニュー"
+        >
+          {user?.name?.charAt(0).toUpperCase() || 'U'}
+        </button>
       </div>
+
+      <UserMenuPanel
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        userName={user?.name || ''}
+        userEmail={user?.email || ''}
+        onLogout={logout}
+      />
 
       {error && (
         <div className={styles.error} data-testid="settings-error">
