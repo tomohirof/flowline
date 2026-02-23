@@ -104,8 +104,9 @@ ai.post('/generate', async (c) => {
 
     return c.json({ flow })
   } catch (e) {
-    console.error('AI generation failed:', e)
-    return c.json({ error: 'AI生成に失敗しました。しばらく後に再試行してください。' }, 502)
+    const detail = e instanceof Error ? e.message : String(e)
+    console.error('AI generation failed:', detail, e)
+    return c.json({ error: 'AI生成に失敗しました。しばらく後に再試行してください。', detail }, 502)
   }
 })
 
@@ -202,8 +203,9 @@ ai.post('/:flowId/edit', async (c) => {
 
     return c.json({ flow })
   } catch (e) {
-    console.error('AI edit failed:', e)
-    return c.json({ error: 'AI生成に失敗しました。しばらく後に再試行してください。' }, 502)
+    const detail = e instanceof Error ? e.message : String(e)
+    console.error('AI edit failed:', detail, e)
+    return c.json({ error: 'AI生成に失敗しました。しばらく後に再試行してください。', detail }, 502)
   }
 })
 
