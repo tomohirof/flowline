@@ -6,6 +6,7 @@ interface TeaserModalProps {
   laneCount: number
   nodeCount: number
   laneColors: number[]
+  isDark?: boolean
   onClose: () => void
 }
 
@@ -14,14 +15,22 @@ export function TeaserModal({
   laneCount,
   nodeCount,
   laneColors,
+  isDark = false,
   onClose,
 }: TeaserModalProps) {
   return (
-    <div className={styles.overlay} data-testid="teaser-modal">
+    <div
+      className={`${styles.overlay}${isDark ? ` ${styles.overlayDark}` : ''}`}
+      data-testid="teaser-modal"
+    >
       <div className={styles.content}>
         <div className={styles.logo}>F</div>
-        <div className={styles.brandName}>Flowline</div>
-        <h2 className={styles.flowTitle}>{flowTitle}</h2>
+        <div className={`${styles.brandName}${isDark ? ` ${styles.brandNameDark}` : ''}`}>
+          Flowline
+        </div>
+        <h2 className={`${styles.flowTitle}${isDark ? ` ${styles.flowTitleDark}` : ''}`}>
+          {flowTitle}
+        </h2>
         <p className={styles.subtitle}>Flowline で作成されたフロー</p>
         <div className={styles.meta}>
           {laneColors.map((colorIndex, i) => (

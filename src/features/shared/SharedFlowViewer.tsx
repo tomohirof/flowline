@@ -19,10 +19,17 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   const [zoom, setZoom] = useState(1)
   const [showModal, setShowModal] = useState(true)
   const [showBottomBar, setShowBottomBar] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
 
   const closeModal = () => {
     setShowModal(false)
-    setTimeout(() => setShowBottomBar(true), 3000)
+    timerRef.current = setTimeout(() => setShowBottomBar(true), 3000)
   }
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -387,6 +394,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           laneCount={sortedLanes.length}
           nodeCount={flow.nodes.length}
           laneColors={sortedLanes.map((l) => l.colorIndex)}
+          isDark={isDark}
           onClose={closeModal}
         />
       )}

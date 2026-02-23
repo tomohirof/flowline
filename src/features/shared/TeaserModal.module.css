@@ -105,6 +105,23 @@
   color: #ccc;
 }
 
+/* Dark theme (midnight) */
+.overlayDark {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(26, 26, 46, 0.95) 0%,
+    rgba(26, 26, 46, 0.8) 100%
+  );
+}
+
+.brandNameDark {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.flowTitleDark {
+  color: #fff;
+}
+
 @keyframes overlayIn {
   from {
     opacity: 0;
