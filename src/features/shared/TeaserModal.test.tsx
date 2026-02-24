@@ -132,6 +132,38 @@ describe('TeaserModal', () => {
     expect(screen.getByText(/0 レーン/)).toBeInTheDocument()
   })
 
+  it('should render logo as a link to Flowline', () => {
+    render(
+      <TeaserModal
+        flowTitle="Test"
+        laneCount={2}
+        nodeCount={3}
+        laneColors={[0, 1]}
+        onClose={vi.fn()}
+      />,
+    )
+    const modal = screen.getByTestId('teaser-modal')
+    const links = modal.querySelectorAll('a[href="https://flowline.six1.jp/flows"]')
+    expect(links.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should render free text as a link to Flowline', () => {
+    render(
+      <TeaserModal
+        flowTitle="Test"
+        laneCount={2}
+        nodeCount={3}
+        laneColors={[0, 1]}
+        onClose={vi.fn()}
+      />,
+    )
+    const modal = screen.getByTestId('teaser-modal')
+    const links = Array.from(modal.querySelectorAll('a'))
+    const freeLink = links.find((a) => a.textContent?.includes('無料'))
+    expect(freeLink).not.toBeUndefined()
+    expect(freeLink!.getAttribute('href')).toBe('https://flowline.six1.jp/flows')
+  })
+
   it('TeaserModal.module.css .content should have solid white background, not gradient', async () => {
     const { readFileSync } = await import('fs')
     const { resolve } = await import('path')

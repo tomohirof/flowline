@@ -107,4 +107,20 @@ describe('SharedFlowViewer', () => {
     const footer = screen.getByTestId('shared-flow-footer')
     expect(footer.textContent).toContain('Flowline')
   })
+
+  it('should render logo in titleBar as a link to Flowline', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    const titleBar = document.querySelector('[class*="titleBar"]')
+    const link = titleBar!.querySelector('a')
+    expect(link).not.toBeNull()
+    expect(link!.getAttribute('href')).toBe('https://flowline.six1.jp/flows')
+  })
+
+  it('should render footer logo as a link to Flowline', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    const footer = screen.getByTestId('shared-flow-footer')
+    const link = footer.querySelector('a')
+    expect(link).not.toBeNull()
+    expect(link!.getAttribute('href')).toBe('https://flowline.six1.jp/flows')
+  })
 })

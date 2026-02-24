@@ -140,10 +140,12 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
       {/* Title bar */}
       <div className={styles.titleBar}>
-        <div className={styles.logoIcon} style={{ background: logoGradient }}>
-          {BRAND.logoInitial}
-        </div>
-        <span className={styles.brandName}>{BRAND.name}</span>
+        <a href="https://flowline.six1.jp/flows" className={styles.logoLink}>
+          <div className={styles.logoIcon} style={{ background: logoGradient }}>
+            {BRAND.logoInitial}
+          </div>
+          <span className={styles.brandName}>{BRAND.name}</span>
+        </a>
       </div>
 
       {/* Hero title area */}
@@ -402,12 +404,12 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
       {/* Footer */}
       <div className={styles.footer} data-testid="shared-flow-footer">
-        <div className={styles.footerLeft}>
+        <a href="https://flowline.six1.jp/flows" className={styles.footerLink}>
           <div className={styles.footerIcon} style={{ background: logoGradient }}>
             {BRAND.logoInitial}
           </div>
           <span className={styles.footerText}>{BRAND.sharedFooter}</span>
-        </div>
+        </a>
         <div className={styles.zoomControls}>
           <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.min(2, z + 0.1))}>
             +

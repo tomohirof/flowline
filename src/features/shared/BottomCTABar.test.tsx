@@ -35,10 +35,10 @@ describe('BottomCTABar', () => {
     expect(screen.getByText(BRAND.sharedCtaFeatures)).toBeInTheDocument()
   })
 
-  it('should have CTA link pointing to /?auth=register', () => {
+  it('should have CTA link pointing to absolute URL', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
     const link = screen.getByRole('link', { name: BRAND.ctaButtonShared })
-    expect(link).toHaveAttribute('href', '/?auth=register')
+    expect(link).toHaveAttribute('href', 'https://flowline.six1.jp/')
   })
 
   it('should call onClose when close button is clicked', async () => {
