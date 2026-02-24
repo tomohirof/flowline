@@ -241,20 +241,20 @@ function buildOgpElement(title: string, authorName: string) {
               position: 'relative',
             },
             children: [
-              // Title + Catchcopy overlay (absolute, spans both columns over swimlane)
-              // top: 180px = visually centered in body area (578px height - title block)
-              // width: 1000px = extends from left column across preview card for overlap effect
+              // Title + Catchcopy overlay (absolute, overlaps swimlane preview card)
+              // top: 128px positions title band to overlay the swimlane content area
+              // maxWidth: 1000px allows the band to shrink to fit content
               {
                 type: 'div',
                 props: {
                   style: {
                     position: 'absolute',
-                    top: '180px',
-                    left: '40px',
+                    top: 128,
+                    left: 40,
                     zIndex: 10,
                     display: 'flex',
                     flexDirection: 'column',
-                    width: '1000px',
+                    maxWidth: 1000,
                   },
                   children: [
                     // Title
@@ -552,20 +552,6 @@ function buildOgpElement(title: string, authorName: string) {
                               height: '100%',
                               style: {
                                 objectFit: 'cover',
-                              },
-                            },
-                          },
-                          // Bottom gradient fade
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                position: 'absolute',
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                height: '80px',
-                                background: 'linear-gradient(transparent, #FFFFFF)',
                               },
                             },
                           },

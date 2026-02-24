@@ -352,6 +352,96 @@ describe('OGP Worker', () => {
       expect(findAbsoluteTitle(lastCall[0] as Record<string, never>)).toBe(true)
     })
 
+    it('should position title overlay at top 128px to overlap swimlane preview', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'position-check')
+
+      await getRequest('/share/position-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function findTitleOverlayTop(node: Record<string, any>): string | number | null {
+        if (!node?.props) return null
+        const { style, children } = node.props
+        if (style?.position === 'absolute' && style?.zIndex >= 10) {
+          if (findText(node, 'My Flow')) return style.top
+        }
+        if (Array.isArray(children)) {
+          for (const child of children) {
+            const result = findTitleOverlayTop(child as Record<string, never>)
+            if (result !== null) return result
+          }
+        }
+        return null
+      }
+
+      const top = findTitleOverlayTop(lastCall[0] as Record<string, never>)
+      // Title overlay should be at top: 128 (body-relative) to overlap the swimlane preview
+      expect(top).toBe(128)
+    })
+
+    it('should use maxWidth on title overlay instead of fixed width', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'maxwidth-check')
+
+      await getRequest('/share/maxwidth-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function findTitleOverlayStyle(node: Record<string, any>): Record<string, any> | null {
+        if (!node?.props) return null
+        const { style, children } = node.props
+        if (style?.position === 'absolute' && style?.zIndex >= 10) {
+          if (findText(node, 'My Flow')) return style
+        }
+        if (Array.isArray(children)) {
+          for (const child of children) {
+            const result = findTitleOverlayStyle(child as Record<string, never>)
+            if (result !== null) return result
+          }
+        }
+        return null
+      }
+
+      const style = findTitleOverlayStyle(lastCall[0] as Record<string, never>)
+      expect(style).not.toBeNull()
+      expect(style!.maxWidth).toBeDefined()
+      expect(style!.width).toBeUndefined()
+    })
+
+    it('should not have bottom gradient fade in preview card', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'no-fade-check')
+
+      await getRequest('/share/no-fade-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function hasGradientFade(node: Record<string, any>): boolean {
+        if (!node?.props) return false
+        const { style, children } = node.props
+        if (
+          style?.background &&
+          typeof style.background === 'string' &&
+          style.background.includes('linear-gradient') &&
+          style.background.includes('#FFFFFF')
+        )
+          return true
+        if (Array.isArray(children)) {
+          return children.some((child: Record<string, never>) => hasGradientFade(child))
+        }
+        return false
+      }
+
+      expect(hasGradientFade(lastCall[0] as Record<string, never>)).toBe(false)
+    })
+
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
       const satori = await import('satori/standalone')
       vi.mocked(satori.default).mockRejectedValueOnce(new Error('SVG generation failed'))
