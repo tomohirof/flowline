@@ -25,10 +25,12 @@ export function TeaserModal({
       data-testid="teaser-modal"
     >
       <div className={styles.content}>
-        <div className={styles.logo}>{BRAND.logoInitial}</div>
-        <div className={`${styles.brandName}${isDark ? ` ${styles.brandNameDark}` : ''}`}>
-          {BRAND.name}
-        </div>
+        <a href={BRAND.flowsUrl} className={styles.logoLink}>
+          <div className={styles.logo}>{BRAND.logoInitial}</div>
+          <div className={`${styles.brandName}${isDark ? ` ${styles.brandNameDark}` : ''}`}>
+            {BRAND.name}
+          </div>
+        </a>
         <h2 className={`${styles.flowTitle}${isDark ? ` ${styles.flowTitleDark}` : ''}`}>
           {flowTitle}
         </h2>
@@ -49,7 +51,9 @@ export function TeaserModal({
         <button className={styles.ctaButton} onClick={onClose}>
           {BRAND.sharedViewButton}
         </button>
-        <p className={styles.freeText}>{BRAND.sharedFreeText}</p>
+        <a href={BRAND.flowsUrl} className={styles.freeLink}>
+          {BRAND.sharedFreeText}
+        </a>
       </div>
     </div>
   )

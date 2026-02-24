@@ -110,6 +110,24 @@
   color: #ccc;
 }
 
+.logoLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.freeLink {
+  font-size: 10px;
+  color: #ccc;
+  text-decoration: none;
+}
+
+.freeLink:hover {
+  text-decoration: underline;
+}
+
 /* Dark theme (midnight) */
 .overlayDark {
   background: rgba(10, 10, 30, 0.5);
