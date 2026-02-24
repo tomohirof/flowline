@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import styles from './AdminPage.module.css'
 
 interface AdminUser {
@@ -118,8 +119,8 @@ export function AdminPage() {
         )}
 
         {loading ? (
-          <div className={styles.loading} data-testid="admin-loading">
-            読み込み中...
+          <div data-testid="admin-loading">
+            <LoadingSpinner />
           </div>
         ) : (
           <div className={styles.tableWrapper} data-testid="admin-user-table">

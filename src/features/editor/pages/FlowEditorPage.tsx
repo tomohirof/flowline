@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useFlow } from '../hooks/useFlow'
 import FlowEditor from '../FlowEditor'
+import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import styles from './FlowEditorPage.module.css'
 
 export function FlowEditorPage() {
@@ -21,11 +22,7 @@ export function FlowEditorPage() {
   }, [saveNow])
 
   if (loading) {
-    return (
-      <div className={`${styles.centerScreen} ${styles.loading}`}>
-        <p>読み込み中...</p>
-      </div>
-    )
+    return <LoadingSpinner fullScreen />
   }
 
   if (error) {

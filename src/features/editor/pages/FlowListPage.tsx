@@ -7,6 +7,7 @@ import {
   createDefaultLanes,
 } from '../../dashboard/constants'
 import type { FlowListResponse, FlowSummary } from '../types'
+import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import styles from './FlowListPage.module.css'
 
 export function FlowListPage() {
@@ -82,7 +83,7 @@ export function FlowListPage() {
       {error && <div className={styles.errorMessage}>{error}</div>}
 
       {loading ? (
-        <p className={styles.loading}>読み込み中...</p>
+        <LoadingSpinner fullScreen />
       ) : flows.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyTitle}>フローがまだありません</p>

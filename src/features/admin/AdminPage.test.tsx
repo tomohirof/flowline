@@ -134,7 +134,7 @@ describe('AdminPage', () => {
     render(<AdminPage />)
 
     expect(screen.getByTestId('admin-loading')).toBeInTheDocument()
-    expect(screen.getByText('読み込み中...')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
   // ========================================

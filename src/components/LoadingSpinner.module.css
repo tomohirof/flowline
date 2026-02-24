@@ -1,0 +1,42 @@
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 200px;
+  font-family: 'DM Sans', 'Noto Sans JP', 'Helvetica Neue', sans-serif;
+}
+
+.fullScreen {
+  height: 100vh;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c5cfc, #5b8def);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.text {
+  color: #999;
+  font-size: 14px;
+}

@@ -70,7 +70,7 @@ describe('SharedFlowPage', () => {
     renderSharedPage()
 
     expect(screen.getByTestId('shared-flow-loading')).toBeInTheDocument()
-    expect(screen.getByText('読み込み中...')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
   // ========================================

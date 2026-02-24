@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { BRAND } from './constants/brand'
+import { LoadingSpinner } from './components/LoadingSpinner'
 import { FlowEditorPage } from './features/editor/pages/FlowEditorPage'
 import { Dashboard } from './features/dashboard/Dashboard'
 import { SharedFlowPage } from './features/shared/SharedFlowPage'
@@ -29,7 +30,7 @@ function Header() {
   if (loading)
     return (
       <header>
-        <p>読み込み中...</p>
+        <LoadingSpinner fullScreen />
       </header>
     )
 
@@ -57,14 +58,14 @@ function Header() {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
-  if (loading) return <p>読み込み中...</p>
+  if (loading) return <LoadingSpinner fullScreen />
   if (!user) return <Navigate to="/" replace />
   return <>{children}</>
 }
 
 function PublicHome() {
   const { user, loading } = useAuth()
-  if (loading) return <p>読み込み中...</p>
+  if (loading) return <LoadingSpinner fullScreen />
   if (user) return <Navigate to="/flows" replace />
   return <LandingPage />
 }
