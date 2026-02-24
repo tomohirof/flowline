@@ -10,6 +10,11 @@ vi.mock('../../../workers/ogp/src/yoga.wasm', () => ({
   default: {},
 }))
 
+// Mock pre-rendered preview PNG
+vi.mock('../../../workers/ogp/src/preview-base64', () => ({
+  PREVIEW_PNG_DATA_URI: 'data:image/png;base64,TESTPREVIEWDATA',
+}))
+
 // Mock satori/standalone — returns a fake SVG string and no-op init
 vi.mock('satori/standalone', () => ({
   default: vi.fn(async () => '<svg></svg>'),
@@ -280,6 +285,35 @@ describe('OGP Worker', () => {
       const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
 
       expect(findText(lastCall[0] as Record<string, never>, 'flowline.app')).toBe(true)
+    })
+
+    it('should include pre-rendered preview as img element', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'preview-check')
+
+      await getRequest('/share/preview-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      // 要素ツリーからimg要素のsrcにbase64プレビューデータが含まれることを確認
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function findImgSrc(node: Record<string, any>, srcSubstring: string): boolean {
+        if (!node?.props) return false
+        if (
+          node.type === 'img' &&
+          typeof node.props.src === 'string' &&
+          node.props.src.includes(srcSubstring)
+        )
+          return true
+        const { children } = node.props
+        if (Array.isArray(children)) {
+          return children.some((child: Record<string, never>) => findImgSrc(child, srcSubstring))
+        }
+        return false
+      }
+
+      expect(findImgSrc(lastCall[0] as Record<string, never>, 'data:image/png;base64,')).toBe(true)
     })
 
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
