@@ -99,7 +99,7 @@ export function useFlow(flowId: string) {
   // Perform save to API
   // =============================================
 
-  const performSaveRef = useRef<() => Promise<void>>()
+  const performSaveRef = useRef<(() => Promise<void>) | null>(null)
 
   const performSave = useCallback(async () => {
     const payload = pendingPayloadRef.current
