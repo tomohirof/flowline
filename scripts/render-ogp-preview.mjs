@@ -1,3 +1,4 @@
+/* global Buffer, console */
 /**
  * Render the fixed swimlane preview SVG to PNG for OGP image embedding.
  * Usage: node scripts/render-ogp-preview.mjs

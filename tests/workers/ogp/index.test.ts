@@ -300,7 +300,12 @@ describe('OGP Worker', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       function findImgSrc(node: Record<string, any>, srcSubstring: string): boolean {
         if (!node?.props) return false
-        if (node.type === 'img' && typeof node.props.src === 'string' && node.props.src.includes(srcSubstring)) return true
+        if (
+          node.type === 'img' &&
+          typeof node.props.src === 'string' &&
+          node.props.src.includes(srcSubstring)
+        )
+          return true
         const { children } = node.props
         if (Array.isArray(children)) {
           return children.some((child: Record<string, never>) => findImgSrc(child, srcSubstring))
