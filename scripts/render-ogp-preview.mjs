@@ -141,12 +141,12 @@ if (!existsSync(fontPath)) {
   console.log(`Font cached: ${fontPath}`)
 }
 
-// Try system fonts first (macOS has Hiragino), then custom font as fallback
+// Use only Noto Sans JP Bold – disable system fonts so Hiragino does not override
 const resvg = new Resvg(svgContent, {
   fitTo: { mode: 'width', value: 760 },
   font: {
     fontFiles: [fontPath],
-    loadSystemFonts: true,
+    loadSystemFonts: false,
   },
 })
 const pngData = resvg.render()
