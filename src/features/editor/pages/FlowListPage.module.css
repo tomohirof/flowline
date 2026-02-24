@@ -46,12 +46,6 @@
   font-size: 13px;
 }
 
-.loading {
-  color: #999;
-  text-align: center;
-  padding: 40px;
-}
-
 .emptyState {
   text-align: center;
   padding: 60px;

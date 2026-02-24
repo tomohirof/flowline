@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import type { Settings } from './types'
 import {
   ProfileSection,
@@ -230,8 +231,8 @@ export function SettingsPage() {
   if (loading) {
     return (
       <div className={styles.layout}>
-        <div className={styles.loading} data-testid="settings-loading">
-          読み込み中...
+        <div data-testid="settings-loading">
+          <LoadingSpinner />
         </div>
       </div>
     )

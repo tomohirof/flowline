@@ -4,6 +4,7 @@ import { BRAND } from '../../constants/brand'
 import { apiFetch, ApiError } from '../../lib/api'
 import type { Flow, FlowDetailResponse } from '../editor/types'
 import { SharedFlowViewer } from './SharedFlowViewer'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import styles from './SharedFlowPage.module.css'
 
 export function SharedFlowPage() {
@@ -60,8 +61,8 @@ export function SharedFlowPage() {
 
   if (loading) {
     return (
-      <div data-testid="shared-flow-loading" className={`${styles.centerScreen} ${styles.loading}`}>
-        <p>読み込み中...</p>
+      <div data-testid="shared-flow-loading">
+        <LoadingSpinner fullScreen />
       </div>
     )
   }
