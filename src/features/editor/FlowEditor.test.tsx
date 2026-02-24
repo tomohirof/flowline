@@ -1438,9 +1438,7 @@ describe('auto-connect by flow position (#182)', () => {
       ],
       arrows: [],
     }
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
     // Find an empty cell rect at row1 (y = TM + HH + 1 * RH = 24 + 46 + 84 = 154)
     // Empty cells have fill="transparent" and cursor="crosshair"
@@ -1463,14 +1461,10 @@ describe('auto-connect by flow position (#182)', () => {
     // B exists only at row2. Creating node at row0 → no upstream.
     const flow: Flow = {
       ...createMinimalFlow(),
-      nodes: [
-        { id: 'n1', laneId: 'lane-1', rowIndex: 2, label: 'B', note: null, orderIndex: 0 },
-      ],
+      nodes: [{ id: 'n1', laneId: 'lane-1', rowIndex: 2, label: 'B', note: null, orderIndex: 0 }],
       arrows: [],
     }
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
     // Find empty cell at row0 (y = TM + HH + 0 * RH = 24 + 46 = 70)
     const allRects = container.querySelectorAll('rect[fill="transparent"]')
@@ -1498,9 +1492,7 @@ describe('arrow reorganization toast (#182)', () => {
       ],
       arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
     }
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
     // Insert row at index 1 (between row0 and row1)
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
@@ -1535,9 +1527,7 @@ describe('arrow reorganization toast (#182)', () => {
       ],
       arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
     }
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
     // Insert row and click cell
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
@@ -1575,9 +1565,7 @@ describe('arrow reorganization toast (#182)', () => {
       ],
       arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
     }
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
     // Insert row and click cell
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
@@ -1612,9 +1600,7 @@ describe('arrow reorganization toast (#182)', () => {
       ],
       arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
     }
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
     // Insert row at index 2 (after both nodes)
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-2"]')
