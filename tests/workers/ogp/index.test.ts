@@ -352,7 +352,7 @@ describe('OGP Worker', () => {
       expect(findAbsoluteTitle(lastCall[0] as Record<string, never>)).toBe(true)
     })
 
-    it('should position title overlay at top 190px for vertical center of body', async () => {
+    it('should position title overlay at top 190px near upper-center of body', async () => {
       const satori = await import('satori/standalone')
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'position-check')
 
@@ -378,7 +378,7 @@ describe('OGP Worker', () => {
       }
 
       const top = findTitleOverlayTop(lastCall[0] as Record<string, never>)
-      // Title overlay should be at top: 190 for vertical center of body (body height = 578px)
+      // Title overlay at top: 190 (body height = 578px, ~33% from top)
       expect(top).toBe(190)
     })
 
