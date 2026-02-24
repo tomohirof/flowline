@@ -1133,13 +1133,23 @@ export default function FlowEditor({
         taskEntries.push({ key, task: t, rowIdx: ri >= 0 ? ri : Infinity })
       }
     })
-    taskEntries.sort((a, b) => a.rowIdx - b.rowIdx)
+    // Sort by rowIdx then by lane position
+    taskEntries.sort((a, b) => {
+      if (a.rowIdx !== b.rowIdx) return a.rowIdx - b.rowIdx
+      const aLi = lanes.findIndex((l) => l.id === a.task.lid)
+      const bLi = lanes.findIndex((l) => l.id === b.task.lid)
+      return aLi - bLi
+    })
 
     // Assign sequential Mermaid-safe node IDs
     const nodeIdMap = new Map<string, string>()
     taskEntries.forEach((e, i) => {
       nodeIdMap.set(e.key, `n${i + 1}`)
     })
+
+    // Lane name lookup
+    const laneNameMap = new Map<string, string>()
+    lanes.forEach((l) => laneNameMap.set(l.id, l.name))
 
     // Escape helper for Mermaid labels
     const esc = (s: string): string =>
@@ -1148,18 +1158,28 @@ export default function FlowEditor({
         .replace(/\[/g, '#lsqb;')
         .replace(/\]/g, '#rsqb;')
         .replace(/\|/g, '#vert;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
         .replace(/\n/g, ' ')
 
-    let m = 'flowchart TD\n'
+    let m = '%% Flowlineスイムレーンの近似出力です\nflowchart LR\n'
 
-    // Group tasks by lane and output subgraphs
-    lanes.forEach((lane) => {
-      const laneTasks = taskEntries.filter((e) => e.task.lid === lane.id)
-      if (laneTasks.length === 0) return
-      m += `    subgraph ${esc(lane.name)}\n`
-      laneTasks.forEach((e) => {
+    // Group tasks by row and output subgraphs
+    const rowGroups = new Map<number, typeof taskEntries>()
+    taskEntries.forEach((e) => {
+      const group = rowGroups.get(e.rowIdx) || []
+      group.push(e)
+      rowGroups.set(e.rowIdx, group)
+    })
+
+    const sortedRowIndices = [...rowGroups.keys()].sort((a, b) => a - b)
+    sortedRowIndices.forEach((ri, i) => {
+      const group = rowGroups.get(ri)!
+      m += `    subgraph row${i + 1}[" "]\n`
+      group.forEach((e) => {
         const nid = nodeIdMap.get(e.key)!
-        m += `        ${nid}["${esc(e.task.label)}"]\n`
+        const laneName = laneNameMap.get(e.task.lid) || ''
+        m += `        ${nid}["${esc(e.task.label)}<br><small>${esc(laneName)}</small>"]\n`
       })
       m += '    end\n'
     })
