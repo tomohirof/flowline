@@ -36,3 +36,28 @@ export function findClosestUpstream(
 
   return bestKey
 }
+
+/**
+ * Find arrows that cross over the inserted row.
+ *
+ * A "crossing" arrow has its `from` node above insertedRowIndex
+ * and its `to` node below insertedRowIndex.
+ */
+export function findCrossingArrows(
+  arrows: { id: string; from: string; to: string; comment: string }[],
+  tasks: Record<string, { lid: string; rid: string }>,
+  rows: { id: string }[],
+  insertedRowIndex: number,
+): { id: string; from: string; to: string; comment: string }[] {
+  return arrows.filter((arrow) => {
+    const fromTask = tasks[arrow.from]
+    const toTask = tasks[arrow.to]
+    if (!fromTask || !toTask) return false
+
+    const fromRi = rows.findIndex((r) => r.id === fromTask.rid)
+    const toRi = rows.findIndex((r) => r.id === toTask.rid)
+    if (fromRi < 0 || toRi < 0) return false
+
+    return fromRi < insertedRowIndex && toRi > insertedRowIndex
+  })
+}
