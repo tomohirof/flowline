@@ -226,3 +226,61 @@ describe('buildArrowPath', () => {
     })
   })
 })
+
+describe('diamond shape', () => {
+  describe('exitPt with diamond', () => {
+    it('should exit from bottom vertex when target is directly below', () => {
+      const result = exitPt({ x: 100, y: 100 }, { x: 100, y: 200 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 100, y: 134 })
+    })
+
+    it('should exit from right vertex when target is to the right', () => {
+      const result = exitPt({ x: 100, y: 100 }, { x: 300, y: 100 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 134, y: 100 })
+    })
+
+    it('should exit from left vertex when target is to the left', () => {
+      const result = exitPt({ x: 100, y: 100 }, { x: -50, y: 100 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 66, y: 100 })
+    })
+
+    it('should exit from top vertex when target is directly above', () => {
+      const result = exitPt({ x: 100, y: 200 }, { x: 100, y: 50 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 100, y: 166 })
+    })
+
+    it('should exit from top vertex when target is at same position', () => {
+      const result = exitPt({ x: 100, y: 100 }, { x: 100, y: 100 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 100, y: 66 })
+    })
+  })
+
+  describe('entryPt with diamond', () => {
+    it('should enter from top vertex when source is above', () => {
+      const result = entryPt({ x: 100, y: 200 }, { x: 100, y: 50 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 100, y: 166 })
+    })
+
+    it('should enter from bottom vertex when source is below', () => {
+      const result = entryPt({ x: 100, y: 100 }, { x: 100, y: 300 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 100, y: 134 })
+    })
+
+    it('should enter from right vertex when source is to the right', () => {
+      const result = entryPt({ x: 100, y: 100 }, { x: 300, y: 100 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 134, y: 100 })
+    })
+  })
+
+  describe('backward compatibility', () => {
+    it('exitPt without shape should work as before', () => {
+      const result = exitPt({ x: 100, y: 100 }, { x: 100, y: 200 }, 76, 28, 84)
+      expect(result).toEqual({ x: 100, y: 128 })
+    })
+
+    it('entryPt without shape should work as before', () => {
+      const result = entryPt({ x: 100, y: 200 }, { x: 100, y: 50 }, 76, 28, 84)
+      expect(result).toEqual({ x: 100, y: 172 })
+    })
+  })
+})

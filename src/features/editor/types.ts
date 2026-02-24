@@ -75,6 +75,7 @@ export interface Node {
   bg?: string | null
   strokeColor?: string | null
   dash?: string | null
+  shape?: 'diamond' | null
 }
 
 export interface Arrow {
@@ -153,6 +154,7 @@ export interface TaskData {
   bg?: string
   strokeColor?: string
   dash?: string
+  shape?: 'diamond'
 }
 
 export interface RowData {

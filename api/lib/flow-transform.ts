@@ -35,6 +35,7 @@ export interface NodeRow {
   bg: string | null
   stroke_color: string | null
   dash: string | null
+  shape: string | null
   created_at: string
   updated_at: string
 }
@@ -85,6 +86,7 @@ export function toNode(row: NodeRow) {
     bg: row.bg,
     strokeColor: row.stroke_color,
     dash: row.dash,
+    shape: row.shape,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

@@ -162,4 +162,107 @@ describe('SharedFlowViewer', () => {
     expect(heroMatch![0]).toMatch(/position:\s*sticky/)
     expect(heroMatch![0]).toMatch(/left:\s*0/)
   })
+
+  it('should render diamond node with polygon element', () => {
+    const diamondFlow = {
+      ...mockFlow,
+      nodes: [
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'Diamond',
+          note: null,
+          orderIndex: 0,
+          shape: 'diamond' as const,
+        },
+      ],
+    }
+    render(<SharedFlowViewer flow={diamondFlow} />)
+    const canvas = screen.getByTestId('shared-flow-canvas')
+    const polygon = canvas.querySelector('polygon')
+    expect(polygon).not.toBeNull()
+  })
+
+  it('should not render lane tag for diamond node', () => {
+    const diamondFlow = {
+      ...mockFlow,
+      nodes: [
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'Diamond',
+          note: null,
+          orderIndex: 0,
+          shape: 'diamond' as const,
+        },
+      ],
+    }
+    render(<SharedFlowViewer flow={diamondFlow} />)
+    const canvas = screen.getByTestId('shared-flow-canvas')
+    const svg = canvas.querySelector('svg')!
+    const texts = svg.querySelectorAll('text')
+    const laneTagTexts = Array.from(texts).filter(
+      (t) => t.getAttribute('font-size') === '8' && t.textContent === 'Lane 1',
+    )
+    expect(laneTagTexts).toHaveLength(0)
+  })
+
+  it('should truncate diamond node label at 8 characters', () => {
+    const diamondFlow = {
+      ...mockFlow,
+      nodes: [
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: '1234567890',
+          note: null,
+          orderIndex: 0,
+          shape: 'diamond' as const,
+        },
+      ],
+    }
+    render(<SharedFlowViewer flow={diamondFlow} />)
+    const canvas = screen.getByTestId('shared-flow-canvas')
+    const svg = canvas.querySelector('svg')!
+    const texts = Array.from(svg.querySelectorAll('text'))
+    const labelText = texts.find((t) => t.textContent?.includes('12345678'))
+    expect(labelText).not.toBeUndefined()
+    expect(labelText!.textContent).toBe('12345678…')
+  })
+
+  it('should render rect node without polygon when shape is undefined', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    const canvas = screen.getByTestId('shared-flow-canvas')
+    const svg = canvas.querySelector('svg')!
+    const nodeRects = svg.querySelectorAll('rect')
+    expect(nodeRects.length).toBeGreaterThan(0)
+    const polygons = svg.querySelectorAll('polygon')
+    expect(polygons).toHaveLength(0)
+  })
+
+  it('should not render note for diamond node', () => {
+    const diamondFlow = {
+      ...mockFlow,
+      nodes: [
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'Diamond',
+          note: 'Some note',
+          orderIndex: 0,
+          shape: 'diamond' as const,
+        },
+      ],
+    }
+    render(<SharedFlowViewer flow={diamondFlow} />)
+    const canvas = screen.getByTestId('shared-flow-canvas')
+    const svg = canvas.querySelector('svg')!
+    const texts = Array.from(svg.querySelectorAll('text'))
+    const noteText = texts.find((t) => t.textContent?.includes('Some note'))
+    expect(noteText).toBeUndefined()
+  })
 })

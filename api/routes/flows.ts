@@ -178,7 +178,7 @@ flows.post('/', async (c) => {
     statements.push(
       db
         .prepare(
-          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index, bg, stroke_color, dash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index, bg, stroke_color, dash, shape) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         )
         .bind(
           node.id,
@@ -191,6 +191,7 @@ flows.post('/', async (c) => {
           node.bg ?? null,
           node.strokeColor ?? null,
           node.dash ?? null,
+          node.shape ?? null,
         ),
     )
   }
@@ -347,7 +348,7 @@ flows.put('/:id', async (c) => {
         statements.push(
           db
             .prepare(
-              'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index, bg, stroke_color, dash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+              'INSERT INTO nodes (id, flow_id, lane_id, row_index, label, note, order_index, bg, stroke_color, dash, shape) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             )
             .bind(
               node.id,
@@ -360,6 +361,7 @@ flows.put('/:id', async (c) => {
               node.bg ?? null,
               node.strokeColor ?? null,
               node.dash ?? null,
+              node.shape ?? null,
             ),
         )
       }

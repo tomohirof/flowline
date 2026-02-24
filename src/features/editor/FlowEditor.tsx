@@ -34,7 +34,7 @@ import {
   STROKE_STYLES,
 } from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
-import { exitPt, entryPt, buildArrowPath } from '../../lib/arrow-routing'
+import { exitPt, entryPt, buildArrowPath, DS } from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { useArrows } from './hooks/useArrows'
@@ -310,6 +310,7 @@ function flowToInternalState(flow: Flow): {
         bg: n.bg || undefined,
         strokeColor: n.strokeColor || undefined,
         dash: n.dash || undefined,
+        shape: (n.shape as 'diamond' | undefined) || undefined,
       }
       if (n.note) {
         notes[key] = n.note
@@ -381,6 +382,7 @@ function internalStateToPayload(
         bg: task.bg || null,
         strokeColor: task.strokeColor || null,
         dash: task.dash || null,
+        shape: task.shape || null,
       }
     })
 
@@ -946,11 +948,10 @@ export default function FlowEditor({
           ri = riMap[t.rid]
         if (li === undefined || ri === undefined) continue
         const c = ct(li, ri)
-        if (
-          Math.abs(pt.x - c.x) < TW / 2 + 12 &&
-          Math.abs(pt.y - c.y) < TH / 2 + 12 &&
-          k !== connectFrom
-        ) {
+        const isDia = t.shape === 'diamond'
+        const snapX = isDia ? DS + 12 : TW / 2 + 12
+        const snapY = isDia ? DS + 12 : TH / 2 + 12
+        if (Math.abs(pt.x - c.x) < snapX && Math.abs(pt.y - c.y) < snapY && k !== connectFrom) {
           setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
           break
         }
@@ -1118,8 +1119,8 @@ export default function FlowEditor({
       t = ct(tli, tri),
       hw = TW / 2,
       hh = TH / 2
-    const s = exitPt(f, t, hw, hh, RH),
-      e = entryPt(t, f, hw, hh, RH)
+    const s = exitPt(f, t, hw, hh, RH, ft.shape),
+      e = entryPt(t, f, hw, hh, RH, tt.shape)
     return buildArrowPath(s, e, f, t)
   }
 
@@ -1428,6 +1429,80 @@ export default function FlowEditor({
                 setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], label: v || '作業' } }))
               }
             />
+          </PanelSection>
+          <PanelSection label="形状">
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(
+                [
+                  {
+                    shape: undefined as 'diamond' | undefined,
+                    label: '矩形',
+                    icon: (active: boolean) => (
+                      <svg width="20" height="14" viewBox="0 0 20 14">
+                        <rect
+                          x="1"
+                          y="1"
+                          width="18"
+                          height="12"
+                          rx="3"
+                          fill="none"
+                          stroke={active ? T.accent : T.panelLabel}
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                    ),
+                  },
+                  {
+                    shape: 'diamond' as const,
+                    label: '分岐',
+                    icon: (active: boolean) => (
+                      <svg width="20" height="20" viewBox="0 0 20 20">
+                        <polygon
+                          points="10,1 19,10 10,19 1,10"
+                          fill="none"
+                          stroke={active ? T.accent : T.panelLabel}
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                    ),
+                  },
+                ] as const
+              ).map((s) => {
+                const isActive = (s.shape || undefined) === (selTaskData.shape || undefined)
+                return (
+                  <div
+                    key={s.label}
+                    onClick={() =>
+                      setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], shape: s.shape } }))
+                    }
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 4,
+                      height: 32,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: isActive ? `${T.accent}15` : 'transparent',
+                      border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {s.icon(isActive)}
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: isActive ? 600 : 400,
+                        color: isActive ? T.accent : T.panelLabel,
+                      }}
+                    >
+                      {s.label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </PanelSection>
           <PanelSection label="メモ">
             <PanelInput
@@ -2580,6 +2655,7 @@ export default function FlowEditor({
                   isConnTgt = connectFrom !== null && connectFrom !== k
                 const isDT = dragging?.key === k,
                   isHov = hovered === k
+                const isDiamond = task.shape === 'diamond'
                 const tagW = lane.name.length * 7 + 14
                 return (
                   <g key={`t-${k}`} opacity={isDT ? 0.3 : 1}>
@@ -2597,66 +2673,104 @@ export default function FlowEditor({
                       onMouseEnter={() => setHovered(k)}
                       onMouseLeave={() => setHovered(null)}
                     />
-                    <rect
-                      x={c.x - TW / 2}
-                      y={c.y - TH / 2}
-                      width={TW}
-                      height={TH}
-                      fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
-                      stroke={
-                        isConnSrc
-                          ? T.accent
-                          : isSel || isMulti
-                            ? T.nodeSelStroke
-                            : isConnTgt && isHov
-                              ? T.accent
-                              : task.strokeColor || T.nodeStroke
-                      }
-                      strokeWidth={isConnSrc || isSel || isMulti ? 2 : 1.2}
-                      strokeDasharray={isConnSrc ? '4,3' : task.dash || 'none'}
-                      rx={10}
-                      style={{
-                        cursor: connectFrom ? 'pointer' : 'grab',
-                        filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
-                      }}
-                      onClick={(e: React.MouseEvent) => taskClick(k, e)}
-                      onDoubleClick={(e: React.MouseEvent) => {
-                        e.stopPropagation()
-                        setEditing(k)
-                        setSelTask(k)
-                        setMultiSel(new Set())
-                        setTimeout(() => inputRef.current?.focus(), 40)
-                      }}
-                      onMouseDown={(e: React.MouseEvent) => {
-                        if (e.shiftKey) return
-                        if (!connectFrom && !editing) onDragStart(k, e)
-                      }}
-                    />
-                    <rect
-                      x={c.x - TW / 2 + 6}
-                      y={c.y - TH / 2 + 5}
-                      width={tagW}
-                      height={15}
-                      rx={3}
-                      fill={p.tag}
-                      style={{ pointerEvents: 'none' }}
-                    />
-                    <text
-                      x={c.x - TW / 2 + 13}
-                      y={c.y - TH / 2 + 12.5}
-                      dominantBaseline="central"
-                      fontSize={8}
-                      fill={p.text}
-                      fontWeight={600}
-                      style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                    >
-                      {lane.name}
-                    </text>
-                    {isLast && !isSel && !isMulti && !connectFrom && (
+                    {isDiamond ? (
+                      <polygon
+                        points={`${c.x},${c.y - DS} ${c.x + DS},${c.y} ${c.x},${c.y + DS} ${c.x - DS},${c.y}`}
+                        fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
+                        stroke={
+                          isConnSrc
+                            ? T.accent
+                            : isSel || isMulti
+                              ? T.nodeSelStroke
+                              : isConnTgt && isHov
+                                ? T.accent
+                                : task.strokeColor || T.accent
+                        }
+                        strokeWidth={isConnSrc || isSel || isMulti ? 2 : 1.2}
+                        strokeDasharray={isConnSrc ? '4,3' : task.dash || 'none'}
+                        style={{
+                          cursor: connectFrom ? 'pointer' : 'grab',
+                          filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
+                        }}
+                        onClick={(e: React.MouseEvent) => taskClick(k, e)}
+                        onDoubleClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          setEditing(k)
+                          setSelTask(k)
+                          setMultiSel(new Set())
+                          setTimeout(() => inputRef.current?.focus(), 40)
+                        }}
+                        onMouseDown={(e: React.MouseEvent) => {
+                          if (e.shiftKey) return
+                          if (!connectFrom && !editing) onDragStart(k, e)
+                        }}
+                      />
+                    ) : (
+                      <rect
+                        x={c.x - TW / 2}
+                        y={c.y - TH / 2}
+                        width={TW}
+                        height={TH}
+                        fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
+                        stroke={
+                          isConnSrc
+                            ? T.accent
+                            : isSel || isMulti
+                              ? T.nodeSelStroke
+                              : isConnTgt && isHov
+                                ? T.accent
+                                : task.strokeColor || T.nodeStroke
+                        }
+                        strokeWidth={isConnSrc || isSel || isMulti ? 2 : 1.2}
+                        strokeDasharray={isConnSrc ? '4,3' : task.dash || 'none'}
+                        rx={10}
+                        style={{
+                          cursor: connectFrom ? 'pointer' : 'grab',
+                          filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
+                        }}
+                        onClick={(e: React.MouseEvent) => taskClick(k, e)}
+                        onDoubleClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          setEditing(k)
+                          setSelTask(k)
+                          setMultiSel(new Set())
+                          setTimeout(() => inputRef.current?.focus(), 40)
+                        }}
+                        onMouseDown={(e: React.MouseEvent) => {
+                          if (e.shiftKey) return
+                          if (!connectFrom && !editing) onDragStart(k, e)
+                        }}
+                      />
+                    )}
+                    {!isDiamond && (
+                      <rect
+                        x={c.x - TW / 2 + 6}
+                        y={c.y - TH / 2 + 5}
+                        width={tagW}
+                        height={15}
+                        rx={3}
+                        fill={p.tag}
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    )}
+                    {!isDiamond && (
+                      <text
+                        x={c.x - TW / 2 + 13}
+                        y={c.y - TH / 2 + 12.5}
+                        dominantBaseline="central"
+                        fontSize={8}
+                        fill={p.text}
+                        fontWeight={600}
+                        style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+                      >
+                        {lane.name}
+                      </text>
+                    )}
+                    {!isDiamond && isLast && !isSel && !isMulti && !connectFrom && (
                       <circle cx={c.x - TW / 2 + 10} cy={c.y - TH / 2 + 10} r={3} fill="#66BB6A" />
                     )}
-                    {isMulti && (
-                      <g>
+                    {isMulti && !isDiamond && (
+                      <g style={{ pointerEvents: 'none' }}>
                         <circle cx={c.x + TW / 2 - 6} cy={c.y - TH / 2 + 6} r={8} fill={T.accent} />
                         <polyline
                           points={`${c.x + TW / 2 - 10},${c.y - TH / 2 + 6} ${c.x + TW / 2 - 7},${c.y - TH / 2 + 9} ${c.x + TW / 2 - 2},${c.y - TH / 2 + 3}`}
@@ -2668,35 +2782,58 @@ export default function FlowEditor({
                         />
                       </g>
                     )}
-                    {oi !== -1 && !connectFrom && !dragging && editorSettings.showOrderBadge && (
-                      <g>
-                        <rect
-                          x={c.x + TW / 2 - 18}
-                          y={c.y + TH / 2 - 16}
-                          width={18}
-                          height={16}
-                          rx={5}
-                          fill={p.tag}
-                        />
-                        <text
-                          x={c.x + TW / 2 - 9}
-                          y={c.y + TH / 2 - 7}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fill={p.text}
-                          fontSize={8.5}
-                          fontWeight={700}
+                    {isMulti && isDiamond && (
+                      <g style={{ pointerEvents: 'none' }}>
+                        <circle cx={c.x + DS - 4} cy={c.y - DS + 4} r={8} fill={T.accent} />
+                        <svg
+                          x={c.x + DS - 9}
+                          y={c.y - DS - 1}
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#fff"
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         >
-                          {oi + 1}
-                        </text>
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
                       </g>
                     )}
+                    {!isDiamond &&
+                      oi !== -1 &&
+                      !connectFrom &&
+                      !dragging &&
+                      editorSettings.showOrderBadge && (
+                        <g>
+                          <rect
+                            x={c.x + TW / 2 - 18}
+                            y={c.y + TH / 2 - 16}
+                            width={18}
+                            height={16}
+                            rx={5}
+                            fill={p.tag}
+                          />
+                          <text
+                            x={c.x + TW / 2 - 9}
+                            y={c.y + TH / 2 - 7}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill={p.text}
+                            fontSize={8.5}
+                            fontWeight={700}
+                          >
+                            {oi + 1}
+                          </text>
+                        </g>
+                      )}
                     {editing === k ? (
                       <foreignObject
-                        x={c.x - TW / 2 + 8}
-                        y={c.y - TH / 2 + 18}
-                        width={TW - 16}
-                        height={TH - 22}
+                        x={isDiamond ? c.x - DS + 4 : c.x - TW / 2 + 8}
+                        y={isDiamond ? c.y - 10 : c.y - TH / 2 + 18}
+                        width={isDiamond ? DS * 2 - 8 : TW - 16}
+                        height={isDiamond ? 24 : TH - 22}
                       >
                         <input
                           ref={inputRef}
@@ -2717,18 +2854,20 @@ export default function FlowEditor({
                     ) : (
                       <text
                         x={c.x}
-                        y={c.y + 6}
+                        y={isDiamond ? c.y + 2 : c.y + 6}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize={13.5}
-                        fontWeight={500}
+                        fontSize={isDiamond ? 12 : 13.5}
+                        fontWeight={isDiamond ? 600 : 500}
                         fill={task.label === '作業' ? T.statusText : T.titleColor}
                         style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                       >
-                        {task.label.length > 10 ? task.label.slice(0, 10) + '…' : task.label}
+                        {task.label.length > (isDiamond ? 8 : 10)
+                          ? task.label.slice(0, isDiamond ? 8 : 10) + '…'
+                          : task.label}
                       </text>
                     )}
-                    {note && !connectFrom && !dragging && (
+                    {!isDiamond && note && !connectFrom && !dragging && (
                       <g>
                         <rect
                           x={c.x - TW / 2 + 6}
@@ -3039,12 +3178,20 @@ export default function FlowEditor({
                   ri = riMap[t.rid]
                 if (li === undefined || ri === undefined) return null
                 const c = ct(li, ri)
-                const handles = [
-                  { x: c.x, y: c.y - TH / 2 },
-                  { x: c.x, y: c.y + TH / 2 },
-                  { x: c.x - TW / 2, y: c.y },
-                  { x: c.x + TW / 2, y: c.y },
-                ]
+                const isDia = t.shape === 'diamond'
+                const handles = isDia
+                  ? [
+                      { x: c.x, y: c.y - DS },
+                      { x: c.x, y: c.y + DS },
+                      { x: c.x - DS, y: c.y },
+                      { x: c.x + DS, y: c.y },
+                    ]
+                  : [
+                      { x: c.x, y: c.y - TH / 2 },
+                      { x: c.x, y: c.y + TH / 2 },
+                      { x: c.x - TW / 2, y: c.y },
+                      { x: c.x + TW / 2, y: c.y },
+                    ]
                 const isSel = selTask === showKey
                 return handles.map((h, i) => (
                   <g key={`ch-${i}`}>
@@ -3082,11 +3229,24 @@ export default function FlowEditor({
                   ri = riMap[t.rid]
                 if (li === undefined || ri === undefined) return null
                 const c = ct(li, ri)
-                const isNear =
-                  Math.abs(connectDragPt.x - c.x) < TW / 2 + 12 &&
-                  Math.abs(connectDragPt.y - c.y) < TH / 2 + 12
+                const isDia = t.shape === 'diamond'
+                const isNear = isDia
+                  ? Math.abs(connectDragPt.x - c.x) < DS + 12 &&
+                    Math.abs(connectDragPt.y - c.y) < DS + 12
+                  : Math.abs(connectDragPt.x - c.x) < TW / 2 + 12 &&
+                    Math.abs(connectDragPt.y - c.y) < TH / 2 + 12
                 if (!isNear) return null
-                return (
+                return isDia ? (
+                  <polygon
+                    key={`ct-${k}`}
+                    points={`${c.x},${c.y - DS - 2} ${c.x + DS + 2},${c.y} ${c.x},${c.y + DS + 2} ${c.x - DS - 2},${c.y}`}
+                    fill={`${T.accent}08`}
+                    stroke={T.accent}
+                    strokeWidth={1.5}
+                    strokeDasharray="4,3"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                ) : (
                   <rect
                     key={`ct-${k}`}
                     x={c.x - TW / 2 - 2}

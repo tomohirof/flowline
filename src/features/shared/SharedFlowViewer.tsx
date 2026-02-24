@@ -4,7 +4,7 @@ import { BRAND } from '../../constants/brand'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
-import { exitPt, entryPt, buildArrowPath, type Point } from '../../lib/arrow-routing'
+import { exitPt, entryPt, buildArrowPath, DS, type Point } from '../../lib/arrow-routing'
 import { formatRelativeTime } from '../../lib/relative-time'
 import { TeaserModal } from './TeaserModal'
 import { BottomCTABar } from './BottomCTABar'
@@ -99,8 +99,8 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     const t = ct(tli, toNode.rowIndex)
     const hw = TW / 2,
       hh = TH / 2
-    const s = exitPt(f, t, hw, hh, RH)
-    const e = entryPt(t, f, hw, hh, RH)
+    const s = exitPt(f, t, hw, hh, RH, fromNode.shape as 'diamond' | undefined)
+    const e = entryPt(t, f, hw, hh, RH, toNode.shape as 'diamond' | undefined)
     return buildArrowPath(s, e, f, t)
   }
 
@@ -276,54 +276,73 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             const p = PALETTES[lane.colorIndex % PALETTES.length]
             const c = ct(li, node.rowIndex)
             const tagW = lane.name.length * 7 + 14
+            const isDiamond = node.shape === 'diamond'
             return (
               <g key={`node-${node.id}`}>
-                <rect
-                  x={c.x - TW / 2}
-                  y={c.y - TH / 2}
-                  width={TW}
-                  height={TH}
-                  fill={T.nodeFill}
-                  stroke={T.nodeStroke}
-                  strokeWidth={1.2}
-                  rx={10}
-                  style={{
-                    filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
-                  }}
-                />
-                <rect
-                  x={c.x - TW / 2 + 6}
-                  y={c.y - TH / 2 + 5}
-                  width={tagW}
-                  height={15}
-                  rx={3}
-                  fill={p.tag}
-                  style={{ pointerEvents: 'none' }}
-                />
-                <text
-                  x={c.x - TW / 2 + 13}
-                  y={c.y - TH / 2 + 12.5}
-                  dominantBaseline="central"
-                  fontSize={8}
-                  fill={p.text}
-                  fontWeight={600}
-                  style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                >
-                  {lane.name}
-                </text>
+                {isDiamond ? (
+                  <polygon
+                    points={`${c.x},${c.y - DS} ${c.x + DS},${c.y} ${c.x},${c.y + DS} ${c.x - DS},${c.y}`}
+                    fill={T.nodeFill}
+                    stroke={T.accent}
+                    strokeWidth={1.2}
+                    style={{
+                      filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
+                    }}
+                  />
+                ) : (
+                  <rect
+                    x={c.x - TW / 2}
+                    y={c.y - TH / 2}
+                    width={TW}
+                    height={TH}
+                    fill={T.nodeFill}
+                    stroke={T.nodeStroke}
+                    strokeWidth={1.2}
+                    rx={10}
+                    style={{
+                      filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
+                    }}
+                  />
+                )}
+                {!isDiamond && (
+                  <rect
+                    x={c.x - TW / 2 + 6}
+                    y={c.y - TH / 2 + 5}
+                    width={tagW}
+                    height={15}
+                    rx={3}
+                    fill={p.tag}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                )}
+                {!isDiamond && (
+                  <text
+                    x={c.x - TW / 2 + 13}
+                    y={c.y - TH / 2 + 12.5}
+                    dominantBaseline="central"
+                    fontSize={8}
+                    fill={p.text}
+                    fontWeight={600}
+                    style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+                  >
+                    {lane.name}
+                  </text>
+                )}
                 <text
                   x={c.x}
-                  y={c.y + 6}
+                  y={isDiamond ? c.y + 2 : c.y + 6}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fontSize={13.5}
-                  fontWeight={500}
+                  fontSize={isDiamond ? 12 : 13.5}
+                  fontWeight={isDiamond ? 600 : 500}
                   fill={node.label === '作業' ? T.statusText : T.titleColor}
                   style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                 >
-                  {node.label.length > 10 ? node.label.slice(0, 10) + '…' : node.label}
+                  {node.label.length > (isDiamond ? 8 : 10)
+                    ? node.label.slice(0, isDiamond ? 8 : 10) + '…'
+                    : node.label}
                 </text>
-                {node.note && (
+                {!isDiamond && node.note && (
                   <g>
                     <rect
                       x={c.x - TW / 2 + 6}
