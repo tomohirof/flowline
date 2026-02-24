@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FlowEditor from './FlowEditor'
 import type { Flow } from './types'
@@ -1558,6 +1558,76 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
     const posC = block.indexOf('C<br><small>レーンC</small>')
     expect(posA).toBeLessThan(posB)
     expect(posB).toBeLessThan(posC)
+  })
+
+  it('should show "✓ コピーしました" after successful Mermaid copy', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'A', colorIndex: 0, position: 0 }],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'ノード', note: null, orderIndex: 0 },
+      ],
+      arrows: [],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const btn = screen.getByText('Mermaid コードをコピー')
+    await userEvent.click(btn)
+    await waitFor(() => {
+      expect(writeTextSpy).toHaveBeenCalled()
+    })
+    expect(screen.getByText('✓ コピーしました')).toBeInTheDocument()
+  })
+
+  it('should revert Mermaid copy button label after 1.5 seconds', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'A', colorIndex: 0, position: 0 }],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'ノード', note: null, orderIndex: 0 },
+      ],
+      arrows: [],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const btn = screen.getByText('Mermaid コードをコピー')
+    await userEvent.click(btn)
+    await waitFor(() => {
+      expect(writeTextSpy).toHaveBeenCalled()
+    })
+    expect(screen.getByText('✓ コピーしました')).toBeInTheDocument()
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
+    expect(screen.getByText('Mermaid コードをコピー')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('should not change label when clipboard.writeText fails', async () => {
+    const writeTextSpy = vi.fn().mockRejectedValue(new Error('clipboard error'))
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextSpy },
+      writable: true,
+      configurable: true,
+    })
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'A', colorIndex: 0, position: 0 }],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'ノード', note: null, orderIndex: 0 },
+      ],
+      arrows: [],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const btn = screen.getByText('Mermaid コードをコピー')
+    await userEvent.click(btn)
+    await waitFor(() => {
+      expect(writeTextSpy).toHaveBeenCalled()
+    })
+    // Label should remain unchanged on failure
+    expect(screen.getByText('Mermaid コードをコピー')).toBeInTheDocument()
+    expect(screen.queryByText('✓ コピーしました')).not.toBeInTheDocument()
   })
 })
 

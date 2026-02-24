@@ -460,6 +460,7 @@ export default function FlowEditor({
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
   const [hoveredRowNum, setHoveredRowNum] = useState<number | null>(null)
+  const [mermaidCopied, setMermaidCopied] = useState<boolean>(false)
   const {
     toasts,
     addConfirmToast,
@@ -1814,9 +1815,17 @@ export default function FlowEditor({
         </PanelSection>
         <PanelSection label="エクスポート">
           <PanelBtn
-            label="Mermaid コードをコピー"
+            label={mermaidCopied ? '✓ コピーしました' : 'Mermaid コードをコピー'}
             color={T.accent}
-            onClick={() => navigator.clipboard?.writeText(exportMermaid())}
+            onClick={async () => {
+              try {
+                await navigator.clipboard?.writeText(exportMermaid())
+                setMermaidCopied(true)
+                setTimeout(() => setMermaidCopied(false), 1500)
+              } catch {
+                // clipboard write failed — do not show feedback
+              }
+            }}
             full
           />
         </PanelSection>
