@@ -15,9 +15,7 @@ describe('useArrows', () => {
 
   it('should initialize with provided arrows', () => {
     const arrows: InternalArrow[] = [{ id: 'a1', from: 'x', to: 'y', comment: '' }]
-    const { result } = renderHook(() =>
-      useArrows({ ...defaultOptions(), initialArrows: arrows }),
-    )
+    const { result } = renderHook(() => useArrows({ ...defaultOptions(), initialArrows: arrows }))
     expect(result.current.arrows).toEqual(arrows)
   })
 
@@ -45,9 +43,7 @@ describe('useArrows', () => {
       const tasks: Record<string, TaskData> = {
         l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
       }
-      const { result } = renderHook(() =>
-        useArrows({ ...defaultOptions(), tasks }),
-      )
+      const { result } = renderHook(() => useArrows({ ...defaultOptions(), tasks }))
       act(() => {
         result.current.autoConnectOnCreate('l0_r1', 1, 0)
       })
@@ -81,9 +77,7 @@ describe('useArrows', () => {
       const tasks: Record<string, TaskData> = {
         l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
       }
-      const { result } = renderHook(() =>
-        useArrows({ ...defaultOptions(), tasks }),
-      )
+      const { result } = renderHook(() => useArrows({ ...defaultOptions(), tasks }))
       act(() => {
         result.current.autoConnectOnCreate('l0_r0', 0, 0)
       })
@@ -94,9 +88,7 @@ describe('useArrows', () => {
       const tasks: Record<string, TaskData> = {
         l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
       }
-      const { result } = renderHook(() =>
-        useArrows({ ...defaultOptions(), tasks }),
-      )
+      const { result } = renderHook(() => useArrows({ ...defaultOptions(), tasks }))
       act(() => {
         result.current.autoConnectOnCreate('l0_r1', 1, 0)
       })
@@ -113,9 +105,7 @@ describe('useArrows', () => {
         l0_r2: { label: 'B', lid: 'l0', rid: 'r2', nodeId: 'n2' },
       }
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
-      const arrows: InternalArrow[] = [
-        { id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' },
-      ]
+      const arrows: InternalArrow[] = [{ id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' }]
       const { result } = renderHook(() =>
         useArrows({
           ...defaultOptions(),
@@ -145,9 +135,7 @@ describe('useArrows', () => {
         l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
       }
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
-      const arrows: InternalArrow[] = [
-        { id: 'a1', from: 'l0_r0', to: 'l0_r1', comment: '' },
-      ]
+      const arrows: InternalArrow[] = [{ id: 'a1', from: 'l0_r0', to: 'l0_r1', comment: '' }]
       const { result } = renderHook(() =>
         useArrows({
           ...defaultOptions(),
@@ -193,9 +181,7 @@ describe('useArrows', () => {
         l0_r2: { label: 'B', lid: 'l0', rid: 'r2', nodeId: 'n2' },
       }
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
-      const arrows: InternalArrow[] = [
-        { id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' },
-      ]
+      const arrows: InternalArrow[] = [{ id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' }]
       const { result } = renderHook(() =>
         useArrows({
           ...defaultOptions(),
@@ -230,9 +216,7 @@ describe('useArrows', () => {
         l0_r2: { label: 'タスクB', lid: 'l0', rid: 'r2', nodeId: 'n2' },
       }
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
-      const arrows: InternalArrow[] = [
-        { id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' },
-      ]
+      const arrows: InternalArrow[] = [{ id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' }]
       const { result } = renderHook(() =>
         useArrows({
           ...defaultOptions(),

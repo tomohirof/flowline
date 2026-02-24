@@ -479,20 +479,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     showOrderBadge: true,
   })
 
-  const {
-    arrows,
-    setArrows,
-    recentInsertedRow,
-    setRecentInsertedRow,
-    autoConnectOnCreate,
-    detectCrossing,
-  } = useArrows({
-    initialArrows: initState.arrows,
-    tasks,
-    rows,
-    lanes,
-    autoConnect: editorSettings.autoConnect,
-  })
+  const { arrows, setArrows, setRecentInsertedRow, autoConnectOnCreate, detectCrossing } =
+    useArrows({
+      initialArrows: initState.arrows,
+      tasks,
+      rows,
+      lanes,
+      autoConnect: editorSettings.autoConnect,
+    })
 
   const fullSettingsRef = useRef<Record<string, unknown>>({})
   const settingsLoadedRef = useRef(false)
@@ -647,22 +641,25 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     return () => ro.disconnect()
   }, [])
 
-  const applySnap = (s: string): void => {
-    const d: EditorSnapshot = JSON.parse(s)
-    skipSnap.current = true
-    setTasks(d.tasks)
-    setOrder(d.order)
-    setArrows(d.arrows)
-    setNotes(d.notes)
-    setLanes(d.lanes)
-    setRows(d.rows)
-    setSelTask(null)
-    setSelArrow(null)
-    setSelLane(null)
-    setMultiSel(new Set())
-    setEditing(null)
-    undoPrevSnap.current = s
-  }
+  const applySnap = useCallback(
+    (s: string): void => {
+      const d: EditorSnapshot = JSON.parse(s)
+      skipSnap.current = true
+      setTasks(d.tasks)
+      setOrder(d.order)
+      setArrows(d.arrows)
+      setNotes(d.notes)
+      setLanes(d.lanes)
+      setRows(d.rows)
+      setSelTask(null)
+      setSelArrow(null)
+      setSelLane(null)
+      setMultiSel(new Set())
+      setEditing(null)
+      undoPrevSnap.current = s
+    },
+    [setArrows],
+  )
 
   const undo = useCallback((): void => {
     if (historyRef.current.length === 0) return
@@ -670,7 +667,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     historyRef.current = historyRef.current.slice(0, -1)
     futureRef.current = [...futureRef.current, snap()]
     applySnap(prev)
-  }, [snap])
+  }, [snap, applySnap])
 
   const redo = useCallback((): void => {
     if (futureRef.current.length === 0) return
@@ -678,7 +675,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     futureRef.current = futureRef.current.slice(0, -1)
     historyRef.current = [...historyRef.current, snap()]
     applySnap(next)
-  }, [snap])
+  }, [snap, applySnap])
 
   const T = THEMES[themeId]
   const RH = 84,
@@ -705,22 +702,25 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   )
   const isDark = themeId === 'midnight'
 
-  const delTask = (k: string): void => {
-    setTasks((p) => {
-      const n = { ...p }
-      delete n[k]
-      return n
-    })
-    setNotes((p) => {
-      const n = { ...p }
-      delete n[k]
-      return n
-    })
-    setOrder((p) => p.filter((x) => x !== k))
-    setArrows((p) => p.filter((a) => a.from !== k && a.to !== k))
-    setEditing(null)
-    setSelTask(null)
-  }
+  const delTask = useCallback(
+    (k: string): void => {
+      setTasks((p) => {
+        const n = { ...p }
+        delete n[k]
+        return n
+      })
+      setNotes((p) => {
+        const n = { ...p }
+        delete n[k]
+        return n
+      })
+      setOrder((p) => p.filter((x) => x !== k))
+      setArrows((p) => p.filter((a) => a.from !== k && a.to !== k))
+      setEditing(null)
+      setSelTask(null)
+    },
+    [setArrows],
+  )
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
@@ -786,7 +786,19 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [selArrow, selTask, editing, editLane, editTitle, editNote, undo, redo, multiSel])
+  }, [
+    selArrow,
+    selTask,
+    editing,
+    editLane,
+    editTitle,
+    editNote,
+    undo,
+    redo,
+    multiSel,
+    delTask,
+    setArrows,
+  ])
 
   const moveLane = (id: string, dir: number): void => {
     setLanes((prev) => {
