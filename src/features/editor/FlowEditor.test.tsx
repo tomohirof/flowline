@@ -1131,6 +1131,81 @@ describe('row insertion UI (#91)', () => {
   })
 })
 
+describe('empty row deletion (#192)', () => {
+  beforeEach(() => {
+    cleanup()
+  })
+
+  it('should show trash icon on empty row hover', () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    // All rows are empty in minimal flow, row 0 should show row number "1"
+    const rowLabel = document.querySelector('[data-testid="canvas-row-0"]')
+    expect(rowLabel).toBeTruthy()
+    expect(rowLabel!.textContent).toBe('1')
+    // Hover the row number hit rect
+    const hitRect = document.querySelector('[data-testid="rownum-hit-0"]')
+    expect(hitRect).toBeTruthy()
+    fireEvent.mouseEnter(hitRect!)
+    const updatedEl = document.querySelector('[data-testid="canvas-row-0"]')
+    // Trash icon is a <g> element (not <text>), indicating the icon changed
+    expect(updatedEl!.tagName.toLowerCase()).toBe('g')
+  })
+
+  it('should delete empty row when clicked', () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    // Hover then click to delete
+    const hitRect = document.querySelector('[data-testid="rownum-hit-0"]')!
+    fireEvent.mouseEnter(hitRect)
+    fireEvent.click(hitRect)
+    const newRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(newRowCount).toBe(initialRowCount - 1)
+  })
+
+  it('should not delete row with nodes', () => {
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      nodes: [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 }],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    // Hover row 0 (has a node) — should stay as text
+    const hitRect = document.querySelector('[data-testid="rownum-hit-0"]')!
+    fireEvent.mouseEnter(hitRect)
+    const updatedEl = document.querySelector('[data-testid="canvas-row-0"]')
+    expect(updatedEl!.tagName.toLowerCase()).toBe('text')
+    // Click — row count should not change
+    fireEvent.click(hitRect)
+    const newRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(newRowCount).toBe(initialRowCount)
+  })
+
+  it('should not delete the last remaining row', () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    // Delete rows one by one until only 1 left
+    for (let i = 0; i < initialRowCount - 1; i++) {
+      const hitRect = document.querySelector('[data-testid="rownum-hit-0"]')!
+      fireEvent.mouseEnter(hitRect)
+      fireEvent.click(hitRect)
+    }
+    const afterDeleteCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(afterDeleteCount).toBe(1)
+    // Try to delete the last row — should not work
+    const hitRect = document.querySelector('[data-testid="rownum-hit-0"]')!
+    fireEvent.mouseEnter(hitRect)
+    // Should show row number, not trash (canDelete is false)
+    const updatedEl = document.querySelector('[data-testid="canvas-row-0"]')
+    expect(updatedEl!.tagName.toLowerCase()).toBe('text')
+    fireEvent.click(hitRect)
+    const finalCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(finalCount).toBe(1)
+  })
+})
+
 describe('lane gap UI header-only (#91)', () => {
   it('should render lane gap hit area with header-only height', () => {
     const flow = createMinimalFlow()

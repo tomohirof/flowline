@@ -459,6 +459,7 @@ export default function FlowEditor({
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
+  const [hoveredRowNum, setHoveredRowNum] = useState<number | null>(null)
   const {
     toasts,
     addConfirmToast,
@@ -874,6 +875,14 @@ export default function FlowEditor({
     })
     setHoveredRowGap(null)
     setRecentInsertedRow({ rowId: newRowId })
+  }
+  const rmRowAt = (ri: number): void => {
+    if (rows.length <= 1) return
+    const row = rows[ri]
+    const hasNodes = Object.values(tasks).some((t) => t.rid === row.id)
+    if (hasNodes) return
+    setRows((p) => p.filter((_, i) => i !== ri))
+    setHoveredRowNum(null)
   }
   const cellFromPos = (sx: number, sy: number): CellInfo | null => {
     for (let li = 0; li < lanes.length; li++)
@@ -2373,74 +2382,64 @@ export default function FlowEditor({
               )
             })}
 
-            {rows.map((_, ri) => (
-              <text
-                key={ri}
-                data-testid={`canvas-row-${ri}`}
-                x={LM - 14}
-                y={TM + HH + ri * RH + RH / 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={9}
-                fill={T.statusText}
-                fontWeight={500}
-              >
-                {ri + 1}
-              </text>
-            ))}
-
-            {/* Row gap "+" — left side, between rows and at the end */}
-            {Array.from({ length: rows.length + 1 }, (_, ri) => {
-              const gy = TM + HH + ri * RH
-              const gx = LM / 2
-              const isHov = hoveredRowGap === ri
+            {rows.map((row, ri) => {
+              const ry = TM + HH + ri * RH + RH / 2
+              const rx = LM / 2
+              const isEmptyRow = !Object.values(tasks).some((t) => t.rid === row.id)
+              const isHoveredRow = hoveredRowNum === ri
+              const canDelete = isEmptyRow && rows.length > 1
               return (
-                <g key={`rowgap-${ri}`}>
+                <g key={`rownum-${ri}`}>
                   <rect
-                    data-testid={`rowgap-hit-${ri}`}
+                    data-testid={`rownum-hit-${ri}`}
                     x={0}
-                    y={gy - 6}
+                    y={TM + HH + ri * RH}
                     width={LM}
-                    height={12}
+                    height={RH}
                     fill="transparent"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => setHoveredRowGap(ri)}
-                    onMouseLeave={() => setHoveredRowGap(null)}
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      insertRowAt(ri)
+                    style={{ cursor: canDelete ? 'pointer' : 'default' }}
+                    onMouseEnter={() => setHoveredRowNum(ri)}
+                    onMouseLeave={() => setHoveredRowNum(null)}
+                    onClick={() => {
+                      if (canDelete) rmRowAt(ri)
                     }}
                   />
-                  {isHov && (
-                    <g data-testid={`rowgap-feedback-${ri}`} style={{ pointerEvents: 'none' }}>
+                  {isHoveredRow && canDelete ? (
+                    <g data-testid={`canvas-row-${ri}`} style={{ pointerEvents: 'none' }}>
                       <line
-                        x1={LM}
-                        y1={gy}
-                        x2={laneX(lanes.length - 1) + LW}
-                        y2={gy}
-                        stroke={T.accent}
-                        strokeWidth={1.5}
-                        strokeDasharray="4,3"
-                        opacity={0.3}
+                        x1={rx - 4}
+                        y1={ry - 5}
+                        x2={rx + 4}
+                        y2={ry - 5}
+                        stroke={T.dangerColor}
+                        strokeWidth={1.2}
+                        strokeLinecap="round"
                       />
-                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
-                      <line
-                        x1={gx - 4}
-                        y1={gy}
-                        x2={gx + 4}
-                        y2={gy}
-                        stroke="#fff"
-                        strokeWidth={1.5}
-                      />
-                      <line
-                        x1={gx}
-                        y1={gy - 4}
-                        x2={gx}
-                        y2={gy + 4}
-                        stroke="#fff"
-                        strokeWidth={1.5}
+                      <rect
+                        x={rx - 3}
+                        y={ry - 4}
+                        width={6}
+                        height={8}
+                        rx={1}
+                        fill="none"
+                        stroke={T.dangerColor}
+                        strokeWidth={1.2}
                       />
                     </g>
+                  ) : (
+                    <text
+                      data-testid={`canvas-row-${ri}`}
+                      x={rx}
+                      y={ry}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize={9}
+                      fill={T.statusText}
+                      fontWeight={500}
+                      style={{ pointerEvents: 'none' }}
+                    >
+                      {ri + 1}
+                    </text>
                   )}
                 </g>
               )
@@ -2497,9 +2496,9 @@ export default function FlowEditor({
                           rx={8}
                           fill="none"
                           stroke={p.dot}
-                          strokeWidth={0.8}
-                          strokeDasharray="3,3"
-                          opacity={0.25}
+                          strokeWidth={1.2}
+                          strokeDasharray="6,4"
+                          opacity={0.45}
                         />
                         <line
                           x1={c.x - 5}
@@ -2508,7 +2507,7 @@ export default function FlowEditor({
                           y2={c.y}
                           stroke={p.dot}
                           strokeWidth={1}
-                          opacity={0.3}
+                          opacity={0.5}
                         />
                         <line
                           x1={c.x}
@@ -2517,7 +2516,7 @@ export default function FlowEditor({
                           y2={c.y + 5}
                           stroke={p.dot}
                           strokeWidth={1}
-                          opacity={0.3}
+                          opacity={0.5}
                         />
                       </g>
                     )}
@@ -3088,6 +3087,63 @@ export default function FlowEditor({
                 />
               </g>
             )}
+
+            {/* Row gap "+" — full-width hit zone, rendered last for top z-order */}
+            {Array.from({ length: rows.length + 1 }, (_, ri) => {
+              const gy = TM + HH + ri * RH
+              const gx = LM / 2
+              const isHov = hoveredRowGap === ri
+              return (
+                <g key={`rowgap-${ri}`}>
+                  <rect
+                    data-testid={`rowgap-hit-${ri}`}
+                    x={0}
+                    y={gy - 10}
+                    width={laneX(lanes.length - 1) + LW}
+                    height={20}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredRowGap(ri)}
+                    onMouseLeave={() => setHoveredRowGap(null)}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      insertRowAt(ri)
+                    }}
+                  />
+                  {isHov && (
+                    <g data-testid={`rowgap-feedback-${ri}`} style={{ pointerEvents: 'none' }}>
+                      <line
+                        x1={LM}
+                        y1={gy}
+                        x2={laneX(lanes.length - 1) + LW}
+                        y2={gy}
+                        stroke={T.accent}
+                        strokeWidth={1.5}
+                        strokeDasharray="4,3"
+                        opacity={0.3}
+                      />
+                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
+                      <line
+                        x1={gx - 4}
+                        y1={gy}
+                        x2={gx + 4}
+                        y2={gy}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                      <line
+                        x1={gx}
+                        y1={gy - 4}
+                        x2={gx}
+                        y2={gy + 4}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                    </g>
+                  )}
+                </g>
+              )
+            })}
           </svg>
         </div>
 
