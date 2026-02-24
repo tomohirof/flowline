@@ -42,6 +42,7 @@ const flushPromises = () => new Promise<void>((resolve) => setTimeout(resolve, 0
 describe('useFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockApiFetch.mockReset()
   })
 
   // =============================================
@@ -315,7 +316,7 @@ describe('useFlow', () => {
       })
     })
 
-    it('should set saveStatus to error when save fails', async () => {
+    it('should set saveStatus to error when save fails after all retries', async () => {
       mockApiFetch.mockResolvedValueOnce({ flow: mockFlow })
 
       const { result } = renderHook(() => useFlow('flow-1'))
@@ -332,19 +333,129 @@ describe('useFlow', () => {
         arrows: mockFlow.arrows,
       }
 
-      mockApiFetch.mockRejectedValueOnce(new ApiError(500, 'Internal Server Error'))
+      mockApiFetch.mockRejectedValue(new ApiError(500, 'Internal Server Error'))
 
       act(() => {
         result.current.updateFlow(payload)
       })
 
+      // Trigger debounced save (attempt 1) + 3 retries × 3s
       await act(async () => {
         vi.advanceTimersByTime(2000)
+        await flushPromises()
+      })
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
         await flushPromises()
       })
 
       await waitFor(() => {
         expect(result.current.saveStatus).toBe('error')
+      })
+    })
+
+    it('should auto-retry up to 3 times with 3s interval before setting error', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flow: mockFlow })
+      const { result } = renderHook(() => useFlow('flow-1'))
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+      })
+
+      const payload: FlowSavePayload = {
+        title: 'Retry Test',
+        themeId: 'cloud',
+        lanes: mockFlow.lanes,
+        nodes: mockFlow.nodes,
+        arrows: mockFlow.arrows,
+      }
+
+      // All save attempts fail
+      mockApiFetch.mockRejectedValue(new ApiError(500, 'Server Error'))
+
+      act(() => {
+        result.current.updateFlow(payload)
+      })
+
+      // Trigger debounced save (attempt 1)
+      await act(async () => {
+        vi.advanceTimersByTime(2000)
+        await flushPromises()
+      })
+      expect(result.current.saveStatus).toBe('saving')
+
+      // Retry 1 after 3s
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      expect(result.current.saveStatus).toBe('saving')
+
+      // Retry 2 after 3s
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      expect(result.current.saveStatus).toBe('saving')
+
+      // Retry 3 (final) after 3s
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      await waitFor(() => {
+        expect(result.current.saveStatus).toBe('error')
+      })
+
+      // 1 GET + 1 initial save + 3 retries = 5
+      expect(mockApiFetch).toHaveBeenCalledTimes(5)
+    })
+
+    it('should succeed on retry and set saved status', async () => {
+      mockApiFetch.mockResolvedValueOnce({ flow: mockFlow })
+      const { result } = renderHook(() => useFlow('flow-1'))
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+      })
+
+      const payload: FlowSavePayload = {
+        title: 'Retry Success',
+        themeId: 'cloud',
+        lanes: mockFlow.lanes,
+        nodes: mockFlow.nodes,
+        arrows: mockFlow.arrows,
+      }
+
+      // First save fails, retry 1 succeeds
+      mockApiFetch
+        .mockRejectedValueOnce(new ApiError(500, 'Server Error'))
+        .mockResolvedValueOnce({ flow: { ...mockFlow, title: 'Retry Success' } })
+
+      act(() => {
+        result.current.updateFlow(payload)
+      })
+
+      // Trigger debounced save (attempt 1 - fails)
+      await act(async () => {
+        vi.advanceTimersByTime(2000)
+        await flushPromises()
+      })
+      expect(result.current.saveStatus).toBe('saving')
+
+      // Retry 1 after 3s (succeeds)
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      await waitFor(() => {
+        expect(result.current.saveStatus).toBe('saved')
       })
     })
   })
@@ -497,6 +608,64 @@ describe('useFlow', () => {
       // Only 2 calls: GET flow-1, GET flow-2 (no PUT for flow-1)
       await waitFor(() => {
         expect(mockApiFetch).toHaveBeenCalledTimes(2)
+      })
+
+      vi.useRealTimers()
+    })
+
+    it('should return retrySave that retries the failed save', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      mockApiFetch.mockResolvedValueOnce({ flow: mockFlow })
+      const { result } = renderHook(() => useFlow('flow-1'))
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false)
+      })
+
+      const payload: FlowSavePayload = {
+        title: 'Manual Retry',
+        themeId: 'cloud',
+        lanes: mockFlow.lanes,
+        nodes: mockFlow.nodes,
+        arrows: mockFlow.arrows,
+      }
+
+      // All auto-retries fail
+      mockApiFetch.mockRejectedValue(new ApiError(500, 'Server Error'))
+
+      act(() => {
+        result.current.updateFlow(payload)
+      })
+
+      // Exhaust auto-retries step by step: debounce + 3 retries
+      await act(async () => {
+        vi.advanceTimersByTime(2000)
+        await flushPromises()
+      })
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      await act(async () => {
+        vi.advanceTimersByTime(3000)
+        await flushPromises()
+      })
+      await waitFor(() => {
+        expect(result.current.saveStatus).toBe('error')
+      })
+
+      // Manual retry succeeds
+      mockApiFetch.mockResolvedValueOnce({ flow: { ...mockFlow, title: 'Manual Retry' } })
+
+      await act(async () => {
+        result.current.retrySave()
+        await flushPromises()
+      })
+      await waitFor(() => {
+        expect(result.current.saveStatus).toBe('saved')
       })
 
       vi.useRealTimers()

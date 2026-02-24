@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { uid } from '../../../lib/uid'
 
 export interface ToastData {
   id: string
-  type: 'confirm' | 'success'
+  type: 'confirm' | 'success' | 'error'
   message: string
   detail?: string
   onConfirm?: () => void
+  onRetry?: () => void
   crossingCount?: number
 }
 
@@ -41,6 +42,10 @@ export function useToast() {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }
 
+  const dismissToastByType = useCallback((type: ToastData['type']): void => {
+    setToasts((prev) => prev.filter((t) => t.type !== type))
+  }, [])
+
   const confirmToast = (id: string, crossingCount?: number): void => {
     setToasts((prev) => {
       const toast = prev.find((t) => t.id === id)
@@ -57,5 +62,15 @@ export function useToast() {
     })
   }
 
-  return { toasts, addConfirmToast, dismissToast, confirmToast }
+  const addErrorToast = useCallback(
+    (toast: Pick<ToastData, 'message' | 'detail' | 'onRetry'>): void => {
+      setToasts((prev) => [
+        ...prev.filter((t) => t.type !== 'error'),
+        { ...toast, id: uid(), type: 'error' as const },
+      ])
+    },
+    [],
+  )
+
+  return { toasts, addConfirmToast, addErrorToast, dismissToast, dismissToastByType, confirmToast }
 }

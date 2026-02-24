@@ -100,4 +100,57 @@ describe('ToastList', () => {
     fireEvent.click(container.querySelector('[data-testid="toast-organize-btn"]')!)
     expect(onConfirm).toHaveBeenCalledWith('t1', undefined)
   })
+
+  // Error toast tests
+  it('should render error toast with warning icon and action buttons', () => {
+    const onRetry = vi.fn()
+    const toasts: ToastData[] = [
+      {
+        id: 'e1',
+        type: 'error',
+        message: '保存に失敗しました',
+        detail: 'ネットワークエラー',
+        onRetry,
+      },
+    ]
+    const { container } = render(
+      <ToastList toasts={toasts} onDismiss={vi.fn()} onConfirm={vi.fn()} />,
+    )
+    expect(container.querySelector('[data-testid="toast-error"]')).toBeTruthy()
+    expect(container.textContent).toContain('⚠')
+    expect(container.textContent).toContain('保存に失敗しました')
+    expect(container.textContent).toContain('ネットワークエラー')
+    expect(container.querySelector('[data-testid="toast-close-btn"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="toast-retry-btn"]')).toBeTruthy()
+  })
+
+  it('should call onDismiss when close button is clicked on error toast', () => {
+    const onDismiss = vi.fn()
+    const toasts: ToastData[] = [{ id: 'e1', type: 'error', message: 'Error', onRetry: vi.fn() }]
+    const { container } = render(
+      <ToastList toasts={toasts} onDismiss={onDismiss} onConfirm={vi.fn()} />,
+    )
+    fireEvent.click(container.querySelector('[data-testid="toast-close-btn"]')!)
+    expect(onDismiss).toHaveBeenCalledWith('e1')
+  })
+
+  it('should call onRetry when retry button is clicked on error toast', () => {
+    const onRetry = vi.fn()
+    const toasts: ToastData[] = [{ id: 'e1', type: 'error', message: 'Error', onRetry }]
+    const { container } = render(
+      <ToastList toasts={toasts} onDismiss={vi.fn()} onConfirm={vi.fn()} />,
+    )
+    fireEvent.click(container.querySelector('[data-testid="toast-retry-btn"]')!)
+    expect(onRetry).toHaveBeenCalled()
+  })
+
+  it('should not render retry button when onRetry is undefined on error toast', () => {
+    const toasts: ToastData[] = [{ id: 'e1', type: 'error', message: 'Error without retry' }]
+    const { container } = render(
+      <ToastList toasts={toasts} onDismiss={vi.fn()} onConfirm={vi.fn()} />,
+    )
+    expect(container.querySelector('[data-testid="toast-error"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="toast-close-btn"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="toast-retry-btn"]')).toBeNull()
+  })
 })
