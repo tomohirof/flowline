@@ -17,7 +17,7 @@ export function useArrows({ initialArrows, tasks, rows, lanes, autoConnect }: Us
 
   const autoConnectOnCreate = (taskKey: string, ri: number, li: number): void => {
     if (!autoConnect || Object.keys(tasks).length < 1) return
-    const bestKey = findClosestUpstream(tasks, rows, lanes, ri, li)
+    const bestKey = findClosestUpstream(tasks, rows, lanes, ri, li, arrows)
     if (bestKey) {
       setArrows((p) => [...p, { id: uid(), from: bestKey, to: taskKey, comment: '' }])
     }

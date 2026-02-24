@@ -8,7 +8,7 @@ describe('findClosestUpstream', () => {
     const tasks: Record<string, { lid: string; rid: string }> = {
       l0_r0: { lid: 'l0', rid: 'r0' },
     }
-    const result = findClosestUpstream(tasks, rows, lanes, 1, 0)
+    const result = findClosestUpstream(tasks, rows, lanes, 1, 0, [])
     expect(result).toBe('l0_r0')
   })
 
@@ -19,7 +19,7 @@ describe('findClosestUpstream', () => {
       l0_r0: { lid: 'l0', rid: 'r0' },
       l0_r1: { lid: 'l0', rid: 'r1' },
     }
-    const result = findClosestUpstream(tasks, rows, lanes, 2, 0)
+    const result = findClosestUpstream(tasks, rows, lanes, 2, 0, [])
     expect(result).toBe('l0_r1')
   })
 
@@ -29,7 +29,7 @@ describe('findClosestUpstream', () => {
     const tasks: Record<string, { lid: string; rid: string }> = {
       l0_r0: { lid: 'l0', rid: 'r0' },
     }
-    const result = findClosestUpstream(tasks, rows, lanes, 0, 1)
+    const result = findClosestUpstream(tasks, rows, lanes, 0, 1, [])
     expect(result).toBe('l0_r0')
   })
 
@@ -39,7 +39,7 @@ describe('findClosestUpstream', () => {
     const tasks: Record<string, { lid: string; rid: string }> = {
       l0_r1: { lid: 'l0', rid: 'r1' },
     }
-    const result = findClosestUpstream(tasks, rows, lanes, 0, 0)
+    const result = findClosestUpstream(tasks, rows, lanes, 0, 0, [])
     expect(result).toBeNull()
   })
 
@@ -47,7 +47,7 @@ describe('findClosestUpstream', () => {
     const rows = [{ id: 'r0' }]
     const lanes = [{ id: 'l0' }]
     const tasks: Record<string, { lid: string; rid: string }> = {}
-    const result = findClosestUpstream(tasks, rows, lanes, 0, 0)
+    const result = findClosestUpstream(tasks, rows, lanes, 0, 0, [])
     expect(result).toBeNull()
   })
 
@@ -57,7 +57,7 @@ describe('findClosestUpstream', () => {
     const tasks: Record<string, { lid: string; rid: string }> = {
       l1_r0: { lid: 'l1', rid: 'r0' },
     }
-    const result = findClosestUpstream(tasks, rows, lanes, 0, 0)
+    const result = findClosestUpstream(tasks, rows, lanes, 0, 0, [])
     expect(result).toBeNull()
   })
 
@@ -68,8 +68,65 @@ describe('findClosestUpstream', () => {
       l0_r0: { lid: 'l0', rid: 'r0' },
       l1_r1: { lid: 'l1', rid: 'r1' },
     }
-    const result = findClosestUpstream(tasks, rows, lanes, 1, 2)
+    const result = findClosestUpstream(tasks, rows, lanes, 1, 2, [])
     expect(result).toBe('l1_r1')
+  })
+
+  it('should prefer tail node (no outgoing arrow) over mid-chain node', () => {
+    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
+    const lanes = [{ id: 'l0' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      A: { lid: 'l0', rid: 'r0' },
+      B: { lid: 'l0', rid: 'r1' },
+      C: { lid: 'l0', rid: 'r2' },
+    }
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B', comment: '' },
+      { id: 'a2', from: 'B', to: 'C', comment: '' },
+    ]
+    const result = findClosestUpstream(tasks, rows, lanes, 3, 0, arrows)
+    expect(result).toBe('C')
+  })
+
+  it('should prefer flow-connected tail over isolated tail', () => {
+    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+    const lanes = [{ id: 'l0' }, { id: 'l1' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      A: { lid: 'l0', rid: 'r0' },
+      B: { lid: 'l0', rid: 'r1' },
+      X: { lid: 'l1', rid: 'r1' },
+    }
+    const arrows = [{ id: 'a1', from: 'A', to: 'B', comment: '' }]
+    const result = findClosestUpstream(tasks, rows, lanes, 2, 0, arrows)
+    expect(result).toBe('B')
+  })
+
+  it('should fall back to isolated tails when no flow-connected tails exist', () => {
+    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+    const lanes = [{ id: 'l0' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      X: { lid: 'l0', rid: 'r0' },
+      Y: { lid: 'l0', rid: 'r1' },
+    }
+    const arrows: { id: string; from: string; to: string; comment: string }[] = []
+    const result = findClosestUpstream(tasks, rows, lanes, 2, 0, arrows)
+    expect(result).toBe('Y')
+  })
+
+  it('should return null when all upstream nodes have outgoing arrows', () => {
+    const rows = [{ id: 'r0' }, { id: 'r1' }]
+    const lanes = [{ id: 'l0' }, { id: 'l1' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      A: { lid: 'l0', rid: 'r0' },
+      B: { lid: 'l0', rid: 'r1' },
+      C: { lid: 'l1', rid: 'r1' },
+    }
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B', comment: '' },
+      { id: 'a2', from: 'A', to: 'C', comment: '' },
+    ]
+    const result = findClosestUpstream(tasks, rows, lanes, 0, 1, arrows)
+    expect(result).toBeNull()
   })
 })
 
