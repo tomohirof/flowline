@@ -99,6 +99,7 @@ export function useFlow(flowId: string) {
   // Perform save to API
   // =============================================
 
+  // Ref needed for recursive retry setTimeout (ESLint react-hooks/immutability)
   const performSaveRef = useRef<(() => Promise<void>) | null>(null)
 
   const performSave = useCallback(async () => {

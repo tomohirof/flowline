@@ -53,7 +53,7 @@ export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
                   {toast.onRetry && (
                     <button
                       data-testid="toast-retry-btn"
-                      onClick={() => toast.onRetry!()}
+                      onClick={() => toast.onRetry?.()}
                       className={styles.retryBtn}
                     >
                       再試行

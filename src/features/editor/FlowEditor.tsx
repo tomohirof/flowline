@@ -458,7 +458,8 @@ export default function FlowEditor({
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
-  const { toasts, addConfirmToast, addErrorToast, dismissToast, confirmToast } = useToast()
+  const { toasts, addConfirmToast, addErrorToast, dismissToast, dismissToastByType, confirmToast } =
+    useToast()
 
   // Show/dismiss error toast based on saveStatus
   useEffect(() => {
@@ -469,12 +470,9 @@ export default function FlowEditor({
         onRetry: onRetrySave,
       })
     } else {
-      const errorToast = toasts.find((t) => t.type === 'error')
-      if (errorToast) {
-        dismissToast(errorToast.id)
-      }
+      dismissToastByType('error')
     }
-  }, [saveStatus]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [saveStatus, addErrorToast, dismissToastByType, onRetrySave])
   const [connectFrom, setConnectFrom] = useState<string | null>(null)
   const [connectDragPt, setConnectDragPt] = useState<Point | null>(null)
   const [connectFromPt, setConnectFromPt] = useState<Point | null>(null)

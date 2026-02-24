@@ -42,6 +42,10 @@ export function useToast() {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }
 
+  const dismissToastByType = (type: ToastData['type']): void => {
+    setToasts((prev) => prev.filter((t) => t.type !== type))
+  }
+
   const confirmToast = (id: string, crossingCount?: number): void => {
     setToasts((prev) => {
       const toast = prev.find((t) => t.id === id)
@@ -65,5 +69,5 @@ export function useToast() {
     ])
   }
 
-  return { toasts, addConfirmToast, addErrorToast, dismissToast, confirmToast }
+  return { toasts, addConfirmToast, addErrorToast, dismissToast, dismissToastByType, confirmToast }
 }
