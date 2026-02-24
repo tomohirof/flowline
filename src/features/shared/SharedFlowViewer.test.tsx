@@ -123,4 +123,18 @@ describe('SharedFlowViewer', () => {
     expect(link).not.toBeNull()
     expect(link!.getAttribute('href')).toBe('https://flowline.six1.jp/flows')
   })
+
+  it('should render titleHero inside canvas for gradient overlay on dot grid', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    const canvas = screen.getByTestId('shared-flow-canvas')
+    const heroInCanvas = canvas.querySelector('[data-testid="shared-title-hero"]')
+    expect(heroInCanvas).not.toBeNull()
+  })
+
+  it('should have titleHero with gradient background in CSS', () => {
+    const css = readFileSync(resolve(__dirname, './SharedFlowViewer.module.css'), 'utf-8')
+    const heroMatch = css.match(/\.titleHero\s*\{[^}]*\}/s)
+    expect(heroMatch).not.toBeNull()
+    expect(heroMatch![0]).toMatch(/linear-gradient/)
+  })
 })
