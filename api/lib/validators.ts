@@ -17,6 +17,7 @@ const nodeSchema = z.object({
   bg: z.string().nullable().optional(),
   strokeColor: z.string().nullable().optional(),
   dash: z.string().nullable().optional(),
+  shape: z.enum(['diamond']).nullable().optional(),
 })
 
 const arrowSchema = z.object({
