@@ -241,95 +241,6 @@ function buildOgpElement(title: string, authorName: string) {
               position: 'relative',
             },
             children: [
-              // Title + Catchcopy overlay (absolute, overlaps swimlane preview card)
-              // top: 128px positions title band to overlay the swimlane content area
-              // maxWidth: 1000px allows the band to shrink to fit content
-              {
-                type: 'div',
-                props: {
-                  style: {
-                    position: 'absolute',
-                    top: 128,
-                    left: 40,
-                    zIndex: 10,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    maxWidth: 1000,
-                  },
-                  children: [
-                    // Title
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          fontSize: '46px',
-                          fontWeight: 900,
-                          color: '#1a1a2e',
-                          lineHeight: 1.2,
-                          letterSpacing: '-0.04em',
-                          backgroundColor: 'rgba(244,244,248,0.85)',
-                          padding: '8px 16px 6px',
-                          borderRadius: '8px 8px 0 0',
-                          overflow: 'hidden',
-                          maxLines: 2,
-                          textOverflow: 'ellipsis',
-                        },
-                        children: title,
-                      },
-                    },
-                    // Catchcopy band
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          backgroundColor: 'rgba(244,244,248,0.85)',
-                          padding: '6px 16px 10px',
-                          borderRadius: '0 0 8px 8px',
-                        },
-                        children: [
-                          // Mini F logo
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '20px',
-                                height: '20px',
-                                borderRadius: '5px',
-                                background: 'linear-gradient(135deg, #7C5CFC, #5B8DEF)',
-                                fontSize: '9px',
-                                fontWeight: 900,
-                                color: '#FFFFFF',
-                              },
-                              children: 'F',
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                fontSize: '18px',
-                                fontWeight: 700,
-                                color: '#888',
-                                letterSpacing: '-0.02em',
-                              },
-                              children: 'フローを描く。チームが動く。',
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-
               // Left column (author top, dots bottom)
               {
                 type: 'div',
@@ -553,6 +464,95 @@ function buildOgpElement(title: string, authorName: string) {
                               style: {
                                 objectFit: 'cover',
                               },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+
+              // Title + Catchcopy overlay (absolute, overlaps swimlane preview card)
+              // IMPORTANT: Must be LAST child in Body div so Satori paints it on top
+              // (Satori does not fully support zIndex; DOM order determines paint order)
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    position: 'absolute',
+                    top: 128,
+                    left: 40,
+                    zIndex: 10,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    maxWidth: 1000,
+                  },
+                  children: [
+                    // Title
+                    {
+                      type: 'div',
+                      props: {
+                        style: {
+                          display: 'flex',
+                          fontSize: '46px',
+                          fontWeight: 900,
+                          color: '#1a1a2e',
+                          lineHeight: 1.2,
+                          letterSpacing: '-0.04em',
+                          backgroundColor: 'rgba(244,244,248,0.85)',
+                          padding: '8px 16px 6px',
+                          borderRadius: '8px 8px 0 0',
+                          overflow: 'hidden',
+                          maxLines: 2,
+                          textOverflow: 'ellipsis',
+                        },
+                        children: title,
+                      },
+                    },
+                    // Catchcopy band
+                    {
+                      type: 'div',
+                      props: {
+                        style: {
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          backgroundColor: 'rgba(244,244,248,0.85)',
+                          padding: '6px 16px 10px',
+                          borderRadius: '0 0 8px 8px',
+                        },
+                        children: [
+                          // Mini F logo
+                          {
+                            type: 'div',
+                            props: {
+                              style: {
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '5px',
+                                background: 'linear-gradient(135deg, #7C5CFC, #5B8DEF)',
+                                fontSize: '9px',
+                                fontWeight: 900,
+                                color: '#FFFFFF',
+                              },
+                              children: 'F',
+                            },
+                          },
+                          {
+                            type: 'div',
+                            props: {
+                              style: {
+                                display: 'flex',
+                                fontSize: '18px',
+                                fontWeight: 700,
+                                color: '#888',
+                                letterSpacing: '-0.02em',
+                              },
+                              children: 'フローを描く。チームが動く。',
                             },
                           },
                         ],
