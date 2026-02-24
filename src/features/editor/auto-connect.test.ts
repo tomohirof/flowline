@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { findClosestUpstream, findCrossingArrows } from './auto-connect'
+import { findClosestUpstream, findCrossingArrows, computeBridgeArrows } from './auto-connect'
 
 describe('findClosestUpstream', () => {
   it('should return the node in the row directly above when single upstream exists', () => {
@@ -184,5 +184,78 @@ describe('findCrossingArrows', () => {
     const arrows = [{ id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' }]
     const result = findCrossingArrows(arrows, tasks, rows, 1)
     expect(result).toEqual([])
+  })
+})
+
+describe('computeBridgeArrows', () => {
+  it('should bridge A→C when deleting B from A→B→C', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B', comment: '' },
+      { id: 'a2', from: 'B', to: 'C', comment: '' },
+    ]
+    const result = computeBridgeArrows(new Set(['B']), arrows)
+    expect(result).toHaveLength(1)
+    expect(result[0].from).toBe('A')
+    expect(result[0].to).toBe('C')
+    expect(result[0].comment).toBe('')
+  })
+
+  it('should bridge multiple incoming × outgoing pairs', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B', comment: '' },
+      { id: 'a2', from: 'X', to: 'B', comment: '' },
+      { id: 'a3', from: 'B', to: 'C', comment: '' },
+      { id: 'a4', from: 'B', to: 'D', comment: '' },
+    ]
+    const result = computeBridgeArrows(new Set(['B']), arrows)
+    expect(result).toHaveLength(4)
+    const pairs = result.map((a) => `${a.from}->${a.to}`)
+    expect(pairs).toContain('A->C')
+    expect(pairs).toContain('A->D')
+    expect(pairs).toContain('X->C')
+    expect(pairs).toContain('X->D')
+  })
+
+  it('should not create duplicate bridges when arrow already exists', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B', comment: '' },
+      { id: 'a2', from: 'B', to: 'C', comment: '' },
+      { id: 'a3', from: 'A', to: 'C', comment: '' },
+    ]
+    const result = computeBridgeArrows(new Set(['B']), arrows)
+    expect(result).toHaveLength(0)
+  })
+
+  it('should not create self-loop bridges', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B', comment: '' },
+      { id: 'a2', from: 'B', to: 'A', comment: '' },
+    ]
+    const result = computeBridgeArrows(new Set(['B']), arrows)
+    expect(result).toHaveLength(0)
+  })
+
+  it('should return empty when deleted node has no arrows', () => {
+    const arrows = [{ id: 'a1', from: 'X', to: 'Y', comment: '' }]
+    const result = computeBridgeArrows(new Set(['Z']), arrows)
+    expect(result).toHaveLength(0)
+  })
+
+  it('should handle multi-node deletion without bridging internal arrows', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B', comment: '' },
+      { id: 'a2', from: 'B', to: 'C', comment: '' },
+      { id: 'a3', from: 'C', to: 'D', comment: '' },
+    ]
+    const result = computeBridgeArrows(new Set(['B', 'C']), arrows)
+    expect(result).toHaveLength(1)
+    expect(result[0].from).toBe('A')
+    expect(result[0].to).toBe('D')
+  })
+
+  it('should return empty when deleting all nodes in a chain', () => {
+    const arrows = [{ id: 'a1', from: 'A', to: 'B', comment: '' }]
+    const result = computeBridgeArrows(new Set(['A', 'B']), arrows)
+    expect(result).toHaveLength(0)
   })
 })

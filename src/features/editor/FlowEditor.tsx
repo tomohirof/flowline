@@ -39,6 +39,7 @@ import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { useArrows } from './hooks/useArrows'
 import { uid } from '../../lib/uid'
+import { computeBridgeArrows } from './auto-connect'
 
 // =============================================
 // Icons
@@ -458,8 +459,15 @@ export default function FlowEditor({
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
-  const { toasts, addConfirmToast, addErrorToast, dismissToast, dismissToastByType, confirmToast } =
-    useToast()
+  const {
+    toasts,
+    addConfirmToast,
+    addSuccessToast,
+    addErrorToast,
+    dismissToast,
+    dismissToastByType,
+    confirmToast,
+  } = useToast()
 
   // Show/dismiss error toast based on saveStatus
   useEffect(() => {
@@ -724,6 +732,7 @@ export default function FlowEditor({
 
   const delTask = useCallback(
     (k: string): void => {
+      const bridges = computeBridgeArrows(new Set([k]), arrows)
       setTasks((p) => {
         const n = { ...p }
         delete n[k]
@@ -735,11 +744,17 @@ export default function FlowEditor({
         return n
       })
       setOrder((p) => p.filter((x) => x !== k))
-      setArrows((p) => p.filter((a) => a.from !== k && a.to !== k))
+      setArrows((p) => [
+        ...p.filter((a) => a.from !== k && a.to !== k),
+        ...bridges.map((b) => ({ ...b, id: uid() })),
+      ])
       setEditing(null)
       setSelTask(null)
+      if (bridges.length > 0) {
+        addSuccessToast({ message: `オートリペア: ${bridges.length}本の矢印を修復しました` })
+      }
     },
-    [setArrows],
+    [arrows, setArrows, addSuccessToast],
   )
 
   useEffect(() => {
@@ -766,6 +781,7 @@ export default function FlowEditor({
         )
           return
         if (multiSel.size > 0) {
+          const bridges = computeBridgeArrows(multiSel, arrows)
           setTasks((p) => {
             const n = { ...p }
             multiSel.forEach((k) => delete n[k])
@@ -777,7 +793,13 @@ export default function FlowEditor({
             return n
           })
           setOrder((p) => p.filter((x) => !multiSel.has(x)))
-          setArrows((p) => p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)))
+          setArrows((p) => [
+            ...p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)),
+            ...bridges.map((b) => ({ ...b, id: uid() })),
+          ])
+          if (bridges.length > 0) {
+            addSuccessToast({ message: `オートリペア: ${bridges.length}本の矢印を修復しました` })
+          }
           setMultiSel(new Set())
           e.preventDefault()
         } else if (selArrow) {
@@ -818,6 +840,8 @@ export default function FlowEditor({
     multiSel,
     delTask,
     setArrows,
+    arrows,
+    addSuccessToast,
   ])
 
   const moveLane = (id: string, dir: number): void => {
@@ -1333,6 +1357,7 @@ export default function FlowEditor({
             <button
               className={styles.dangerBtn}
               onClick={() => {
+                const bridges = computeBridgeArrows(multiSel, arrows)
                 setTasks((p) => {
                   const n = { ...p }
                   multiSel.forEach((k) => delete n[k])
@@ -1344,7 +1369,15 @@ export default function FlowEditor({
                   return n
                 })
                 setOrder((p) => p.filter((x) => !multiSel.has(x)))
-                setArrows((p) => p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)))
+                setArrows((p) => [
+                  ...p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)),
+                  ...bridges.map((b) => ({ ...b, id: uid() })),
+                ])
+                if (bridges.length > 0) {
+                  addSuccessToast({
+                    message: `オートリペア: ${bridges.length}本の矢印を修復しました`,
+                  })
+                }
                 setMultiSel(new Set())
               }}
               data-testid="multi-delete-btn"
