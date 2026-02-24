@@ -467,8 +467,7 @@ function buildOgpElement(title: string, authorName: string) {
                           borderRadius: '14px',
                           backgroundColor: '#FFFFFF',
                           border: '1px solid #E8E8EE',
-                          boxShadow:
-                            '0 8px 40px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03)',
+                          boxShadow: '0 8px 40px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03)',
                           overflow: 'hidden',
                           position: 'relative',
                         },
