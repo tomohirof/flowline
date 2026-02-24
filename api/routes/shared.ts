@@ -33,12 +33,13 @@ shared.get('/:token', async (c) => {
   const db = c.env.FLOWLINE_DB
 
   // Find flow by share_token with author name (exclude soft-deleted flows)
+  // LEFT JOIN ensures flow is returned even if author user was deleted
   const flow = await db
     .prepare(
-      'SELECT f.*, u.name as author_name FROM flows f JOIN users u ON f.user_id = u.id WHERE f.share_token = ? AND f.deleted_at IS NULL',
+      'SELECT f.*, u.name as author_name FROM flows f LEFT JOIN users u ON f.user_id = u.id WHERE f.share_token = ? AND f.deleted_at IS NULL',
     )
     .bind(token)
-    .first<FlowRow & { author_name: string }>()
+    .first<FlowRow & { author_name: string | null }>()
   if (!flow) {
     return c.json({ error: '共有フローが見つかりません' }, 404)
   }
@@ -59,7 +60,7 @@ shared.get('/:token', async (c) => {
 
   return c.json({
     flow: {
-      ...toPublicFlowSummary(flow, flow.author_name),
+      ...toPublicFlowSummary(flow, flow.author_name ?? undefined),
       lanes,
       nodes,
       arrows,
