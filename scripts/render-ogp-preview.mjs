@@ -4,22 +4,18 @@
  * Usage: node scripts/render-ogp-preview.mjs
  * Output: workers/ogp/src/preview-base64.ts
  */
-import { Resvg, initWasm } from '@resvg/resvg-wasm'
-import { readFileSync, writeFileSync } from 'fs'
+import { Resvg } from '@resvg/resvg-js'
+import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..')
 
-// Initialize resvg WASM
-const wasmPath = resolve(root, 'node_modules/@resvg/resvg-wasm/index_bg.wasm')
-await initWasm(readFileSync(wasmPath))
-
 // The swimlane SVG from the reference design template
 const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="760" height="490" viewBox="0 0 760 490">
   <style>
-    text { font-family: 'Helvetica Neue', Arial, sans-serif; }
+    text { font-family: 'Noto Sans JP', sans-serif; }
   </style>
 
   <!-- Lane backgrounds -->
@@ -129,8 +125,29 @@ const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="760" height="
   <line x1="544" y1="307" x2="582" y2="307" stroke="#8A889A" stroke-width="1.2" marker-end="url(#am)"/>
 </svg>`
 
+// Download Noto Sans JP Bold TTF for Japanese text rendering in SVG
+// resvg-wasm requires TTF format (not WOFF) and uses fontFiles option
+import { tmpdir } from 'os'
+const fontUrl = 'https://github.com/google/fonts/raw/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf'
+const fontPath = resolve(tmpdir(), 'NotoSansJP.ttf')
+
+if (!existsSync(fontPath)) {
+  console.log('Downloading Noto Sans JP font...')
+  const fontRes = await fetch(fontUrl)
+  if (!fontRes.ok) throw new Error(`Font download failed: ${fontRes.status}`)
+  writeFileSync(fontPath, Buffer.from(await fontRes.arrayBuffer()))
+  console.log(`Font saved: ${fontPath}`)
+} else {
+  console.log(`Font cached: ${fontPath}`)
+}
+
+// Try system fonts first (macOS has Hiragino), then custom font as fallback
 const resvg = new Resvg(svgContent, {
   fitTo: { mode: 'width', value: 760 },
+  font: {
+    fontFiles: [fontPath],
+    loadSystemFonts: true,
+  },
 })
 const pngData = resvg.render()
 const pngBuffer = pngData.asPng()
