@@ -338,7 +338,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   fill={node.label === '作業' ? T.statusText : T.titleColor}
                   style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                 >
-                  {node.label.length > (isDiamond ? 8 : 10) ? node.label.slice(0, isDiamond ? 8 : 10) + '…' : node.label}
+                  {node.label.length > (isDiamond ? 8 : 10)
+                    ? node.label.slice(0, isDiamond ? 8 : 10) + '…'
+                    : node.label}
                 </text>
                 {!isDiamond && node.note && (
                   <g>

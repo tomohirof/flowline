@@ -19,7 +19,14 @@ export const DS = 34
  * hw: ノード半幅, hh: ノード半高さ, rh: 行高さ（閾値計算に使用）
  * shape: オプションのノード形状（'diamond' の場合は菱形頂点から出る）
  */
-export const exitPt = (c: Point, o: Point, hw: number, hh: number, rh: number, shape?: 'diamond'): Point => {
+export const exitPt = (
+  c: Point,
+  o: Point,
+  hw: number,
+  hh: number,
+  rh: number,
+  shape?: 'diamond',
+): Point => {
   const dx = o.x - c.x,
     dy = o.y - c.y
 
@@ -46,7 +53,14 @@ export const exitPt = (c: Point, o: Point, hw: number, hh: number, rh: number, s
  * o は接続元のノード中心。
  * shape: オプションのノード形状（'diamond' の場合は菱形頂点に入る）
  */
-export const entryPt = (c: Point, o: Point, hw: number, hh: number, rh: number, shape?: 'diamond'): Point => {
+export const entryPt = (
+  c: Point,
+  o: Point,
+  hw: number,
+  hh: number,
+  rh: number,
+  shape?: 'diamond',
+): Point => {
   const dx = o.x - c.x,
     dy = o.y - c.y
 

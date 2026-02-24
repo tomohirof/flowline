@@ -1433,33 +1433,71 @@ export default function FlowEditor({
           </PanelSection>
           <PanelSection label="形状">
             <div style={{ display: 'flex', gap: 4 }}>
-              {([
-                { shape: undefined as 'diamond' | undefined, label: '矩形', icon: (active: boolean) => (
-                  <svg width="20" height="14" viewBox="0 0 20 14">
-                    <rect x="1" y="1" width="18" height="12" rx="3" fill="none" stroke={active ? T.accent : T.panelLabel} strokeWidth="1.5" />
-                  </svg>
-                )},
-                { shape: 'diamond' as const, label: '分岐', icon: (active: boolean) => (
-                  <svg width="20" height="20" viewBox="0 0 20 20">
-                    <polygon points="10,1 19,10 10,19 1,10" fill="none" stroke={active ? T.accent : T.panelLabel} strokeWidth="1.5" />
-                  </svg>
-                )},
-              ] as const).map((s) => {
+              {(
+                [
+                  {
+                    shape: undefined as 'diamond' | undefined,
+                    label: '矩形',
+                    icon: (active: boolean) => (
+                      <svg width="20" height="14" viewBox="0 0 20 14">
+                        <rect
+                          x="1"
+                          y="1"
+                          width="18"
+                          height="12"
+                          rx="3"
+                          fill="none"
+                          stroke={active ? T.accent : T.panelLabel}
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                    ),
+                  },
+                  {
+                    shape: 'diamond' as const,
+                    label: '分岐',
+                    icon: (active: boolean) => (
+                      <svg width="20" height="20" viewBox="0 0 20 20">
+                        <polygon
+                          points="10,1 19,10 10,19 1,10"
+                          fill="none"
+                          stroke={active ? T.accent : T.panelLabel}
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                    ),
+                  },
+                ] as const
+              ).map((s) => {
                 const isActive = (s.shape || undefined) === (selTaskData.shape || undefined)
                 return (
                   <div
                     key={s.label}
-                    onClick={() => setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], shape: s.shape } }))}
+                    onClick={() =>
+                      setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], shape: s.shape } }))
+                    }
                     style={{
-                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      gap: 4, height: 32, borderRadius: 6, cursor: 'pointer',
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 4,
+                      height: 32,
+                      borderRadius: 6,
+                      cursor: 'pointer',
                       background: isActive ? `${T.accent}15` : 'transparent',
                       border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
                       transition: 'all 0.15s',
                     }}
                   >
                     {s.icon(isActive)}
-                    <span style={{ fontSize: 11, fontWeight: isActive ? 600 : 400, color: isActive ? T.accent : T.panelLabel }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: isActive ? 600 : 400,
+                        color: isActive ? T.accent : T.panelLabel,
+                      }}
+                    >
                       {s.label}
                     </span>
                   </div>
@@ -2748,32 +2786,49 @@ export default function FlowEditor({
                     {isMulti && isDiamond && (
                       <g style={{ pointerEvents: 'none' }}>
                         <circle cx={c.x + DS - 4} cy={c.y - DS + 4} r={8} fill={T.accent} />
-                        <svg x={c.x + DS - 9} y={c.y - DS - 1} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                      </g>
-                    )}
-                    {!isDiamond && oi !== -1 && !connectFrom && !dragging && editorSettings.showOrderBadge && (
-                      <g>
-                        <rect
-                          x={c.x + TW / 2 - 18}
-                          y={c.y + TH / 2 - 16}
-                          width={18}
-                          height={16}
-                          rx={5}
-                          fill={p.tag}
-                        />
-                        <text
-                          x={c.x + TW / 2 - 9}
-                          y={c.y + TH / 2 - 7}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fill={p.text}
-                          fontSize={8.5}
-                          fontWeight={700}
+                        <svg
+                          x={c.x + DS - 9}
+                          y={c.y - DS - 1}
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#fff"
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         >
-                          {oi + 1}
-                        </text>
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
                       </g>
                     )}
+                    {!isDiamond &&
+                      oi !== -1 &&
+                      !connectFrom &&
+                      !dragging &&
+                      editorSettings.showOrderBadge && (
+                        <g>
+                          <rect
+                            x={c.x + TW / 2 - 18}
+                            y={c.y + TH / 2 - 16}
+                            width={18}
+                            height={16}
+                            rx={5}
+                            fill={p.tag}
+                          />
+                          <text
+                            x={c.x + TW / 2 - 9}
+                            y={c.y + TH / 2 - 7}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill={p.text}
+                            fontSize={8.5}
+                            fontWeight={700}
+                          >
+                            {oi + 1}
+                          </text>
+                        </g>
+                      )}
                     {editing === k ? (
                       <foreignObject
                         x={isDiamond ? c.x - DS + 4 : c.x - TW / 2 + 8}
@@ -2808,7 +2863,9 @@ export default function FlowEditor({
                         fill={task.label === '作業' ? T.statusText : T.titleColor}
                         style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                       >
-                        {task.label.length > (isDiamond ? 8 : 10) ? task.label.slice(0, isDiamond ? 8 : 10) + '…' : task.label}
+                        {task.label.length > (isDiamond ? 8 : 10)
+                          ? task.label.slice(0, isDiamond ? 8 : 10) + '…'
+                          : task.label}
                       </text>
                     )}
                     {!isDiamond && note && !connectFrom && !dragging && (
@@ -3175,8 +3232,10 @@ export default function FlowEditor({
                 const c = ct(li, ri)
                 const isDia = t.shape === 'diamond'
                 const isNear = isDia
-                  ? Math.abs(connectDragPt.x - c.x) < DS + 12 && Math.abs(connectDragPt.y - c.y) < DS + 12
-                  : Math.abs(connectDragPt.x - c.x) < TW / 2 + 12 && Math.abs(connectDragPt.y - c.y) < TH / 2 + 12
+                  ? Math.abs(connectDragPt.x - c.x) < DS + 12 &&
+                    Math.abs(connectDragPt.y - c.y) < DS + 12
+                  : Math.abs(connectDragPt.x - c.x) < TW / 2 + 12 &&
+                    Math.abs(connectDragPt.y - c.y) < TH / 2 + 12
                 if (!isNear) return null
                 return isDia ? (
                   <polygon

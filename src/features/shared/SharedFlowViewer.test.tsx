@@ -167,7 +167,15 @@ describe('SharedFlowViewer', () => {
     const diamondFlow = {
       ...mockFlow,
       nodes: [
-        { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'Diamond', note: null, orderIndex: 0, shape: 'diamond' as const },
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'Diamond',
+          note: null,
+          orderIndex: 0,
+          shape: 'diamond' as const,
+        },
       ],
     }
     render(<SharedFlowViewer flow={diamondFlow} />)
@@ -180,14 +188,24 @@ describe('SharedFlowViewer', () => {
     const diamondFlow = {
       ...mockFlow,
       nodes: [
-        { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'Diamond', note: null, orderIndex: 0, shape: 'diamond' as const },
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'Diamond',
+          note: null,
+          orderIndex: 0,
+          shape: 'diamond' as const,
+        },
       ],
     }
     render(<SharedFlowViewer flow={diamondFlow} />)
     const canvas = screen.getByTestId('shared-flow-canvas')
     const svg = canvas.querySelector('svg')!
     const texts = svg.querySelectorAll('text')
-    const laneTagTexts = Array.from(texts).filter(t => t.getAttribute('font-size') === '8' && t.textContent === 'Lane 1')
+    const laneTagTexts = Array.from(texts).filter(
+      (t) => t.getAttribute('font-size') === '8' && t.textContent === 'Lane 1',
+    )
     expect(laneTagTexts).toHaveLength(0)
   })
 
@@ -195,14 +213,22 @@ describe('SharedFlowViewer', () => {
     const diamondFlow = {
       ...mockFlow,
       nodes: [
-        { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: '1234567890', note: null, orderIndex: 0, shape: 'diamond' as const },
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: '1234567890',
+          note: null,
+          orderIndex: 0,
+          shape: 'diamond' as const,
+        },
       ],
     }
     render(<SharedFlowViewer flow={diamondFlow} />)
     const canvas = screen.getByTestId('shared-flow-canvas')
     const svg = canvas.querySelector('svg')!
     const texts = Array.from(svg.querySelectorAll('text'))
-    const labelText = texts.find(t => t.textContent?.includes('12345678'))
+    const labelText = texts.find((t) => t.textContent?.includes('12345678'))
     expect(labelText).not.toBeUndefined()
     expect(labelText!.textContent).toBe('12345678…')
   })
@@ -221,14 +247,22 @@ describe('SharedFlowViewer', () => {
     const diamondFlow = {
       ...mockFlow,
       nodes: [
-        { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'Diamond', note: 'Some note', orderIndex: 0, shape: 'diamond' as const },
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'Diamond',
+          note: 'Some note',
+          orderIndex: 0,
+          shape: 'diamond' as const,
+        },
       ],
     }
     render(<SharedFlowViewer flow={diamondFlow} />)
     const canvas = screen.getByTestId('shared-flow-canvas')
     const svg = canvas.querySelector('svg')!
     const texts = Array.from(svg.querySelectorAll('text'))
-    const noteText = texts.find(t => t.textContent?.includes('Some note'))
+    const noteText = texts.find((t) => t.textContent?.includes('Some note'))
     expect(noteText).toBeUndefined()
   })
 })
