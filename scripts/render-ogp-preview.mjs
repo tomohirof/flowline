@@ -126,7 +126,7 @@ const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="760" height="
 </svg>`
 
 // Download Noto Sans JP Bold TTF for Japanese text rendering in SVG
-// resvg-wasm requires TTF format (not WOFF) and uses fontFiles option
+// resvg-js requires TTF format (not WOFF); pass font via fontFiles option
 import { tmpdir } from 'os'
 const fontUrl = 'https://github.com/google/fonts/raw/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf'
 const fontPath = resolve(tmpdir(), 'NotoSansJP.ttf')
