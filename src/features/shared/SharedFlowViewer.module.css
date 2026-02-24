@@ -134,6 +134,7 @@
   padding: 28px 28px 18px;
   background: linear-gradient(180deg, var(--theme-hero-gradient) 0%, transparent 100%);
   margin: -40px -40px 0 -40px;
+  min-width: calc(100% + 80px);
   position: relative;
   z-index: 1;
 }
