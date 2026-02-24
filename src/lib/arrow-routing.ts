@@ -9,15 +9,26 @@ export interface ArrowPath {
   my: number
 }
 
+/** Diamond shape half-diagonal (vertex distance from center) */
+export const DS = 34
+
 /**
  * ノード中心 c から相手ノード中心 o に向かう矢印の出口点を計算する。
  * FlowEditor の threshold ベースのロジックを共通化したもの。
  *
  * hw: ノード半幅, hh: ノード半高さ, rh: 行高さ（閾値計算に使用）
+ * shape: オプションのノード形状（'diamond' の場合は菱形頂点から出る）
  */
-export const exitPt = (c: Point, o: Point, hw: number, hh: number, rh: number): Point => {
+export const exitPt = (c: Point, o: Point, hw: number, hh: number, rh: number, shape?: 'diamond'): Point => {
   const dx = o.x - c.x,
     dy = o.y - c.y
+
+  if (shape === 'diamond') {
+    if (Math.abs(dx) < 1 && dy > 0) return { x: c.x, y: c.y + DS }
+    if (dx >= 0) return { x: c.x + DS, y: c.y }
+    return { x: c.x - DS, y: c.y }
+  }
+
   // 同位置
   if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y + hh }
   // 下方向: 下部から出る
@@ -33,10 +44,19 @@ export const exitPt = (c: Point, o: Point, hw: number, hh: number, rh: number): 
 /**
  * ノード中心 c への矢印の入口点を計算する。
  * o は接続元のノード中心。
+ * shape: オプションのノード形状（'diamond' の場合は菱形頂点に入る）
  */
-export const entryPt = (c: Point, o: Point, hw: number, hh: number, rh: number): Point => {
+export const entryPt = (c: Point, o: Point, hw: number, hh: number, rh: number, shape?: 'diamond'): Point => {
   const dx = o.x - c.x,
     dy = o.y - c.y
+
+  if (shape === 'diamond') {
+    if (dy < -rh * 0.3) return { x: c.x, y: c.y - DS }
+    if (dy > rh * 0.3) return { x: c.x, y: c.y + DS }
+    if (dx > 0) return { x: c.x + DS, y: c.y }
+    return { x: c.x - DS, y: c.y }
+  }
+
   // 同位置
   if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y - hh }
   // 上方向から来る: 上部に接続
