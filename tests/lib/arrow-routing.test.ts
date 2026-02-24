@@ -228,8 +228,6 @@ describe('buildArrowPath', () => {
 })
 
 describe('diamond shape', () => {
-  const DS = 34
-
   describe('exitPt with diamond', () => {
     it('should exit from bottom vertex when target is directly below', () => {
       const result = exitPt({ x: 100, y: 100 }, { x: 100, y: 200 }, 76, 28, 84, 'diamond')
