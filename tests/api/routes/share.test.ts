@@ -375,6 +375,15 @@ describe('Share API', () => {
       expect(body.flow.arrows).toEqual([])
     })
 
+    it('should include authorName in response', async () => {
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'Shared Flow', 'author-token')
+
+      const res = await getRequest('/api/shared/author-token', env)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.flow.authorName).toBe('Test User')
+    })
+
     it('should work without any auth cookie', async () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'Public Flow', 'open-token')
 

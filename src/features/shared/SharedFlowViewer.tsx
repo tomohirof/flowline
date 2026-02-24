@@ -5,6 +5,7 @@ import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
 import { exitPt, entryPt, buildArrowPath, type Point } from '../../lib/arrow-routing'
+import { formatRelativeTime } from '../../lib/relative-time'
 import { TeaserModal } from './TeaserModal'
 import { BottomCTABar } from './BottomCTABar'
 
@@ -145,6 +146,36 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         <span className={styles.brandName}>{BRAND.name}</span>
       </div>
 
+      {/* Hero title area */}
+      <div className={styles.titleHero} data-testid="shared-title-hero">
+        {flow.authorName && (
+          <div className={styles.authorRow}>
+            <div className={styles.authorAvatar} style={{ background: logoGradient }}>
+              {flow.authorName.charAt(0).toUpperCase()}
+            </div>
+            <div className={styles.authorText}>
+              <span className={styles.authorName}>{flow.authorName}</span>
+              <span className={styles.authorSub}>が {BRAND.name} で作成</span>
+            </div>
+          </div>
+        )}
+        <div className={styles.heroTitle}>{flow.title}</div>
+        <div className={styles.metaRow}>
+          <div className={styles.laneDots}>
+            {sortedLanes.slice(0, 6).map((lane) => {
+              const p = PALETTES[lane.colorIndex % PALETTES.length]
+              return (
+                <div key={lane.id} className={styles.laneDot} style={{ backgroundColor: p.dot }} />
+              )
+            })}
+          </div>
+          <span>
+            {sortedLanes.length} レーン · {flow.nodes.length} ノード · 更新{' '}
+            {formatRelativeTime(flow.updatedAt)}
+          </span>
+        </div>
+      </div>
+
       {/* Canvas */}
       <div
         ref={containerRef}
@@ -158,18 +189,6 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           height={(totalH + 30) * zoom}
           viewBox={`0 -30 ${totalW} ${totalH + 30}`}
         >
-          {/* Flow title */}
-          <text
-            x={LM}
-            y={TM - 8}
-            fontSize={16}
-            fontWeight={700}
-            fill={T.titleColor}
-            style={{ fontFamily: 'inherit' }}
-          >
-            {flow.title.length > 40 ? flow.title.slice(0, 40) + '…' : flow.title}
-          </text>
-
           {/* Lanes */}
           {sortedLanes.map((lane, li) => {
             const p = PALETTES[lane.colorIndex % PALETTES.length]
