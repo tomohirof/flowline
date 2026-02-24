@@ -1404,7 +1404,8 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
     const mermaid = await clickMermaidCopyButton(writeTextSpy)
     expect(mermaid).toContain('flowchart LR')
     expect(mermaid).toContain('subgraph')
-    expect(mermaid).toContain('孤立ノード')
+    // Full node format: id["label<br><small>laneName</small>"]
+    expect(mermaid).toMatch(/n1\["孤立ノード<br><small>レーン1<\/small>"\]/)
     expect(mermaid).not.toContain('-->')
   })
 
@@ -1427,8 +1428,8 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
     }
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     const mermaid = await clickMermaidCopyButton(writeTextSpy)
-    expect(mermaid).toContain('テスト#quot;ラベル#quot;です')
-    expect(mermaid).toContain('<br><small>')
+    // Full node format with escaped quotes and lane label
+    expect(mermaid).toMatch(/n1\["テスト#quot;ラベル#quot;です<br><small>レーン1<\/small>"\]/)
   })
 
   it('exportMermaid should escape angle brackets in labels to prevent HTML injection', async () => {
