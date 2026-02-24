@@ -154,4 +154,12 @@ describe('SharedFlowViewer', () => {
     expect(style).toContain('--theme-hero-gradient')
     expect(style).not.toContain('#fff')
   })
+
+  it('should have position sticky and left 0 on titleHero for scroll-proof gradient', () => {
+    const css = readFileSync(resolve(__dirname, './SharedFlowViewer.module.css'), 'utf-8')
+    const heroMatch = css.match(/\.titleHero\s*\{[^}]*\}/s)
+    expect(heroMatch).not.toBeNull()
+    expect(heroMatch![0]).toMatch(/position:\s*sticky/)
+    expect(heroMatch![0]).toMatch(/left:\s*0/)
+  })
 })
