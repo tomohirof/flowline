@@ -12,12 +12,26 @@ export function findClosestUpstream(
   lanes: { id: string }[],
   newRi: number,
   newLi: number,
+  arrows: { from: string; to: string }[],
 ): string | null {
+  // Build outgoing/incoming sets from arrows
+  const outgoing = new Set(arrows.map((a) => a.from))
+  const incoming = new Set(arrows.map((a) => a.to))
+
+  // Tail nodes: no outgoing arrows
+  const allKeys = Object.keys(tasks)
+  const tails = allKeys.filter((k) => !outgoing.has(k))
+
+  // Prefer flow-connected tails (have incoming), fall back to all tails
+  const flowTails = tails.filter((k) => incoming.has(k))
+  const candidates = flowTails.length > 0 ? flowTails : tails
+
   let bestKey: string | null = null
   let bestRi = -1
   let bestLi = -1
 
-  for (const [key, task] of Object.entries(tasks)) {
+  for (const key of candidates) {
+    const task = tasks[key]
     const tRi = rows.findIndex((r) => r.id === task.rid)
     const tLi = lanes.findIndex((l) => l.id === task.lid)
     if (tRi < 0 || tLi < 0) continue
