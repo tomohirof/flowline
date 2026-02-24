@@ -1,11 +1,11 @@
-/* global Buffer, console */
+/* global Buffer, console, fetch */
 /**
  * Render the fixed swimlane preview SVG to PNG for OGP image embedding.
  * Usage: node scripts/render-ogp-preview.mjs
  * Output: workers/ogp/src/preview-base64.ts
  */
 import { Resvg } from '@resvg/resvg-js'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { writeFileSync, existsSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
