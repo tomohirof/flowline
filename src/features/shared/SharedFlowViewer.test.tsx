@@ -137,4 +137,21 @@ describe('SharedFlowViewer', () => {
     expect(heroMatch).not.toBeNull()
     expect(heroMatch![0]).toMatch(/linear-gradient/)
   })
+
+  it('should use white gradient for light theme (not canvas-bg)', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    const root = screen.getByTestId('shared-flow-view')
+    const style = root.getAttribute('style') || ''
+    expect(style).toContain('--theme-hero-gradient')
+    expect(style).toContain('#fff')
+  })
+
+  it('should use dark gradient for midnight theme', () => {
+    const darkFlow = { ...mockFlow, themeId: 'midnight' }
+    render(<SharedFlowViewer flow={darkFlow} />)
+    const root = screen.getByTestId('shared-flow-view')
+    const style = root.getAttribute('style') || ''
+    expect(style).toContain('--theme-hero-gradient')
+    expect(style).not.toContain('#fff')
+  })
 })

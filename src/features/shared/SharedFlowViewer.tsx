@@ -130,6 +130,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           '--theme-status-bg': T.statusBg,
           '--theme-status-border': T.statusBorder,
           '--theme-status-text': T.statusText,
+          '--theme-hero-gradient': isDark ? T.canvasBg : '#fff',
         } as React.CSSProperties
       }
     >
