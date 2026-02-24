@@ -481,7 +481,7 @@ function buildOgpElement(title: string, authorName: string) {
                 props: {
                   style: {
                     position: 'absolute',
-                    top: 128,
+                    top: 190,
                     left: 40,
                     zIndex: 10,
                     display: 'flex',
