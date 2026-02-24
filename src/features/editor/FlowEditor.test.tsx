@@ -1525,6 +1525,40 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
     expect(mermaid).toContain('#vert;')
     expect(mermaid).toContain('A#vert;B選択')
   })
+
+  it('exportMermaid should sort nodes within same row by lane position', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [
+        { id: 'lane-1', name: 'レーンA', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'レーンB', colorIndex: 1, position: 1 },
+        { id: 'lane-3', name: 'レーンC', colorIndex: 2, position: 2 },
+      ],
+      nodes: [
+        // Deliberately out of lane-position order
+        { id: 'n1', laneId: 'lane-3', rowIndex: 0, label: 'C', note: null, orderIndex: 2 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'n3', laneId: 'lane-2', rowIndex: 0, label: 'B', note: null, orderIndex: 1 },
+      ],
+      arrows: [],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+
+    // All 3 nodes should be in the same subgraph (same row)
+    const lines = mermaid.split('\n')
+    const subgraphStart = lines.findIndex((l) => l.trim().startsWith('subgraph'))
+    const endIdx = lines.findIndex((l, i) => i > subgraphStart && l.trim() === 'end')
+    const block = lines.slice(subgraphStart, endIdx + 1).join('\n')
+
+    // Nodes should appear sorted by lane position: A (lane0), B (lane1), C (lane2)
+    const posA = block.indexOf('A<br><small>レーンA</small>')
+    const posB = block.indexOf('B<br><small>レーンB</small>')
+    const posC = block.indexOf('C<br><small>レーンC</small>')
+    expect(posA).toBeLessThan(posB)
+    expect(posB).toBeLessThan(posC)
+  })
 })
 
 describe('auto-connect by flow position (#182)', () => {
