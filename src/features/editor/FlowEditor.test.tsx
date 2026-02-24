@@ -1373,7 +1373,21 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
     const subgraphStarts = lines
       .map((l, i) => ({ line: l.trim(), idx: i }))
       .filter((x) => x.line.startsWith('subgraph'))
-    expect(subgraphStarts.length).toBeGreaterThanOrEqual(2)
+    // 2 row subgraphs (row 0 and row 1)
+    expect(subgraphStarts.length).toBe(2)
+    // n1 and n2 (both row 0) should be in the first subgraph block
+    const firstSubgraphStart = subgraphStarts[0].idx
+    const firstEndIdx = lines.findIndex((l, i) => i > firstSubgraphStart && l.trim() === 'end')
+    const firstBlock = lines.slice(firstSubgraphStart, firstEndIdx + 1).join('\n')
+    expect(firstBlock).toContain('n1[')
+    expect(firstBlock).toContain('n2[')
+    expect(firstBlock).not.toContain('n3[')
+    // n3 (row 1) should be in the second subgraph block
+    const secondSubgraphStart = subgraphStarts[1].idx
+    const secondEndIdx = lines.findIndex((l, i) => i > secondSubgraphStart && l.trim() === 'end')
+    const secondBlock = lines.slice(secondSubgraphStart, secondEndIdx + 1).join('\n')
+    expect(secondBlock).toContain('n3[')
+    expect(secondBlock).not.toContain('n1[')
   })
 
   it('exportMermaid should include isolated nodes inside row subgraph', async () => {
