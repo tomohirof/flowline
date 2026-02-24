@@ -3,10 +3,11 @@ import { uid } from '../../../lib/uid'
 
 export interface ToastData {
   id: string
-  type: 'confirm' | 'success'
+  type: 'confirm' | 'success' | 'error'
   message: string
   detail?: string
   onConfirm?: () => void
+  onRetry?: () => void
   crossingCount?: number
 }
 
@@ -57,5 +58,12 @@ export function useToast() {
     })
   }
 
-  return { toasts, addConfirmToast, dismissToast, confirmToast }
+  const addErrorToast = (toast: Pick<ToastData, 'message' | 'detail' | 'onRetry'>): void => {
+    setToasts((prev) => [
+      ...prev.filter((t) => t.type !== 'error'),
+      { ...toast, id: uid(), type: 'error' as const },
+    ])
+  }
+
+  return { toasts, addConfirmToast, addErrorToast, dismissToast, confirmToast }
 }

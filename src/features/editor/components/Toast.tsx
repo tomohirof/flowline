@@ -15,7 +15,11 @@ export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
       {toasts.map((toast) => (
         <div key={toast.id} data-testid={`toast-${toast.type}`} className={styles.toast}>
           <div className={styles.content}>
-            <div className={styles.icon}>{toast.type === 'confirm' ? '↻' : '✓'}</div>
+            <div
+              className={`${styles.icon}${toast.type === 'error' ? ` ${styles.iconError}` : ''}`}
+            >
+              {toast.type === 'confirm' ? '↻' : toast.type === 'error' ? '⚠' : '✓'}
+            </div>
             <div className={styles.body}>
               <div className={styles.message}>{toast.message}</div>
               {toast.detail && <div className={styles.detail}>{toast.detail}</div>}
@@ -35,6 +39,26 @@ export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
                   >
                     整理する
                   </button>
+                </div>
+              )}
+              {toast.type === 'error' && (
+                <div className={styles.actions}>
+                  <button
+                    data-testid="toast-close-btn"
+                    onClick={() => onDismiss(toast.id)}
+                    className={styles.skipBtn}
+                  >
+                    閉じる
+                  </button>
+                  {toast.onRetry && (
+                    <button
+                      data-testid="toast-retry-btn"
+                      onClick={() => toast.onRetry!()}
+                      className={styles.retryBtn}
+                    >
+                      再試行
+                    </button>
+                  )}
                 </div>
               )}
             </div>

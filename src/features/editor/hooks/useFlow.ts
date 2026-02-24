@@ -99,6 +99,8 @@ export function useFlow(flowId: string) {
   // Perform save to API
   // =============================================
 
+  const performSaveRef = useRef<() => Promise<void>>()
+
   const performSave = useCallback(async () => {
     const payload = pendingPayloadRef.current
     if (!payload || !flowIdRef.current) return
@@ -121,7 +123,7 @@ export function useFlow(flowId: string) {
         retryCountRef.current += 1
         retryTimerRef.current = setTimeout(() => {
           retryTimerRef.current = null
-          performSave()
+          performSaveRef.current?.()
         }, RETRY_INTERVAL_MS)
         // Keep saveStatus as 'saving' during retries
       } else {
@@ -130,6 +132,10 @@ export function useFlow(flowId: string) {
       }
     }
   }, [])
+
+  useEffect(() => {
+    performSaveRef.current = performSave
+  }, [performSave])
 
   // =============================================
   // updateFlow - debounced save

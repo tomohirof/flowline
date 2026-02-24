@@ -418,13 +418,20 @@ interface FlowEditorProps {
   onSave: (payload: FlowSavePayload) => void
   saveStatus: SaveStatus
   onShareChange?: (token: string | null) => void
+  onRetrySave?: () => void
 }
 
 // =============================================
 // FlowEditor Component
 // =============================================
 
-export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: FlowEditorProps) {
+export default function FlowEditor({
+  flow,
+  onSave,
+  saveStatus,
+  onShareChange,
+  onRetrySave,
+}: FlowEditorProps) {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -451,7 +458,23 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
-  const { toasts, addConfirmToast, dismissToast, confirmToast } = useToast()
+  const { toasts, addConfirmToast, addErrorToast, dismissToast, confirmToast } = useToast()
+
+  // Show/dismiss error toast based on saveStatus
+  useEffect(() => {
+    if (saveStatus === 'error') {
+      addErrorToast({
+        message: '保存に失敗しました',
+        detail: '変更内容が保存されていません。ネットワーク接続を確認してください。',
+        onRetry: onRetrySave,
+      })
+    } else {
+      const errorToast = toasts.find((t) => t.type === 'error')
+      if (errorToast) {
+        dismissToast(errorToast.id)
+      }
+    }
+  }, [saveStatus]) // eslint-disable-line react-hooks/exhaustive-deps
   const [connectFrom, setConnectFrom] = useState<string | null>(null)
   const [connectDragPt, setConnectDragPt] = useState<Point | null>(null)
   const [connectFromPt, setConnectFromPt] = useState<Point | null>(null)

@@ -178,4 +178,74 @@ describe('useToast', () => {
     })
     expect(result.current.toasts[0].id).not.toBe(firstId)
   })
+
+  // --- Error toast tests ---
+
+  it('should add an error toast', () => {
+    const onRetry = vi.fn()
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.addErrorToast({
+        message: '保存に失敗しました',
+        detail: 'ネットワークエラー',
+        onRetry,
+      })
+    })
+    expect(result.current.toasts).toHaveLength(1)
+    expect(result.current.toasts[0].type).toBe('error')
+    expect(result.current.toasts[0].message).toBe('保存に失敗しました')
+    expect(result.current.toasts[0].detail).toBe('ネットワークエラー')
+    expect(result.current.toasts[0].onRetry).toBe(onRetry)
+  })
+
+  it('should deduplicate error toasts (only one error at a time)', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.addErrorToast({ message: '1つ目のエラー' })
+    })
+    act(() => {
+      result.current.addErrorToast({ message: '2つ目のエラー' })
+    })
+    const errors = result.current.toasts.filter((t) => t.type === 'error')
+    expect(errors).toHaveLength(1)
+    expect(errors[0].message).toBe('2つ目のエラー')
+  })
+
+  it('should not auto-dismiss error toasts', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.addErrorToast({ message: 'エラー' })
+    })
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+    expect(result.current.toasts).toHaveLength(1)
+    expect(result.current.toasts[0].type).toBe('error')
+  })
+
+  it('should dismiss error toast by id', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.addErrorToast({ message: 'dismiss me' })
+    })
+    const id = result.current.toasts[0].id
+    act(() => {
+      result.current.dismissToast(id)
+    })
+    expect(result.current.toasts).toHaveLength(0)
+  })
+
+  it('should allow error and confirm toasts to coexist', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.addConfirmToast({ message: '確認トースト' })
+    })
+    act(() => {
+      result.current.addErrorToast({ message: 'エラートースト' })
+    })
+    expect(result.current.toasts).toHaveLength(2)
+    const types = result.current.toasts.map((t) => t.type)
+    expect(types).toContain('confirm')
+    expect(types).toContain('error')
+  })
 })

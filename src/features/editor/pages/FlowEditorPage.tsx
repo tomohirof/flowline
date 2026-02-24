@@ -6,7 +6,7 @@ import styles from './FlowEditorPage.module.css'
 
 export function FlowEditorPage() {
   const { id } = useParams<{ id: string }>()
-  const { flow, loading, error, saveStatus, updateFlow, saveNow } = useFlow(id ?? '')
+  const { flow, loading, error, saveStatus, updateFlow, saveNow, retrySave } = useFlow(id ?? '')
 
   // Ctrl+S handler for immediate save
   useEffect(() => {
@@ -40,5 +40,7 @@ export function FlowEditorPage() {
     return null
   }
 
-  return <FlowEditor flow={flow} onSave={updateFlow} saveStatus={saveStatus} />
+  return (
+    <FlowEditor flow={flow} onSave={updateFlow} saveStatus={saveStatus} onRetrySave={retrySave} />
+  )
 }
