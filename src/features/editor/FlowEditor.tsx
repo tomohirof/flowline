@@ -35,6 +35,7 @@ import {
 } from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
 import { exitPt, entryPt, buildArrowPath } from '../../lib/arrow-routing'
+import { findClosestUpstream, findCrossingArrows } from './auto-connect'
 
 const uid = (): string => crypto.randomUUID()
 
@@ -450,6 +451,19 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
+  const [recentInsertedRow, setRecentInsertedRow] = useState<{
+    rowId: string
+  } | null>(null)
+  const [toasts, setToasts] = useState<
+    Array<{
+      id: string
+      type: 'confirm' | 'success'
+      message: string
+      detail?: string
+      onConfirm?: () => void
+      crossingCount?: number
+    }>
+  >([])
   const [connectFrom, setConnectFrom] = useState<string | null>(null)
   const [connectDragPt, setConnectDragPt] = useState<Point | null>(null)
   const [connectFromPt, setConnectFromPt] = useState<Point | null>(null)
@@ -629,6 +643,20 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     return () => ro.disconnect()
   }, [])
 
+  // Auto-dismiss success toasts after 3 seconds
+  const successToastIds = toasts
+    .filter((t) => t.type === 'success')
+    .map((t) => t.id)
+    .join(',')
+  useEffect(() => {
+    if (!successToastIds) return
+    const ids = new Set(successToastIds.split(','))
+    const timer = setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => !ids.has(t.id)))
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [successToastIds])
+
   const applySnap = (s: string): void => {
     const d: EditorSnapshot = JSON.parse(s)
     skipSnap.current = true
@@ -789,12 +817,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setHoveredLaneGap(null)
   }
   const insertRowAt = (i: number): void => {
+    const newRowId = uid()
     setRows((prev) => {
       const n = [...prev]
-      n.splice(i, 0, { id: uid() })
+      n.splice(i, 0, { id: newRowId })
       return n
     })
     setHoveredRowGap(null)
+    setRecentInsertedRow({ rowId: newRowId })
   }
   const cellFromPos = (sx: number, sy: number): CellInfo | null => {
     for (let li = 0; li < lanes.length; li++)
@@ -935,8 +965,53 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setTasks((p) => ({ ...p, [k]: { label, lid, rid, nodeId: uid() } }))
     const no = [...order, k]
     setOrder(no)
-    if (editorSettings.autoConnect && no.length >= 2 && tasks[no[no.length - 2]])
-      setArrows((p) => [...p, { id: uid(), from: no[no.length - 2], to: k, comment: '' }])
+    if (editorSettings.autoConnect && Object.keys(tasks).length >= 1) {
+      const li = lanes.findIndex((l) => l.id === lid)
+      const bestKey = findClosestUpstream(tasks, rows, lanes, ri, li)
+      if (bestKey) {
+        setArrows((p) => [...p, { id: uid(), from: bestKey, to: k, comment: '' }])
+      }
+    }
+    // Detect crossing arrows for reorganization toast
+    if (recentInsertedRow && rid === recentInsertedRow.rowId) {
+      const insertedIndex = rows.findIndex((r) => r.id === recentInsertedRow.rowId)
+      if (insertedIndex >= 0) {
+        const crossing = findCrossingArrows(arrows, tasks, rows, insertedIndex)
+        if (crossing.length > 0) {
+          const newNodeKey = k
+          const crossingCount = crossing.length
+          setToasts((prev) => [
+            ...prev.filter((t) => t.type !== 'confirm'),
+            {
+              id: uid(),
+              type: 'confirm' as const,
+              message: '挿入した行を経由するよう矢印を整理しますか？',
+              detail: crossing
+                .map((a) => {
+                  const fromLabel = tasks[a.from]?.label ?? '?'
+                  const toLabel = tasks[a.to]?.label ?? '?'
+                  return `${fromLabel} → ${label} → ${toLabel} に変更`
+                })
+                .join('\n'),
+              onConfirm: () => {
+                setArrows((prev) => {
+                  const crossingIds = new Set(crossing.map((c) => c.id))
+                  const filtered = prev.filter((a) => !crossingIds.has(a.id))
+                  const newArrows: typeof prev = []
+                  for (const c of crossing) {
+                    newArrows.push({ id: uid(), from: c.from, to: newNodeKey, comment: '' })
+                    newArrows.push({ id: uid(), from: newNodeKey, to: c.to, comment: '' })
+                  }
+                  return [...filtered, ...newArrows]
+                })
+              },
+              crossingCount,
+            },
+          ])
+        }
+      }
+      setRecentInsertedRow(null)
+    }
     setSelArrow(null)
     if (editorSettings.enterEditOnCreate) {
       setEditing(k)
@@ -3121,6 +3196,111 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
           setEditing(null)
         }}
       />
+      {/* Toast notifications */}
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          data-testid={`toast-${toast.type}`}
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: 'calc(50% + 20px)',
+            transform: 'translate(-50%, -50%)',
+            background: '#fff',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            padding: '20px 24px',
+            zIndex: 9999,
+            minWidth: 320,
+            animation: 'toastIn 0.3s ease-out',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 16,
+                flexShrink: 0,
+              }}
+            >
+              {toast.type === 'confirm' ? '↻' : '✓'}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#1a1a2e', marginBottom: 4 }}>
+                {toast.message}
+              </div>
+              {toast.detail && (
+                <div
+                  style={{
+                    background: '#f5f5f7',
+                    borderRadius: 6,
+                    padding: '6px 10px',
+                    fontSize: 13,
+                    color: '#666',
+                    marginBottom: 8,
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {toast.detail}
+                </div>
+              )}
+              {toast.type === 'confirm' && (
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+                  <button
+                    data-testid="toast-skip-btn"
+                    onClick={() => setToasts((p) => p.filter((t) => t.id !== toast.id))}
+                    style={{
+                      padding: '6px 16px',
+                      borderRadius: 6,
+                      border: '1px solid #e0e0e0',
+                      background: '#fff',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      color: '#666',
+                    }}
+                  >
+                    スキップ
+                  </button>
+                  <button
+                    data-testid="toast-organize-btn"
+                    onClick={() => {
+                      toast.onConfirm?.()
+                      setToasts((p) => [
+                        ...p.filter((t) => t.id !== toast.id),
+                        {
+                          id: uid(),
+                          type: 'success' as const,
+                          message: `${toast.crossingCount ?? 1}本の矢印を整理しました`,
+                        },
+                      ])
+                    }}
+                    style={{
+                      padding: '6px 16px',
+                      borderRadius: 6,
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
+                    }}
+                  >
+                    整理する
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
