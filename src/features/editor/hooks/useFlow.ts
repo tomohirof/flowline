@@ -3,6 +3,8 @@ import { apiFetch, ApiError } from '../../../lib/api'
 import type { Flow, FlowDetailResponse, FlowSavePayload, SaveStatus } from '../types'
 
 const DEBOUNCE_MS = 2000
+const MAX_RETRIES = 3
+const RETRY_INTERVAL_MS = 3000
 
 export function useFlow(flowId: string) {
   const [flow, setFlow] = useState<Flow | null>(null)
@@ -12,6 +14,8 @@ export function useFlow(flowId: string) {
 
   const pendingPayloadRef = useRef<FlowSavePayload | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const retryCountRef = useRef<number>(0)
   const flowIdRef = useRef<string>(flowId)
 
   // Track current flowId to avoid stale saves
@@ -39,9 +43,14 @@ export function useFlow(flowId: string) {
   useEffect(() => {
     // Cleanup refs on flowId change
     pendingPayloadRef.current = null
+    retryCountRef.current = 0
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
       debounceTimerRef.current = null
+    }
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = null
     }
 
     if (!flowId) return
@@ -80,6 +89,9 @@ export function useFlow(flowId: string) {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
       }
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current)
+      }
     }
   }, [])
 
@@ -100,11 +112,22 @@ export function useFlow(flowId: string) {
       })
       // Clear payload only after successful save
       pendingPayloadRef.current = null
+      retryCountRef.current = 0
       setFlow(data.flow)
       setSaveStatus('saved')
     } catch {
       // Payload is preserved in pendingPayloadRef for retry
-      setSaveStatus('error')
+      if (retryCountRef.current < MAX_RETRIES) {
+        retryCountRef.current += 1
+        retryTimerRef.current = setTimeout(() => {
+          retryTimerRef.current = null
+          performSave()
+        }, RETRY_INTERVAL_MS)
+        // Keep saveStatus as 'saving' during retries
+      } else {
+        retryCountRef.current = 0
+        setSaveStatus('error')
+      }
     }
   }, [])
 
@@ -116,6 +139,13 @@ export function useFlow(flowId: string) {
     (payload: FlowSavePayload) => {
       pendingPayloadRef.current = payload
       setSaveStatus('unsaved')
+
+      // Reset retry state when user makes a new edit
+      retryCountRef.current = 0
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current)
+        retryTimerRef.current = null
+      }
 
       // Cancel existing debounce timer
       if (debounceTimerRef.current) {
@@ -148,6 +178,15 @@ export function useFlow(flowId: string) {
     }
   }, [performSave])
 
+  // =============================================
+  // retrySave - manual retry after error
+  // =============================================
+
+  const retrySave = useCallback(() => {
+    retryCountRef.current = 0
+    performSave()
+  }, [performSave])
+
   return {
     flow,
     loading,
@@ -155,5 +194,6 @@ export function useFlow(flowId: string) {
     saveStatus,
     updateFlow,
     saveNow,
+    retrySave,
   }
 }
