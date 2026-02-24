@@ -452,7 +452,6 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
   const [recentInsertedRow, setRecentInsertedRow] = useState<{
-    index: number
     rowId: string
   } | null>(null)
   const [toasts, setToasts] = useState<
@@ -462,6 +461,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       message: string
       detail?: string
       onConfirm?: () => void
+      crossingCount?: number
     }>
   >([])
   const [connectFrom, setConnectFrom] = useState<string | null>(null)
@@ -644,14 +644,18 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
   }, [])
 
   // Auto-dismiss success toasts after 3 seconds
+  const successToastIds = toasts
+    .filter((t) => t.type === 'success')
+    .map((t) => t.id)
+    .join(',')
   useEffect(() => {
-    const successToasts = toasts.filter((t) => t.type === 'success')
-    if (successToasts.length === 0) return
+    if (!successToastIds) return
+    const ids = new Set(successToastIds.split(','))
     const timer = setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.type !== 'success'))
+      setToasts((prev) => prev.filter((t) => !ids.has(t.id)))
     }, 3000)
     return () => clearTimeout(timer)
-  }, [toasts])
+  }, [successToastIds])
 
   const applySnap = (s: string): void => {
     const d: EditorSnapshot = JSON.parse(s)
@@ -820,7 +824,7 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
       return n
     })
     setHoveredRowGap(null)
-    setRecentInsertedRow({ index: i, rowId: newRowId })
+    setRecentInsertedRow({ rowId: newRowId })
   }
   const cellFromPos = (sx: number, sy: number): CellInfo | null => {
     for (let li = 0; li < lanes.length; li++)
@@ -975,8 +979,9 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
         const crossing = findCrossingArrows(arrows, tasks, rows, insertedIndex)
         if (crossing.length > 0) {
           const newNodeKey = k
+          const crossingCount = crossing.length
           setToasts((prev) => [
-            ...prev,
+            ...prev.filter((t) => t.type !== 'confirm'),
             {
               id: uid(),
               type: 'confirm' as const,
@@ -999,16 +1004,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                   }
                   return [...filtered, ...newArrows]
                 })
-                setToasts((prev) =>
-                  prev
-                    .filter((t) => t.type !== 'confirm')
-                    .concat({
-                      id: uid(),
-                      type: 'success',
-                      message: `${crossing.length}本の矢印を整理しました`,
-                    }),
-                )
               },
+              crossingCount,
             },
           ])
         }
@@ -3275,7 +3272,14 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
                     data-testid="toast-organize-btn"
                     onClick={() => {
                       toast.onConfirm?.()
-                      setToasts((p) => p.filter((t) => t.id !== toast.id))
+                      setToasts((p) => [
+                        ...p.filter((t) => t.id !== toast.id),
+                        {
+                          id: uid(),
+                          type: 'success' as const,
+                          message: `${toast.crossingCount ?? 1}本の矢印を整理しました`,
+                        },
+                      ])
                     }}
                     style={{
                       padding: '6px 16px',
