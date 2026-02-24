@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-
-const uid = (): string => crypto.randomUUID()
+import { uid } from '../../../lib/uid'
 
 export interface ToastData {
   id: string
@@ -45,7 +44,8 @@ export function useToast() {
   const confirmToast = (id: string, crossingCount?: number): void => {
     setToasts((prev) => {
       const toast = prev.find((t) => t.id === id)
-      toast?.onConfirm?.()
+      if (!toast) return prev
+      toast.onConfirm?.()
       return [
         ...prev.filter((t) => t.id !== id),
         {

@@ -130,8 +130,10 @@ describe('useToast', () => {
     act(() => {
       result.current.confirmToast('non-existent-id', 1)
     })
-    // Original toast should remain, plus a success toast is added
-    expect(result.current.toasts.length).toBeGreaterThanOrEqual(1)
+    // Original toast should remain unchanged, no success toast added
+    expect(result.current.toasts).toHaveLength(1)
+    expect(result.current.toasts[0].type).toBe('confirm')
+    expect(result.current.toasts[0].message).toBe('keep me')
   })
 
   it('should use default crossingCount of 1 when undefined', () => {

@@ -38,8 +38,7 @@ import { exitPt, entryPt, buildArrowPath } from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { useArrows } from './hooks/useArrows'
-
-const uid = (): string => crypto.randomUUID()
+import { uid } from '../../lib/uid'
 
 // =============================================
 // Icons
@@ -967,10 +966,8 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     setTasks((p) => ({ ...p, [k]: { label, lid, rid, nodeId: uid() } }))
     const no = [...order, k]
     setOrder(no)
-    {
-      const li = lanes.findIndex((l) => l.id === lid)
-      autoConnectOnCreate(k, ri, li)
-    }
+    const li = lanes.findIndex((l) => l.id === lid)
+    autoConnectOnCreate(k, ri, li)
     detectCrossing(rid, k, label, addConfirmToast)
     setSelArrow(null)
     if (editorSettings.enterEditOnCreate) {

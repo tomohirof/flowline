@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import type { InternalArrow, TaskData, RowData, InternalLane } from '../types'
 import { findClosestUpstream, findCrossingArrows } from '../auto-connect'
-
-const uid = (): string => crypto.randomUUID()
+import { uid } from '../../../lib/uid'
 
 interface UseArrowsOptions {
   initialArrows: InternalArrow[]
