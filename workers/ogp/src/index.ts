@@ -48,7 +48,7 @@ let cachedFontData: ArrayBuffer | null = null
 async function loadFont(): Promise<ArrayBuffer> {
   if (cachedFontData) return cachedFontData
   const res = await fetch(
-    'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-400-normal.woff',
+    'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-700-normal.woff',
   )
   if (!res.ok) {
     throw new Error(`Font fetch failed: ${res.status}`)
@@ -231,7 +231,7 @@ function buildOgpElement(title: string, authorName: string) {
           },
         },
 
-        // Body
+        // Body (position: relative for absolute title overlay)
         {
           type: 'div',
           props: {
@@ -241,64 +241,23 @@ function buildOgpElement(title: string, authorName: string) {
               position: 'relative',
             },
             children: [
-              // Left column
+              // Title + Catchcopy overlay (absolute, spans both columns over swimlane)
+              // top: 180px = visually centered in body area (578px height - title block)
+              // width: 1000px = extends from left column across preview card for overlap effect
               {
                 type: 'div',
                 props: {
                   style: {
+                    position: 'absolute',
+                    top: '180px',
+                    left: '40px',
+                    zIndex: 10,
                     display: 'flex',
                     flexDirection: 'column',
-                    width: '420px',
-                    padding: '40px 40px',
-                    justifyContent: 'center',
-                    zIndex: 3,
+                    width: '1000px',
                   },
                   children: [
-                    // Author info
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '20px',
-                        },
-                        children: [
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '14px',
-                                background: 'linear-gradient(135deg, #7C5CFC, #5B8DEF)',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                color: '#FFFFFF',
-                              },
-                              children: authorInitial,
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                color: '#999',
-                              },
-                              children: `${authorName} が共有`,
-                            },
-                          },
-                        ],
-                      },
-                    },
-                    // Title band
+                    // Title
                     {
                       type: 'div',
                       props: {
@@ -328,9 +287,8 @@ function buildOgpElement(title: string, authorName: string) {
                           alignItems: 'center',
                           gap: '8px',
                           backgroundColor: 'rgba(244,244,248,0.85)',
-                          padding: '4px 16px 10px',
+                          padding: '6px 16px 10px',
                           borderRadius: '0 0 8px 8px',
-                          marginBottom: '20px',
                         },
                         children: [
                           // Mini F logo
@@ -368,7 +326,66 @@ function buildOgpElement(title: string, authorName: string) {
                         ],
                       },
                     },
-                    // Lane color dots
+                  ],
+                },
+              },
+
+              // Left column (author top, dots bottom)
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: '420px',
+                    padding: '40px 40px',
+                    justifyContent: 'space-between',
+                  },
+                  children: [
+                    // Author info (top)
+                    {
+                      type: 'div',
+                      props: {
+                        style: {
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        },
+                        children: [
+                          {
+                            type: 'div',
+                            props: {
+                              style: {
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '14px',
+                                background: 'linear-gradient(135deg, #7C5CFC, #5B8DEF)',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: '#FFFFFF',
+                              },
+                              children: authorInitial,
+                            },
+                          },
+                          {
+                            type: 'div',
+                            props: {
+                              style: {
+                                display: 'flex',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: '#999',
+                              },
+                              children: `${authorName} が共有`,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                    // Lane color dots (bottom)
                     {
                       type: 'div',
                       props: {
@@ -507,7 +524,10 @@ function buildOgpElement(title: string, authorName: string) {
                                     },
                                   },
                                 },
-                                { type: 'div', props: { style: { display: 'flex', flex: 1 } } },
+                                {
+                                  type: 'div',
+                                  props: { style: { display: 'flex', flex: 1 } },
+                                },
                                 {
                                   type: 'div',
                                   props: {
@@ -598,11 +618,14 @@ app.get('/share/:tokenPng', async (c) => {
     const svg = await satori(element as unknown as React.ReactNode, {
       width: 1200,
       height: 630,
+      // Note: Only weight 700 is registered. All fontWeight values in element styles
+      // (900, 800, 600, etc.) are rendered as 700 by satori's nearest-match fallback.
+      // This is intentional — a single bold font covers all text adequately at OGP size.
       fonts: [
         {
           name: 'Noto Sans JP',
           data: fontData,
-          weight: 400,
+          weight: 700,
           style: 'normal' as const,
         },
       ],

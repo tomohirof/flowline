@@ -316,6 +316,42 @@ describe('OGP Worker', () => {
       expect(findImgSrc(lastCall[0] as Record<string, never>, 'data:image/png;base64,')).toBe(true)
     })
 
+    it('should have title overlay positioned absolutely with z-index for swimlane overlap', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'layout-check')
+
+      await getRequest('/share/layout-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function findAbsoluteTitle(node: Record<string, any>): boolean {
+        if (!node?.props) return false
+        const { style, children } = node.props
+        // Title overlay should be absolutely positioned with z-index >= 10
+        if (
+          style?.position === 'absolute' &&
+          style?.zIndex >= 10 &&
+          typeof children !== 'undefined'
+        ) {
+          // Check if this node or its descendants contain the title text
+          if (typeof children === 'string' && children === 'My Flow') return true
+          if (Array.isArray(children)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const hasTitle = children.some((c: any) => findText(c, 'My Flow'))
+            if (hasTitle) return true
+          }
+        }
+        if (Array.isArray(children)) {
+          return children.some((child: Record<string, never>) => findAbsoluteTitle(child))
+        }
+        return false
+      }
+
+      expect(findAbsoluteTitle(lastCall[0] as Record<string, never>)).toBe(true)
+    })
+
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
       const satori = await import('satori/standalone')
       vi.mocked(satori.default).mockRejectedValueOnce(new Error('SVG generation failed'))
