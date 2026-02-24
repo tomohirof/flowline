@@ -62,6 +62,10 @@ export function useToast() {
     })
   }
 
+  const addSuccessToast = useCallback((toast: Pick<ToastData, 'message' | 'detail'>): void => {
+    setToasts((prev) => [...prev, { ...toast, id: uid(), type: 'success' as const }])
+  }, [])
+
   const addErrorToast = useCallback(
     (toast: Pick<ToastData, 'message' | 'detail' | 'onRetry'>): void => {
       setToasts((prev) => [
@@ -72,5 +76,13 @@ export function useToast() {
     [],
   )
 
-  return { toasts, addConfirmToast, addErrorToast, dismissToast, dismissToastByType, confirmToast }
+  return {
+    toasts,
+    addConfirmToast,
+    addSuccessToast,
+    addErrorToast,
+    dismissToast,
+    dismissToastByType,
+    confirmToast,
+  }
 }

@@ -235,6 +235,16 @@ describe('useToast', () => {
     expect(result.current.toasts).toHaveLength(0)
   })
 
+  it('should add success toast via addSuccessToast', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.addSuccessToast({ message: '修復しました' })
+    })
+    expect(result.current.toasts).toHaveLength(1)
+    expect(result.current.toasts[0].type).toBe('success')
+    expect(result.current.toasts[0].message).toBe('修復しました')
+  })
+
   it('should allow error and confirm toasts to coexist', () => {
     const { result } = renderHook(() => useToast())
     act(() => {

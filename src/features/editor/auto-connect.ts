@@ -75,3 +75,36 @@ export function findCrossingArrows(
     return fromRi < insertedRowIndex && toRi > insertedRowIndex
   })
 }
+
+/**
+ * Compute bridge arrows when deleting nodes.
+ *
+ * For each deleted node, pairs its incoming arrows (from external nodes)
+ * with its outgoing arrows (to external nodes) to create bridges,
+ * preserving flow continuity.
+ */
+export function computeBridgeArrows(
+  deletingKeys: Set<string>,
+  currentArrows: { id: string; from: string; to: string; comment: string }[],
+): { from: string; to: string; comment: string }[] {
+  const incoming = currentArrows.filter((a) => deletingKeys.has(a.to) && !deletingKeys.has(a.from))
+  const outgoing = currentArrows.filter((a) => deletingKeys.has(a.from) && !deletingKeys.has(a.to))
+
+  const existing = new Set(currentArrows.map((a) => `${a.from}->${a.to}`))
+
+  const bridges: { from: string; to: string; comment: string }[] = []
+  const seen = new Set<string>()
+
+  for (const inc of incoming) {
+    for (const out of outgoing) {
+      const key = `${inc.from}->${out.to}`
+      if (inc.from === out.to) continue
+      if (existing.has(key)) continue
+      if (seen.has(key)) continue
+      seen.add(key)
+      bridges.push({ from: inc.from, to: out.to, comment: '' })
+    }
+  }
+
+  return bridges
+}
