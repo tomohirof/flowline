@@ -40,3 +40,9 @@
   color: #999;
   font-size: 14px;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo {
+    animation: none;
+  }
+}

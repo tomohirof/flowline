@@ -83,7 +83,7 @@ export function FlowListPage() {
       {error && <div className={styles.errorMessage}>{error}</div>}
 
       {loading ? (
-        <LoadingSpinner fullScreen />
+        <LoadingSpinner />
       ) : flows.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyTitle}>フローがまだありません</p>
