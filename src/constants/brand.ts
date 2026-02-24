@@ -4,6 +4,10 @@ export const BRAND = {
   logoInitial: 'F',
   copyright: '© 2026 Flowline',
 
+  // ── URL ──
+  siteUrl: 'https://flowline.six1.jp/',
+  flowsUrl: 'https://flowline.six1.jp/flows',
+
   // ── タグライン・キャッチコピー ──
   taglinePart1: 'フローを描く。',
   taglinePart2: 'チームが動く。',

@@ -140,7 +140,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
       {/* Title bar */}
       <div className={styles.titleBar}>
-        <a href="https://flowline.six1.jp/flows" className={styles.logoLink}>
+        <a href={BRAND.flowsUrl} className={styles.logoLink}>
           <div className={styles.logoIcon} style={{ background: logoGradient }}>
             {BRAND.logoInitial}
           </div>
@@ -404,7 +404,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
       {/* Footer */}
       <div className={styles.footer} data-testid="shared-flow-footer">
-        <a href="https://flowline.six1.jp/flows" className={styles.footerLink}>
+        <a href={BRAND.flowsUrl} className={styles.footerLink}>
           <div className={styles.footerIcon} style={{ background: logoGradient }}>
             {BRAND.logoInitial}
           </div>

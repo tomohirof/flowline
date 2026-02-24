@@ -111,12 +111,6 @@
   flex-shrink: 0;
 }
 
-.footerLeft {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .footerIcon {
   width: 16px;
   height: 16px;

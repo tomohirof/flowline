@@ -17,7 +17,7 @@ export function BottomCTABar({ visible, onClose }: BottomCTABarProps) {
           <div className={styles.heading}>{BRAND.sharedCreateCta}</div>
           <div className={styles.subText}>{BRAND.sharedCtaFeatures}</div>
         </div>
-        <a href="https://flowline.six1.jp/" className={styles.ctaLink}>
+        <a href={BRAND.siteUrl} className={styles.ctaLink}>
           {BRAND.ctaButtonShared}
         </a>
         <button

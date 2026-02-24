@@ -25,7 +25,7 @@ export function TeaserModal({
       data-testid="teaser-modal"
     >
       <div className={styles.content}>
-        <a href="https://flowline.six1.jp/flows" className={styles.logoLink}>
+        <a href={BRAND.flowsUrl} className={styles.logoLink}>
           <div className={styles.logo}>{BRAND.logoInitial}</div>
           <div className={`${styles.brandName}${isDark ? ` ${styles.brandNameDark}` : ''}`}>
             {BRAND.name}
@@ -51,7 +51,7 @@ export function TeaserModal({
         <button className={styles.ctaButton} onClick={onClose}>
           {BRAND.sharedViewButton}
         </button>
-        <a href="https://flowline.six1.jp/flows" className={styles.freeLink}>
+        <a href={BRAND.flowsUrl} className={styles.freeLink}>
           {BRAND.sharedFreeText}
         </a>
       </div>
