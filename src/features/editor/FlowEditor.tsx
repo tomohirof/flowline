@@ -757,6 +757,29 @@ export default function FlowEditor({
     [arrows, setArrows, addSuccessToast],
   )
 
+  const delMultiSel = useCallback((): void => {
+    const bridges = computeBridgeArrows(multiSel, arrows)
+    setTasks((p) => {
+      const n = { ...p }
+      multiSel.forEach((k) => delete n[k])
+      return n
+    })
+    setNotes((p) => {
+      const n = { ...p }
+      multiSel.forEach((k) => delete n[k])
+      return n
+    })
+    setOrder((p) => p.filter((x) => !multiSel.has(x)))
+    setArrows((p) => [
+      ...p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)),
+      ...bridges.map((b) => ({ ...b, id: uid() })),
+    ])
+    if (bridges.length > 0) {
+      addSuccessToast({ message: `オートリペア: ${bridges.length}本の矢印を修復しました` })
+    }
+    setMultiSel(new Set())
+  }, [multiSel, arrows, setArrows, addSuccessToast])
+
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
       // Undo: Cmd+Z / Ctrl+Z
@@ -781,26 +804,7 @@ export default function FlowEditor({
         )
           return
         if (multiSel.size > 0) {
-          const bridges = computeBridgeArrows(multiSel, arrows)
-          setTasks((p) => {
-            const n = { ...p }
-            multiSel.forEach((k) => delete n[k])
-            return n
-          })
-          setNotes((p) => {
-            const n = { ...p }
-            multiSel.forEach((k) => delete n[k])
-            return n
-          })
-          setOrder((p) => p.filter((x) => !multiSel.has(x)))
-          setArrows((p) => [
-            ...p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)),
-            ...bridges.map((b) => ({ ...b, id: uid() })),
-          ])
-          if (bridges.length > 0) {
-            addSuccessToast({ message: `オートリペア: ${bridges.length}本の矢印を修復しました` })
-          }
-          setMultiSel(new Set())
+          delMultiSel()
           e.preventDefault()
         } else if (selArrow) {
           setArrows((p) => p.filter((a) => a.id !== selArrow))
@@ -839,9 +843,8 @@ export default function FlowEditor({
     redo,
     multiSel,
     delTask,
+    delMultiSel,
     setArrows,
-    arrows,
-    addSuccessToast,
   ])
 
   const moveLane = (id: string, dir: number): void => {
@@ -1356,30 +1359,7 @@ export default function FlowEditor({
           <PanelSection label="操作">
             <button
               className={styles.dangerBtn}
-              onClick={() => {
-                const bridges = computeBridgeArrows(multiSel, arrows)
-                setTasks((p) => {
-                  const n = { ...p }
-                  multiSel.forEach((k) => delete n[k])
-                  return n
-                })
-                setNotes((p) => {
-                  const n = { ...p }
-                  multiSel.forEach((k) => delete n[k])
-                  return n
-                })
-                setOrder((p) => p.filter((x) => !multiSel.has(x)))
-                setArrows((p) => [
-                  ...p.filter((a) => !multiSel.has(a.from) && !multiSel.has(a.to)),
-                  ...bridges.map((b) => ({ ...b, id: uid() })),
-                ])
-                if (bridges.length > 0) {
-                  addSuccessToast({
-                    message: `オートリペア: ${bridges.length}本の矢印を修復しました`,
-                  })
-                }
-                setMultiSel(new Set())
-              }}
+              onClick={() => delMultiSel()}
               data-testid="multi-delete-btn"
             >
               {multiSel.size}件を削除
