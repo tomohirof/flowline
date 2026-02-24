@@ -454,10 +454,12 @@ describe('OGP Worker', () => {
       // Body div is the child with position: 'relative' and flex: 1
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const root = lastCall[0] as Record<string, any>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rootChildren = root.props.children as Array<Record<string, any>>
       const bodyDiv = rootChildren.find(
         (c) => c?.props?.style?.position === 'relative' && c?.props?.style?.flex === 1,
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const bodyChildren = bodyDiv.props.children as Array<Record<string, any>>
 
       // Find indices: title overlay has position absolute + zIndex >= 10
