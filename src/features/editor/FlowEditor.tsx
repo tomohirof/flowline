@@ -461,6 +461,7 @@ export default function FlowEditor({
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
   const [hoveredRowNum, setHoveredRowNum] = useState<number | null>(null)
   const [mermaidCopied, setMermaidCopied] = useState<boolean>(false)
+  const mermaidTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const {
     toasts,
     addConfirmToast,
@@ -556,6 +557,12 @@ export default function FlowEditor({
       })
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (mermaidTimerRef.current) clearTimeout(mermaidTimerRef.current)
     }
   }, [])
 
@@ -1819,9 +1826,11 @@ export default function FlowEditor({
             color={T.accent}
             onClick={async () => {
               try {
-                await navigator.clipboard?.writeText(exportMermaid())
+                if (!navigator.clipboard) return
+                await navigator.clipboard.writeText(exportMermaid())
+                if (mermaidTimerRef.current) clearTimeout(mermaidTimerRef.current)
                 setMermaidCopied(true)
-                setTimeout(() => setMermaidCopied(false), 1500)
+                mermaidTimerRef.current = setTimeout(() => setMermaidCopied(false), 1500)
               } catch {
                 // clipboard write failed — do not show feedback
               }
