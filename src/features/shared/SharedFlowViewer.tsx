@@ -174,7 +174,11 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
               {sortedLanes.slice(0, 6).map((lane) => {
                 const p = PALETTES[lane.colorIndex % PALETTES.length]
                 return (
-                  <div key={lane.id} className={styles.laneDot} style={{ backgroundColor: p.dot }} />
+                  <div
+                    key={lane.id}
+                    className={styles.laneDot}
+                    style={{ backgroundColor: p.dot }}
+                  />
                 )
               })}
             </div>
