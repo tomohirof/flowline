@@ -148,36 +148,6 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         </a>
       </div>
 
-      {/* Hero title area */}
-      <div className={styles.titleHero} data-testid="shared-title-hero">
-        {flow.authorName && (
-          <div className={styles.authorRow}>
-            <div className={styles.authorAvatar} style={{ background: logoGradient }}>
-              {flow.authorName.charAt(0).toUpperCase()}
-            </div>
-            <div className={styles.authorText}>
-              <span className={styles.authorName}>{flow.authorName}</span>
-              <span className={styles.authorSub}>が {BRAND.name} で作成</span>
-            </div>
-          </div>
-        )}
-        <div className={styles.heroTitle}>{flow.title}</div>
-        <div className={styles.metaRow}>
-          <div className={styles.laneDots}>
-            {sortedLanes.slice(0, 6).map((lane) => {
-              const p = PALETTES[lane.colorIndex % PALETTES.length]
-              return (
-                <div key={lane.id} className={styles.laneDot} style={{ backgroundColor: p.dot }} />
-              )
-            })}
-          </div>
-          <span>
-            {sortedLanes.length} レーン · {flow.nodes.length} ノード · 更新{' '}
-            {formatRelativeTime(flow.updatedAt)}
-          </span>
-        </div>
-      </div>
-
       {/* Canvas */}
       <div
         ref={containerRef}
@@ -185,6 +155,35 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         data-testid="shared-flow-canvas"
         style={{ backgroundSize: `${20 * zoom}px ${20 * zoom}px` }}
       >
+        {/* Hero title area */}
+        <div className={styles.titleHero} data-testid="shared-title-hero">
+          {flow.authorName && (
+            <div className={styles.authorRow}>
+              <div className={styles.authorAvatar} style={{ background: logoGradient }}>
+                {flow.authorName.charAt(0).toUpperCase()}
+              </div>
+              <div className={styles.authorText}>
+                <span className={styles.authorName}>{flow.authorName}</span>
+                <span className={styles.authorSub}>が {BRAND.name} で作成</span>
+              </div>
+            </div>
+          )}
+          <div className={styles.heroTitle}>{flow.title}</div>
+          <div className={styles.metaRow}>
+            <div className={styles.laneDots}>
+              {sortedLanes.slice(0, 6).map((lane) => {
+                const p = PALETTES[lane.colorIndex % PALETTES.length]
+                return (
+                  <div key={lane.id} className={styles.laneDot} style={{ backgroundColor: p.dot }} />
+                )
+              })}
+            </div>
+            <span>
+              {sortedLanes.length} レーン · {flow.nodes.length} ノード · 更新{' '}
+              {formatRelativeTime(flow.updatedAt)}
+            </span>
+          </div>
+        </div>
         <svg
           className={styles.svg}
           width={totalW * zoom}

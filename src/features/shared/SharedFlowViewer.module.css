@@ -133,7 +133,9 @@
 .titleHero {
   padding: 28px 28px 18px;
   background: linear-gradient(180deg, var(--theme-canvas-bg) 0%, transparent 100%);
-  flex-shrink: 0;
+  margin: -40px -40px 0 -40px;
+  position: relative;
+  z-index: 1;
 }
 
 .authorRow {
