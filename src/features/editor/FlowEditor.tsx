@@ -948,9 +948,12 @@ export default function FlowEditor({
           ri = riMap[t.rid]
         if (li === undefined || ri === undefined) continue
         const c = ct(li, ri)
+        const isDia = t.shape === 'diamond'
+        const snapX = isDia ? DS + 12 : TW / 2 + 12
+        const snapY = isDia ? DS + 12 : TH / 2 + 12
         if (
-          Math.abs(pt.x - c.x) < TW / 2 + 12 &&
-          Math.abs(pt.y - c.y) < TH / 2 + 12 &&
+          Math.abs(pt.x - c.x) < snapX &&
+          Math.abs(pt.y - c.y) < snapY &&
           k !== connectFrom
         ) {
           setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])

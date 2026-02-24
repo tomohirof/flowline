@@ -243,6 +243,16 @@ describe('diamond shape', () => {
       const result = exitPt({ x: 100, y: 100 }, { x: -50, y: 100 }, 76, 28, 84, 'diamond')
       expect(result).toEqual({ x: 66, y: 100 })
     })
+
+    it('should exit from top vertex when target is directly above', () => {
+      const result = exitPt({ x: 100, y: 200 }, { x: 100, y: 50 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 100, y: 166 })
+    })
+
+    it('should exit from top vertex when target is at same position', () => {
+      const result = exitPt({ x: 100, y: 100 }, { x: 100, y: 100 }, 76, 28, 84, 'diamond')
+      expect(result).toEqual({ x: 100, y: 66 })
+    })
   })
 
   describe('entryPt with diamond', () => {

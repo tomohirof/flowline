@@ -32,6 +32,7 @@ export const exitPt = (
 
   if (shape === 'diamond') {
     if (Math.abs(dx) < 1 && dy > 0) return { x: c.x, y: c.y + DS }
+    if (Math.abs(dx) < 1 && dy <= 0) return { x: c.x, y: c.y - DS }
     if (dx >= 0) return { x: c.x + DS, y: c.y }
     return { x: c.x - DS, y: c.y }
   }
