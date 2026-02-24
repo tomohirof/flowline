@@ -76,7 +76,6 @@ describe('findClosestUpstream', () => {
 describe('findCrossingArrows', () => {
   it('should detect arrow crossing the inserted row', () => {
     const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
-    const lanes = [{ id: 'l0' }]
     const tasks: Record<string, { lid: string; rid: string }> = {
       l0_r0: { lid: 'l0', rid: 'r0' },
       l0_r2: { lid: 'l0', rid: 'r2' },
@@ -88,7 +87,6 @@ describe('findCrossingArrows', () => {
 
   it('should return empty array when no arrows cross', () => {
     const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
-    const lanes = [{ id: 'l0' }]
     const tasks: Record<string, { lid: string; rid: string }> = {
       l0_r0: { lid: 'l0', rid: 'r0' },
       l0_r1: { lid: 'l0', rid: 'r1' },
