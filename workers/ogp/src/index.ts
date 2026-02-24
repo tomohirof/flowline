@@ -241,7 +241,9 @@ function buildOgpElement(title: string, authorName: string) {
               position: 'relative',
             },
             children: [
-              // Title + Catchcopy overlay (absolute, spans both columns)
+              // Title + Catchcopy overlay (absolute, spans both columns over swimlane)
+              // top: 180px = visually centered in body area (578px height - title block)
+              // width: 1000px = extends from left column across preview card for overlap effect
               {
                 type: 'div',
                 props: {
@@ -616,6 +618,9 @@ app.get('/share/:tokenPng', async (c) => {
     const svg = await satori(element as unknown as React.ReactNode, {
       width: 1200,
       height: 630,
+      // Note: Only weight 700 is registered. All fontWeight values in element styles
+      // (900, 800, 600, etc.) are rendered as 700 by satori's nearest-match fallback.
+      // This is intentional — a single bold font covers all text adequately at OGP size.
       fonts: [
         {
           name: 'Noto Sans JP',
