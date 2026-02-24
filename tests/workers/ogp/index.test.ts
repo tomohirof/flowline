@@ -442,6 +442,39 @@ describe('OGP Worker', () => {
       expect(hasGradientFade(lastCall[0] as Record<string, never>)).toBe(false)
     })
 
+    it('should render title overlay after preview card in DOM order for front rendering', async () => {
+      const satori = await import('satori/standalone')
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'dom-order-check')
+
+      await getRequest('/share/dom-order-check.png', env)
+
+      const satoriMock = vi.mocked(satori.default)
+      const lastCall = satoriMock.mock.calls[satoriMock.mock.calls.length - 1]
+
+      // Body div is the child with position: 'relative' and flex: 1
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const root = lastCall[0] as Record<string, any>
+      const rootChildren = root.props.children as Array<Record<string, any>>
+      const bodyDiv = rootChildren.find(
+        (c) => c?.props?.style?.position === 'relative' && c?.props?.style?.flex === 1,
+      )
+      const bodyChildren = bodyDiv.props.children as Array<Record<string, any>>
+
+      // Find indices: title overlay has position absolute + zIndex >= 10
+      // Preview card column has flex: 1 (right column)
+      const titleIdx = bodyChildren.findIndex(
+        (c) => c?.props?.style?.position === 'absolute' && c?.props?.style?.zIndex >= 10,
+      )
+      const previewIdx = bodyChildren.findIndex(
+        (c) => c?.props?.style?.flex === 1 && c?.props?.style?.padding,
+      )
+
+      expect(titleIdx).toBeGreaterThan(-1)
+      expect(previewIdx).toBeGreaterThan(-1)
+      // Title overlay must come AFTER preview card in DOM order (Satori paints later elements on top)
+      expect(titleIdx).toBeGreaterThan(previewIdx)
+    })
+
     it('should return 500 with error message when SVG generation (satori) fails', async () => {
       const satori = await import('satori/standalone')
       vi.mocked(satori.default).mockRejectedValueOnce(new Error('SVG generation failed'))
