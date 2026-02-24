@@ -908,6 +908,10 @@ export default function FlowEditor({ flow, onSave, saveStatus, onShareChange }: 
     if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
   }
   const cellClick = (lid: string, rid: string, _li: number, ri: number): void => {
+    if (editArrowComment) {
+      setEditArrowComment(null)
+      return
+    }
     const k = ky(lid, rid)
     if (connectFrom) {
       if (k !== connectFrom && tasks[k])
