@@ -96,6 +96,7 @@ export interface Flow {
   lanes: Lane[]
   nodes: Node[]
   arrows: Arrow[]
+  authorName?: string
 }
 
 // =============================================

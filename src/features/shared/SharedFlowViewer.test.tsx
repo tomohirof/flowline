@@ -21,6 +21,9 @@ const mockFlow = {
   id: 'flow-1',
   title: 'テストフロー',
   themeId: 'cloud',
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z',
+  shareToken: null,
   lanes: [{ id: 'lane-1', name: 'Lane 1', colorIndex: 0, position: 0 }],
   nodes: [
     { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'Task 1', note: null, orderIndex: 0 },
@@ -49,13 +52,11 @@ describe('SharedFlowViewer', () => {
     expect(flowTitleInBar).toBeNull()
   })
 
-  it('should render flow title in SVG', () => {
+  it('should render flow title in hero section', () => {
     render(<SharedFlowViewer flow={mockFlow} />)
-    const svg = document.querySelector('svg')
-    expect(svg).not.toBeNull()
-    const titleTexts = svg!.querySelectorAll('text')
-    const titleText = Array.from(titleTexts).find((t) => t.textContent === 'テストフロー')
-    expect(titleText).not.toBeNull()
+    const hero = screen.getByTestId('shared-title-hero')
+    expect(hero).not.toBeNull()
+    expect(hero.textContent).toContain('テストフロー')
   })
 
   it('should render zoom controls in footer', () => {
@@ -65,27 +66,40 @@ describe('SharedFlowViewer', () => {
     expect(footer.textContent).toContain('100%')
   })
 
-  it('should render SVG title text even when title is empty string', () => {
+  it('should render hero section with empty title', () => {
     const emptyTitleFlow = { ...mockFlow, title: '' }
     render(<SharedFlowViewer flow={emptyTitleFlow} />)
-    const svg = document.querySelector('svg')
-    expect(svg).not.toBeNull()
-    // SVG <text> element should exist even with empty title
-    const titleTexts = svg!.querySelectorAll('text')
-    const emptyTitle = Array.from(titleTexts).find((t) => t.textContent === '')
-    expect(emptyTitle).not.toBeNull()
+    const hero = screen.getByTestId('shared-title-hero')
+    expect(hero).not.toBeNull()
   })
 
-  it('should truncate long flow title in SVG at 40 chars', () => {
+  it('should display full title in hero section without truncation', () => {
     const longTitle = 'あ'.repeat(50)
     const longTitleFlow = { ...mockFlow, title: longTitle }
     render(<SharedFlowViewer flow={longTitleFlow} />)
-    const svg = document.querySelector('svg')
-    expect(svg).not.toBeNull()
-    const titleTexts = svg!.querySelectorAll('text')
-    const truncated = Array.from(titleTexts).find((t) => t.textContent?.endsWith('…'))
-    expect(truncated).not.toBeNull()
-    expect(truncated!.textContent).toBe('あ'.repeat(40) + '…')
+    const hero = screen.getByTestId('shared-title-hero')
+    expect(hero.textContent).toContain(longTitle)
+  })
+
+  it('should render author info when authorName is provided', () => {
+    const flowWithAuthor = { ...mockFlow, authorName: 'Test Author' }
+    render(<SharedFlowViewer flow={flowWithAuthor} />)
+    const hero = screen.getByTestId('shared-title-hero')
+    expect(hero.textContent).toContain('Test Author')
+    expect(hero.textContent).toContain('Flowline で作成')
+  })
+
+  it('should not render author row when authorName is not provided', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    const hero = screen.getByTestId('shared-title-hero')
+    expect(hero.textContent).not.toContain('で作成')
+  })
+
+  it('should display meta info with lane and node counts', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    const hero = screen.getByTestId('shared-title-hero')
+    expect(hero.textContent).toContain('1 レーン')
+    expect(hero.textContent).toContain('1 ノード')
   })
 
   it('should render brand logo in footer', () => {
