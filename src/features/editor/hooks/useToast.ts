@@ -29,14 +29,15 @@ export function useToast() {
     return () => clearTimeout(timer)
   }, [successToastIds])
 
-  const addConfirmToast = (
-    toast: Omit<ToastData, 'id' | 'type'> & { crossingCount?: number },
-  ): void => {
-    setToasts((prev) => [
-      ...prev.filter((t) => t.type !== 'confirm'),
-      { ...toast, id: uid(), type: 'confirm' as const },
-    ])
-  }
+  const addConfirmToast = useCallback(
+    (toast: Omit<ToastData, 'id' | 'type'> & { crossingCount?: number }): void => {
+      setToasts((prev) => [
+        ...prev.filter((t) => t.type !== 'confirm'),
+        { ...toast, id: uid(), type: 'confirm' as const },
+      ])
+    },
+    [],
+  )
 
   const dismissToast = (id: string): void => {
     setToasts((prev) => prev.filter((t) => t.id !== id))

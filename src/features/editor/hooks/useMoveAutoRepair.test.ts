@@ -25,9 +25,8 @@ vi.mock('../../../lib/uid', () => ({
 
 /**
  * Render the hook and trigger a move repair check.
- * After setting the ref via triggerMoveRepairCheck, a rerender with
- * a new arrows reference is needed to fire the useEffect (simulating
- * the re-render that moveTask's setArrows/setTasks would cause).
+ * triggerMoveRepairCheck is now synchronous — no rerender needed
+ * for chain detection. Cross-lane rewire tests still need rerender.
  */
 function renderAndTrigger(
   opts: Parameters<typeof useMoveAutoRepair>[0],
@@ -37,9 +36,10 @@ function renderAndTrigger(
   const { result, rerender } = renderHook((props: typeof opts) => useMoveAutoRepair(props), {
     initialProps: opts,
   })
-  result.current.triggerMoveRepairCheck(movedKey, laneId)
-  // Simulate moveTask's state changes causing a re-render
-  rerender({ ...opts, arrows: [...opts.arrows] })
+  // Synchronous — no rerender needed for chain detection
+  act(() => {
+    result.current.triggerMoveRepairCheck(movedKey, laneId, opts.arrows, opts.tasks)
+  })
   return { result, rerender }
 }
 
