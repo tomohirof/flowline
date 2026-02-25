@@ -17,8 +17,12 @@ const DEMO_FLOW: Flow = {
 }
 
 export function useDemoFlow() {
-  const [flow] = useState<Flow>(() => ({ ...DEMO_FLOW, lanes: DEMO_FLOW.lanes.map((l) => ({ ...l })) }))
+  const [flow] = useState<Flow>(() => ({
+    ...DEMO_FLOW,
+    lanes: DEMO_FLOW.lanes.map((l) => ({ ...l })),
+  }))
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updateFlow = useCallback((_payload: FlowSavePayload) => {
     // noop — demo mode does not save to API
   }, [])

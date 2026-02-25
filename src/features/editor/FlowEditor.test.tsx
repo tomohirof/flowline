@@ -2416,25 +2416,19 @@ describe('2-click confirm UX (#219)', () => {
 
     it('should hide share button when hideShare is true', () => {
       const flow = createMinimalFlow()
-      render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" hideShare={true} />,
-      )
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" hideShare={true} />)
       expect(screen.queryByTestId('share-button')).toBeNull()
     })
 
     it('should show share button by default (hideShare undefined)', () => {
       const flow = createMinimalFlow()
-      render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
       expect(screen.getByTestId('share-button')).toBeTruthy()
     })
 
     it('should show normal save status when saveCtaLabel is not provided', () => {
       const flow = createMinimalFlow()
-      render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
       expect(screen.getByTestId('save-status')).toBeTruthy()
       expect(screen.queryByTestId('save-cta-button')).toBeNull()
     })

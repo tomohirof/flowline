@@ -589,7 +589,7 @@ export default function FlowEditor({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isDemo])
 
   useEffect(() => {
     return () => {
@@ -609,19 +609,22 @@ export default function FlowEditor({
     }
   }, [])
 
-  const updateEditorSetting = useCallback((key: string, value: boolean) => {
-    setEditorSettings((prev) => ({ ...prev, [key]: value }))
-    if (isDemo) return
-    if (!settingsLoadedRef.current) return
-    const merged = { ...fullSettingsRef.current, [key]: value }
-    fullSettingsRef.current = merged
-    apiFetch('/settings', {
-      method: 'PUT',
-      body: JSON.stringify(merged),
-    }).catch(() => {
-      // 保存失敗は無視（UIは即時反映）
-    })
-  }, [])
+  const updateEditorSetting = useCallback(
+    (key: string, value: boolean) => {
+      setEditorSettings((prev) => ({ ...prev, [key]: value }))
+      if (isDemo) return
+      if (!settingsLoadedRef.current) return
+      const merged = { ...fullSettingsRef.current, [key]: value }
+      fullSettingsRef.current = merged
+      apiFetch('/settings', {
+        method: 'PUT',
+        body: JSON.stringify(merged),
+      }).catch(() => {
+        // 保存失敗は無視（UIは即時反映）
+      })
+    },
+    [isDemo],
+  )
 
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)

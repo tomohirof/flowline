@@ -340,12 +340,7 @@ describe('AuthModal', () => {
 
       render(
         <MemoryRouter>
-          <AuthModal
-            isOpen={true}
-            onClose={onClose}
-            initialMode="login"
-            onSuccess={onSuccess}
-          />
+          <AuthModal isOpen={true} onClose={onClose} initialMode="login" onSuccess={onSuccess} />
         </MemoryRouter>,
       )
 
