@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { InternalArrow } from './types'
 import {
   remapArrows,
+  remapArrowsBatch,
   filterArrowsByDeletedKeys,
   calcArrowPath,
   findChain,
@@ -763,5 +764,48 @@ describe('detectCrossLaneRewire', () => {
       // l9_r9 intentionally missing
     }
     expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
+})
+
+/* ========================================================= */
+/* remapArrowsBatch                                          */
+/* ========================================================= */
+
+describe('remapArrowsBatch', () => {
+  it('should remap multiple keys in a single pass', () => {
+    const arrows = [
+      mkArrow({ id: 'a1', from: 'L1_R1', to: 'L1_R2' }),
+      mkArrow({ id: 'a2', from: 'L1_R2', to: 'L2_R1' }),
+    ]
+    const keyMap = new Map([
+      ['L1_R1', 'L1_R3'],
+      ['L1_R2', 'L1_R4'],
+    ])
+    const result = remapArrowsBatch(arrows, keyMap)
+    expect(result[0].from).toBe('L1_R3')
+    expect(result[0].to).toBe('L1_R4')
+    expect(result[1].from).toBe('L1_R4')
+    expect(result[1].to).toBe('L2_R1')
+  })
+
+  it('should not mutate original array', () => {
+    const arrows = [mkArrow({ from: 'L1_R1', to: 'L1_R2' })]
+    const keyMap = new Map([['L1_R1', 'L1_R3']])
+    const result = remapArrowsBatch(arrows, keyMap)
+    expect(result).not.toBe(arrows)
+    expect(arrows[0].from).toBe('L1_R1')
+  })
+
+  it('should handle empty keyMap (no changes)', () => {
+    const arrows = [mkArrow({ from: 'L1_R1', to: 'L1_R2' })]
+    const result = remapArrowsBatch(arrows, new Map())
+    expect(result[0].from).toBe('L1_R1')
+    expect(result[0].to).toBe('L1_R2')
+  })
+
+  it('should handle empty arrows array', () => {
+    const keyMap = new Map([['L1_R1', 'L1_R3']])
+    const result = remapArrowsBatch([], keyMap)
+    expect(result).toEqual([])
   })
 })

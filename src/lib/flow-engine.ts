@@ -105,6 +105,21 @@ export function remapArrows(
 }
 
 /**
+ * Replace multiple keys in a single pass using a keyMap.
+ * Used for batch-moving multiple nodes at once.
+ */
+export function remapArrowsBatch(
+  arrows: InternalArrow[],
+  keyMap: Map<string, string>,
+): InternalArrow[] {
+  return arrows.map((a) => ({
+    ...a,
+    from: keyMap.get(a.from) ?? a.from,
+    to: keyMap.get(a.to) ?? a.to,
+  }))
+}
+
+/**
  * Remove arrows whose `from` or `to` key appears in `deletedKeys`.
  * Returns a new array — the original is not mutated.
  */
