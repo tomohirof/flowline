@@ -454,7 +454,7 @@ describe('統合テスト', () => {
       k9: { lid: 'lane-right', rid: 'r5' }, // 移動後: r2→r5
       k10: { lid: 'lane-right', rid: 'r2' },
       k11: { lid: 'lane-right', rid: 'r3' },
-      k15: { lid: 'lane-left', rid: 'r4' },  // 旧末尾(r3)より下の行
+      k15: { lid: 'lane-left', rid: 'r4' }, // 旧末尾(r3)より下の行
     }
     const rows = [{ id: 'r1' }, { id: 'r2' }, { id: 'r3' }, { id: 'r4' }, { id: 'r5' }]
 
@@ -468,13 +468,7 @@ describe('統合テスト', () => {
     expect(reorder.proposed).toEqual(['k7', 'k10', 'k11', 'k9'])
 
     // Step 3: detectCrossLaneRewire — 横矢印張り替え提案
-    const rewires = detectCrossLaneRewire(
-      reorder.current,
-      reorder.proposed,
-      arrows,
-      tasks,
-      rows,
-    )
+    const rewires = detectCrossLaneRewire(reorder.current, reorder.proposed, arrows, tasks, rows)
     expect(rewires).toEqual([
       {
         arrowId: 'a4',
@@ -495,20 +489,24 @@ describe('統合テスト', () => {
       { id: 'a1', from: 'k7', to: 'k9', comment: '' },
       { id: 'a2', from: 'k9', to: 'k10', comment: '' },
       { id: 'a3', from: 'k10', to: 'k11', comment: '' },
-      { id: 'a4', from: 'k11', to: 'k15', comment: '' },  // 下方向クロスレーン
-      { id: 'a5', from: 'k11', to: 'k16', comment: '' },  // 同行水平クロスレーン
+      { id: 'a4', from: 'k11', to: 'k15', comment: '' }, // 下方向クロスレーン
+      { id: 'a5', from: 'k11', to: 'k16', comment: '' }, // 同行水平クロスレーン
     ]
     const tasks: Record<string, { lid: string; rid: string }> = {
       k7: { lid: 'lane-right', rid: 'r1' },
       k9: { lid: 'lane-right', rid: 'r5' },
       k10: { lid: 'lane-right', rid: 'r2' },
       k11: { lid: 'lane-right', rid: 'r3' },
-      k15: { lid: 'lane-left', rid: 'r6' },   // 旧末尾より下の行
-      k16: { lid: 'lane-left', rid: 'r3' },   // 旧末尾と同じ行
+      k15: { lid: 'lane-left', rid: 'r6' }, // 旧末尾より下の行
+      k16: { lid: 'lane-left', rid: 'r3' }, // 旧末尾と同じ行
     }
     const rows = [
-      { id: 'r1' }, { id: 'r2' }, { id: 'r3' },
-      { id: 'r4' }, { id: 'r5' }, { id: 'r6' },
+      { id: 'r1' },
+      { id: 'r2' },
+      { id: 'r3' },
+      { id: 'r4' },
+      { id: 'r5' },
+      { id: 'r6' },
     ]
 
     const chain = findChain(arrows, tasks, 'lane-right')
@@ -518,13 +516,7 @@ describe('統合テスト', () => {
     expect(reorder.changed).toBe(true)
     expect(reorder.proposed).toEqual(['k7', 'k10', 'k11', 'k9'])
 
-    const rewires = detectCrossLaneRewire(
-      reorder.current,
-      reorder.proposed,
-      arrows,
-      tasks,
-      rows,
-    )
+    const rewires = detectCrossLaneRewire(reorder.current, reorder.proposed, arrows, tasks, rows)
 
     // 下方向の a4 のみ張り替え。同行水平の a5 は対象外
     expect(rewires).toEqual([
@@ -544,8 +536,8 @@ describe('統合テスト', () => {
       { id: 'a1', from: 'k7', to: 'k9', comment: '' },
       { id: 'a2', from: 'k9', to: 'k10', comment: '' },
       { id: 'a3', from: 'k10', to: 'k11', comment: '' },
-      { id: 'a4', from: 'k11', to: 'k15', comment: '' },  // 下方向
-      { id: 'a5', from: 'k11', to: 'k17', comment: '' },  // 上方向
+      { id: 'a4', from: 'k11', to: 'k15', comment: '' }, // 下方向
+      { id: 'a5', from: 'k11', to: 'k17', comment: '' }, // 上方向
     ]
     const tasks: Record<string, { lid: string; rid: string }> = {
       k7: { lid: 'lane-right', rid: 'r1' },
@@ -553,22 +545,20 @@ describe('統合テスト', () => {
       k10: { lid: 'lane-right', rid: 'r2' },
       k11: { lid: 'lane-right', rid: 'r3' },
       k15: { lid: 'lane-left', rid: 'r6' },
-      k17: { lid: 'lane-left', rid: 'r1' },   // 旧末尾より上の行
+      k17: { lid: 'lane-left', rid: 'r1' }, // 旧末尾より上の行
     }
     const rows = [
-      { id: 'r1' }, { id: 'r2' }, { id: 'r3' },
-      { id: 'r4' }, { id: 'r5' }, { id: 'r6' },
+      { id: 'r1' },
+      { id: 'r2' },
+      { id: 'r3' },
+      { id: 'r4' },
+      { id: 'r5' },
+      { id: 'r6' },
     ]
 
     const chain = findChain(arrows, tasks, 'lane-right')
     const reorder = detectReorder(chain, tasks, rows)
-    const rewires = detectCrossLaneRewire(
-      reorder.current,
-      reorder.proposed,
-      arrows,
-      tasks,
-      rows,
-    )
+    const rewires = detectCrossLaneRewire(reorder.current, reorder.proposed, arrows, tasks, rows)
 
     // 下方向の a4 のみ張り替え。上方向の a5 は対象外
     expect(rewires).toEqual([
@@ -597,19 +587,17 @@ describe('統合テスト', () => {
       k15: { lid: 'lane-left', rid: 'r6' },
     }
     const rows = [
-      { id: 'r1' }, { id: 'r2' }, { id: 'r3' },
-      { id: 'r4' }, { id: 'r5' }, { id: 'r6' },
+      { id: 'r1' },
+      { id: 'r2' },
+      { id: 'r3' },
+      { id: 'r4' },
+      { id: 'r5' },
+      { id: 'r6' },
     ]
 
     const chain = findChain(arrows, tasks, 'lane-right')
     const reorder = detectReorder(chain, tasks, rows)
-    const rewires = detectCrossLaneRewire(
-      reorder.current,
-      reorder.proposed,
-      arrows,
-      tasks,
-      rows,
-    )
+    const rewires = detectCrossLaneRewire(reorder.current, reorder.proposed, arrows, tasks, rows)
 
     expect(rewires).toHaveLength(1)
     expect(rewires[0].comment).toBe('確認依頼')
@@ -685,7 +673,7 @@ describe('detectCrossLaneRewire', () => {
       l0_r1: { lid: 'l0', rid: 'r3' },
       l0_r2: { lid: 'l0', rid: 'r1' },
       l0_r3: { lid: 'l0', rid: 'r2' },
-      l1_r0: { lid: 'l1', rid: 'r3' },  // 旧末尾(r2)より下の行
+      l1_r0: { lid: 'l1', rid: 'r3' }, // 旧末尾(r2)より下の行
     }
     const result = detectCrossLaneRewire(current, proposed, arrows, tasks, rows)
     expect(result).toEqual([
@@ -704,8 +692,8 @@ describe('detectCrossLaneRewire', () => {
       l0_r0: { lid: 'l0', rid: 'r0' },
       l0_r1: { lid: 'l0', rid: 'r3' },
       l0_r2: { lid: 'l0', rid: 'r1' },
-      l1_r0: { lid: 'l1', rid: 'r2' },  // 旧末尾(r1)より下の行
-      l2_r1: { lid: 'l2', rid: 'r2' },  // 旧末尾(r1)より下の行
+      l1_r0: { lid: 'l1', rid: 'r2' }, // 旧末尾(r1)より下の行
+      l2_r1: { lid: 'l2', rid: 'r2' }, // 旧末尾(r1)より下の行
     }
     const result = detectCrossLaneRewire(current, proposed, arrows, tasks, rows)
     expect(result).toHaveLength(2)
