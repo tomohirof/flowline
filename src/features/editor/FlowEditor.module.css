@@ -725,13 +725,28 @@
   animation: ghostBounce 0.35s ease-out forwards;
 }
 
+@keyframes repairPulse {
+  0%,
+  100% {
+    stroke-opacity: 0.4;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+}
+
+.repairPulseAnim {
+  animation: repairPulse 1s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stampIn,
   .floodIn,
   .stampOut,
   .floodOut,
   .ghostPulseAnim,
-  .ghostBounceAnim {
+  .ghostBounceAnim,
+  .repairPulseAnim {
     animation: none;
   }
 }
