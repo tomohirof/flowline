@@ -41,7 +41,7 @@ import { useArrows } from './hooks/useArrows'
 import { useMoveAutoRepair } from './hooks/useMoveAutoRepair'
 import { uid } from '../../lib/uid'
 import { computeBridgeArrows } from './auto-connect'
-import { remapArrows, filterArrowsByDeletedKeys, calcArrowPath } from '../../lib/flow-engine'
+import { remapArrows, remapArrowsBatch, filterArrowsByDeletedKeys, calcArrowPath, calcMultiDropTargets } from '../../lib/flow-engine'
 
 // =============================================
 // Icons
@@ -511,6 +511,7 @@ export default function FlowEditor({
   const [connectFromPt, setConnectFromPt] = useState<Point | null>(null)
   const [dragging, setDragging] = useState<DragState | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
+  const [dragOverMulti, setDragOverMulti] = useState<Set<string> | null>(null)
   const [activeTool, setActiveTool] = useState<ToolId | string>('select')
   const [themeId, setThemeId] = useState<ThemeId>(initState.themeId)
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
@@ -977,11 +978,15 @@ export default function FlowEditor({
     e.stopPropagation()
     e.preventDefault()
     if (connectFrom || editing) return
-    setDragging({ key: k })
+    if (multiSel.size > 0 && multiSel.has(k)) {
+      setDragging({ key: k, multi: true })
+    } else {
+      setDragging({ key: k })
+      setMultiSel(new Set())
+    }
     setSelTask(null)
     setSelArrow(null)
     setSelLane(null)
-    setMultiSel(new Set())
   }
   const startConnectDrag = (k: string, hx: number, hy: number, e: React.MouseEvent): void => {
     e.stopPropagation()
@@ -1000,7 +1005,19 @@ export default function FlowEditor({
     }
     if (!dragging) return
     const cell = cellFromPos(pt.x, pt.y)
-    setDragOver(cell && cell.key !== dragging.key && !tasks[cell.key] ? cell.key : null)
+    if (dragging.multi) {
+      if (!cell || cell.key === dragging.key) {
+        setDragOverMulti(null)
+        return
+      }
+      setDragOverMulti(
+        calcMultiDropTargets(cell, dragging.key, multiSel, tasks, liMap, riMap, lanes, rows),
+      )
+      setDragOver(null)
+    } else {
+      setDragOver(cell && cell.key !== dragging.key && !tasks[cell.key] ? cell.key : null)
+      setDragOverMulti(null)
+    }
   }
   const onSvgMouseUp = (e: React.MouseEvent): void => {
     if (connectFrom) {
@@ -1026,6 +1043,18 @@ export default function FlowEditor({
       return
     }
     if (!dragging) return
+    if (dragging.multi && dragOverMulti) {
+      const pt = svgPt(e.clientX, e.clientY)
+      const cell = cellFromPos(pt.x, pt.y)
+      if (cell) {
+        moveMultiTasks(dragging.key, multiSel, cell.li, cell.ri)
+      }
+      setDragging(null)
+      setDragOver(null)
+      setDragOverMulti(null)
+      setMultiSel(new Set())
+      return
+    }
     if (dragOver) {
       for (let li = 0; li < lanes.length; li++)
         for (let ri = 0; ri < rows.length; ri++)
@@ -1038,6 +1067,7 @@ export default function FlowEditor({
     }
     setDragging(null)
     setDragOver(null)
+    setDragOverMulti(null)
   }
   const moveTask = (
     fk: string,
@@ -1065,6 +1095,64 @@ export default function FlowEditor({
     const ri = rows.findIndex((r) => r.id === to.rid)
     if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
     triggerMoveRepairCheck(nk, to.lid)
+  }
+  const moveMultiTasks = (
+    anchorKey: string,
+    selected: Set<string>,
+    anchorTargetLi: number,
+    anchorTargetRi: number,
+  ): void => {
+    const anchorTask = tasks[anchorKey]
+    if (!anchorTask) return
+    const anchorLi = liMap[anchorTask.lid]
+    const anchorRi = riMap[anchorTask.rid]
+    const dLi = anchorTargetLi - anchorLi
+    const dRi = anchorTargetRi - anchorRi
+
+    const keyMap = new Map<string, string>()
+    const posMap = new Map<string, { lid: string; rid: string }>()
+
+    for (const k of selected) {
+      const t = tasks[k]
+      if (!t) continue
+      const newLi = liMap[t.lid] + dLi
+      const newRi = riMap[t.rid] + dRi
+      const newKey = ky(lanes[newLi].id, rows[newRi].id)
+      keyMap.set(k, newKey)
+      posMap.set(newKey, { lid: lanes[newLi].id, rid: rows[newRi].id })
+    }
+
+    setTasks((p) => {
+      const n = { ...p }
+      for (const oldK of keyMap.keys()) delete n[oldK]
+      for (const [oldK, newK] of keyMap) {
+        const pos = posMap.get(newK)!
+        n[newK] = { ...tasks[oldK], lid: pos.lid, rid: pos.rid }
+      }
+      return n
+    })
+
+    setNotes((p) => {
+      const n = { ...p }
+      const moved: [string, string][] = []
+      for (const [oldK] of keyMap) {
+        if (n[oldK]) moved.push([oldK, n[oldK]])
+      }
+      for (const [oldK] of moved) delete n[oldK]
+      for (const [oldK, val] of moved) n[keyMap.get(oldK)!] = val
+      return n
+    })
+
+    setOrder((p) => p.map((k) => keyMap.get(k) ?? k))
+    setArrows((p) => remapArrowsBatch(p, keyMap))
+
+    let maxRi = 0
+    for (const [, newK] of keyMap) {
+      const pos = posMap.get(newK)!
+      const ri = riMap[pos.rid]
+      if (ri > maxRi) maxRi = ri
+    }
+    if (maxRi === rows.length - 1) setRows((p) => [...p, { id: uid() }])
   }
   const cellClick = (lid: string, rid: string, _li: number, ri: number): void => {
     if (editArrowComment) {
@@ -2327,6 +2415,7 @@ export default function FlowEditor({
               if (dragging) {
                 setDragging(null)
                 setDragOver(null)
+                setDragOverMulti(null)
               }
               if (connectFrom) {
                 setConnectFrom(null)
@@ -2660,7 +2749,7 @@ export default function FlowEditor({
                 const c = ct(li, ri),
                   p = PALETTES[lane.ci],
                   isHov = hovered === k,
-                  isDT = dragOver === k
+                  isDT = dragOver === k || (dragOverMulti?.has(k) ?? false)
                 const isGhost = ghostCell?.li === li && ghostCell?.ri === ri
                 return (
                   <g key={`ec-${k}`}>
@@ -2803,7 +2892,7 @@ export default function FlowEditor({
                 return (
                   <g
                     key={`t-${k}`}
-                    opacity={isDT ? 0.3 : 1}
+                    opacity={isDT || (dragging?.multi && multiSel.has(k)) ? 0.3 : 1}
                     style={
                       bouncingNode === k
                         ? {

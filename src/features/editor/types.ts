@@ -172,6 +172,7 @@ export interface InternalLane {
 
 export interface DragState {
   key: string
+  multi?: boolean
 }
 
 export interface CellInfo {
