@@ -18,7 +18,6 @@
     "deploy": "npm run build && wrangler pages deploy dist"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
     "@resvg/resvg-wasm": "^2.6.2",
     "bcryptjs": "^3.0.3",
     "hono": "^4.11.9",
@@ -47,7 +46,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
     "jsdom": "^28.1.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.3",
