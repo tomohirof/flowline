@@ -2798,6 +2798,7 @@ export default function FlowEditor({
                 const isDT = dragging?.key === k,
                   isHov = hovered === k
                 const isDiamond = task.shape === 'diamond'
+                const isSwapTarget = dragOver === k && dragging != null && dragging.key !== k
                 const tagW = lane.name.length * 7 + 14
                 return (
                   <g
@@ -2894,6 +2895,40 @@ export default function FlowEditor({
                           if (!connectFrom && !editing) onDragStart(k, e)
                         }}
                       />
+                    )}
+                    {isSwapTarget && (
+                      <g style={{ pointerEvents: 'none' }}>
+                        <rect
+                          x={c.x - TW / 2 - 4}
+                          y={c.y - TH / 2 - 4}
+                          width={TW + 8}
+                          height={TH + 8}
+                          rx={12}
+                          fill={`${T.accent}0A`}
+                          stroke={T.accent}
+                          strokeWidth={2}
+                          strokeDasharray="6,4"
+                          className={styles.dragPulseAnim}
+                        />
+                        <rect
+                          x={c.x + TW / 2 - 8}
+                          y={c.y - TH / 2 - 12}
+                          width={36}
+                          height={18}
+                          rx={9}
+                          fill={T.accent}
+                        />
+                        <text
+                          x={c.x + TW / 2 + 10}
+                          y={c.y - TH / 2 - 3}
+                          textAnchor="middle"
+                          fontSize={8}
+                          fontWeight={700}
+                          fill="#fff"
+                        >
+                          ↕ 入替
+                        </text>
+                      </g>
                     )}
                     {!isDiamond && (
                       <rect
