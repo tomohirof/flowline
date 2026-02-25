@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FlowEditor from './FlowEditor'
@@ -2431,6 +2431,219 @@ describe('2-click confirm UX (#219)', () => {
       render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
       expect(screen.getByTestId('save-status')).toBeTruthy()
       expect(screen.queryByTestId('save-cta-button')).toBeNull()
+    })
+  })
+
+  describe('JSON export (#235)', () => {
+    beforeEach(() => {
+      cleanup()
+    })
+
+    // Save originals for restoration
+    let origCreateElement: typeof document.createElement
+    let origCreateObjectURL: typeof URL.createObjectURL
+    let origRevokeObjectURL: typeof URL.revokeObjectURL
+    let origBlob: typeof Blob
+
+    beforeEach(() => {
+      origCreateElement = document.createElement.bind(document)
+      origCreateObjectURL = URL.createObjectURL
+      origRevokeObjectURL = URL.revokeObjectURL
+      origBlob = globalThis.Blob
+    })
+
+    afterEach(() => {
+      // Restore mocks to not leak between tests
+      URL.createObjectURL = origCreateObjectURL
+      URL.revokeObjectURL = origRevokeObjectURL
+      globalThis.Blob = origBlob
+      vi.useRealTimers()
+      vi.restoreAllMocks()
+    })
+
+    /**
+     * Helper: mock download infrastructure (createElement('a'), URL).
+     * Must be called AFTER render() to avoid breaking React's internal createElement calls.
+     * Returns spies to assert on.
+     */
+    const setupDownloadMock = () => {
+      const clickSpy = vi.fn()
+      let capturedHref = ''
+      let capturedDownload = ''
+      let capturedBlobText = ''
+
+      URL.createObjectURL = vi.fn().mockImplementation((blob: Blob) => {
+        // Read the blob text synchronously via the Blob constructor argument
+        // We intercept at createElement('a') level and also capture from Blob
+        blob.text().then((t) => { capturedBlobText = t })
+        return 'blob:mock-url'
+      })
+      URL.revokeObjectURL = vi.fn()
+
+      // Intercept Blob constructor to capture content synchronously
+      const OrigBlob = globalThis.Blob
+      globalThis.Blob = class MockBlob extends OrigBlob {
+        constructor(parts?: BlobPart[], options?: BlobPropertyBag) {
+          super(parts, options)
+          if (parts && parts.length > 0 && typeof parts[0] === 'string') {
+            capturedBlobText = parts[0]
+          }
+        }
+      } as typeof Blob
+
+      vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+        if (tag === 'a') {
+          const el = origCreateElement('a')
+          // Override click to prevent navigation and capture values
+          el.click = clickSpy
+          // Intercept property assignments
+          const origHrefDesc = Object.getOwnPropertyDescriptor(HTMLAnchorElement.prototype, 'href')
+          const origDownloadDesc = Object.getOwnPropertyDescriptor(HTMLAnchorElement.prototype, 'download')
+          Object.defineProperty(el, 'href', {
+            get() { return origHrefDesc?.get?.call(this) ?? capturedHref },
+            set(v: string) {
+              capturedHref = v
+              origHrefDesc?.set?.call(this, v)
+            },
+          })
+          Object.defineProperty(el, 'download', {
+            get() { return origDownloadDesc?.get?.call(this) ?? capturedDownload },
+            set(v: string) {
+              capturedDownload = v
+              origDownloadDesc?.set?.call(this, v)
+            },
+          })
+          return el
+        }
+        return origCreateElement(tag)
+      })
+
+      return {
+        clickSpy,
+        getCapturedBlobText: () => capturedBlobText,
+        getCapturedHref: () => capturedHref,
+        getCapturedDownload: () => capturedDownload,
+        restoreBlob: () => { globalThis.Blob = OrigBlob },
+      }
+    }
+
+    const clickJSONDownloadButton = async () => {
+      const btn = screen.getByText('JSON をダウンロード')
+      await userEvent.click(btn)
+    }
+
+    it('should render JSON download button in export panel', () => {
+      const flow = createMinimalFlow()
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      expect(screen.getByText('JSON をダウンロード')).toBeInTheDocument()
+    })
+
+    it('should export valid JSON with meta, flow, and recentActions fields', async () => {
+      const flow: Flow = {
+        ...createMinimalFlow(),
+        nodes: [
+          { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+        ],
+      }
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      const { clickSpy, getCapturedBlobText } = setupDownloadMock()
+      await clickJSONDownloadButton()
+
+      expect(clickSpy).toHaveBeenCalled()
+      const text = getCapturedBlobText()
+      const data = JSON.parse(text)
+
+      // meta fields
+      expect(data.meta).toBeDefined()
+      expect(data.meta.exportedAt).toBeDefined()
+      expect(typeof data.meta.appVersion).toBe('string')
+      expect(typeof data.meta.gitHash).toBe('string')
+      expect(typeof data.meta.url).toBe('string')
+
+      // flow fields
+      expect(data.flow).toBeDefined()
+      expect(data.flow.title).toBe('Test Flow')
+      expect(data.flow.themeId).toBe('cloud')
+      expect(data.flow.lanes).toHaveLength(1)
+      // flowToInternalState creates at least 7 rows (max(6, maxRowIndex) + 2)
+      expect(data.flow.rows.length).toBeGreaterThanOrEqual(7)
+      expect(data.flow.order).toHaveLength(1)
+
+      // recentActions
+      expect(data.recentActions).toBeDefined()
+      expect(Array.isArray(data.recentActions)).toBe(true)
+    })
+
+    it('should export empty flow without errors', async () => {
+      const flow: Flow = {
+        ...createMinimalFlow(),
+        lanes: [],
+        nodes: [],
+        arrows: [],
+      }
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      const { clickSpy, getCapturedBlobText } = setupDownloadMock()
+      await clickJSONDownloadButton()
+
+      expect(clickSpy).toHaveBeenCalled()
+      const text = getCapturedBlobText()
+      const data = JSON.parse(text)
+      expect(data.flow.lanes).toEqual([])
+      expect(data.flow.tasks).toEqual({})
+      expect(data.flow.arrows).toEqual([])
+      expect(data.flow.notes).toEqual({})
+      expect(data.flow.order).toEqual([])
+      expect(data.recentActions).toEqual([])
+    })
+
+    it('should show feedback text after download', async () => {
+      const flow = createMinimalFlow()
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      setupDownloadMock()
+      await clickJSONDownloadButton()
+      expect(screen.getByText('✓ ダウンロードしました')).toBeInTheDocument()
+    })
+
+    it('should revert download button label after 1.5 seconds', async () => {
+      const flow = createMinimalFlow()
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      setupDownloadMock()
+      // Enable fake timers after render to avoid blocking useEffect timers
+      vi.useFakeTimers()
+      const btn = screen.getByText('JSON をダウンロード')
+      // Use fireEvent instead of userEvent to avoid async timer conflicts
+      fireEvent.click(btn)
+      expect(screen.getByText('✓ ダウンロードしました')).toBeInTheDocument()
+      act(() => { vi.advanceTimersByTime(1500) })
+      expect(screen.getByText('JSON をダウンロード')).toBeInTheDocument()
+      vi.useRealTimers()
+    })
+
+    it('should have empty recentActions when no edits made', async () => {
+      const flow = createMinimalFlow()
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      const { getCapturedBlobText } = setupDownloadMock()
+      await clickJSONDownloadButton()
+      const data = JSON.parse(getCapturedBlobText())
+      expect(data.recentActions).toEqual([])
+    })
+
+    it('should call URL.revokeObjectURL after download', async () => {
+      const flow = createMinimalFlow()
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      setupDownloadMock()
+      await clickJSONDownloadButton()
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
+    })
+
+    it('should generate filename with sanitized title', async () => {
+      const flow = createMinimalFlow()
+      render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      const { getCapturedDownload } = setupDownloadMock()
+      await clickJSONDownloadButton()
+      const filename = getCapturedDownload()
+      expect(filename).toMatch(/^flowline-.*\.json$/)
+      expect(filename).toContain('Test')
     })
   })
 })

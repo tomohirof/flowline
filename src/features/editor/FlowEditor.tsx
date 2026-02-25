@@ -489,6 +489,8 @@ export default function FlowEditor({
   const [rowAnim, setRowAnim] = useState<{ type: 'add' | 'delete'; index: number } | null>(null)
   const [mermaidCopied, setMermaidCopied] = useState<boolean>(false)
   const mermaidTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [jsonDownloaded, setJsonDownloaded] = useState<boolean>(false)
+  const jsonTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rowAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bouncingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const {
@@ -606,6 +608,7 @@ export default function FlowEditor({
   useEffect(() => {
     return () => {
       if (mermaidTimerRef.current) clearTimeout(mermaidTimerRef.current)
+      if (jsonTimerRef.current) clearTimeout(jsonTimerRef.current)
     }
   }, [])
 
@@ -1422,6 +1425,45 @@ export default function FlowEditor({
     return m
   }
 
+  const exportJSON = (): string => {
+    const payload = {
+      meta: {
+        exportedAt: new Date().toISOString(),
+        appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0',
+        gitHash: typeof __GIT_HASH__ !== 'undefined' ? __GIT_HASH__ : 'unknown',
+        url: window.location.href,
+      },
+      flow: {
+        title,
+        themeId,
+        lanes,
+        rows,
+        tasks,
+        arrows,
+        notes,
+        order,
+      },
+      recentActions: historyRef.current.slice(-3).map((s, i) => ({
+        index: i,
+        snapshot: JSON.parse(s),
+      })),
+    }
+    return JSON.stringify(payload, null, 2)
+  }
+
+  const downloadJSON = (): void => {
+    const json = exportJSON()
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const sanitized = title.replace(/[^a-zA-Z0-9\u3040-\u9FFF_-]/g, '_').slice(0, 50)
+    const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
+    a.href = url
+    a.download = `flowline-${sanitized}-${ts}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const bgClick = (): void => {
     setGhostCell(null)
     setGhostRowGap(null)
@@ -2124,6 +2166,17 @@ export default function FlowEditor({
               } catch {
                 // clipboard write failed — do not show feedback
               }
+            }}
+            full
+          />
+          <PanelBtn
+            label={jsonDownloaded ? '✓ ダウンロードしました' : 'JSON をダウンロード'}
+            color={T.accent}
+            onClick={() => {
+              downloadJSON()
+              if (jsonTimerRef.current) clearTimeout(jsonTimerRef.current)
+              setJsonDownloaded(true)
+              jsonTimerRef.current = setTimeout(() => setJsonDownloaded(false), 1500)
             }}
             full
           />
