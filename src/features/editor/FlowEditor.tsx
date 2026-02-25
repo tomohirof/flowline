@@ -3024,25 +3024,7 @@ export default function FlowEditor({
                 </g>
               )
             })}
-            {arrowPaths.map(({ arrow, path }) => (
-              <path
-                key={`ah-${arrow.id}`}
-                d={path.d}
-                stroke="rgba(0,0,0,0)"
-                strokeWidth={20}
-                fill="none"
-                pointerEvents="stroke"
-                style={{ cursor: 'pointer' }}
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation()
-                  setSelArrow(selArrow === arrow.id ? null : arrow.id)
-                  setSelTask(null)
-                  setSelLane(null)
-                }}
-              />
-            ))}
-
-            {/* Row gap "+" — full-width hit zone, rendered before floating controls so controls have higher z-order */}
+            {/* Row gap "+" — full-width hit zone, rendered before arrow hit paths so arrows and controls have higher z-order */}
             {Array.from({ length: rows.length + 1 }, (_, ri) => {
               const gy = TM + HH + ri * RH
               const gx = LM / 2
@@ -3098,6 +3080,24 @@ export default function FlowEditor({
                 </g>
               )
             })}
+
+            {arrowPaths.map(({ arrow, path }) => (
+              <path
+                key={`ah-${arrow.id}`}
+                d={path.d}
+                stroke="rgba(0,0,0,0)"
+                strokeWidth={20}
+                fill="none"
+                pointerEvents="stroke"
+                style={{ cursor: 'pointer' }}
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation()
+                  setSelArrow(selArrow === arrow.id ? null : arrow.id)
+                  setSelTask(null)
+                  setSelLane(null)
+                }}
+              />
+            ))}
 
             {/* Floating arrow controls */}
             {selArrow &&
