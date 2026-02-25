@@ -476,6 +476,7 @@ export default function FlowEditor({
   const [mermaidCopied, setMermaidCopied] = useState<boolean>(false)
   const mermaidTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rowAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const bouncingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const {
     toasts,
     addConfirmToast,
@@ -591,6 +592,12 @@ export default function FlowEditor({
   useEffect(() => {
     return () => {
       if (rowAnimTimerRef.current) clearTimeout(rowAnimTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (bouncingTimerRef.current) clearTimeout(bouncingTimerRef.current)
     }
   }, [])
 
@@ -884,8 +891,6 @@ export default function FlowEditor({
     delTask,
     delMultiSel,
     setArrows,
-    ghostCell,
-    ghostRowGap,
   ])
 
   const moveLane = (id: string, dir: number): void => {
@@ -1092,7 +1097,8 @@ export default function FlowEditor({
     detectCrossing(rid, k, label, addConfirmToast)
     setSelArrow(null)
     setBouncingNode(k)
-    setTimeout(() => setBouncingNode(null), 400)
+    if (bouncingTimerRef.current) clearTimeout(bouncingTimerRef.current)
+    bouncingTimerRef.current = setTimeout(() => setBouncingNode(null), 400)
     if (editorSettings.enterEditOnCreate) {
       setEditing(k)
       setTimeout(() => inputRef.current?.focus(), 40)
@@ -3201,7 +3207,7 @@ export default function FlowEditor({
                         className={styles.ghostPulseAnim}
                       />
                       <rect
-                        x={(laneX(lanes.length - 1) + LW) / 2 - 56}
+                        x={(LM + laneX(lanes.length - 1) + LW) / 2 - 56}
                         y={gy - 12}
                         width={112}
                         height={24}
@@ -3210,7 +3216,7 @@ export default function FlowEditor({
                         opacity={0.92}
                       />
                       <text
-                        x={(laneX(lanes.length - 1) + LW) / 2}
+                        x={(LM + laneX(lanes.length - 1) + LW) / 2}
                         y={gy + 3.5}
                         textAnchor="middle"
                         fontSize={11}
