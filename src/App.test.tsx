@@ -26,6 +26,10 @@ vi.mock('./features/shared/SharedFlowPage', () => ({
   SharedFlowPage: () => <div data-testid="shared-flow">Shared</div>,
 }))
 
+vi.mock('./features/editor/pages/DemoEditorPage', () => ({
+  DemoEditorPage: () => <div data-testid="demo-editor">Demo</div>,
+}))
+
 vi.mock('./features/auth/VerifyPage', () => ({
   VerifyPage: () => <div data-testid="verify-page">Verify</div>,
 }))
@@ -156,6 +160,46 @@ describe('App routing', () => {
     // ProtectedRouteだと未認証時に / にリダイレクトされるが、
     // VerifyPageは直接表示される
     expect(screen.getByTestId('verify-page')).toBeInTheDocument()
+    expect(screen.queryByTestId('landing-page')).not.toBeInTheDocument()
+  })
+
+  it('/try にアクセスするとDemoEditorPageが表示される', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    })
+    testInitialEntries = ['/try']
+    render(<App />)
+    expect(screen.getByTestId('demo-editor')).toBeInTheDocument()
+  })
+
+  it('/try 表示時は共通ヘッダーを非表示にする', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    })
+    testInitialEntries = ['/try']
+    render(<App />)
+    expect(screen.queryByTestId('app-header')).not.toBeInTheDocument()
+  })
+
+  it('/try はProtectedRouteで囲まれていない（未認証でもアクセス可能）', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    })
+    testInitialEntries = ['/try']
+    render(<App />)
+    expect(screen.getByTestId('demo-editor')).toBeInTheDocument()
     expect(screen.queryByTestId('landing-page')).not.toBeInTheDocument()
   })
 })

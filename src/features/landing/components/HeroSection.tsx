@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { BRAND } from '../../../constants/brand'
 import styles from './HeroSection.module.css'
 import landingStyles from '../landing.module.css'
@@ -31,9 +32,14 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
           {BRAND.heroSubtext2}
         </p>
 
-        <button className={landingStyles.btnPrimary} onClick={onCtaClick}>
-          {BRAND.ctaButtonPrimary}
-        </button>
+        <div className={styles.ctaGroup}>
+          <button className={landingStyles.btnPrimary} onClick={onCtaClick}>
+            {BRAND.ctaButtonPrimary}
+          </button>
+          <Link to="/try" className={styles.tryLink} data-testid="try-link">
+            {BRAND.demoTryLink}
+          </Link>
+        </div>
       </div>
     </section>
   )

@@ -106,6 +106,21 @@ export function remapArrows(
 }
 
 /**
+ * Replace multiple keys in a single pass using a keyMap.
+ * Used for batch-moving multiple nodes at once.
+ */
+export function remapArrowsBatch(
+  arrows: InternalArrow[],
+  keyMap: Map<string, string>,
+): InternalArrow[] {
+  return arrows.map((a) => ({
+    ...a,
+    from: keyMap.get(a.from) ?? a.from,
+    to: keyMap.get(a.to) ?? a.to,
+  }))
+}
+
+/**
  * Remove arrows whose `from` or `to` key appears in `deletedKeys`.
  * Returns a new array — the original is not mutated.
  */
@@ -148,6 +163,47 @@ export function reconnectChain(sortedKeys: string[]): { from: string; to: string
     arrows.push({ from: sortedKeys[i], to: sortedKeys[i + 1] })
   }
   return arrows
+}
+
+/* --------------------------------------------------------- */
+/* calcMultiDropTargets                                      */
+/* --------------------------------------------------------- */
+
+/**
+ * Calculate target cell keys for a multi-node drop.
+ * Returns a Set of target keys if all cells are valid, or null if drop is invalid.
+ */
+export function calcMultiDropTargets(
+  anchorTarget: { li: number; ri: number; key: string },
+  anchorKey: string,
+  selected: Set<string>,
+  tasks: Record<string, { lid: string; rid: string }>,
+  liMap: Record<string, number>,
+  riMap: Record<string, number>,
+  lanes: { id: string }[],
+  rows: { id: string }[],
+): Set<string> | null {
+  const anchorTask = tasks[anchorKey]
+  if (!anchorTask) return null
+  const anchorLi = liMap[anchorTask.lid]
+  const anchorRi = riMap[anchorTask.rid]
+  const dLi = anchorTarget.li - anchorLi
+  const dRi = anchorTarget.ri - anchorRi
+
+  const ky = (lid: string, rid: string) => `${lid}_${rid}`
+  const targets = new Set<string>()
+
+  for (const k of selected) {
+    const t = tasks[k]
+    if (!t) return null
+    const newLi = liMap[t.lid] + dLi
+    const newRi = riMap[t.rid] + dRi
+    if (newLi < 0 || newLi >= lanes.length || newRi < 0 || newRi >= rows.length) return null
+    const targetKey = ky(lanes[newLi].id, rows[newRi].id)
+    if (tasks[targetKey] && !selected.has(targetKey)) return null
+    targets.add(targetKey)
+  }
+  return targets
 }
 
 /* --------------------------------------------------------- */

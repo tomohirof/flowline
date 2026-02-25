@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { BRAND } from '../../../constants/brand'
 import styles from './CtaSection.module.css'
 import landingStyles from '../landing.module.css'
@@ -15,6 +16,9 @@ export function CtaSection({ onCtaClick }: CtaSectionProps) {
         <button className={landingStyles.btnPrimary} onClick={onCtaClick}>
           {BRAND.ctaButtonPrimary}
         </button>
+        <Link to="/try" className={styles.tryLink} data-testid="cta-try-link">
+          {BRAND.demoTryLink}
+        </Link>
       </div>
     </section>
   )

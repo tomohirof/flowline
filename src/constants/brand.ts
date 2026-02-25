@@ -33,4 +33,8 @@ export const BRAND = {
   sharedViewButton: 'フロー図を表示する',
   sharedViewBadge: '閲覧モード',
   sharedFreeText: '閲覧は無料 · ログイン不要',
+
+  // ── デモページ ──
+  demoTryLink: '今すぐ試す（ログイン不要）→',
+  demoSaveCta: 'ログインして保存',
 } as const

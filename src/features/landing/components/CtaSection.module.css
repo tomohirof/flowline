@@ -15,3 +15,15 @@
   color: var(--text-sub);
   margin: 0 0 40px;
 }
+
+.tryLink {
+  display: inline-block;
+  margin-top: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.tryLink:hover {
+  color: #fff;
+}
