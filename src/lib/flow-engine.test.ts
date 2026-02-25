@@ -7,6 +7,7 @@ import {
   findChain,
   detectReorder,
   reconnectChain,
+  detectCrossLaneRewire,
 } from './flow-engine'
 import { exitPt, entryPt } from './arrow-routing'
 import { computeBridgeArrows } from '../features/editor/auto-connect'
@@ -436,5 +437,117 @@ describe('統合テスト', () => {
       // Same lane → X should match
       expect(exit.x).toBe(entry.x)
     }
+  })
+})
+
+/* ======================================================= */
+/* detectCrossLaneRewire                                   */
+/* ======================================================= */
+
+describe('detectCrossLaneRewire', () => {
+  const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
+
+  it('should return empty array when tail does not change', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2']
+    const proposed = ['l0_r0', 'l0_r1', 'l0_r2']
+    const arrows = [{ id: 'x1', from: 'l0_r2', to: 'l1_r0', comment: '' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r1' },
+      l0_r2: { lid: 'l0', rid: 'r2' },
+      l1_r0: { lid: 'l1', rid: 'r0' },
+    }
+    expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
+
+  it('should return empty array when new tail is on same row as old tail', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2']
+    const proposed = ['l0_r0', 'l0_r2', 'l0_r1']
+    const arrows = [{ id: 'x1', from: 'l0_r2', to: 'l1_r0', comment: '' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r2' },
+      l0_r2: { lid: 'l0', rid: 'r2' },
+      l1_r0: { lid: 'l1', rid: 'r0' },
+    }
+    expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
+
+  it('should return empty array when new tail is above old tail', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2']
+    const proposed = ['l0_r0', 'l0_r2', 'l0_r1']
+    const arrows = [{ id: 'x1', from: 'l0_r2', to: 'l1_r0', comment: '' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r1' },
+      l0_r2: { lid: 'l0', rid: 'r2' },
+      l1_r0: { lid: 'l1', rid: 'r0' },
+    }
+    expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
+
+  it('should return empty array when old tail has no cross-lane arrows', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2']
+    const proposed = ['l0_r0', 'l0_r2', 'l0_r1']
+    const arrows: { id: string; from: string; to: string; comment: string }[] = []
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r3' },
+      l0_r2: { lid: 'l0', rid: 'r1' },
+    }
+    expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
+
+  it('should return rewire proposals when new tail is below old tail and old tail has cross-lane arrow', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2', 'l0_r3']
+    const proposed = ['l0_r0', 'l0_r2', 'l0_r3', 'l0_r1']
+    const arrows = [{ id: 'x1', from: 'l0_r3', to: 'l1_r0', comment: 'memo' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r3' },
+      l0_r2: { lid: 'l0', rid: 'r1' },
+      l0_r3: { lid: 'l0', rid: 'r2' },
+      l1_r0: { lid: 'l1', rid: 'r0' },
+    }
+    const result = detectCrossLaneRewire(current, proposed, arrows, tasks, rows)
+    expect(result).toEqual([
+      { arrowId: 'x1', oldFrom: 'l0_r3', newFrom: 'l0_r1', to: 'l1_r0', comment: 'memo' },
+    ])
+  })
+
+  it('should return multiple rewire proposals for multiple cross-lane arrows', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2']
+    const proposed = ['l0_r0', 'l0_r2', 'l0_r1']
+    const arrows = [
+      { id: 'x1', from: 'l0_r2', to: 'l1_r0', comment: '' },
+      { id: 'x2', from: 'l0_r2', to: 'l2_r1', comment: 'note' },
+    ]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r3' },
+      l0_r2: { lid: 'l0', rid: 'r1' },
+      l1_r0: { lid: 'l1', rid: 'r0' },
+      l2_r1: { lid: 'l2', rid: 'r1' },
+    }
+    const result = detectCrossLaneRewire(current, proposed, arrows, tasks, rows)
+    expect(result).toHaveLength(2)
+    expect(result[0]).toEqual({ arrowId: 'x1', oldFrom: 'l0_r2', newFrom: 'l0_r1', to: 'l1_r0', comment: '' })
+    expect(result[1]).toEqual({ arrowId: 'x2', oldFrom: 'l0_r2', newFrom: 'l0_r1', to: 'l2_r1', comment: 'note' })
+  })
+
+  it('should ignore same-lane arrows from old tail', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2']
+    const proposed = ['l0_r0', 'l0_r2', 'l0_r1']
+    const arrows = [{ id: 'x1', from: 'l0_r2', to: 'l0_r0', comment: '' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r3' },
+      l0_r2: { lid: 'l0', rid: 'r1' },
+    }
+    expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
+
+  it('should return empty array when chains are empty', () => {
+    expect(detectCrossLaneRewire([], [], [], {}, rows)).toEqual([])
   })
 })
