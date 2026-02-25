@@ -49,9 +49,7 @@ export function useMoveAutoRepair({
     const arrowCount = proposed.length - 1
 
     const chainKeySet = new Set(chain)
-    const oldChainArrows = arrows.filter(
-      (a) => chainKeySet.has(a.from) && chainKeySet.has(a.to),
-    )
+    const oldChainArrows = arrows.filter((a) => chainKeySet.has(a.from) && chainKeySet.has(a.to))
 
     addConfirmToast({
       message: '接続順を修復しますか？',

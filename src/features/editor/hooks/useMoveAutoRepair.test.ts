@@ -185,13 +185,7 @@ describe('useMoveAutoRepair', () => {
         l0_r3: { label: 'D', lid: 'l0', rid: 'r2', nodeId: 'n4' },
         l0_r4: { label: 'E', lid: 'l0', rid: 'r3', nodeId: 'n5' },
       }
-      const rows: RowData[] = [
-        { id: 'r0' },
-        { id: 'r1' },
-        { id: 'r2' },
-        { id: 'r3' },
-        { id: 'r4' },
-      ]
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }, { id: 'r4' }]
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       const { result } = renderHook(() =>
@@ -262,9 +256,9 @@ describe('useMoveAutoRepair', () => {
       // Chain: A→B→C in lane l0, cross-lane arrow: A→X (l1)
       // B moved to r2, C at r1 => proposed: A→C→B
       const initialArrows: InternalArrow[] = [
-        mkArrow('a1', 'l0_r0', 'l0_r1'),  // chain: A→B
-        mkArrow('a2', 'l0_r1', 'l0_r2'),  // chain: B→C
-        mkArrow('a3', 'l0_r0', 'l1_r0'),  // cross-lane: A→X (should be preserved)
+        mkArrow('a1', 'l0_r0', 'l0_r1'), // chain: A→B
+        mkArrow('a2', 'l0_r1', 'l0_r2'), // chain: B→C
+        mkArrow('a3', 'l0_r0', 'l1_r0'), // cross-lane: A→X (should be preserved)
       ]
       let currentArrows = [...initialArrows]
       const setArrows = vi.fn((updater: (prev: InternalArrow[]) => InternalArrow[]) => {
@@ -372,8 +366,8 @@ describe('useMoveAutoRepair', () => {
       // A→B pair survives, so its comment should be preserved.
       const initialArrows: InternalArrow[] = [
         mkArrow('a1', 'l0_r0', 'l0_r1', '保持コメント'), // A→B
-        mkArrow('a2', 'l0_r1', 'l0_r2'),                   // B→C
-        mkArrow('a3', 'l0_r2', 'l0_r3'),                   // C→D
+        mkArrow('a2', 'l0_r1', 'l0_r2'), // B→C
+        mkArrow('a3', 'l0_r2', 'l0_r3'), // C→D
       ]
       let currentArrows = [...initialArrows]
       const setArrows = vi.fn((updater: (prev: InternalArrow[]) => InternalArrow[]) => {
