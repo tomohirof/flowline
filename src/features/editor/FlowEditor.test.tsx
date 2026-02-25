@@ -2476,7 +2476,9 @@ describe('JSON export (#235)', () => {
     URL.createObjectURL = vi.fn().mockImplementation((blob: Blob) => {
       // Read the blob text synchronously via the Blob constructor argument
       // We intercept at createElement('a') level and also capture from Blob
-      blob.text().then((t) => { capturedBlobText = t })
+      blob.text().then((t) => {
+        capturedBlobText = t
+      })
       return 'blob:mock-url'
     })
     URL.revokeObjectURL = vi.fn()
@@ -2499,16 +2501,23 @@ describe('JSON export (#235)', () => {
         el.click = clickSpy
         // Intercept property assignments
         const origHrefDesc = Object.getOwnPropertyDescriptor(HTMLAnchorElement.prototype, 'href')
-        const origDownloadDesc = Object.getOwnPropertyDescriptor(HTMLAnchorElement.prototype, 'download')
+        const origDownloadDesc = Object.getOwnPropertyDescriptor(
+          HTMLAnchorElement.prototype,
+          'download',
+        )
         Object.defineProperty(el, 'href', {
-          get() { return origHrefDesc?.get?.call(this) ?? capturedHref },
+          get() {
+            return origHrefDesc?.get?.call(this) ?? capturedHref
+          },
           set(v: string) {
             capturedHref = v
             origHrefDesc?.set?.call(this, v)
           },
         })
         Object.defineProperty(el, 'download', {
-          get() { return origDownloadDesc?.get?.call(this) ?? capturedDownload },
+          get() {
+            return origDownloadDesc?.get?.call(this) ?? capturedDownload
+          },
           set(v: string) {
             capturedDownload = v
             origDownloadDesc?.set?.call(this, v)
@@ -2524,7 +2533,9 @@ describe('JSON export (#235)', () => {
       getCapturedBlobText: () => capturedBlobText,
       getCapturedHref: () => capturedHref,
       getCapturedDownload: () => capturedDownload,
-      restoreBlob: () => { globalThis.Blob = OrigBlob },
+      restoreBlob: () => {
+        globalThis.Blob = OrigBlob
+      },
     }
   }
 
@@ -2615,7 +2626,9 @@ describe('JSON export (#235)', () => {
     // Use fireEvent instead of userEvent to avoid async timer conflicts
     fireEvent.click(btn)
     expect(screen.getByText('✓ ダウンロードしました')).toBeInTheDocument()
-    act(() => { vi.advanceTimersByTime(1500) })
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
     expect(screen.getByText('JSON をダウンロード')).toBeInTheDocument()
     vi.useRealTimers()
   })
