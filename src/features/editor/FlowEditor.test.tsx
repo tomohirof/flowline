@@ -2094,9 +2094,7 @@ describe('2-click confirm UX (#219)', () => {
   describe('node ghost (empty cell 2-click)', () => {
     it('should show ghost node on first click and create node on second click', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       // Find an empty cell rect at row 0 (y = TM + HH + 0 * RH = 24 + 46 = 70)
       const allRects = container.querySelectorAll('rect[fill="transparent"]')
@@ -2133,9 +2131,7 @@ describe('2-click confirm UX (#219)', () => {
 
     it('should cancel ghost when Escape is pressed', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       const allRects = container.querySelectorAll('rect[fill="transparent"]')
       const emptyCellRects = Array.from(allRects).filter(
@@ -2164,9 +2160,7 @@ describe('2-click confirm UX (#219)', () => {
 
     it('should cancel ghost when background (SVG) is clicked', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       const allRects = container.querySelectorAll('rect[fill="transparent"]')
       const emptyCellRects = Array.from(allRects).filter(
@@ -2196,9 +2190,7 @@ describe('2-click confirm UX (#219)', () => {
 
     it('should cancel ghost when mouse leaves the cell', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       const allRects = container.querySelectorAll('rect[fill="transparent"]')
       const emptyCellRects = Array.from(allRects).filter(
@@ -2233,9 +2225,7 @@ describe('2-click confirm UX (#219)', () => {
           { id: 'lane-2', name: 'レーン2', colorIndex: 1, position: 1 },
         ],
       }
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       // Find empty cells — we want two at different rows
       const allRects = container.querySelectorAll('rect[fill="transparent"]')
@@ -2245,9 +2235,7 @@ describe('2-click confirm UX (#219)', () => {
       const cell1 = emptyCellRects.find((r) => r.getAttribute('y') === '70')
       expect(cell1).toBeTruthy()
       // Pick a different cell at row 1 (y=154) — use same lane for simplicity
-      const cell2 = emptyCellRects.find(
-        (r) => r.getAttribute('y') === '154' && r !== cell1,
-      )
+      const cell2 = emptyCellRects.find((r) => r.getAttribute('y') === '154' && r !== cell1)
       expect(cell2).toBeTruthy()
 
       // Click cell 1 — ghost appears
@@ -2279,9 +2267,7 @@ describe('2-click confirm UX (#219)', () => {
   describe('row ghost (row gap 2-click)', () => {
     it('should show ghost row on first click and insert row on second click', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
       const initialRowCount = container.querySelectorAll('[data-testid^="canvas-row-"]').length
 
       // 1st click on row gap
@@ -2313,9 +2299,7 @@ describe('2-click confirm UX (#219)', () => {
 
     it('should cancel ghost row when Escape is pressed', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')
       fireEvent.click(hitArea!)
@@ -2340,9 +2324,7 @@ describe('2-click confirm UX (#219)', () => {
 
     it('should cancel ghost row when mouse leaves the row gap', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')
       fireEvent.click(hitArea!)
@@ -2369,9 +2351,7 @@ describe('2-click confirm UX (#219)', () => {
   describe('bounce animation on node creation', () => {
     it('should apply bounce class to newly confirmed node', () => {
       const flow = createMinimalFlow()
-      const { container } = render(
-        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-      )
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       // Find empty cell at row 0
       const allRects = container.querySelectorAll('rect[fill="transparent"]')
@@ -2386,8 +2366,8 @@ describe('2-click confirm UX (#219)', () => {
       fireEvent.click(targetRect!)
 
       // Node should exist and its parent <g> should have bounce class
-      const nodeGroups = Array.from(container.querySelectorAll('g')).filter(
-        (g) => g.classList.toString().includes('ghostBounceAnim'),
+      const nodeGroups = Array.from(container.querySelectorAll('g')).filter((g) =>
+        g.classList.toString().includes('ghostBounceAnim'),
       )
       expect(nodeGroups.length).toBeGreaterThanOrEqual(1)
     })

@@ -2644,7 +2644,13 @@ export default function FlowEditor({
                       height={RH}
                       fill="transparent"
                       style={{
-                        cursor: connectFrom ? 'default' : dragging ? 'default' : isGhost ? 'pointer' : 'crosshair',
+                        cursor: connectFrom
+                          ? 'default'
+                          : dragging
+                            ? 'default'
+                            : isGhost
+                              ? 'pointer'
+                              : 'crosshair',
                       }}
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation()
@@ -2705,10 +2711,7 @@ export default function FlowEditor({
                       </g>
                     )}
                     {isGhost && (
-                      <g
-                        style={{ pointerEvents: 'none' }}
-                        className={styles.ghostPulseAnim}
-                      >
+                      <g style={{ pointerEvents: 'none' }} className={styles.ghostPulseAnim}>
                         <rect
                           x={c.x - TW / 2}
                           y={c.y - TH / 2}
