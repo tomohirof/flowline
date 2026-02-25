@@ -10,9 +10,10 @@ interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
   initialMode: 'login' | 'register'
+  onSuccess?: () => void
 }
 
-export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModalProps) {
   const navigate = useNavigate()
   const { login, register, resendVerification } = useAuth()
 
@@ -53,7 +54,11 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
         if (mode === 'login') {
           await login(email, password)
           onClose()
-          navigate('/flows')
+          if (onSuccess) {
+            onSuccess()
+          } else {
+            navigate('/flows')
+          }
         } else {
           const result = await register(email, password, name)
           if (result.needsVerification) {
@@ -81,7 +86,7 @@ export function AuthModal({ isOpen, onClose, initialMode }: AuthModalProps) {
         setSubmitting(false)
       }
     },
-    [mode, email, password, name, login, register, onClose, navigate],
+    [mode, email, password, name, login, register, onClose, navigate, onSuccess],
   )
 
   const handleResend = useCallback(async () => {

@@ -331,4 +331,59 @@ describe('AuthModal', () => {
     )
     expect(screen.getByLabelText('閉じる')).toBeInTheDocument()
   })
+
+  describe('onSuccess callback', () => {
+    it('should call onSuccess instead of navigating to /flows when provided', async () => {
+      const onSuccess = vi.fn()
+      const onClose = vi.fn()
+      mockLogin.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'Test' })
+
+      render(
+        <MemoryRouter>
+          <AuthModal
+            isOpen={true}
+            onClose={onClose}
+            initialMode="login"
+            onSuccess={onSuccess}
+          />
+        </MemoryRouter>,
+      )
+
+      fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+        target: { value: 'a@b.com' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+        target: { value: 'pass1234' },
+      })
+      fireEvent.click(screen.getByTestId('auth-submit'))
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalledOnce()
+      })
+      expect(mockNavigate).not.toHaveBeenCalledWith('/flows')
+    })
+
+    it('should navigate to /flows when onSuccess is not provided', async () => {
+      const onClose = vi.fn()
+      mockLogin.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'Test' })
+
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={onClose} initialMode="login" />
+        </MemoryRouter>,
+      )
+
+      fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+        target: { value: 'a@b.com' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+        target: { value: 'pass1234' },
+      })
+      fireEvent.click(screen.getByTestId('auth-submit'))
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/flows')
+      })
+    })
+  })
 })
