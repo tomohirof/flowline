@@ -148,3 +148,56 @@ export function reconnectChain(sortedKeys: string[]): { from: string; to: string
   }
   return arrows
 }
+
+/* --------------------------------------------------------- */
+/* detectCrossLaneRewire                                     */
+/* --------------------------------------------------------- */
+
+export interface CrossLaneRewire {
+  arrowId: string
+  oldFrom: string
+  newFrom: string
+  to: string
+  comment: string
+}
+
+/**
+ * チェーン再接続で末尾ノードが変わった場合、旧末尾のクロスレーン矢印を
+ * 新末尾に張り替える提案を返す。
+ *
+ * 条件:
+ * - 旧末尾 !== 新末尾
+ * - 新末尾の行インデックス > 旧末尾の行インデックス（下方向に伸びた場合のみ）
+ * - 旧末尾から別レーンへの矢印が存在する
+ */
+export function detectCrossLaneRewire(
+  currentChain: string[],
+  proposedChain: string[],
+  arrows: { id: string; from: string; to: string; comment: string }[],
+  tasks: Record<string, { lid: string; rid: string }>,
+  rows: { id: string }[],
+): CrossLaneRewire[] {
+  if (currentChain.length === 0 || proposedChain.length === 0) return []
+
+  const oldTail = currentChain[currentChain.length - 1]
+  const newTail = proposedChain[proposedChain.length - 1]
+  if (oldTail === newTail) return []
+
+  if (!tasks[oldTail] || !tasks[newTail]) return []
+
+  const rowIndex = new Map(rows.map((r, i) => [r.id, i]))
+  const oldRow = rowIndex.get(tasks[oldTail].rid) ?? 0
+  const newRow = rowIndex.get(tasks[newTail].rid) ?? 0
+  if (newRow <= oldRow) return []
+
+  const oldTailLane = tasks[oldTail].lid
+  return arrows
+    .filter((a) => a.from === oldTail && tasks[a.to] != null && tasks[a.to].lid !== oldTailLane)
+    .map((a) => ({
+      arrowId: a.id,
+      oldFrom: oldTail,
+      newFrom: newTail,
+      to: a.to,
+      comment: a.comment,
+    }))
+}
