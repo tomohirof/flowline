@@ -836,11 +836,11 @@ describe('swapKeys', () => {
     expect(result!.tasks['L1_R2'].label).toBe('B')
     expect(result!.tasks['L1_R1'].label).toBe('C')
 
-    const a1 = result!.arrows.find(a => a.id === 'a1')!
+    const a1 = result!.arrows.find((a) => a.id === 'a1')!
     expect(a1.from).toBe('L1_R3')
     expect(a1.to).toBe('L1_R2')
 
-    const a2 = result!.arrows.find(a => a.id === 'a2')!
+    const a2 = result!.arrows.find((a) => a.id === 'a2')!
     expect(a2.from).toBe('L1_R2')
     expect(a2.to).toBe('L1_R1')
 

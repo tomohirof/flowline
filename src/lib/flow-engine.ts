@@ -175,7 +175,19 @@ export interface CrossLaneRewire {
 /* --------------------------------------------------------- */
 
 export interface SwapResult {
-  tasks: Record<string, { label: string; lid: string; rid: string; nodeId: string; bg?: string; strokeColor?: string; dash?: string; shape?: 'diamond' }>
+  tasks: Record<
+    string,
+    {
+      label: string
+      lid: string
+      rid: string
+      nodeId: string
+      bg?: string
+      strokeColor?: string
+      dash?: string
+      shape?: 'diamond'
+    }
+  >
   arrows: InternalArrow[]
   order: string[]
   notes: Record<string, string>
@@ -188,7 +200,19 @@ export interface SwapResult {
  * 同一レーン限定。異なるレーンや存在しないキーの場合は null を返す。
  */
 export function swapKeys(
-  tasks: Record<string, { label: string; lid: string; rid: string; nodeId: string; bg?: string; strokeColor?: string; dash?: string; shape?: 'diamond' }>,
+  tasks: Record<
+    string,
+    {
+      label: string
+      lid: string
+      rid: string
+      nodeId: string
+      bg?: string
+      strokeColor?: string
+      dash?: string
+      shape?: 'diamond'
+    }
+  >,
   arrows: InternalArrow[],
   order: string[],
   notes: Record<string, string>,
@@ -222,9 +246,7 @@ export function swapKeys(
   if (noteB) newNotes[newKeyB] = noteB
 
   // order
-  const newOrder = order.map((k) =>
-    k === draggedKey ? newKeyA : k === targetKey ? newKeyB : k
-  )
+  const newOrder = order.map((k) => (k === draggedKey ? newKeyA : k === targetKey ? newKeyB : k))
 
   // arrows: 2キー同時リマップ（temp キーで中間衝突回避）
   const temp = `__swap_temp__`
