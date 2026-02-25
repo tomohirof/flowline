@@ -1,4 +1,5 @@
 import type { InternalArrow, ArrowPathResult } from './types'
+import type { TaskData } from '../features/editor/types'
 import { exitPt, entryPt, buildArrowPath } from './arrow-routing'
 import type { Point } from './arrow-routing'
 
@@ -175,19 +176,7 @@ export interface CrossLaneRewire {
 /* --------------------------------------------------------- */
 
 export interface SwapResult {
-  tasks: Record<
-    string,
-    {
-      label: string
-      lid: string
-      rid: string
-      nodeId: string
-      bg?: string
-      strokeColor?: string
-      dash?: string
-      shape?: 'diamond'
-    }
-  >
+  tasks: Record<string, TaskData>
   arrows: InternalArrow[]
   order: string[]
   notes: Record<string, string>
@@ -200,19 +189,7 @@ export interface SwapResult {
  * 同一レーン限定。異なるレーンや存在しないキーの場合は null を返す。
  */
 export function swapKeys(
-  tasks: Record<
-    string,
-    {
-      label: string
-      lid: string
-      rid: string
-      nodeId: string
-      bg?: string
-      strokeColor?: string
-      dash?: string
-      shape?: 'diamond'
-    }
-  >,
+  tasks: Record<string, TaskData>,
   arrows: InternalArrow[],
   order: string[],
   notes: Record<string, string>,
@@ -242,8 +219,8 @@ export function swapKeys(
   const noteB = newNotes[targetKey]
   delete newNotes[draggedKey]
   delete newNotes[targetKey]
-  if (noteA) newNotes[newKeyA] = noteA
-  if (noteB) newNotes[newKeyB] = noteB
+  if (noteA !== undefined) newNotes[newKeyA] = noteA
+  if (noteB !== undefined) newNotes[newKeyB] = noteB
 
   // order
   const newOrder = order.map((k) => (k === draggedKey ? newKeyA : k === targetKey ? newKeyB : k))

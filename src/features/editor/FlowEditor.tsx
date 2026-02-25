@@ -1082,8 +1082,6 @@ export default function FlowEditor({
     setOrder(result.order)
     setArrows(result.arrows)
     setSelTask(result.newKeyA)
-    setDragging(null)
-    setDragOver(null)
     triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid)
   }
   const cellClick = (lid: string, rid: string, _li: number, ri: number): void => {
