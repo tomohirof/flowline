@@ -531,8 +531,20 @@ describe('detectCrossLaneRewire', () => {
     }
     const result = detectCrossLaneRewire(current, proposed, arrows, tasks, rows)
     expect(result).toHaveLength(2)
-    expect(result[0]).toEqual({ arrowId: 'x1', oldFrom: 'l0_r2', newFrom: 'l0_r1', to: 'l1_r0', comment: '' })
-    expect(result[1]).toEqual({ arrowId: 'x2', oldFrom: 'l0_r2', newFrom: 'l0_r1', to: 'l2_r1', comment: 'note' })
+    expect(result[0]).toEqual({
+      arrowId: 'x1',
+      oldFrom: 'l0_r2',
+      newFrom: 'l0_r1',
+      to: 'l1_r0',
+      comment: '',
+    })
+    expect(result[1]).toEqual({
+      arrowId: 'x2',
+      oldFrom: 'l0_r2',
+      newFrom: 'l0_r1',
+      to: 'l2_r1',
+      comment: 'note',
+    })
   })
 
   it('should ignore same-lane arrows from old tail', () => {
