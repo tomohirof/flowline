@@ -15,6 +15,8 @@ export interface ArrowConfig {
   hw: number
   hh: number
   rh: number
+  fromShape?: 'diamond'
+  toShape?: 'diamond'
 }
 
 /* --------------------------------------------------------- */
@@ -32,8 +34,8 @@ export function calcArrowPath(
 ): ArrowPathResult {
   const f: Point = { x: from.x, y: from.y }
   const t: Point = { x: to.x, y: to.y }
-  const s = exitPt(f, t, config.hw, config.hh, config.rh)
-  const e = entryPt(t, f, config.hw, config.hh, config.rh)
+  const s = exitPt(f, t, config.hw, config.hh, config.rh, config.fromShape)
+  const e = entryPt(t, f, config.hw, config.hh, config.rh, config.toShape)
   return buildArrowPath(s, e, f, t)
 }
 

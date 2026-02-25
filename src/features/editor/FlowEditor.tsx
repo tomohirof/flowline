@@ -34,12 +34,13 @@ import {
   STROKE_STYLES,
 } from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
-import { exitPt, entryPt, buildArrowPath, DS } from '../../lib/arrow-routing'
+import { DS } from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { useArrows } from './hooks/useArrows'
 import { uid } from '../../lib/uid'
 import { computeBridgeArrows } from './auto-connect'
+import { remapArrows, filterArrowsByDeletedKeys, calcArrowPath } from '../../lib/flow-engine'
 
 // =============================================
 // Icons
@@ -1012,9 +1013,7 @@ export default function FlowEditor({
         return n
       })
     setOrder((p) => p.map((k) => (k === fk ? nk : k)))
-    setArrows((p) =>
-      p.map((a) => ({ ...a, from: a.from === fk ? nk : a.from, to: a.to === fk ? nk : a.to })),
-    )
+    setArrows((p) => remapArrows(p, fk, nk))
     setSelTask(nk)
     const ri = rows.findIndex((r) => r.id === to.rid)
     if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
@@ -1102,7 +1101,7 @@ export default function FlowEditor({
         return n
       })
       setOrder((p) => p.filter((x) => !rm.includes(x)))
-      setArrows((p) => p.filter((a) => !rm.includes(a.from) && !rm.includes(a.to)))
+      setArrows((p) => filterArrowsByDeletedKeys(p, new Set(rm)))
     }
   }
   const rmLane = (id: string): void => {
@@ -1117,7 +1116,7 @@ export default function FlowEditor({
         return n
       })
       setOrder((p) => p.filter((x) => !rm.includes(x)))
-      setArrows((p) => p.filter((a) => !rm.includes(a.from) && !rm.includes(a.to)))
+      setArrows((p) => filterArrowsByDeletedKeys(p, new Set(rm)))
     }
   }
 
@@ -1130,13 +1129,9 @@ export default function FlowEditor({
       tli = liMap[tt.lid],
       tri = riMap[tt.rid]
     if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
-    const f = ct(fli, fri),
-      t = ct(tli, tri),
-      hw = TW / 2,
-      hh = TH / 2
-    const s = exitPt(f, t, hw, hh, RH, ft.shape),
-      e = entryPt(t, f, hw, hh, RH, tt.shape)
-    return buildArrowPath(s, e, f, t)
+    const from = ct(fli, fri)
+    const to = ct(tli, tri)
+    return calcArrowPath(from, to, { hw: TW / 2, hh: TH / 2, rh: RH, fromShape: ft.shape ?? undefined, toShape: tt.shape ?? undefined })
   }
 
   const exportMermaid = (): string => {
