@@ -41,7 +41,7 @@ import { useArrows } from './hooks/useArrows'
 import { useMoveAutoRepair } from './hooks/useMoveAutoRepair'
 import { uid } from '../../lib/uid'
 import { computeBridgeArrows } from './auto-connect'
-import { remapArrows, filterArrowsByDeletedKeys, calcArrowPath } from '../../lib/flow-engine'
+import { remapArrows, swapKeys, filterArrowsByDeletedKeys, calcArrowPath } from '../../lib/flow-engine'
 
 // =============================================
 // Icons
@@ -988,7 +988,18 @@ export default function FlowEditor({
     }
     if (!dragging) return
     const cell = cellFromPos(pt.x, pt.y)
-    setDragOver(cell && cell.key !== dragging.key && !tasks[cell.key] ? cell.key : null)
+    if (cell && cell.key !== dragging.key) {
+      const tgt = tasks[cell.key]
+      const src = tasks[dragging.key]
+      // 空セル or 同一レーンのノード → ドロップ許可
+      if (!tgt || (tgt && src && tgt.lid === src.lid)) {
+        setDragOver(cell.key)
+      } else {
+        setDragOver(null)
+      }
+    } else {
+      setDragOver(null)
+    }
   }
   const onSvgMouseUp = (e: React.MouseEvent): void => {
     if (connectFrom) {
@@ -1015,14 +1026,18 @@ export default function FlowEditor({
     }
     if (!dragging) return
     if (dragOver) {
-      for (let li = 0; li < lanes.length; li++)
-        for (let ri = 0; ri < rows.length; ri++)
-          if (ky(lanes[li].id, rows[ri].id) === dragOver) {
-            moveTask(dragging.key, { lid: lanes[li].id, rid: rows[ri].id, key: dragOver, li, ri })
-            setDragging(null)
-            setDragOver(null)
-            return
-          }
+      if (tasks[dragOver]) {
+        swapInsertNodes(dragging.key, dragOver)
+      } else {
+        for (let li = 0; li < lanes.length; li++)
+          for (let ri = 0; ri < rows.length; ri++)
+            if (ky(lanes[li].id, rows[ri].id) === dragOver) {
+              moveTask(dragging.key, { lid: lanes[li].id, rid: rows[ri].id, key: dragOver, li, ri })
+              setDragging(null)
+              setDragOver(null)
+              return
+            }
+      }
     }
     setDragging(null)
     setDragOver(null)
@@ -1053,6 +1068,18 @@ export default function FlowEditor({
     const ri = rows.findIndex((r) => r.id === to.rid)
     if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
     triggerMoveRepairCheck(nk, to.lid)
+  }
+  const swapInsertNodes = (draggedKey: string, targetKey: string): void => {
+    const result = swapKeys(tasks, arrows, order, notes, draggedKey, targetKey)
+    if (!result) return
+    setTasks(result.tasks)
+    setNotes(result.notes)
+    setOrder(result.order)
+    setArrows(result.arrows)
+    setSelTask(result.newKeyA)
+    setDragging(null)
+    setDragOver(null)
+    triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid)
   }
   const cellClick = (lid: string, rid: string, _li: number, ri: number): void => {
     if (editArrowComment) {
@@ -3650,7 +3677,7 @@ export default function FlowEditor({
             : connectFrom
               ? '接続先クリック · Esc解除'
               : dragging
-                ? '空きセルにドロップ'
+                ? '空きセルにドロップ · ノードに重ねて入替'
                 : 'クリック:追加 · ドラッグ:移動 · ○:接続 · Shift+クリック:複数選択'}
         </span>
       </div>
