@@ -1119,13 +1119,14 @@ describe('row insertion UI (#91)', () => {
     expect(feedback).toBeTruthy()
   })
 
-  it('should insert row at specified position when row gap is clicked', async () => {
+  it('should insert row at specified position when row gap is clicked twice (2-click confirm)', async () => {
     const flow = createMinimalFlow()
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
     const hitArea = document.querySelector('[data-testid="rowgap-hit-1"]')
     expect(hitArea).toBeTruthy()
-    await userEvent.click(hitArea!)
+    await userEvent.click(hitArea!) // 1st click — ghost
+    await userEvent.click(hitArea!) // 2nd click — confirm
     const newRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
     expect(newRowCount).toBe(initialRowCount + 1)
   })
@@ -1229,14 +1230,16 @@ describe('empty row deletion (#192)', () => {
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
 
-    // First insert
+    // First insert (2 clicks for confirm)
     const hitArea = document.querySelector('[data-testid="rowgap-hit-1"]')!
-    fireEvent.click(hitArea)
+    fireEvent.click(hitArea) // ghost
+    fireEvent.click(hitArea) // confirm
     const afterFirstInsert = document.querySelectorAll('[data-testid^="canvas-row-"]').length
     expect(afterFirstInsert).toBe(initialRowCount + 1)
 
-    // Second insert during animation should be blocked
+    // Second insert during animation should be blocked (even ghost click is blocked by rowAnim)
     const hitArea2 = document.querySelector('[data-testid="rowgap-hit-0"]')!
+    fireEvent.click(hitArea2)
     fireEvent.click(hitArea2)
     const afterSecondInsert = document.querySelectorAll('[data-testid^="canvas-row-"]').length
     expect(afterSecondInsert).toBe(initialRowCount + 1) // No change
@@ -1246,7 +1249,8 @@ describe('empty row deletion (#192)', () => {
       vi.advanceTimersByTime(700)
     })
     const hitArea3 = document.querySelector('[data-testid="rowgap-hit-0"]')!
-    fireEvent.click(hitArea3)
+    fireEvent.click(hitArea3) // ghost
+    fireEvent.click(hitArea3) // confirm
     const afterThirdInsert = document.querySelectorAll('[data-testid^="canvas-row-"]').length
     expect(afterThirdInsert).toBe(initialRowCount + 2)
 
@@ -1258,9 +1262,10 @@ describe('empty row deletion (#192)', () => {
     const flow = createMinimalFlow()
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert a row to get animation lock
+    // Insert a row to get animation lock (2 clicks)
     const hitArea = document.querySelector('[data-testid="rowgap-hit-1"]')!
-    fireEvent.click(hitArea)
+    fireEvent.click(hitArea) // ghost
+    fireEvent.click(hitArea) // confirm
 
     // Try to delete during animation — should be blocked
     const deleteHit = document.querySelector('[data-testid="rownum-hit-0"]')!
@@ -1295,9 +1300,10 @@ describe('empty row deletion (#192)', () => {
     const flow = createMinimalFlow()
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert a row
+    // Insert a row (2 clicks)
     const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')!
-    fireEvent.click(hitArea)
+    fireEvent.click(hitArea) // ghost
+    fireEvent.click(hitArea) // confirm
 
     // Animation overlay should be present
     const overlay = container.querySelector('[data-testid="row-anim-overlay"]')
@@ -1333,9 +1339,10 @@ describe('empty row deletion (#192)', () => {
     const flow = createMinimalFlow()
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert a row
+    // Insert a row (2 clicks)
     const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')!
-    fireEvent.click(hitArea)
+    fireEvent.click(hitArea) // ghost
+    fireEvent.click(hitArea) // confirm
 
     expect(container.querySelector('[data-testid="row-anim-overlay"]')).toBeTruthy()
 
@@ -1797,7 +1804,8 @@ describe('auto-connect by flow position (#182)', () => {
     // Find the rect at y=154 (row 1)
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '154')
     expect(targetRect).toBeTruthy()
-    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!) // 1st click — ghost
+    fireEvent.click(targetRect!) // 2nd click — confirm
 
     // After clicking, an arrow should be created from A → C (closest upstream)
     // Check that an arrow path with marker-end exists
@@ -1821,7 +1829,8 @@ describe('auto-connect by flow position (#182)', () => {
     )
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '70')
     expect(targetRect).toBeTruthy()
-    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!) // 1st click — ghost
+    fireEvent.click(targetRect!) // 2nd click — confirm
 
     // No arrows should be created (B is below, not upstream)
     const arrowPaths = container.querySelectorAll('path[marker-end]')
@@ -1842,10 +1851,11 @@ describe('arrow reorganization toast (#182)', () => {
     }
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert row at index 1 (between row0 and row1)
+    // Insert row at index 1 (between row0 and row1) — 2 clicks
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
     expect(rowGapHit).toBeTruthy()
-    fireEvent.click(rowGapHit!)
+    fireEvent.click(rowGapHit!) // ghost
+    fireEvent.click(rowGapHit!) // confirm
 
     // After insertion, rows: [row0(A), newRow(empty), row1(B)]
     // The new empty cell at ri=1 will have y = 24 + 46 + 1*84 = 154
@@ -1855,7 +1865,8 @@ describe('arrow reorganization toast (#182)', () => {
     )
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '154')
     expect(targetRect).toBeTruthy()
-    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!) // ghost
+    fireEvent.click(targetRect!) // confirm
 
     // Confirm toast should appear
     await waitFor(() => {
@@ -1877,15 +1888,17 @@ describe('arrow reorganization toast (#182)', () => {
     }
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert row and click cell
+    // Insert row and click cell — both need 2 clicks
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
-    fireEvent.click(rowGapHit!)
+    fireEvent.click(rowGapHit!) // ghost
+    fireEvent.click(rowGapHit!) // confirm
     const allRects = container.querySelectorAll('rect[fill="transparent"]')
     const emptyCellRects = Array.from(allRects).filter(
       (r) => (r as SVGRectElement).style.cursor === 'crosshair',
     )
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '154')
-    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!) // ghost
+    fireEvent.click(targetRect!) // confirm
 
     await waitFor(() => {
       expect(container.querySelector('[data-testid="toast-confirm"]')).toBeTruthy()
@@ -1915,15 +1928,17 @@ describe('arrow reorganization toast (#182)', () => {
     }
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert row and click cell
+    // Insert row and click cell — both need 2 clicks
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
-    fireEvent.click(rowGapHit!)
+    fireEvent.click(rowGapHit!) // ghost
+    fireEvent.click(rowGapHit!) // confirm
     const allRects = container.querySelectorAll('rect[fill="transparent"]')
     const emptyCellRects = Array.from(allRects).filter(
       (r) => (r as SVGRectElement).style.cursor === 'crosshair',
     )
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '154')
-    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!) // ghost
+    fireEvent.click(targetRect!) // confirm
 
     await waitFor(() => {
       expect(container.querySelector('[data-testid="toast-confirm"]')).toBeTruthy()
@@ -1950,19 +1965,21 @@ describe('arrow reorganization toast (#182)', () => {
     }
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert row at index 2 (after both nodes)
+    // Insert row at index 2 (after both nodes) — 2 clicks
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-2"]')
     expect(rowGapHit).toBeTruthy()
-    fireEvent.click(rowGapHit!)
+    fireEvent.click(rowGapHit!) // ghost
+    fireEvent.click(rowGapHit!) // confirm
 
-    // Click cell at new row (ri=2, y = 24 + 46 + 2*84 = 238)
+    // Click cell at new row (ri=2, y = 24 + 46 + 2*84 = 238) — 2 clicks
     const allRects = container.querySelectorAll('rect[fill="transparent"]')
     const emptyCellRects = Array.from(allRects).filter(
       (r) => (r as SVGRectElement).style.cursor === 'crosshair',
     )
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '238')
     expect(targetRect).toBeTruthy()
-    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!) // ghost
+    fireEvent.click(targetRect!) // confirm
 
     // No toast should appear
     expect(container.querySelector('[data-testid="toast-confirm"]')).toBeNull()
@@ -2066,5 +2083,299 @@ describe('z-order: arrow controls above row gap (#212)', () => {
     expect(handleIndex).not.toBe(-1)
 
     expect(handleIndex).toBeGreaterThan(lastRowGapIndex)
+  })
+})
+
+describe('2-click confirm UX (#219)', () => {
+  beforeEach(() => {
+    cleanup()
+  })
+
+  describe('node ghost (empty cell 2-click)', () => {
+    it('should show ghost node on first click and create node on second click', () => {
+      const flow = createMinimalFlow()
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+      // Find an empty cell rect at row 0 (y = TM + HH + 0 * RH = 24 + 46 = 70)
+      const allRects = container.querySelectorAll('rect[fill="transparent"]')
+      const emptyCellRects = Array.from(allRects).filter(
+        (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+      )
+      const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '70')
+      expect(targetRect).toBeTruthy()
+
+      // 1st click — should show ghost (dashed rect with "作業" and "クリックで確定")
+      fireEvent.click(targetRect!)
+
+      // Ghost should be visible
+      const ghostTexts = Array.from(container.querySelectorAll('text')).filter(
+        (t) => t.textContent === 'クリックで確定',
+      )
+      expect(ghostTexts.length).toBeGreaterThanOrEqual(1)
+
+      // Node should NOT exist yet (no rect with width=152)
+      const nodeRects = Array.from(container.querySelectorAll('rect[rx="10"]')).filter(
+        (r) => r.getAttribute('width') === '152',
+      )
+      expect(nodeRects.length).toBe(0)
+
+      // 2nd click on same element — should create node (same DOM element, no mouseLeave)
+      fireEvent.click(targetRect!)
+
+      // Node should now exist
+      const nodeRectsAfter = Array.from(container.querySelectorAll('rect[rx="10"]')).filter(
+        (r) => r.getAttribute('width') === '152',
+      )
+      expect(nodeRectsAfter.length).toBe(1)
+    })
+
+    it('should cancel ghost when Escape is pressed', () => {
+      const flow = createMinimalFlow()
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+      const allRects = container.querySelectorAll('rect[fill="transparent"]')
+      const emptyCellRects = Array.from(allRects).filter(
+        (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+      )
+      const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '70')
+      fireEvent.click(targetRect!)
+
+      // Ghost should be visible
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(true)
+
+      // Press Escape
+      fireEvent.keyDown(window, { key: 'Escape' })
+
+      // Ghost should be gone
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(false)
+    })
+
+    it('should cancel ghost when background (SVG) is clicked', () => {
+      const flow = createMinimalFlow()
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+      const allRects = container.querySelectorAll('rect[fill="transparent"]')
+      const emptyCellRects = Array.from(allRects).filter(
+        (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+      )
+      const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '70')
+      fireEvent.click(targetRect!)
+
+      // Ghost should be visible
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(true)
+
+      // Click SVG background
+      const svg = container.querySelector('[data-testid="canvas-svg"]')
+      fireEvent.click(svg!)
+
+      // Ghost should be gone
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(false)
+    })
+
+    it('should cancel ghost when mouse leaves the cell', () => {
+      const flow = createMinimalFlow()
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+      const allRects = container.querySelectorAll('rect[fill="transparent"]')
+      const emptyCellRects = Array.from(allRects).filter(
+        (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+      )
+      const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '70')
+      fireEvent.click(targetRect!)
+
+      // Ghost should be visible
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(true)
+
+      // Mouse leave the cell
+      fireEvent.mouseLeave(targetRect!)
+
+      // Ghost should be gone
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(false)
+    })
+
+    it('should move ghost when clicking a different empty cell', () => {
+      const flow: Flow = {
+        ...createMinimalFlow(),
+        lanes: [
+          { id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 },
+          { id: 'lane-2', name: 'レーン2', colorIndex: 1, position: 1 },
+        ],
+      }
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+      // Find empty cells — we want two at different rows
+      const allRects = container.querySelectorAll('rect[fill="transparent"]')
+      const emptyCellRects = Array.from(allRects).filter(
+        (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+      )
+      const cell1 = emptyCellRects.find((r) => r.getAttribute('y') === '70')
+      expect(cell1).toBeTruthy()
+      // Pick a different cell at row 1 (y=154) — use same lane for simplicity
+      const cell2 = emptyCellRects.find((r) => r.getAttribute('y') === '154' && r !== cell1)
+      expect(cell2).toBeTruthy()
+
+      // Click cell 1 — ghost appears
+      fireEvent.click(cell1!)
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(true)
+
+      // Mouse leaves cell 1 — ghost cancels (matches real browser behavior)
+      fireEvent.mouseLeave(cell1!)
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(false)
+
+      // Click cell 2 — new ghost appears at cell 2, NOT creating a node
+      fireEvent.click(cell2!)
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(true)
+
+      // Node should NOT exist
+      const nodeRects = Array.from(container.querySelectorAll('rect[rx="10"]')).filter(
+        (r) => r.getAttribute('width') === '152',
+      )
+      expect(nodeRects.length).toBe(0)
+    })
+  })
+
+  describe('row ghost (row gap 2-click)', () => {
+    it('should show ghost row on first click and insert row on second click', () => {
+      const flow = createMinimalFlow()
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+      const initialRowCount = container.querySelectorAll('[data-testid^="canvas-row-"]').length
+
+      // 1st click on row gap
+      const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')
+      expect(hitArea).toBeTruthy()
+      fireEvent.click(hitArea!)
+
+      // Row count should NOT change yet
+      expect(container.querySelectorAll('[data-testid^="canvas-row-"]').length).toBe(
+        initialRowCount,
+      )
+
+      // Ghost should be visible (dashed line with "クリックで確定" text)
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(true)
+
+      // 2nd click on same row gap
+      const hitArea2 = container.querySelector('[data-testid="rowgap-hit-1"]')
+      fireEvent.click(hitArea2!)
+
+      // Row should now be inserted
+      expect(container.querySelectorAll('[data-testid^="canvas-row-"]').length).toBe(
+        initialRowCount + 1,
+      )
+    })
+
+    it('should cancel ghost row when Escape is pressed', () => {
+      const flow = createMinimalFlow()
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+      const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')
+      fireEvent.click(hitArea!)
+
+      // Ghost should be visible
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(true)
+
+      // Press Escape
+      fireEvent.keyDown(window, { key: 'Escape' })
+
+      // Ghost should be gone
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(false)
+    })
+
+    it('should cancel ghost row when mouse leaves the row gap', () => {
+      const flow = createMinimalFlow()
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+      const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')
+      fireEvent.click(hitArea!)
+
+      // Ghost should be visible
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(true)
+
+      // Mouse leave
+      fireEvent.mouseLeave(hitArea!)
+
+      // Ghost should be gone
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(false)
+    })
+  })
+
+  describe('bounce animation on node creation', () => {
+    it('should apply bounce class to newly confirmed node', () => {
+      const flow = createMinimalFlow()
+      const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+      // Find empty cell at row 0
+      const allRects = container.querySelectorAll('rect[fill="transparent"]')
+      const emptyCellRects = Array.from(allRects).filter(
+        (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+      )
+      const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '70')
+      expect(targetRect).toBeTruthy()
+
+      // 1st click — ghost, 2nd click — confirm (same element reference)
+      fireEvent.click(targetRect!)
+      fireEvent.click(targetRect!)
+
+      // Node should exist and its parent <g> should have bounce class
+      const nodeGroups = Array.from(container.querySelectorAll('g')).filter((g) =>
+        g.classList.toString().includes('ghostBounceAnim'),
+      )
+      expect(nodeGroups.length).toBeGreaterThanOrEqual(1)
+    })
   })
 })
