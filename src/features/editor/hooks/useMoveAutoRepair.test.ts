@@ -69,11 +69,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }]
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
-      renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast },
-        'l0_r1',
-        'l0',
-      )
+      renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l0_r1', 'l0')
 
       expect(addConfirmToast).not.toHaveBeenCalled()
     })
@@ -92,11 +88,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
-      renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast },
-        'l0_r3',
-        'l0',
-      )
+      renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l0_r3', 'l0')
 
       expect(addConfirmToast).not.toHaveBeenCalled()
     })
@@ -114,11 +106,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
-      renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast },
-        'l0_r1',
-        'l0',
-      )
+      renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l0_r1', 'l0')
 
       expect(addConfirmToast).not.toHaveBeenCalled()
     })
@@ -133,11 +121,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
-      renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast },
-        'l0_r0',
-        'l0',
-      )
+      renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l0_r0', 'l0')
 
       expect(addConfirmToast).not.toHaveBeenCalled()
     })
@@ -165,11 +149,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }, { id: 'r4' }]
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
-      renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast },
-        'l0_r1',
-        'l0',
-      )
+      renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l0_r1', 'l0')
 
       expect(addConfirmToast).toHaveBeenCalledOnce()
       const toast = addConfirmToast.mock.calls[0][0]
@@ -192,11 +172,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
-      renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast },
-        'l0_r1',
-        'l0',
-      )
+      renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l0_r1', 'l0')
 
       expect(addConfirmToast).toHaveBeenCalledOnce()
       expect(addConfirmToast.mock.calls[0][0].crossingCount).toBe(2)
@@ -359,11 +335,7 @@ describe('useMoveAutoRepair', () => {
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       expect(() => {
-        renderAndTrigger(
-          { arrows, setArrows, tasks, rows, addConfirmToast },
-          'l0_r0',
-          'l0',
-        )
+        renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l0_r0', 'l0')
       }).not.toThrow()
     })
 
@@ -380,11 +352,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
-      renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast },
-        'l1_r1',
-        'l1',
-      )
+      renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l1_r1', 'l1')
 
       expect(addConfirmToast).toHaveBeenCalledOnce()
       const toast = addConfirmToast.mock.calls[0][0]
