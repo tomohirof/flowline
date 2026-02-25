@@ -1110,12 +1110,12 @@ export default function FlowEditor({
     const task = tasks[fk]
     if (!task) return
     const nk = to.key
-    setTasks((p) => {
-      const n = { ...p }
-      delete n[fk]
-      n[nk] = { ...task, lid: to.lid, rid: to.rid }
-      return n
-    })
+    // Compute post-move state synchronously for triggerMoveRepairCheck
+    const newTasks = { ...tasks }
+    delete newTasks[fk]
+    newTasks[nk] = { ...task, lid: to.lid, rid: to.rid }
+    const newArrows = remapArrows(arrows, fk, nk)
+    setTasks(() => newTasks)
     if (notes[fk])
       setNotes((p) => {
         const n = { ...p }
@@ -1124,11 +1124,11 @@ export default function FlowEditor({
         return n
       })
     setOrder((p) => p.map((k) => (k === fk ? nk : k)))
-    setArrows((p) => remapArrows(p, fk, nk))
+    setArrows(() => newArrows)
     setSelTask(nk)
     const ri = rows.findIndex((r) => r.id === to.rid)
     if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
-    triggerMoveRepairCheck(nk, to.lid)
+    triggerMoveRepairCheck(nk, to.lid, newArrows, newTasks)
   }
   const swapInsertNodes = (draggedKey: string, targetKey: string): void => {
     const result = swapKeys(tasks, arrows, order, notes, draggedKey, targetKey)
@@ -1166,15 +1166,13 @@ export default function FlowEditor({
       posMap.set(newKey, { lid: lanes[newLi].id, rid: rows[newRi].id })
     }
 
-    setTasks((p) => {
-      const n = { ...p }
-      for (const oldK of keyMap.keys()) delete n[oldK]
-      for (const [oldK, newK] of keyMap) {
-        const pos = posMap.get(newK)!
-        n[newK] = { ...p[oldK], lid: pos.lid, rid: pos.rid }
-      }
-      return n
-    })
+    const newTasks = { ...tasks }
+    for (const oldK of keyMap.keys()) delete newTasks[oldK]
+    for (const [oldK, newK] of keyMap) {
+      const pos = posMap.get(newK)!
+      newTasks[newK] = { ...tasks[oldK], lid: pos.lid, rid: pos.rid }
+    }
+    setTasks(() => newTasks)
 
     setNotes((p) => {
       const n = { ...p }
@@ -1188,7 +1186,8 @@ export default function FlowEditor({
     })
 
     setOrder((p) => p.map((k) => keyMap.get(k) ?? k))
-    setArrows((p) => remapArrowsBatch(p, keyMap))
+    const newArrows = remapArrowsBatch(arrows, keyMap)
+    setArrows(() => newArrows)
 
     let maxRi = 0
     for (const [, newK] of keyMap) {
@@ -1200,7 +1199,7 @@ export default function FlowEditor({
 
     for (const [, newK] of keyMap) {
       const pos = posMap.get(newK)!
-      triggerMoveRepairCheck(newK, pos.lid)
+      triggerMoveRepairCheck(newK, pos.lid, newArrows, newTasks)
     }
   }
   const cellClick = (lid: string, rid: string, _li: number, ri: number): void => {
