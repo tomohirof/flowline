@@ -83,8 +83,8 @@ export function findChain(
   while (current && !visited.has(current)) {
     visited.add(current)
     chain.push(current)
-    const nexts = adj.get(current) || []
-    current = nexts.find((n) => laneKeys.has(n) && !visited.has(n))
+    const nexts: string[] = adj.get(current) || []
+    current = nexts.find((n: string) => laneKeys.has(n) && !visited.has(n))
   }
 
   return chain

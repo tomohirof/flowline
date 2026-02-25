@@ -184,9 +184,41 @@ describe('calcArrowPath', () => {
     expect(r2.d).toBe('M100,128 L100,150 L400,150 L400,172')
   })
 
-  it.todo('diamond — left-down exit from left vertex')
-  it.todo('diamond — right-down exit from right vertex')
-  it.todo('diamond — straight-down exit from bottom vertex')
+  it('③ diamond — left-down exit from left vertex', () => {
+    // from diamond at {300,200} to target at {100,400}: dx=-200 < 0 → left vertex
+    const result = calcArrowPath(
+      { x: 300, y: 200 },
+      { x: 100, y: 400 },
+      { hw: 76, hh: 28, rh: 84, fromShape: 'diamond' },
+    )
+    expect(result).not.toBeNull()
+    // exitPt diamond: dx=-200 < 0 → {x: 300-34, y: 200} = {x: 266, y: 200}
+    expect(result!.d).toContain('M266,200')
+  })
+
+  it('③ diamond — right-down exit from right vertex', () => {
+    // from diamond at {300,200} to target at {500,400}: dx=200 >= 0 → right vertex
+    const result = calcArrowPath(
+      { x: 300, y: 200 },
+      { x: 500, y: 400 },
+      { hw: 76, hh: 28, rh: 84, fromShape: 'diamond' },
+    )
+    expect(result).not.toBeNull()
+    // exitPt diamond: dx=200 >= 0 → {x: 300+34, y: 200} = {x: 334, y: 200}
+    expect(result!.d).toContain('M334,200')
+  })
+
+  it('③ diamond — straight-down exit from bottom vertex', () => {
+    // from diamond at {300,200} to target at {300,400}: dx=0, dy>0 → bottom vertex
+    const result = calcArrowPath(
+      { x: 300, y: 200 },
+      { x: 300, y: 400 },
+      { hw: 76, hh: 28, rh: 84, fromShape: 'diamond' },
+    )
+    expect(result).not.toBeNull()
+    // exitPt diamond: |dx|<1, dy>0 → {x: 300, y: 200+34} = {x: 300, y: 234}
+    expect(result!.d).toContain('M300,234')
+  })
 })
 
 /* ========================================================= */
