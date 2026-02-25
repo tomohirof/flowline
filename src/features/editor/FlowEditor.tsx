@@ -424,6 +424,9 @@ interface FlowEditorProps {
   saveStatus: SaveStatus
   onShareChange?: (token: string | null) => void
   onRetrySave?: () => void
+  saveCtaLabel?: string
+  onSaveCtaClick?: () => void
+  hideShare?: boolean
 }
 
 // =============================================
@@ -436,9 +439,13 @@ export default function FlowEditor({
   saveStatus,
   onShareChange,
   onRetrySave,
+  saveCtaLabel,
+  onSaveCtaClick,
+  hideShare,
 }: FlowEditorProps) {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const isDemo = !!saveCtaLabel
   const [menuOpen, setMenuOpen] = useState(false)
   // Initialize state from flow data (lazy initialization to avoid recomputing on every render)
   const [initState] = useState(() => flowToInternalState(flow))
@@ -546,6 +553,7 @@ export default function FlowEditor({
   const settingsLoadedRef = useRef(false)
 
   useEffect(() => {
+    if (isDemo) return
     let cancelled = false
     apiFetch<{ settings: Record<string, unknown> }>('/settings')
       .then((data) => {
@@ -581,7 +589,7 @@ export default function FlowEditor({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isDemo])
 
   useEffect(() => {
     return () => {
@@ -601,18 +609,22 @@ export default function FlowEditor({
     }
   }, [])
 
-  const updateEditorSetting = useCallback((key: string, value: boolean) => {
-    setEditorSettings((prev) => ({ ...prev, [key]: value }))
-    if (!settingsLoadedRef.current) return
-    const merged = { ...fullSettingsRef.current, [key]: value }
-    fullSettingsRef.current = merged
-    apiFetch('/settings', {
-      method: 'PUT',
-      body: JSON.stringify(merged),
-    }).catch(() => {
-      // 保存失敗は無視（UIは即時反映）
-    })
-  }, [])
+  const updateEditorSetting = useCallback(
+    (key: string, value: boolean) => {
+      setEditorSettings((prev) => ({ ...prev, [key]: value }))
+      if (isDemo) return
+      if (!settingsLoadedRef.current) return
+      const merged = { ...fullSettingsRef.current, [key]: value }
+      fullSettingsRef.current = merged
+      apiFetch('/settings', {
+        method: 'PUT',
+        body: JSON.stringify(merged),
+      }).catch(() => {
+        // 保存失敗は無視（UIは即時反映）
+      })
+    },
+    [isDemo],
+  )
 
   const inputRef = useRef<HTMLInputElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -2146,16 +2158,18 @@ export default function FlowEditor({
             {title}
           </span>
         )}
-        <button
-          data-testid="share-button"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation()
-            setShowShareDialog(true)
-          }}
-          className={`${styles.shareButton} ${shareToken ? styles.shareButtonActive : styles.shareButtonInactive}`}
-        >
-          {shareToken ? '共有中' : '共有'}
-        </button>
+        {!hideShare && (
+          <button
+            data-testid="share-button"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
+              setShowShareDialog(true)
+            }}
+            className={`${styles.shareButton} ${shareToken ? styles.shareButtonActive : styles.shareButtonInactive}`}
+          >
+            {shareToken ? '共有中' : '共有'}
+          </button>
+        )}
         <div className={styles.spacer} />
         {connectFrom && (
           <div className={styles.connectBanner}>
@@ -2172,30 +2186,43 @@ export default function FlowEditor({
             </button>
           </div>
         )}
-        <span
-          data-testid="save-status"
-          className={styles.saveStatus}
-          style={{
-            color:
-              saveStatus === 'error'
-                ? '#E06060'
-                : saveStatus === 'unsaved'
-                  ? T.accent
-                  : T.statusText,
-          }}
-        >
-          {saveStatusText[saveStatus]}
-        </span>
+        {saveCtaLabel ? (
+          <button
+            data-testid="save-cta-button"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
+              onSaveCtaClick?.()
+            }}
+            className={styles.saveCtaButton}
+          >
+            {saveCtaLabel}
+          </button>
+        ) : (
+          <span
+            data-testid="save-status"
+            className={styles.saveStatus}
+            style={{
+              color:
+                saveStatus === 'error'
+                  ? '#E06060'
+                  : saveStatus === 'unsaved'
+                    ? T.accent
+                    : T.statusText,
+            }}
+          >
+            {saveStatusText[saveStatus]}
+          </span>
+        )}
         <span className={styles.zoomPercent}>{Math.round(zoom * 100)}%</span>
         <button
           data-testid="editor-user-avatar"
           onClick={(e) => {
             e.stopPropagation()
-            setMenuOpen((v) => !v)
+            if (!isDemo) setMenuOpen((v) => !v)
           }}
           className={styles.editorAvatar}
         >
-          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          {user?.name ? user.name.charAt(0).toUpperCase() : 'G'}
         </button>
       </div>
 

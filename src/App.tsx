@@ -8,6 +8,7 @@ import { LandingPage } from './features/landing/LandingPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 import { AdminPage } from './features/admin/AdminPage'
 import { VerifyPage } from './features/auth/VerifyPage'
+import { DemoEditorPage } from './features/editor/pages/DemoEditorPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 
 function Header() {
@@ -21,6 +22,7 @@ function Header() {
     location.pathname === '/settings' ||
     location.pathname === '/admin' ||
     location.pathname === '/verify' ||
+    location.pathname === '/try' ||
     location.pathname.match(/^\/flows\/[^/]+$/) ||
     location.pathname.match(/^\/shared\/[^/]+$/)
   ) {
@@ -114,6 +116,7 @@ function App() {
             />
             <Route path="/verify" element={<VerifyPage />} />
             <Route path="/shared/:token" element={<SharedFlowPage />} />
+            <Route path="/try" element={<DemoEditorPage />} />
           </Routes>
         </main>
       </AuthProvider>
