@@ -2246,10 +2246,16 @@ describe('2-click confirm UX (#219)', () => {
         ),
       ).toBe(true)
 
-      // Click cell 2 (different position) — ghost should move, NOT create node
-      fireEvent.click(cell2!)
+      // Mouse leaves cell 1 — ghost cancels (matches real browser behavior)
+      fireEvent.mouseLeave(cell1!)
+      expect(
+        Array.from(container.querySelectorAll('text')).some(
+          (t) => t.textContent === 'クリックで確定',
+        ),
+      ).toBe(false)
 
-      // Ghost should still be visible (moved to new cell)
+      // Click cell 2 — new ghost appears at cell 2, NOT creating a node
+      fireEvent.click(cell2!)
       expect(
         Array.from(container.querySelectorAll('text')).some(
           (t) => t.textContent === 'クリックで確定',
