@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { InternalArrow, TaskData, RowData } from '../types'
 import { useMoveAutoRepair } from './useMoveAutoRepair'
@@ -525,6 +525,92 @@ describe('useMoveAutoRepair', () => {
 
       // No cross-lane toast
       expect(addConfirmToast).not.toHaveBeenCalled()
+    })
+  })
+
+  /* ======================================================= */
+  /* repairPreview                                           */
+  /* ======================================================= */
+
+  describe('repairPreview', () => {
+    it('should set repairPreview when chain reorder toast is shown', () => {
+      // 3-node chain: A(r0)→C(r2)→B(r1) — needs reorder to A→B→C
+      const arrows: InternalArrow[] = [
+        mkArrow('a1', 'l0_r0', 'l0_r2'),
+        mkArrow('a2', 'l0_r2', 'l0_r1'),
+      ]
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r2', nodeId: 'n3' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+      const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
+
+      const { result } = renderAndTrigger(
+        { arrows, setArrows, tasks, rows, addConfirmToast },
+        'l0_r2',
+        'l0',
+      )
+
+      // repairPreview should be set with nodes and proposedArrows
+      expect(result.current.repairPreview).not.toBeNull()
+      expect(result.current.repairPreview!.nodes).toContain('l0_r0')
+      expect(result.current.repairPreview!.nodes).toContain('l0_r1')
+      expect(result.current.repairPreview!.nodes).toContain('l0_r2')
+      expect(result.current.repairPreview!.proposedArrows.length).toBe(2)
+    })
+
+    it('should clear repairPreview when clearRepairPreview is called', () => {
+      const arrows: InternalArrow[] = [
+        mkArrow('a1', 'l0_r0', 'l0_r2'),
+        mkArrow('a2', 'l0_r2', 'l0_r1'),
+      ]
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r2', nodeId: 'n3' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+      const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
+
+      const { result } = renderAndTrigger(
+        { arrows, setArrows, tasks, rows, addConfirmToast },
+        'l0_r2',
+        'l0',
+      )
+
+      expect(result.current.repairPreview).not.toBeNull()
+
+      // Clear
+      act(() => {
+        result.current.clearRepairPreview()
+      })
+
+      expect(result.current.repairPreview).toBeNull()
+    })
+
+    it('should have null repairPreview when no reorder is needed', () => {
+      // Already in correct order A→B→C
+      const arrows: InternalArrow[] = [
+        mkArrow('a1', 'l0_r0', 'l0_r1'),
+        mkArrow('a2', 'l0_r1', 'l0_r2'),
+      ]
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r2', nodeId: 'n3' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+      const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
+
+      const { result } = renderAndTrigger(
+        { arrows, setArrows, tasks, rows, addConfirmToast },
+        'l0_r1',
+        'l0',
+      )
+
+      expect(result.current.repairPreview).toBeNull()
     })
   })
 })
