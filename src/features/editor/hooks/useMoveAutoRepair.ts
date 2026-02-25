@@ -6,8 +6,8 @@ import {
   detectReorder,
   reconnectChain,
   detectCrossLaneRewire,
+  type CrossLaneRewire,
 } from '../../../lib/flow-engine'
-import type { CrossLaneRewire } from '../../../lib/flow-engine'
 import { uid } from '../../../lib/uid'
 
 interface UseMoveAutoRepairOptions {
@@ -98,6 +98,8 @@ export function useMoveAutoRepair({
   }, [arrows, tasks, rows, setArrows, addConfirmToast])
 
   // Cross-lane rewire detection (fires after chain reconnection updates arrows)
+  // arrows is required in deps: onConfirm sets the ref, then setArrows triggers
+  // a re-render with new arrows reference, causing this effect to fire.
   useEffect(() => {
     const pending = pendingCrossLaneRef.current
     if (!pending) return

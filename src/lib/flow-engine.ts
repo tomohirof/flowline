@@ -183,12 +183,14 @@ export function detectCrossLaneRewire(
   const newTail = proposedChain[proposedChain.length - 1]
   if (oldTail === newTail) return []
 
+  if (!tasks[oldTail] || !tasks[newTail]) return []
+
   const rowIndex = new Map(rows.map((r, i) => [r.id, i]))
-  const oldRow = rowIndex.get(tasks[oldTail]?.rid) ?? 0
-  const newRow = rowIndex.get(tasks[newTail]?.rid) ?? 0
+  const oldRow = rowIndex.get(tasks[oldTail].rid) ?? 0
+  const newRow = rowIndex.get(tasks[newTail].rid) ?? 0
   if (newRow <= oldRow) return []
 
-  const oldTailLane = tasks[oldTail]?.lid
+  const oldTailLane = tasks[oldTail].lid
   return arrows
     .filter((a) => a.from === oldTail && tasks[a.to] != null && tasks[a.to].lid !== oldTailLane)
     .map((a) => ({
