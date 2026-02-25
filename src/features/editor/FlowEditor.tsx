@@ -1460,8 +1460,10 @@ export default function FlowEditor({
     const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
     a.href = url
     a.download = `flowline-${sanitized}-${ts}.json`
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
   const bgClick = (): void => {

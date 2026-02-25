@@ -2643,11 +2643,17 @@ describe('JSON export (#235)', () => {
   })
 
   it('should call URL.revokeObjectURL after download', async () => {
+    vi.useFakeTimers()
     const flow = createMinimalFlow()
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     setupDownloadMock()
-    await clickJSONDownloadButton()
+    fireEvent.click(screen.getByText('JSON をダウンロード'))
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
+    vi.useRealTimers()
   })
 
   it('should generate filename with sanitized title', async () => {
