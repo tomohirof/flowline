@@ -16,12 +16,14 @@ describe('useDemoFlow', () => {
   // =============================================
 
   describe('initial state', () => {
-    it('should return a flow with default 2 lanes', () => {
+    it('should return a flow with default 4 lanes', () => {
       const { result } = renderHook(() => useDemoFlow())
       expect(result.current.flow).not.toBeNull()
-      expect(result.current.flow.lanes).toHaveLength(2)
-      expect(result.current.flow.lanes[0].name).toBe('レーン1')
-      expect(result.current.flow.lanes[1].name).toBe('レーン2')
+      expect(result.current.flow.lanes).toHaveLength(4)
+      expect(result.current.flow.lanes[0].name).toBe('lane1')
+      expect(result.current.flow.lanes[1].name).toBe('lane2')
+      expect(result.current.flow.lanes[2].name).toBe('lane3')
+      expect(result.current.flow.lanes[3].name).toBe('lane4')
     })
 
     it('should return empty nodes and arrows', () => {
@@ -103,12 +105,15 @@ describe('useDemoFlow', () => {
       const lanes = result.current.flow.lanes
       expect(lanes[0].position).toBe(0)
       expect(lanes[1].position).toBe(1)
+      expect(lanes[2].position).toBe(2)
+      expect(lanes[3].position).toBe(3)
     })
 
-    it('should have lanes with different colorIndex values', () => {
+    it('should have lanes with unique colorIndex values', () => {
       const { result } = renderHook(() => useDemoFlow())
       const lanes = result.current.flow.lanes
-      expect(lanes[0].colorIndex).not.toBe(lanes[1].colorIndex)
+      const colorIndices = lanes.map((l) => l.colorIndex)
+      expect(new Set(colorIndices).size).toBe(colorIndices.length)
     })
   })
 
