@@ -8,6 +8,8 @@ import {
   detectReorder,
   reconnectChain,
 } from './flow-engine'
+import { exitPt, entryPt } from './arrow-routing'
+import { computeBridgeArrows } from '../features/editor/auto-connect'
 
 /* --------------------------------------------------------- */
 /* helpers                                                   */
@@ -331,5 +333,89 @@ describe('reconnectChain', () => {
 
   it('should return empty array for empty input', () => {
     expect(reconnectChain([])).toEqual([])
+  })
+})
+
+/* ========================================================= */
+/* 統合テスト                                                  */
+/* ========================================================= */
+
+describe('統合テスト', () => {
+  it('⑤ should bridge A→C when B is deleted from A→B→C', () => {
+    const arrows: InternalArrow[] = [
+      { id: 'a1', from: 'A', to: 'B', comment: '' },
+      { id: 'a2', from: 'B', to: 'C', comment: '' },
+    ]
+    const bridges = computeBridgeArrows(new Set(['B']), arrows)
+    expect(bridges).toHaveLength(1)
+    expect(bridges[0].from).toBe('A')
+    expect(bridges[0].to).toBe('C')
+
+    // After filtering deleted keys and adding bridges
+    const remaining = filterArrowsByDeletedKeys(arrows, new Set(['B']))
+    expect(remaining).toHaveLength(0)
+    const newArrows = [
+      ...remaining,
+      ...bridges.map((b, i) => ({
+        id: `bridge${i}`,
+        from: b.from,
+        to: b.to,
+        comment: b.comment,
+      })),
+    ]
+    expect(newArrows).toHaveLength(1)
+    expect(newArrows[0].from).toBe('A')
+    expect(newArrows[0].to).toBe('C')
+  })
+
+  it('⑥ should verify all arrow directions after chain reconnection', () => {
+    // 5 nodes in same lane, chain needs reordering
+    const chain = ['k1', 'k2', 'k3', 'k4', 'k5']
+    const tasks: Record<string, { rid: string }> = {
+      k1: { rid: 'r0' },
+      k2: { rid: 'r4' },
+      k3: { rid: 'r1' },
+      k4: { rid: 'r2' },
+      k5: { rid: 'r3' },
+    }
+    const rows = [
+      { id: 'r0' },
+      { id: 'r1' },
+      { id: 'r2' },
+      { id: 'r3' },
+      { id: 'r4' },
+    ]
+
+    // Detect and reorder
+    const reorder = detectReorder(chain, tasks, rows)
+    expect(reorder.changed).toBe(true)
+    expect(reorder.proposed).toEqual(['k1', 'k3', 'k4', 'k5', 'k2'])
+
+    // Reconnect
+    const newArrows = reconnectChain(reorder.proposed)
+
+    // Verify all arrow routing directions
+    const RH = 84,
+      TM = 24,
+      HH = 46
+    const positions: Record<string, { x: number; y: number }> = {}
+    for (const key of reorder.proposed) {
+      const ri = rows.findIndex((r) => r.id === tasks[key].rid)
+      positions[key] = { x: 200, y: TM + HH + ri * RH + RH / 2 }
+    }
+
+    for (const arrow of newArrows) {
+      const fp = positions[arrow.from]
+      const tp = positions[arrow.to]
+      const exit = exitPt(fp, tp, 76, 28, RH)
+      const entry = entryPt(tp, fp, 76, 28, RH)
+
+      // Exit should be from bottom (y > center.y)
+      expect(exit.y).toBeGreaterThan(fp.y)
+      // Entry should be at top (y < center.y)
+      expect(entry.y).toBeLessThan(tp.y)
+      // Same lane → X should match
+      expect(exit.x).toBe(entry.x)
+    }
   })
 })
