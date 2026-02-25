@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { InternalArrow, TaskData, RowData } from '../types'
 import { findChain, detectReorder, reconnectChain } from '../../../lib/flow-engine'
@@ -31,12 +31,13 @@ export function useMoveAutoRepair({
   addConfirmToast,
   addSuccessToast,
 }: UseMoveAutoRepairOptions) {
-  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
+  const pendingMoveRef = useRef<PendingMove | null>(null)
 
   useEffect(() => {
-    if (!pendingMove) return
-    const { movedKey, laneId } = pendingMove
-    setPendingMove(null)
+    const pending = pendingMoveRef.current
+    if (!pending) return
+    pendingMoveRef.current = null
+    const { movedKey, laneId } = pending
 
     const chain = findChain(arrows, tasks, laneId)
     if (chain.length < 3) return
@@ -83,10 +84,10 @@ export function useMoveAutoRepair({
       },
       crossingCount: arrowCount,
     })
-  }, [pendingMove, arrows, tasks, rows, setArrows, addConfirmToast, addSuccessToast])
+  }, [arrows, tasks, rows, setArrows, addConfirmToast, addSuccessToast])
 
   const triggerMoveRepairCheck = (movedKey: string, laneId: string): void => {
-    setPendingMove({ movedKey, laneId })
+    pendingMoveRef.current = { movedKey, laneId }
   }
 
   return { triggerMoveRepairCheck }
