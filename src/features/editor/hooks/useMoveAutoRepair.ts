@@ -23,11 +23,6 @@ interface UseMoveAutoRepairOptions {
   }) => void
 }
 
-interface PendingMove {
-  movedKey: string
-  laneId: string
-}
-
 export function useMoveAutoRepair({
   arrows,
   setArrows,
@@ -35,79 +30,11 @@ export function useMoveAutoRepair({
   rows,
   addConfirmToast,
 }: UseMoveAutoRepairOptions) {
-  const pendingMoveRef = useRef<PendingMove | null>(null)
   const pendingCrossLaneRef = useRef<CrossLaneRewire[] | null>(null)
   const [repairPreview, setRepairPreview] = useState<{
     nodes: string[]
     proposedArrows: { from: string; to: string }[]
   } | null>(null)
-
-  // Chain reconnection detection
-  useEffect(() => {
-    const pending = pendingMoveRef.current
-    if (!pending) return
-    pendingMoveRef.current = null
-    const { movedKey, laneId } = pending
-
-    const chain = findChain(arrows, tasks, laneId)
-    if (chain.length < 3) return
-    if (!chain.includes(movedKey)) return
-
-    const { changed, current, proposed } = detectReorder(chain, tasks, rows)
-    if (!changed) return
-
-    const detail = proposed.map((k) => tasks[k]?.label ?? '?').join(' → ')
-    const arrowCount = proposed.length - 1
-
-    const chainKeySet = new Set(chain)
-    const oldChainArrows = arrows.filter((a) => chainKeySet.has(a.from) && chainKeySet.has(a.to))
-
-    // Pre-compute cross-lane rewires before chain reconnection
-    const crossLaneRewires = detectCrossLaneRewire(current, proposed, arrows, tasks, rows)
-
-    // Set repair preview for visual feedback
-    const proposedArrowPairs = reconnectChain(proposed)
-    setRepairPreview({
-      nodes: [...proposed],
-      proposedArrows: proposedArrowPairs,
-    })
-
-    addConfirmToast({
-      message: '接続順を修復しますか？',
-      detail: `接続順を修復: ${detail}`,
-      onConfirm: () => {
-        setRepairPreview(null)
-        setArrows((prev) => {
-          const oldIds = new Set(oldChainArrows.map((a) => a.id))
-          const filtered = prev.filter((a) => !oldIds.has(a.id))
-
-          const commentMap = new Map<string, string>()
-          for (const a of oldChainArrows) {
-            if (a.comment) {
-              commentMap.set(`${a.from}->${a.to}`, a.comment)
-              commentMap.set(`${a.to}->${a.from}`, a.comment)
-            }
-          }
-
-          const newPairs = reconnectChain(proposed)
-          const newArrows: InternalArrow[] = newPairs.map((p) => ({
-            id: uid(),
-            from: p.from,
-            to: p.to,
-            comment: commentMap.get(`${p.from}->${p.to}`) ?? '',
-          }))
-
-          return [...filtered, ...newArrows]
-        })
-
-        // Queue cross-lane rewire toast
-        if (crossLaneRewires.length > 0) {
-          pendingCrossLaneRef.current = crossLaneRewires
-        }
-      },
-      crossingCount: arrowCount,
-    })
-  }, [arrows, tasks, rows, setArrows, addConfirmToast])
 
   // Cross-lane rewire detection (fires after chain reconnection updates arrows)
   // arrows is required in deps: onConfirm sets the ref, then setArrows triggers
@@ -152,8 +79,79 @@ export function useMoveAutoRepair({
     })
   }, [arrows, tasks, setArrows, addConfirmToast])
 
-  const triggerMoveRepairCheck = (movedKey: string, laneId: string): void => {
-    pendingMoveRef.current = { movedKey, laneId }
+  // Synchronous chain detection — called directly from moveTask
+  const triggerMoveRepairCheck = (
+    movedKey: string,
+    laneId: string,
+    currentArrows: InternalArrow[],
+    currentTasks: Record<string, TaskData>,
+  ): void => {
+    const chain = findChain(currentArrows, currentTasks, laneId)
+    if (chain.length < 3) return
+    if (!chain.includes(movedKey)) return
+
+    const { changed, current, proposed } = detectReorder(chain, currentTasks, rows)
+    if (!changed) return
+
+    const detail = proposed.map((k) => currentTasks[k]?.label ?? '?').join(' → ')
+    const arrowCount = proposed.length - 1
+
+    const chainKeySet = new Set(chain)
+    const oldChainArrows = currentArrows.filter(
+      (a) => chainKeySet.has(a.from) && chainKeySet.has(a.to),
+    )
+
+    // Pre-compute cross-lane rewires before chain reconnection
+    const crossLaneRewires = detectCrossLaneRewire(
+      current,
+      proposed,
+      currentArrows,
+      currentTasks,
+      rows,
+    )
+
+    // Set repair preview for visual feedback
+    const proposedArrowPairs = reconnectChain(proposed)
+    setRepairPreview({
+      nodes: [...proposed],
+      proposedArrows: proposedArrowPairs,
+    })
+
+    addConfirmToast({
+      message: '接続順を修復しますか？',
+      detail: `接続順を修復: ${detail}`,
+      onConfirm: () => {
+        setRepairPreview(null)
+        setArrows((prev) => {
+          const oldIds = new Set(oldChainArrows.map((a) => a.id))
+          const filtered = prev.filter((a) => !oldIds.has(a.id))
+
+          const commentMap = new Map<string, string>()
+          for (const a of oldChainArrows) {
+            if (a.comment) {
+              commentMap.set(`${a.from}->${a.to}`, a.comment)
+              commentMap.set(`${a.to}->${a.from}`, a.comment)
+            }
+          }
+
+          const newPairs = reconnectChain(proposed)
+          const newArrows: InternalArrow[] = newPairs.map((p) => ({
+            id: uid(),
+            from: p.from,
+            to: p.to,
+            comment: commentMap.get(`${p.from}->${p.to}`) ?? '',
+          }))
+
+          return [...filtered, ...newArrows]
+        })
+
+        // Queue cross-lane rewire toast
+        if (crossLaneRewires.length > 0) {
+          pendingCrossLaneRef.current = crossLaneRewires
+        }
+      },
+      crossingCount: arrowCount,
+    })
   }
 
   const clearRepairPreview = (): void => {
