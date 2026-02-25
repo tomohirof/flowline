@@ -846,7 +846,10 @@ describe('calcMultiDropTargets', () => {
       'L1_R1',
       selected,
       tasks,
-      liMap, riMap, lanes, rows,
+      liMap,
+      riMap,
+      lanes,
+      rows,
     )
     expect(result).toEqual(new Set(['L2_R1', 'L2_R2']))
   })
@@ -862,7 +865,10 @@ describe('calcMultiDropTargets', () => {
       'L3_R3',
       selected,
       tasks,
-      liMap, riMap, lanes, rows,
+      liMap,
+      riMap,
+      lanes,
+      rows,
     )
     expect(result).toBeNull()
   })
@@ -879,7 +885,10 @@ describe('calcMultiDropTargets', () => {
       'L1_R1',
       selected,
       tasks,
-      liMap, riMap, lanes, rows,
+      liMap,
+      riMap,
+      lanes,
+      rows,
     )
     expect(result).toBeNull()
   })
@@ -895,7 +904,10 @@ describe('calcMultiDropTargets', () => {
       'L1_R1',
       selected,
       tasks,
-      liMap, riMap, lanes, rows,
+      liMap,
+      riMap,
+      lanes,
+      rows,
     )
     expect(result).toEqual(new Set(['L1_R2', 'L1_R3']))
   })
@@ -911,7 +923,10 @@ describe('calcMultiDropTargets', () => {
       'L1_R1',
       selected,
       tasks,
-      liMap, riMap, lanes, rows,
+      liMap,
+      riMap,
+      lanes,
+      rows,
     )
     expect(result).toBeNull()
   })

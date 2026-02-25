@@ -41,7 +41,13 @@ import { useArrows } from './hooks/useArrows'
 import { useMoveAutoRepair } from './hooks/useMoveAutoRepair'
 import { uid } from '../../lib/uid'
 import { computeBridgeArrows } from './auto-connect'
-import { remapArrows, remapArrowsBatch, filterArrowsByDeletedKeys, calcArrowPath, calcMultiDropTargets } from '../../lib/flow-engine'
+import {
+  remapArrows,
+  remapArrowsBatch,
+  filterArrowsByDeletedKeys,
+  calcArrowPath,
+  calcMultiDropTargets,
+} from '../../lib/flow-engine'
 
 // =============================================
 // Icons
