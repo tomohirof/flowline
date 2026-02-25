@@ -1,3 +1,6 @@
+import type { InternalArrow, ArrowPathResult } from '../../lib/types'
+export type { InternalArrow, ArrowPathResult }
+
 // =============================================
 // Theme & Palette types (from mockup constants)
 // =============================================
@@ -167,23 +170,8 @@ export interface InternalLane {
   ci: number
 }
 
-export interface InternalArrow {
-  id: string
-  from: string
-  to: string
-  comment: string
-  color?: string
-  dash?: string
-}
-
 export interface DragState {
   key: string
-}
-
-export interface ArrowPathResult {
-  d: string
-  mx: number
-  my: number
 }
 
 export interface CellInfo {

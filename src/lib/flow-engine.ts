@@ -1,4 +1,4 @@
-import type { InternalArrow, ArrowPathResult } from '../features/editor/types'
+import type { InternalArrow, ArrowPathResult } from './types'
 import { exitPt, entryPt, buildArrowPath } from './arrow-routing'
 import type { Point } from './arrow-routing'
 
@@ -39,6 +39,10 @@ export function calcArrowPath(from: NodePos, to: NodePos, config: ArrowConfig): 
  * 指定レーン内の矢印チェーンをたどり、チェーン順のkey配列を返す。
  * チェーンの起点は「同レーン内で incoming がないノード」。
  * 循環参照は visited Set で安全に停止する。
+ *
+ * 注意: 同一レーン内に非連結な複数チェーン（例: A→B と C→D）が存在する場合、
+ * 最初のheadから到達可能なチェーンのみを返す。現状のエディタではレーン内チェーンは
+ * 常に単一連結であることを前提としている。
  */
 export function findChain(
   arrows: { from: string; to: string }[],

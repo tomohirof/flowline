@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { InternalArrow } from '../features/editor/types'
+import type { InternalArrow } from './types'
 import {
   remapArrows,
   filterArrowsByDeletedKeys,
