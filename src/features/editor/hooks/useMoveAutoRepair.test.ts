@@ -401,6 +401,7 @@ describe('useMoveAutoRepair', () => {
     it('should show cross-lane toast after chain reconnection onConfirm when old tail had cross-lane arrow', () => {
       // Chain: A(r0) → B(r1) → C(r2) → D(r3), D has cross-lane arrow to X(l1)
       // After move: B moves to r3 → proposed: A→C→D→B, old tail=D, new tail=B
+      // X must be below old tail D(r2) for cross-lane rewire to trigger
       const initialArrows: InternalArrow[] = [
         mkArrow('a1', 'l0_r0', 'l0_r1'),
         mkArrow('a2', 'l0_r1', 'l0_r2'),
@@ -419,7 +420,7 @@ describe('useMoveAutoRepair', () => {
         l0_r1: { label: 'B', lid: 'l0', rid: 'r3', nodeId: 'n2' },
         l0_r2: { label: 'C', lid: 'l0', rid: 'r1', nodeId: 'n3' },
         l0_r3: { label: 'D', lid: 'l0', rid: 'r2', nodeId: 'n4' },
-        l1_r0: { label: 'X', lid: 'l1', rid: 'r0', nodeId: 'n5' },
+        l1_r0: { label: 'X', lid: 'l1', rid: 'r3', nodeId: 'n5' },
       }
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
 
@@ -467,7 +468,7 @@ describe('useMoveAutoRepair', () => {
         l0_r1: { label: 'B', lid: 'l0', rid: 'r3', nodeId: 'n2' },
         l0_r2: { label: 'C', lid: 'l0', rid: 'r1', nodeId: 'n3' },
         l0_r3: { label: 'D', lid: 'l0', rid: 'r2', nodeId: 'n4' },
-        l1_r0: { label: 'X', lid: 'l1', rid: 'r0', nodeId: 'n5' },
+        l1_r0: { label: 'X', lid: 'l1', rid: 'r3', nodeId: 'n5' },
       }
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
 
