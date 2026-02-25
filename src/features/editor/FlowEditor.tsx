@@ -1127,7 +1127,7 @@ export default function FlowEditor({
       for (const oldK of keyMap.keys()) delete n[oldK]
       for (const [oldK, newK] of keyMap) {
         const pos = posMap.get(newK)!
-        n[newK] = { ...tasks[oldK], lid: pos.lid, rid: pos.rid }
+        n[newK] = { ...p[oldK], lid: pos.lid, rid: pos.rid }
       }
       return n
     })
