@@ -1970,6 +1970,36 @@ describe('arrow reorganization toast (#182)', () => {
 })
 
 describe('z-order: arrow controls above row gap (#212)', () => {
+  it('should render arrow hit paths after row gap hit zones in SVG DOM order', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const allElements = Array.from(container.querySelectorAll('*'))
+
+    const rowGapIndices = allElements
+      .map((el, i) => (el.getAttribute('data-testid')?.startsWith('rowgap-hit-') ? i : -1))
+      .filter((i) => i !== -1)
+    expect(rowGapIndices.length).toBeGreaterThan(0)
+    const lastRowGapIndex = Math.max(...rowGapIndices)
+
+    // Arrow hit path: transparent stroke-width=20 path
+    const arrowHitIndex = allElements.findIndex(
+      (el) =>
+        el.tagName === 'path' &&
+        el.getAttribute('pointer-events') === 'stroke' &&
+        el.getAttribute('stroke-width') === '20',
+    )
+    expect(arrowHitIndex).not.toBe(-1)
+
+    // Arrow hit paths should come AFTER row gaps = higher z-order, so arrow clicks win
+    expect(arrowHitIndex).toBeGreaterThan(lastRowGapIndex)
+  })
+
   it('should render arrow floating controls after row gap hit zones in SVG DOM order', () => {
     const flow = createMinimalFlow()
     flow.nodes = [
