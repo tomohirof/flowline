@@ -27,11 +27,7 @@ export interface ArrowConfig {
  * ノード中心座標とサイズ設定から、矢印のSVGパスを計算する。
  * exitPt → entryPt → buildArrowPath の順に呼び出す薄いラッパー。
  */
-export function calcArrowPath(
-  from: NodePos,
-  to: NodePos,
-  config: ArrowConfig,
-): ArrowPathResult {
+export function calcArrowPath(from: NodePos, to: NodePos, config: ArrowConfig): ArrowPathResult {
   const f: Point = { x: from.x, y: from.y }
   const t: Point = { x: to.x, y: to.y }
   const s = exitPt(f, t, config.hw, config.hh, config.rh, config.fromShape)
@@ -49,9 +45,7 @@ export function findChain(
   tasks: Record<string, { lid: string; rid: string }>,
   laneId: string,
 ): string[] {
-  const laneKeys = new Set(
-    Object.keys(tasks).filter((k) => tasks[k].lid === laneId),
-  )
+  const laneKeys = new Set(Object.keys(tasks).filter((k) => tasks[k].lid === laneId))
   if (laneKeys.size === 0) return []
 
   // Build adjacency for same-lane nodes only
@@ -143,9 +137,7 @@ export function detectReorder(
 /**
  * 位置順のkey配列から隣接ペアの矢印配列を生成する。
  */
-export function reconnectChain(
-  sortedKeys: string[],
-): { from: string; to: string }[] {
+export function reconnectChain(sortedKeys: string[]): { from: string; to: string }[] {
   const arrows: { from: string; to: string }[] = []
   for (let i = 0; i < sortedKeys.length - 1; i++) {
     arrows.push({ from: sortedKeys[i], to: sortedKeys[i + 1] })

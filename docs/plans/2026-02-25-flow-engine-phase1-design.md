@@ -68,12 +68,12 @@ reconnectChain(sortedKeys: string[])
 
 ## FlowEditor.tsx の差し替え箇所
 
-| 箇所 | 行 | 現在 | 差し替え後 |
-|------|-----|------|-----------|
-| `moveTask` | L999-1001 | `p.map(a => ({...a, from: a.from===fk ? nk : a.from, ...}))` | `remapArrows(p, fk, nk)` |
-| `rmRow` | L1089 | `p.filter(a => !rm.includes(a.from) && !rm.includes(a.to))` | `filterArrowsByDeletedKeys(p, new Set(rm))` |
-| `rmLane` | L1104 | 同上 | `filterArrowsByDeletedKeys(p, new Set(rm))` |
-| `aPath` | L1108-1124 | 関数全体 | 座標解決をUI層に残し `calcArrowPath(fromPos, toPos, config)` を呼ぶ |
+| 箇所       | 行         | 現在                                                         | 差し替え後                                                          |
+| ---------- | ---------- | ------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `moveTask` | L999-1001  | `p.map(a => ({...a, from: a.from===fk ? nk : a.from, ...}))` | `remapArrows(p, fk, nk)`                                            |
+| `rmRow`    | L1089      | `p.filter(a => !rm.includes(a.from) && !rm.includes(a.to))`  | `filterArrowsByDeletedKeys(p, new Set(rm))`                         |
+| `rmLane`   | L1104      | 同上                                                         | `filterArrowsByDeletedKeys(p, new Set(rm))`                         |
+| `aPath`    | L1108-1124 | 関数全体                                                     | 座標解決をUI層に残し `calcArrowPath(fromPos, toPos, config)` を呼ぶ |
 
 **座標解決（`tasks[arrow.from]`, `liMap`, `riMap`, `ct()`）はFlowEditor側に残す。`calcArrowPath` には解決済みの `{x, y}` のみ渡す。**
 
@@ -122,12 +122,12 @@ Phase 1では含めない。テスト③は `test.todo()` で予約。diamond-no
 
 ## スコープ外
 
-| やらないこと | 理由 |
-|------------|------|
-| 制約ソルバー / 物理エンジン | グリッド構造では不要 |
-| Strategy パターン | 現状1パターンしかない |
-| ビジュアル回帰テスト | UIが頻繁に変わるフェーズでは維持コストが高い |
-| Reducer化 / 状態管理ライブラリ | 切り出しとは独立した判断 |
+| やらないこと                   | 理由                                         |
+| ------------------------------ | -------------------------------------------- |
+| 制約ソルバー / 物理エンジン    | グリッド構造では不要                         |
+| Strategy パターン              | 現状1パターンしかない                        |
+| ビジュアル回帰テスト           | UIが頻繁に変わるフェーズでは維持コストが高い |
+| Reducer化 / 状態管理ライブラリ | 切り出しとは独立した判断                     |
 
 ## 完了条件
 

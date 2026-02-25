@@ -15,9 +15,7 @@ import { computeBridgeArrows } from '../features/editor/auto-connect'
 /* helpers                                                   */
 /* --------------------------------------------------------- */
 
-function mkArrow(
-  overrides: Partial<InternalArrow> & { from: string; to: string },
-): InternalArrow {
+function mkArrow(overrides: Partial<InternalArrow> & { from: string; to: string }): InternalArrow {
   return {
     id: overrides.id ?? 'a1',
     from: overrides.from,
@@ -68,9 +66,7 @@ describe('remapArrows', () => {
   })
 
   it('should preserve optional color and dash fields', () => {
-    const arrows = [
-      mkArrow({ from: 'A', to: 'B', color: '#ff0000', dash: '5,3' }),
-    ]
+    const arrows = [mkArrow({ from: 'A', to: 'B', color: '#ff0000', dash: '5,3' })]
     const result = remapArrows(arrows, 'A', 'C')
     expect(result[0]).toEqual({
       id: 'a1',
@@ -127,10 +123,7 @@ describe('filterArrowsByDeletedKeys', () => {
       mkArrow({ id: 'a1', from: 'A', to: 'B' }),
       mkArrow({ id: 'a2', from: 'C', to: 'D' }),
     ]
-    const result = filterArrowsByDeletedKeys(
-      arrows,
-      new Set(['A', 'B', 'C', 'D']),
-    )
+    const result = filterArrowsByDeletedKeys(arrows, new Set(['A', 'B', 'C', 'D']))
     expect(result).toEqual([])
   })
 
@@ -410,13 +403,7 @@ describe('統合テスト', () => {
       k4: { rid: 'r2' },
       k5: { rid: 'r3' },
     }
-    const rows = [
-      { id: 'r0' },
-      { id: 'r1' },
-      { id: 'r2' },
-      { id: 'r3' },
-      { id: 'r4' },
-    ]
+    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }, { id: 'r4' }]
 
     // Detect and reorder
     const reorder = detectReorder(chain, tasks, rows)

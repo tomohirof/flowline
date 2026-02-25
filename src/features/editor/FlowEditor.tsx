@@ -1131,7 +1131,13 @@ export default function FlowEditor({
     if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
     const from = ct(fli, fri)
     const to = ct(tli, tri)
-    return calcArrowPath(from, to, { hw: TW / 2, hh: TH / 2, rh: RH, fromShape: ft.shape ?? undefined, toShape: tt.shape ?? undefined })
+    return calcArrowPath(from, to, {
+      hw: TW / 2,
+      hh: TH / 2,
+      rh: RH,
+      fromShape: ft.shape ?? undefined,
+      toShape: tt.shape ?? undefined,
+    })
   }
 
   const exportMermaid = (): string => {

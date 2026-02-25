@@ -13,6 +13,7 @@
 ### Task 1: `remapArrows` — テスト作成
 
 **Files:**
+
 - Create: `src/lib/flow-engine.test.ts`
 - Create: `src/lib/flow-engine.ts`
 
@@ -78,6 +79,7 @@ Expected: FAIL — `remapArrows` が存在しない
 ### Task 2: `remapArrows` — 実装
 
 **Files:**
+
 - Create: `src/lib/flow-engine.ts`
 
 **Step 3: 最小限の実装**
@@ -114,6 +116,7 @@ Expected: 6 tests PASS
 ### Task 3: `filterArrowsByDeletedKeys` — テスト作成
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.test.ts`
 
 **Step 5: 失敗するテストを追加**
@@ -176,6 +179,7 @@ Expected: `filterArrowsByDeletedKeys` のテストが FAIL
 ### Task 4: `filterArrowsByDeletedKeys` — 実装
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.ts`
 
 **Step 7: 実装を追加**
@@ -212,12 +216,14 @@ git commit -m "feat: add remapArrows and filterArrowsByDeletedKeys to flow-engin
 ### Task 5: `calcArrowPath` — テスト作成
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.test.ts`
 
 **Step 10: 失敗するテストを追加**
 
 `flow-engine.test.ts` に追加。テスト値は `arrow-routing.ts` の実際のロジックに基づく:
-- `exitPt({x:200,y:100}, {x:200,y:300}, 76, 28, 84)`: dy=200 > 84*0.3=25.2 → `{x:200, y:128}`
+
+- `exitPt({x:200,y:100}, {x:200,y:300}, 76, 28, 84)`: dy=200 > 84\*0.3=25.2 → `{x:200, y:128}`
 - `entryPt({x:200,y:300}, {x:200,y:100}, 76, 28, 84)`: dy=-200 < -25.2 → `{x:200, y:272}`
 - `buildArrowPath({x:200,y:128}, {x:200,y:272}, {x:200,y:100}, {x:200,y:300})`: dx=0 < 2 → 直線 `M200,128 L200,272`
 
@@ -286,6 +292,7 @@ Expected: `calcArrowPath` のテストが FAIL
 ### Task 6: `calcArrowPath` — 実装
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.ts`
 
 **Step 12: 実装を追加**
@@ -312,11 +319,7 @@ export interface ArrowConfig {
  * arrow-routing.ts の exitPt → entryPt → buildArrowPath を順に呼ぶラッパー。
  * 座標解決はUI層で行い、解決済みの値を渡す。
  */
-export function calcArrowPath(
-  from: NodePos,
-  to: NodePos,
-  config: ArrowConfig,
-): ArrowPathResult {
+export function calcArrowPath(from: NodePos, to: NodePos, config: ArrowConfig): ArrowPathResult {
   const f: Point = { x: from.x, y: from.y }
   const t: Point = { x: to.x, y: to.y }
   const s = exitPt(f, t, config.hw, config.hh, config.rh)
@@ -342,6 +345,7 @@ git commit -m "feat: add calcArrowPath wrapper to flow-engine"
 ### Task 7: `findChain` — テスト作成
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.test.ts`
 
 **Step 15: 失敗するテストを追加**
@@ -425,6 +429,7 @@ Expected: `findChain` のテストが FAIL
 ### Task 8: `findChain` — 実装
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.ts`
 
 **Step 17: 実装を追加**
@@ -441,9 +446,7 @@ export function findChain(
   laneId: string,
 ): string[] {
   // Collect keys in this lane
-  const laneKeys = new Set(
-    Object.keys(tasks).filter((k) => tasks[k].lid === laneId),
-  )
+  const laneKeys = new Set(Object.keys(tasks).filter((k) => tasks[k].lid === laneId))
   if (laneKeys.size === 0) return []
 
   // Build adjacency: from → to[], filtering to same-lane nodes only
@@ -495,6 +498,7 @@ git commit -m "feat: add findChain with cycle safety to flow-engine"
 ### Task 9: `detectReorder` — テスト作成
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.test.ts`
 
 **Step 20: 失敗するテストを追加**
@@ -562,6 +566,7 @@ Expected: `detectReorder` のテストが FAIL
 ### Task 10: `detectReorder` — 実装
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.ts`
 
 **Step 22: 実装を追加**
@@ -601,6 +606,7 @@ Expected: 全テスト PASS
 ### Task 11: `reconnectChain` — テスト作成
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.test.ts`
 
 **Step 24: 失敗するテストを追加**
@@ -643,6 +649,7 @@ Expected: `reconnectChain` のテストが FAIL
 ### Task 12: `reconnectChain` — 実装
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.ts`
 
 **Step 26: 実装を追加**
@@ -651,9 +658,7 @@ Expected: `reconnectChain` のテストが FAIL
 /**
  * 位置順のkey配列から隣接ペアの矢印配列を生成する。
  */
-export function reconnectChain(
-  sortedKeys: string[],
-): { from: string; to: string }[] {
+export function reconnectChain(sortedKeys: string[]): { from: string; to: string }[] {
   const arrows: { from: string; to: string }[] = []
   for (let i = 0; i < sortedKeys.length - 1; i++) {
     arrows.push({ from: sortedKeys[i], to: sortedKeys[i + 1] })
@@ -679,6 +684,7 @@ git commit -m "feat: add detectReorder and reconnectChain to flow-engine"
 ### Task 13: 統合テスト — テスト作成
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.test.ts`
 
 **Step 29: 統合テストを追加**
@@ -701,9 +707,15 @@ describe('統合テスト', () => {
     // After filtering deleted keys and adding bridges
     const remaining = filterArrowsByDeletedKeys(arrows, new Set(['B']))
     expect(remaining).toHaveLength(0) // both arrows had B
-    const newArrows = [...remaining, ...bridges.map((b, i) => ({
-      id: `bridge${i}`, from: b.from, to: b.to, comment: b.comment,
-    }))]
+    const newArrows = [
+      ...remaining,
+      ...bridges.map((b, i) => ({
+        id: `bridge${i}`,
+        from: b.from,
+        to: b.to,
+        comment: b.comment,
+      })),
+    ]
     expect(newArrows).toHaveLength(1)
     expect(newArrows[0].from).toBe('A')
     expect(newArrows[0].to).toBe('C')
@@ -731,7 +743,9 @@ describe('統合テスト', () => {
 
     // Verify all arrow routing directions
     // All nodes at same X (same lane), increasing Y
-    const RH = 84, TM = 24, HH = 46
+    const RH = 84,
+      TM = 24,
+      HH = 46
     const positions: Record<string, { x: number; y: number }> = {}
     for (const key of reorder.proposed) {
       const ri = rows.findIndex((r) => r.id === tasks[key].rid)
@@ -772,6 +786,7 @@ git commit -m "test: add integration tests for bridge deletion and chain reconne
 ### Task 14: FlowEditor.tsx — import差し替え（remapArrows, filterArrowsByDeletedKeys）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:37` (import追加)
 - Modify: `src/features/editor/FlowEditor.tsx:999-1001` (moveTask内)
 - Modify: `src/features/editor/FlowEditor.tsx:1089` (rmRow内)
@@ -833,6 +848,7 @@ Expected: 全テスト PASS
 ### Task 15: FlowEditor.tsx — aPath を calcArrowPath に差し替え
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:37` (import更新)
 - Modify: `src/features/editor/FlowEditor.tsx:1108-1124` (aPath関数)
 
@@ -926,6 +942,7 @@ Expected: ビルド成功、エラーなし
 **Step 44: ブラウザ目視確認**
 
 Playwrightまたはchrome-devtoolsで以下を確認:
+
 1. エディタ画面を開く
 2. ノードを追加し、矢印で接続する → 矢印パスが正しく描画される
 3. ノードを別セルに移動する → 矢印が追従する
