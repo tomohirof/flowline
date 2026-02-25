@@ -9,8 +9,10 @@ const DEMO_FLOW: Flow = {
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
   lanes: [
-    { id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 },
-    { id: 'lane-2', name: 'レーン2', colorIndex: 1, position: 1 },
+    { id: 'lane-1', name: 'lane1', colorIndex: 0, position: 0 },
+    { id: 'lane-2', name: 'lane2', colorIndex: 1, position: 1 },
+    { id: 'lane-3', name: 'lane3', colorIndex: 2, position: 2 },
+    { id: 'lane-4', name: 'lane4', colorIndex: 3, position: 3 },
   ],
   nodes: [],
   arrows: [],
