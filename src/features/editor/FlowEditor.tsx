@@ -534,7 +534,7 @@ export default function FlowEditor({
       autoConnect: editorSettings.autoConnect,
     })
 
-  const { triggerMoveRepairCheck } = useMoveAutoRepair({
+  const { triggerMoveRepairCheck, repairPreview, clearRepairPreview } = useMoveAutoRepair({
     arrows,
     setArrows,
     tasks,
@@ -2771,6 +2771,7 @@ export default function FlowEditor({
                 const isDT = dragging?.key === k,
                   isHov = hovered === k
                 const isDiamond = task.shape === 'diamond'
+                const isRepairTarget = repairPreview?.nodes.includes(k) ?? false
                 const tagW = lane.name.length * 7 + 14
                 return (
                   <g
@@ -2804,16 +2805,19 @@ export default function FlowEditor({
                         points={`${c.x},${c.y - DS} ${c.x + DS},${c.y} ${c.x},${c.y + DS} ${c.x - DS},${c.y}`}
                         fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
                         stroke={
-                          isConnSrc
+                          isRepairTarget
                             ? T.accent
-                            : isSel || isMulti
-                              ? T.nodeSelStroke
-                              : isConnTgt && isHov
-                                ? T.accent
-                                : task.strokeColor || T.accent
+                            : isConnSrc
+                              ? T.accent
+                              : isSel || isMulti
+                                ? T.nodeSelStroke
+                                : isConnTgt && isHov
+                                  ? T.accent
+                                  : task.strokeColor || T.accent
                         }
-                        strokeWidth={isConnSrc || isSel || isMulti ? 2 : 1.2}
+                        strokeWidth={isRepairTarget ? 2 : isConnSrc || isSel || isMulti ? 2 : 1.2}
                         strokeDasharray={isConnSrc ? '4,3' : task.dash || 'none'}
+                        className={isRepairTarget ? styles.repairPulseAnim : undefined}
                         style={{
                           cursor: connectFrom ? 'pointer' : 'grab',
                           filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
@@ -2839,16 +2843,19 @@ export default function FlowEditor({
                         height={TH}
                         fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
                         stroke={
-                          isConnSrc
+                          isRepairTarget
                             ? T.accent
-                            : isSel || isMulti
-                              ? T.nodeSelStroke
-                              : isConnTgt && isHov
-                                ? T.accent
-                                : task.strokeColor || T.nodeStroke
+                            : isConnSrc
+                              ? T.accent
+                              : isSel || isMulti
+                                ? T.nodeSelStroke
+                                : isConnTgt && isHov
+                                  ? T.accent
+                                  : task.strokeColor || T.nodeStroke
                         }
-                        strokeWidth={isConnSrc || isSel || isMulti ? 2 : 1.2}
+                        strokeWidth={isRepairTarget ? 2 : isConnSrc || isSel || isMulti ? 2 : 1.2}
                         strokeDasharray={isConnSrc ? '4,3' : task.dash || 'none'}
+                        className={isRepairTarget ? styles.repairPulseAnim : undefined}
                         rx={10}
                         style={{
                           cursor: connectFrom ? 'pointer' : 'grab',
@@ -3251,6 +3258,40 @@ export default function FlowEditor({
                   setSelLane(null)
                 }}
               />
+            ))}
+
+            {/* Repair preview arrows (dashed overlay) */}
+            {repairPreview?.proposedArrows.map((pa, i) => {
+              const fakePath = aPath({ id: `preview-${i}`, from: pa.from, to: pa.to, comment: '' })
+              if (!fakePath) return null
+              return (
+                <path
+                  key={`repair-preview-${i}`}
+                  d={fakePath.d}
+                  stroke={T.accent}
+                  strokeWidth={2}
+                  strokeDasharray="6,4"
+                  fill="none"
+                  opacity={0.6}
+                  markerEnd={`url(#m-preview-${i})`}
+                  style={{ pointerEvents: 'none' }}
+                />
+              )
+            })}
+            {/* Repair preview arrowheads */}
+            {repairPreview?.proposedArrows.map((_, i) => (
+              <defs key={`repair-preview-def-${i}`}>
+                <marker
+                  id={`m-preview-${i}`}
+                  markerWidth="9"
+                  markerHeight="8"
+                  refX="8"
+                  refY="4"
+                  orient="auto"
+                >
+                  <polygon points="0 0.5, 9 4, 0 7.5" fill={T.accent} opacity={0.6} />
+                </marker>
+              </defs>
             ))}
 
             {/* Floating arrow controls */}
@@ -3714,7 +3755,17 @@ export default function FlowEditor({
           setEditing(null)
         }}
       />
-      <ToastList toasts={toasts} onDismiss={dismissToast} onConfirm={confirmToast} />
+      <ToastList
+        toasts={toasts}
+        onDismiss={(id) => {
+          dismissToast(id)
+          clearRepairPreview()
+        }}
+        onConfirm={(id, crossingCount) => {
+          confirmToast(id, crossingCount)
+          clearRepairPreview()
+        }}
+      />
     </div>
   )
 }

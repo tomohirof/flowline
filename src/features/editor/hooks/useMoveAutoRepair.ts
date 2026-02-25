@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { InternalArrow, TaskData, RowData } from '../types'
 import {
@@ -37,6 +37,10 @@ export function useMoveAutoRepair({
 }: UseMoveAutoRepairOptions) {
   const pendingMoveRef = useRef<PendingMove | null>(null)
   const pendingCrossLaneRef = useRef<CrossLaneRewire[] | null>(null)
+  const [repairPreview, setRepairPreview] = useState<{
+    nodes: string[]
+    proposedArrows: { from: string; to: string }[]
+  } | null>(null)
 
   // Chain reconnection detection
   useEffect(() => {
@@ -61,10 +65,18 @@ export function useMoveAutoRepair({
     // Pre-compute cross-lane rewires before chain reconnection
     const crossLaneRewires = detectCrossLaneRewire(current, proposed, arrows, tasks, rows)
 
+    // Set repair preview for visual feedback
+    const proposedArrowPairs = reconnectChain(proposed)
+    setRepairPreview({
+      nodes: [...proposed],
+      proposedArrows: proposedArrowPairs,
+    })
+
     addConfirmToast({
       message: '接続順を修復しますか？',
       detail: `接続順を修復: ${detail}`,
       onConfirm: () => {
+        setRepairPreview(null)
         setArrows((prev) => {
           const oldIds = new Set(oldChainArrows.map((a) => a.id))
           const filtered = prev.filter((a) => !oldIds.has(a.id))
@@ -113,10 +125,21 @@ export function useMoveAutoRepair({
       return `${oldLabel} → ${toLabel}\n↓\n${newLabel} → ${toLabel}`
     })
 
+    const rewireNodes = new Set<string>()
+    pending.forEach((r) => {
+      rewireNodes.add(r.newFrom)
+      rewireNodes.add(r.to)
+    })
+    setRepairPreview({
+      nodes: [...rewireNodes],
+      proposedArrows: pending.map((r) => ({ from: r.newFrom, to: r.to })),
+    })
+
     addConfirmToast({
       message: '横矢印の張り替え',
       detail: detailLines.join('\n'),
       onConfirm: () => {
+        setRepairPreview(null)
         setArrows((prev) =>
           prev.map((a) => {
             const match = pending.find((r) => r.arrowId === a.id)
@@ -133,5 +156,9 @@ export function useMoveAutoRepair({
     pendingMoveRef.current = { movedKey, laneId }
   }
 
-  return { triggerMoveRepairCheck }
+  const clearRepairPreview = (): void => {
+    setRepairPreview(null)
+  }
+
+  return { triggerMoveRepairCheck, repairPreview, clearRepairPreview }
 }
