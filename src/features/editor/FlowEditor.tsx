@@ -886,6 +886,24 @@ export default function FlowEditor({
           e.preventDefault()
         }
       }
+      // Select All: Cmd+A / Ctrl+A
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        if (
+          editing ||
+          editLane ||
+          editTitle ||
+          editNote ||
+          (document.activeElement as HTMLElement)?.tagName === 'INPUT'
+        )
+          return
+        e.preventDefault()
+        const allKeys = Object.keys(tasks)
+        if (allKeys.length === 0) return
+        setMultiSel(new Set(allKeys))
+        setSelTask(null)
+        setSelArrow(null)
+        return
+      }
       if (e.key === 'Escape') {
         setConnectFrom(null)
         setConnectDragPt(null)

@@ -2666,3 +2666,45 @@ describe('JSON export (#235)', () => {
     expect(filename).toContain('Test')
   })
 })
+
+describe('Cmd+A select all (#240)', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
+  it('should select all nodes with Cmd+A', () => {
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+        { id: 'n3', laneId: 'lane-1', rowIndex: 2, label: 'C', note: null, orderIndex: 2 },
+      ],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    fireEvent.keyDown(document, { key: 'a', metaKey: true })
+    // All 3 nodes should be selected — status bar shows "3件選択中"
+    expect(screen.getByText(/3件選択中/)).toBeInTheDocument()
+  })
+
+  it('should not select all when no nodes exist', () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    fireEvent.keyDown(document, { key: 'a', metaKey: true })
+    // No "件選択中" text should appear
+    expect(screen.queryByText(/件選択中/)).toBeNull()
+  })
+
+  it('should work with Ctrl+A (Windows)', () => {
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+      ],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    fireEvent.keyDown(document, { key: 'a', ctrlKey: true })
+    expect(screen.getByText(/2件選択中/)).toBeInTheDocument()
+  })
+})
