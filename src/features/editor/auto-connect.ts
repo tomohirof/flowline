@@ -24,31 +24,38 @@ export function findClosestUpstream(
 
   // Prefer flow-connected tails (have incoming), fall back to all tails
   const flowTails = tails.filter((k) => incoming.has(k))
-  const candidates = flowTails.length > 0 ? flowTails : tails
 
-  let bestKey: string | null = null
-  let bestRi = -1
-  let bestLi = -1
+  const findBest = (candidates: string[]): string | null => {
+    let bestKey: string | null = null
+    let bestRi = -1
+    let bestLi = -1
 
-  for (const key of candidates) {
-    const task = tasks[key]
-    const tRi = rows.findIndex((r) => r.id === task.rid)
-    const tLi = lanes.findIndex((l) => l.id === task.lid)
-    if (tRi < 0 || tLi < 0) continue
+    for (const key of candidates) {
+      const task = tasks[key]
+      const tRi = rows.findIndex((r) => r.id === task.rid)
+      const tLi = lanes.findIndex((l) => l.id === task.lid)
+      if (tRi < 0 || tLi < 0) continue
 
-    // Must be upstream: higher row, or same row with left lane
-    if (tRi > newRi) continue
-    if (tRi === newRi && tLi >= newLi) continue
+      // Must be upstream: higher row, or same row with left lane
+      if (tRi > newRi) continue
+      if (tRi === newRi && tLi >= newLi) continue
 
-    // Pick closest: maximize row index, then lane index
-    if (tRi > bestRi || (tRi === bestRi && tLi > bestLi)) {
-      bestKey = key
-      bestRi = tRi
-      bestLi = tLi
+      // Pick closest: maximize row index, then lane index
+      if (tRi > bestRi || (tRi === bestRi && tLi > bestLi)) {
+        bestKey = key
+        bestRi = tRi
+        bestLi = tLi
+      }
     }
+
+    return bestKey
   }
 
-  return bestKey
+  // Try flow-connected tails first, fall back to all tails
+  const result = flowTails.length > 0 ? findBest(flowTails) : null
+  if (result) return result
+
+  return findBest(tails)
 }
 
 /**

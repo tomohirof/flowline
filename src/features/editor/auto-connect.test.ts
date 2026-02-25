@@ -128,6 +128,26 @@ describe('findClosestUpstream', () => {
     const result = findClosestUpstream(tasks, rows, lanes, 0, 1, arrows)
     expect(result).toBeNull()
   })
+
+  it('should fall back to isolated tail when flow-connected tails are all downstream (#241)', () => {
+    // lane2: 1→2→3 (row0→row1→row2), lane3: 4 (row0), new node 5 at lane3 row1
+    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+    const lanes = [{ id: 'l0' }, { id: 'l1' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      N1: { lid: 'l0', rid: 'r0' },
+      N2: { lid: 'l0', rid: 'r1' },
+      N3: { lid: 'l0', rid: 'r2' },
+      N4: { lid: 'l1', rid: 'r0' },
+    }
+    const arrows = [
+      { id: 'a1', from: 'N1', to: 'N2', comment: '' },
+      { id: 'a2', from: 'N2', to: 'N3', comment: '' },
+    ]
+    // Adding node 5 at lane3(l1) row1(r1) — N4 is isolated tail at row0, upstream
+    // N3 is flow-connected tail at row2, but downstream (row2 > row1)
+    const result = findClosestUpstream(tasks, rows, lanes, 1, 1, arrows)
+    expect(result).toBe('N4')
+  })
 })
 
 describe('findCrossingArrows', () => {
