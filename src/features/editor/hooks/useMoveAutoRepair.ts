@@ -1,7 +1,13 @@
 import { useRef, useEffect } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { InternalArrow, TaskData, RowData } from '../types'
-import { findChain, detectReorder, reconnectChain } from '../../../lib/flow-engine'
+import {
+  findChain,
+  detectReorder,
+  reconnectChain,
+  detectCrossLaneRewire,
+} from '../../../lib/flow-engine'
+import type { CrossLaneRewire } from '../../../lib/flow-engine'
 import { uid } from '../../../lib/uid'
 
 interface UseMoveAutoRepairOptions {
@@ -30,7 +36,9 @@ export function useMoveAutoRepair({
   addConfirmToast,
 }: UseMoveAutoRepairOptions) {
   const pendingMoveRef = useRef<PendingMove | null>(null)
+  const pendingCrossLaneRef = useRef<CrossLaneRewire[] | null>(null)
 
+  // Chain reconnection detection
   useEffect(() => {
     const pending = pendingMoveRef.current
     if (!pending) return
@@ -41,7 +49,7 @@ export function useMoveAutoRepair({
     if (chain.length < 3) return
     if (!chain.includes(movedKey)) return
 
-    const { changed, proposed } = detectReorder(chain, tasks, rows)
+    const { changed, current, proposed } = detectReorder(chain, tasks, rows)
     if (!changed) return
 
     const detail = proposed.map((k) => tasks[k]?.label ?? '?').join(' → ')
@@ -49,6 +57,9 @@ export function useMoveAutoRepair({
 
     const chainKeySet = new Set(chain)
     const oldChainArrows = arrows.filter((a) => chainKeySet.has(a.from) && chainKeySet.has(a.to))
+
+    // Pre-compute cross-lane rewires before chain reconnection
+    const crossLaneRewires = detectCrossLaneRewire(current, proposed, arrows, tasks, rows)
 
     addConfirmToast({
       message: '接続順を修復しますか？',
@@ -76,10 +87,44 @@ export function useMoveAutoRepair({
 
           return [...filtered, ...newArrows]
         })
+
+        // Queue cross-lane rewire toast
+        if (crossLaneRewires.length > 0) {
+          pendingCrossLaneRef.current = crossLaneRewires
+        }
       },
       crossingCount: arrowCount,
     })
   }, [arrows, tasks, rows, setArrows, addConfirmToast])
+
+  // Cross-lane rewire detection (fires after chain reconnection updates arrows)
+  useEffect(() => {
+    const pending = pendingCrossLaneRef.current
+    if (!pending) return
+    pendingCrossLaneRef.current = null
+
+    const detailLines = pending.map((r) => {
+      const oldLabel = tasks[r.oldFrom]?.label ?? '?'
+      const newLabel = tasks[r.newFrom]?.label ?? '?'
+      const toLabel = tasks[r.to]?.label ?? '?'
+      return `${oldLabel} → ${toLabel}\n↓\n${newLabel} → ${toLabel}`
+    })
+
+    addConfirmToast({
+      message: '横矢印の張り替え',
+      detail: detailLines.join('\n'),
+      onConfirm: () => {
+        setArrows((prev) =>
+          prev.map((a) => {
+            const match = pending.find((r) => r.arrowId === a.id)
+            if (!match) return a
+            return { ...a, from: match.newFrom, comment: match.comment }
+          }),
+        )
+      },
+      crossingCount: pending.length,
+    })
+  }, [arrows, tasks, setArrows, addConfirmToast])
 
   const triggerMoveRepairCheck = (movedKey: string, laneId: string): void => {
     pendingMoveRef.current = { movedKey, laneId }

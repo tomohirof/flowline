@@ -392,4 +392,138 @@ describe('useMoveAutoRepair', () => {
       }
     })
   })
+
+  /* ======================================================= */
+  /* cross-lane rewire                                       */
+  /* ======================================================= */
+
+  describe('cross-lane rewire', () => {
+    it('should show cross-lane toast after chain reconnection onConfirm when old tail had cross-lane arrow', () => {
+      // Chain: A(r0) → B(r1) → C(r2) → D(r3), D has cross-lane arrow to X(l1)
+      // After move: B moves to r3 → proposed: A→C→D→B, old tail=D, new tail=B
+      const initialArrows: InternalArrow[] = [
+        mkArrow('a1', 'l0_r0', 'l0_r1'),
+        mkArrow('a2', 'l0_r1', 'l0_r2'),
+        mkArrow('a3', 'l0_r2', 'l0_r3'),
+        mkArrow('cross1', 'l0_r3', 'l1_r0', 'メモ'),
+      ]
+      let currentArrows = [...initialArrows]
+      const setArrows = vi.fn((updater: SetStateAction<InternalArrow[]>) => {
+        if (typeof updater === 'function') {
+          currentArrows = updater(currentArrows)
+        }
+      }) as unknown as Dispatch<SetStateAction<InternalArrow[]>>
+
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r3', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r1', nodeId: 'n3' },
+        l0_r3: { label: 'D', lid: 'l0', rid: 'r2', nodeId: 'n4' },
+        l1_r0: { label: 'X', lid: 'l1', rid: 'r0', nodeId: 'n5' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
+
+      const { rerender } = renderAndTrigger(
+        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast },
+        'l0_r1',
+        'l0',
+      )
+
+      // Toast 1: chain reconnection
+      expect(addConfirmToast).toHaveBeenCalledOnce()
+      const chainToast = addConfirmToast.mock.calls[0][0]
+      chainToast.onConfirm()
+
+      // After onConfirm, rerender with updated arrows to trigger cross-lane useEffect
+      addConfirmToast.mockClear()
+      rerender({ arrows: [...currentArrows], setArrows, tasks, rows, addConfirmToast })
+
+      // Toast 2: cross-lane rewire
+      expect(addConfirmToast).toHaveBeenCalledOnce()
+      const crossToast = addConfirmToast.mock.calls[0][0]
+      expect(crossToast.message).toBe('横矢印の張り替え')
+      expect(crossToast.detail).toContain('D')
+      expect(crossToast.detail).toContain('B')
+      expect(crossToast.detail).toContain('X')
+      expect(crossToast.crossingCount).toBe(1)
+    })
+
+    it('should rewire arrow from old tail to new tail on cross-lane toast onConfirm', () => {
+      const initialArrows: InternalArrow[] = [
+        mkArrow('a1', 'l0_r0', 'l0_r1'),
+        mkArrow('a2', 'l0_r1', 'l0_r2'),
+        mkArrow('a3', 'l0_r2', 'l0_r3'),
+        mkArrow('cross1', 'l0_r3', 'l1_r0', '引継ぎメモ'),
+      ]
+      let currentArrows = [...initialArrows]
+      const setArrows = vi.fn((updater: SetStateAction<InternalArrow[]>) => {
+        if (typeof updater === 'function') {
+          currentArrows = updater(currentArrows)
+        }
+      }) as unknown as Dispatch<SetStateAction<InternalArrow[]>>
+
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r3', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r1', nodeId: 'n3' },
+        l0_r3: { label: 'D', lid: 'l0', rid: 'r2', nodeId: 'n4' },
+        l1_r0: { label: 'X', lid: 'l1', rid: 'r0', nodeId: 'n5' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
+
+      const { rerender } = renderAndTrigger(
+        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast },
+        'l0_r1',
+        'l0',
+      )
+
+      // Execute chain reconnection
+      addConfirmToast.mock.calls[0][0].onConfirm()
+      addConfirmToast.mockClear()
+      rerender({ arrows: [...currentArrows], setArrows, tasks, rows, addConfirmToast })
+
+      // Execute cross-lane rewire
+      addConfirmToast.mock.calls[0][0].onConfirm()
+
+      // Verify: cross-lane arrow now from new tail (l0_r1) to l1_r0
+      const crossArrow = currentArrows.find((a) => a.to === 'l1_r0')
+      expect(crossArrow).toBeDefined()
+      expect(crossArrow!.from).toBe('l0_r1')
+      expect(crossArrow!.comment).toBe('引継ぎメモ')
+    })
+
+    it('should not show cross-lane toast when old tail has no cross-lane arrows', () => {
+      const initialArrows: InternalArrow[] = [
+        mkArrow('a1', 'l0_r0', 'l0_r1'),
+        mkArrow('a2', 'l0_r1', 'l0_r2'),
+      ]
+      let currentArrows = [...initialArrows]
+      const setArrows = vi.fn((updater: SetStateAction<InternalArrow[]>) => {
+        if (typeof updater === 'function') {
+          currentArrows = updater(currentArrows)
+        }
+      }) as unknown as Dispatch<SetStateAction<InternalArrow[]>>
+
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r2', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r1', nodeId: 'n3' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+
+      const { rerender } = renderAndTrigger(
+        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast },
+        'l0_r1',
+        'l0',
+      )
+
+      // Execute chain reconnection
+      addConfirmToast.mock.calls[0][0].onConfirm()
+      addConfirmToast.mockClear()
+      rerender({ arrows: [...currentArrows], setArrows, tasks, rows, addConfirmToast })
+
+      // No cross-lane toast
+      expect(addConfirmToast).not.toHaveBeenCalled()
+    })
+  })
 })
