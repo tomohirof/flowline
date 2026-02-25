@@ -43,6 +43,7 @@ import { uid } from '../../lib/uid'
 import { computeBridgeArrows } from './auto-connect'
 import {
   remapArrows,
+  swapKeys,
   remapArrowsBatch,
   filterArrowsByDeletedKeys,
   calcArrowPath,
@@ -1035,7 +1036,18 @@ export default function FlowEditor({
       setMultiDragAnchorCell(targets ? { li: cell.li, ri: cell.ri } : null)
       setDragOver(null)
     } else {
-      setDragOver(cell && cell.key !== dragging.key && !tasks[cell.key] ? cell.key : null)
+      if (cell && cell.key !== dragging.key) {
+        const tgt = tasks[cell.key]
+        const src = tasks[dragging.key]
+        // 空セル or 同一レーンのノード → ドロップ許可
+        if (!tgt || (tgt && src && tgt.lid === src.lid)) {
+          setDragOver(cell.key)
+        } else {
+          setDragOver(null)
+        }
+      } else {
+        setDragOver(null)
+      }
       setDragOverMulti(null)
     }
   }
@@ -1073,14 +1085,18 @@ export default function FlowEditor({
       return
     }
     if (dragOver) {
-      for (let li = 0; li < lanes.length; li++)
-        for (let ri = 0; ri < rows.length; ri++)
-          if (ky(lanes[li].id, rows[ri].id) === dragOver) {
-            moveTask(dragging.key, { lid: lanes[li].id, rid: rows[ri].id, key: dragOver, li, ri })
-            setDragging(null)
-            setDragOver(null)
-            return
-          }
+      if (tasks[dragOver]) {
+        swapInsertNodes(dragging.key, dragOver)
+      } else {
+        for (let li = 0; li < lanes.length; li++)
+          for (let ri = 0; ri < rows.length; ri++)
+            if (ky(lanes[li].id, rows[ri].id) === dragOver) {
+              moveTask(dragging.key, { lid: lanes[li].id, rid: rows[ri].id, key: dragOver, li, ri })
+              setDragging(null)
+              setDragOver(null)
+              return
+            }
+      }
     }
     setDragging(null)
     setDragOver(null)
@@ -1113,6 +1129,16 @@ export default function FlowEditor({
     const ri = rows.findIndex((r) => r.id === to.rid)
     if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
     triggerMoveRepairCheck(nk, to.lid)
+  }
+  const swapInsertNodes = (draggedKey: string, targetKey: string): void => {
+    const result = swapKeys(tasks, arrows, order, notes, draggedKey, targetKey)
+    if (!result) return
+    setTasks(result.tasks)
+    setNotes(result.notes)
+    setOrder(result.order)
+    setArrows(result.arrows)
+    setSelTask(result.newKeyA)
+    triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid)
   }
   const moveMultiTasks = (
     anchorKey: string,
@@ -2911,6 +2937,7 @@ export default function FlowEditor({
                 const isDT = dragging?.key === k,
                   isHov = hovered === k
                 const isDiamond = task.shape === 'diamond'
+                const isSwapTarget = dragOver === k && dragging != null && dragging.key !== k
                 const isRepairTarget = repairPreview?.nodes.includes(k) ?? false
                 const tagW = lane.name.length * 7 + 14
                 return (
@@ -3014,6 +3041,40 @@ export default function FlowEditor({
                           if (!connectFrom && !editing) onDragStart(k, e)
                         }}
                       />
+                    )}
+                    {isSwapTarget && (
+                      <g style={{ pointerEvents: 'none' }}>
+                        <rect
+                          x={c.x - TW / 2 - 4}
+                          y={c.y - TH / 2 - 4}
+                          width={TW + 8}
+                          height={TH + 8}
+                          rx={12}
+                          fill={`${T.accent}0A`}
+                          stroke={T.accent}
+                          strokeWidth={2}
+                          strokeDasharray="6,4"
+                          className={styles.dragPulseAnim}
+                        />
+                        <rect
+                          x={c.x + TW / 2 - 8}
+                          y={c.y - TH / 2 - 12}
+                          width={36}
+                          height={18}
+                          rx={9}
+                          fill={T.accent}
+                        />
+                        <text
+                          x={c.x + TW / 2 + 10}
+                          y={c.y - TH / 2 - 3}
+                          textAnchor="middle"
+                          fontSize={8}
+                          fontWeight={700}
+                          fill="#fff"
+                        >
+                          ↕ 入替
+                        </text>
+                      </g>
                     )}
                     {!isDiamond && (
                       <rect
@@ -3831,7 +3892,7 @@ export default function FlowEditor({
             : connectFrom
               ? '接続先クリック · Esc解除'
               : dragging
-                ? '空きセルにドロップ'
+                ? '空きセルにドロップ · ノードに重ねて入替'
                 : 'クリック:追加 · ドラッグ:移動 · ○:接続 · Shift+クリック:複数選択'}
         </span>
       </div>

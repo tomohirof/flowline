@@ -9,6 +9,7 @@ import {
   detectReorder,
   reconnectChain,
   detectCrossLaneRewire,
+  swapKeys,
   calcMultiDropTargets,
 } from './flow-engine'
 import { exitPt, entryPt } from './arrow-routing'
@@ -765,6 +766,108 @@ describe('detectCrossLaneRewire', () => {
       // l9_r9 intentionally missing
     }
     expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
+})
+
+/* ========================================================= */
+/* swapKeys                                                  */
+/* ========================================================= */
+
+describe('swapKeys', () => {
+  it('should swap two keys in tasks, arrows, order, and notes', () => {
+    const tasks = {
+      L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
+      L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2' },
+    }
+    const arrows = [mkArrow({ from: 'L1_R1', to: 'L1_R2' })]
+    const order = ['L1_R1', 'L1_R2']
+    const notes = { L1_R1: 'note-A' }
+
+    const result = swapKeys(tasks, arrows, order, notes, 'L1_R1', 'L1_R2')
+
+    // tasks: 位置が交換されている
+    expect(result!.tasks['L1_R2'].label).toBe('A')
+    expect(result!.tasks['L1_R2'].rid).toBe('R2')
+    expect(result!.tasks['L1_R1'].label).toBe('B')
+    expect(result!.tasks['L1_R1'].rid).toBe('R1')
+
+    // arrows: キーが更新されている
+    expect(result!.arrows[0].from).toBe('L1_R2')
+    expect(result!.arrows[0].to).toBe('L1_R1')
+
+    // order: キーが更新されている
+    expect(result!.order).toEqual(['L1_R2', 'L1_R1'])
+
+    // notes: キーが移動している
+    expect(result!.notes['L1_R2']).toBe('note-A')
+    expect(result!.notes['L1_R1']).toBeUndefined()
+  })
+
+  it('should return null when keys are in different lanes', () => {
+    const tasks = {
+      L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
+      L2_R2: { label: 'B', lid: 'L2', rid: 'R2', nodeId: 'n2' },
+    }
+    const result = swapKeys(tasks, [], ['L1_R1', 'L2_R2'], {}, 'L1_R1', 'L2_R2')
+    expect(result).toBeNull()
+  })
+
+  it('should return null when same row', () => {
+    const tasks = {
+      L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
+    }
+    const result = swapKeys(tasks, [], ['L1_R1'], {}, 'L1_R1', 'L1_R1')
+    expect(result).toBeNull()
+  })
+
+  it('should handle non-adjacent nodes without affecting others', () => {
+    const tasks = {
+      L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
+      L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2' },
+      L1_R3: { label: 'C', lid: 'L1', rid: 'R3', nodeId: 'n3' },
+    }
+    const arrows = [
+      mkArrow({ id: 'a1', from: 'L1_R1', to: 'L1_R2' }),
+      mkArrow({ id: 'a2', from: 'L1_R2', to: 'L1_R3' }),
+    ]
+    const order = ['L1_R1', 'L1_R2', 'L1_R3']
+
+    const result = swapKeys(tasks, arrows, order, {}, 'L1_R1', 'L1_R3')
+
+    expect(result!.tasks['L1_R3'].label).toBe('A')
+    expect(result!.tasks['L1_R2'].label).toBe('B')
+    expect(result!.tasks['L1_R1'].label).toBe('C')
+
+    const a1 = result!.arrows.find((a) => a.id === 'a1')!
+    expect(a1.from).toBe('L1_R3')
+    expect(a1.to).toBe('L1_R2')
+
+    const a2 = result!.arrows.find((a) => a.id === 'a2')!
+    expect(a2.from).toBe('L1_R2')
+    expect(a2.to).toBe('L1_R1')
+
+    expect(result!.order).toEqual(['L1_R3', 'L1_R2', 'L1_R1'])
+  })
+
+  it('should swap notes for both nodes', () => {
+    const tasks = {
+      L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
+      L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2' },
+    }
+    const notes = { L1_R1: 'note-A', L1_R2: 'note-B' }
+
+    const result = swapKeys(tasks, [], ['L1_R1', 'L1_R2'], notes, 'L1_R1', 'L1_R2')
+
+    expect(result!.notes['L1_R2']).toBe('note-A')
+    expect(result!.notes['L1_R1']).toBe('note-B')
+  })
+
+  it('should return null when dragged key does not exist', () => {
+    const tasks = {
+      L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2' },
+    }
+    const result = swapKeys(tasks, [], [], {}, 'L1_R1', 'L1_R2')
+    expect(result).toBeNull()
   })
 })
 
