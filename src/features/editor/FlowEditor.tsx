@@ -518,6 +518,10 @@ export default function FlowEditor({
   const [dragging, setDragging] = useState<DragState | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [dragOverMulti, setDragOverMulti] = useState<Set<string> | null>(null)
+  const [multiDragAnchorCell, setMultiDragAnchorCell] = useState<{
+    li: number
+    ri: number
+  } | null>(null)
   const [activeTool, setActiveTool] = useState<ToolId | string>('select')
   const [themeId, setThemeId] = useState<ThemeId>(initState.themeId)
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
@@ -1014,11 +1018,21 @@ export default function FlowEditor({
     if (dragging.multi) {
       if (!cell || cell.key === dragging.key) {
         setDragOverMulti(null)
+        setMultiDragAnchorCell(null)
         return
       }
-      setDragOverMulti(
-        calcMultiDropTargets(cell, dragging.key, multiSel, tasks, liMap, riMap, lanes, rows),
+      const targets = calcMultiDropTargets(
+        cell,
+        dragging.key,
+        multiSel,
+        tasks,
+        liMap,
+        riMap,
+        lanes,
+        rows,
       )
+      setDragOverMulti(targets)
+      setMultiDragAnchorCell(targets ? { li: cell.li, ri: cell.ri } : null)
       setDragOver(null)
     } else {
       setDragOver(cell && cell.key !== dragging.key && !tasks[cell.key] ? cell.key : null)
@@ -1049,15 +1063,12 @@ export default function FlowEditor({
       return
     }
     if (!dragging) return
-    if (dragging.multi && dragOverMulti) {
-      const pt = svgPt(e.clientX, e.clientY)
-      const cell = cellFromPos(pt.x, pt.y)
-      if (cell) {
-        moveMultiTasks(dragging.key, multiSel, cell.li, cell.ri)
-      }
+    if (dragging.multi && dragOverMulti && multiDragAnchorCell) {
+      moveMultiTasks(dragging.key, multiSel, multiDragAnchorCell.li, multiDragAnchorCell.ri)
       setDragging(null)
       setDragOver(null)
       setDragOverMulti(null)
+      setMultiDragAnchorCell(null)
       setMultiSel(new Set())
       return
     }
@@ -1074,6 +1085,7 @@ export default function FlowEditor({
     setDragging(null)
     setDragOver(null)
     setDragOverMulti(null)
+    setMultiDragAnchorCell(null)
   }
   const moveTask = (
     fk: string,
@@ -1159,6 +1171,11 @@ export default function FlowEditor({
       if (ri > maxRi) maxRi = ri
     }
     if (maxRi === rows.length - 1) setRows((p) => [...p, { id: uid() }])
+
+    for (const [, newK] of keyMap) {
+      const pos = posMap.get(newK)!
+      triggerMoveRepairCheck(newK, pos.lid)
+    }
   }
   const cellClick = (lid: string, rid: string, _li: number, ri: number): void => {
     if (editArrowComment) {
@@ -2422,6 +2439,7 @@ export default function FlowEditor({
                 setDragging(null)
                 setDragOver(null)
                 setDragOverMulti(null)
+                setMultiDragAnchorCell(null)
               }
               if (connectFrom) {
                 setConnectFrom(null)
