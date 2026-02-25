@@ -936,6 +936,7 @@ export default function FlowEditor({
     delTask,
     delMultiSel,
     setArrows,
+    tasks,
   ])
 
   const moveLane = (id: string, dir: number): void => {
