@@ -2378,4 +2378,65 @@ describe('2-click confirm UX (#219)', () => {
       expect(nodeGroups.length).toBeGreaterThanOrEqual(1)
     })
   })
+
+  describe('demo mode props (#225)', () => {
+    it('should render saveCtaLabel button instead of save status when provided', () => {
+      const flow = createMinimalFlow()
+      const onSaveCtaClick = vi.fn()
+      render(
+        <FlowEditor
+          flow={flow}
+          onSave={vi.fn()}
+          saveStatus="saved"
+          saveCtaLabel="ログインして保存"
+          onSaveCtaClick={onSaveCtaClick}
+        />,
+      )
+      const ctaButton = screen.getByTestId('save-cta-button')
+      expect(ctaButton.textContent).toBe('ログインして保存')
+    })
+
+    it('should call onSaveCtaClick when CTA button is clicked', async () => {
+      const flow = createMinimalFlow()
+      const onSaveCtaClick = vi.fn()
+      const user = userEvent.setup()
+      render(
+        <FlowEditor
+          flow={flow}
+          onSave={vi.fn()}
+          saveStatus="saved"
+          saveCtaLabel="ログインして保存"
+          onSaveCtaClick={onSaveCtaClick}
+        />,
+      )
+      const ctaButton = screen.getByTestId('save-cta-button')
+      await user.click(ctaButton)
+      expect(onSaveCtaClick).toHaveBeenCalledOnce()
+    })
+
+    it('should hide share button when hideShare is true', () => {
+      const flow = createMinimalFlow()
+      render(
+        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" hideShare={true} />,
+      )
+      expect(screen.queryByTestId('share-button')).toBeNull()
+    })
+
+    it('should show share button by default (hideShare undefined)', () => {
+      const flow = createMinimalFlow()
+      render(
+        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+      )
+      expect(screen.getByTestId('share-button')).toBeTruthy()
+    })
+
+    it('should show normal save status when saveCtaLabel is not provided', () => {
+      const flow = createMinimalFlow()
+      render(
+        <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+      )
+      expect(screen.getByTestId('save-status')).toBeTruthy()
+      expect(screen.queryByTestId('save-cta-button')).toBeNull()
+    })
+  })
 })

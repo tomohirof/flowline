@@ -194,6 +194,22 @@
   margin-left: 12px;
 }
 
+.saveCtaButton {
+  background: linear-gradient(135deg, #6C5CE7, #5B8DEF);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.saveCtaButton:hover {
+  opacity: 0.85;
+}
+
 .zoomPercent {
   font-size: 10px;
   color: var(--theme-status-text);
