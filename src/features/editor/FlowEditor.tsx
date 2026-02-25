@@ -463,6 +463,14 @@ export default function FlowEditor({
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
+  const [ghostCell, setGhostCell] = useState<{
+    li: number
+    ri: number
+    lid: string
+    rid: string
+  } | null>(null)
+  const [ghostRowGap, setGhostRowGap] = useState<number | null>(null)
+  const [bouncingNode, setBouncingNode] = useState<string | null>(null)
   const [hoveredRowNum, setHoveredRowNum] = useState<number | null>(null)
   const [rowAnim, setRowAnim] = useState<{ type: 'add' | 'delete'; index: number } | null>(null)
   const [mermaidCopied, setMermaidCopied] = useState<boolean>(false)
@@ -857,6 +865,8 @@ export default function FlowEditor({
         setDragOver(null)
         setActiveTool('select')
         setShowThemePicker(false)
+        setGhostCell(null)
+        setGhostRowGap(null)
       }
     }
     window.addEventListener('keydown', handler)
@@ -874,6 +884,8 @@ export default function FlowEditor({
     delTask,
     delMultiSel,
     setArrows,
+    ghostCell,
+    ghostRowGap,
   ])
 
   const moveLane = (id: string, dir: number): void => {
@@ -896,6 +908,15 @@ export default function FlowEditor({
   }
   const insertRowAt = (i: number): void => {
     if (rowAnim) return
+    if (ghostRowGap === i) {
+      // 2クリック目 — 確定
+      setGhostRowGap(null)
+    } else {
+      // 1クリック目 — ゴースト表示のみ
+      setGhostRowGap(i)
+      setGhostCell(null)
+      return
+    }
     const newRowId = uid()
     setRows((prev) => {
       const n = [...prev]
@@ -1048,6 +1069,17 @@ export default function FlowEditor({
       setTimeout(() => inputRef.current?.focus(), 40)
       return
     }
+    // -- 2クリック確認UX: ゴーストチェック --
+    const li = lanes.findIndex((l) => l.id === lid)
+    if (ghostCell && ghostCell.li === li && ghostCell.ri === ri) {
+      // 2クリック目 — 確定
+      setGhostCell(null)
+    } else {
+      // 1クリック目 — ゴースト表示のみ
+      setGhostCell({ li, ri, lid, rid })
+      setGhostRowGap(null)
+      return
+    }
     let label = '作業'
     if (editorSettings.copyLabelOnSameRow) {
       const sameRowNode = Object.entries(tasks).find(([key, t]) => t.rid === rid && key !== k)
@@ -1056,10 +1088,11 @@ export default function FlowEditor({
     setTasks((p) => ({ ...p, [k]: { label, lid, rid, nodeId: uid() } }))
     const no = [...order, k]
     setOrder(no)
-    const li = lanes.findIndex((l) => l.id === lid)
     autoConnectOnCreate(k, ri, li)
     detectCrossing(rid, k, label, addConfirmToast)
     setSelArrow(null)
+    setBouncingNode(k)
+    setTimeout(() => setBouncingNode(null), 400)
     if (editorSettings.enterEditOnCreate) {
       setEditing(k)
       setTimeout(() => inputRef.current?.focus(), 40)
@@ -1236,6 +1269,8 @@ export default function FlowEditor({
   }
 
   const bgClick = (): void => {
+    setGhostCell(null)
+    setGhostRowGap(null)
     setSelTask(null)
     setSelArrow(null)
     setSelLane(null)
@@ -2593,6 +2628,7 @@ export default function FlowEditor({
                   p = PALETTES[lane.ci],
                   isHov = hovered === k,
                   isDT = dragOver === k
+                const isGhost = ghostCell?.li === li && ghostCell?.ri === ri
                 return (
                   <g key={`ec-${k}`}>
                     <rect
@@ -2602,14 +2638,17 @@ export default function FlowEditor({
                       height={RH}
                       fill="transparent"
                       style={{
-                        cursor: connectFrom ? 'default' : dragging ? 'default' : 'crosshair',
+                        cursor: connectFrom ? 'default' : dragging ? 'default' : isGhost ? 'pointer' : 'crosshair',
                       }}
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation()
                         if (!dragging) cellClick(lane.id, row.id, li, ri)
                       }}
                       onMouseEnter={() => setHovered(k)}
-                      onMouseLeave={() => setHovered(null)}
+                      onMouseLeave={() => {
+                        setHovered(null)
+                        if (isGhost) setGhostCell(null)
+                      }}
                     />
                     {isDT && (
                       <rect
@@ -2625,7 +2664,7 @@ export default function FlowEditor({
                         className={styles.dragPulseAnim}
                       />
                     )}
-                    {isHov && !connectFrom && !dragging && (
+                    {isHov && !connectFrom && !dragging && !isGhost && (
                       <g style={{ pointerEvents: 'none' }}>
                         <rect
                           x={c.x - TW / 2}
@@ -2659,6 +2698,47 @@ export default function FlowEditor({
                         />
                       </g>
                     )}
+                    {isGhost && (
+                      <g
+                        style={{ pointerEvents: 'none' }}
+                        className={styles.ghostPulseAnim}
+                      >
+                        <rect
+                          x={c.x - TW / 2}
+                          y={c.y - TH / 2}
+                          width={TW}
+                          height={TH}
+                          rx={8}
+                          fill={`${T.accent}08`}
+                          stroke={T.accent}
+                          strokeWidth={1.5}
+                          strokeDasharray="6,4"
+                        />
+                        <text
+                          x={c.x}
+                          y={c.y - 2}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={T.accent}
+                          opacity={0.6}
+                        >
+                          作業
+                        </text>
+                        <text
+                          x={c.x}
+                          y={c.y + 14}
+                          textAnchor="middle"
+                          fontSize={9}
+                          fontWeight={500}
+                          fill={T.accent}
+                          opacity={0.4}
+                        >
+                          クリックで確定
+                        </text>
+                      </g>
+                    )}
                   </g>
                 )
               }),
@@ -2684,7 +2764,18 @@ export default function FlowEditor({
                 const isDiamond = task.shape === 'diamond'
                 const tagW = lane.name.length * 7 + 14
                 return (
-                  <g key={`t-${k}`} opacity={isDT ? 0.3 : 1}>
+                  <g
+                    key={`t-${k}`}
+                    opacity={isDT ? 0.3 : 1}
+                    style={
+                      bouncingNode === k
+                        ? {
+                            transformOrigin: `${c.x}px ${c.y}px`,
+                          }
+                        : undefined
+                    }
+                    className={bouncingNode === k ? styles.ghostBounceAnim : undefined}
+                  >
                     <rect
                       x={laneX(li)}
                       y={TM + HH + ri * RH}
@@ -3029,6 +3120,7 @@ export default function FlowEditor({
               const gy = TM + HH + ri * RH
               const gx = LM / 2
               const isHov = hoveredRowGap === ri
+              const isGhostHere = ghostRowGap === ri
               return (
                 <g key={`rowgap-${ri}`}>
                   {/* Clickable hit zone limited to left margin where "+" icon appears */}
@@ -3041,7 +3133,10 @@ export default function FlowEditor({
                     fill="transparent"
                     style={{ cursor: 'pointer' }}
                     onMouseEnter={() => setHoveredRowGap(ri)}
-                    onMouseLeave={() => setHoveredRowGap(null)}
+                    onMouseLeave={() => {
+                      setHoveredRowGap(null)
+                      if (isGhostHere) setGhostRowGap(null)
+                    }}
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation()
                       insertRowAt(ri)
@@ -3056,7 +3151,10 @@ export default function FlowEditor({
                     fill="transparent"
                     style={{ pointerEvents: 'auto' }}
                     onMouseEnter={() => setHoveredRowGap(ri)}
-                    onMouseLeave={() => setHoveredRowGap(null)}
+                    onMouseLeave={() => {
+                      setHoveredRowGap(null)
+                      if (isGhostHere) setGhostRowGap(null)
+                    }}
                   />
                   {isHov && (
                     <g data-testid={`rowgap-feedback-${ri}`} style={{ pointerEvents: 'none' }}>
@@ -3087,6 +3185,41 @@ export default function FlowEditor({
                         stroke="#fff"
                         strokeWidth={1.5}
                       />
+                    </g>
+                  )}
+                  {isGhostHere && (
+                    <g style={{ pointerEvents: 'none' }}>
+                      <line
+                        x1={LM + 6}
+                        y1={gy}
+                        x2={laneX(lanes.length - 1) + LW - 6}
+                        y2={gy}
+                        stroke={T.accent}
+                        strokeWidth={1.5}
+                        strokeDasharray="6,4"
+                        opacity={0.5}
+                        className={styles.ghostPulseAnim}
+                      />
+                      <rect
+                        x={(laneX(lanes.length - 1) + LW) / 2 - 56}
+                        y={gy - 12}
+                        width={112}
+                        height={24}
+                        rx={12}
+                        fill={T.accent}
+                        opacity={0.92}
+                      />
+                      <text
+                        x={(laneX(lanes.length - 1) + LW) / 2}
+                        y={gy + 3.5}
+                        textAnchor="middle"
+                        fontSize={11}
+                        fontWeight={700}
+                        fill="#fff"
+                        style={{ fontFamily: 'inherit' }}
+                      >
+                        クリックで確定
+                      </text>
                     </g>
                   )}
                 </g>
