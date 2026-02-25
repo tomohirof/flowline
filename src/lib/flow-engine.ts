@@ -190,7 +190,7 @@ export function detectCrossLaneRewire(
 
   const oldTailLane = tasks[oldTail]?.lid
   return arrows
-    .filter((a) => a.from === oldTail && tasks[a.to]?.lid !== oldTailLane)
+    .filter((a) => a.from === oldTail && tasks[a.to] != null && tasks[a.to].lid !== oldTailLane)
     .map((a) => ({
       arrowId: a.id,
       oldFrom: oldTail,

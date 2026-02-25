@@ -550,4 +550,40 @@ describe('detectCrossLaneRewire', () => {
   it('should return empty array when chains are empty', () => {
     expect(detectCrossLaneRewire([], [], [], {}, rows)).toEqual([])
   })
+
+  it('should return empty array when only currentChain is empty', () => {
+    const proposed = ['l0_r0', 'l0_r1']
+    expect(detectCrossLaneRewire([], proposed, [], {}, rows)).toEqual([])
+  })
+
+  it('should return empty array when only proposedChain is empty', () => {
+    const current = ['l0_r0', 'l0_r1']
+    expect(detectCrossLaneRewire(current, [], [], {}, rows)).toEqual([])
+  })
+
+  it('should return empty array when arrows exist but none originate from old tail', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2']
+    const proposed = ['l0_r0', 'l0_r2', 'l0_r1']
+    const arrows = [{ id: 'x1', from: 'l0_r0', to: 'l1_r0', comment: '' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r3' },
+      l0_r2: { lid: 'l0', rid: 'r1' },
+      l1_r0: { lid: 'l1', rid: 'r0' },
+    }
+    expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
+
+  it('should skip arrows whose to-node is missing from tasks', () => {
+    const current = ['l0_r0', 'l0_r1', 'l0_r2']
+    const proposed = ['l0_r0', 'l0_r2', 'l0_r1']
+    const arrows = [{ id: 'x1', from: 'l0_r2', to: 'l9_r9', comment: '' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      l0_r0: { lid: 'l0', rid: 'r0' },
+      l0_r1: { lid: 'l0', rid: 'r3' },
+      l0_r2: { lid: 'l0', rid: 'r1' },
+      // l9_r9 intentionally missing
+    }
+    expect(detectCrossLaneRewire(current, proposed, arrows, tasks, rows)).toEqual([])
+  })
 })
