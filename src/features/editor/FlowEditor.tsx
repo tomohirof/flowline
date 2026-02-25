@@ -3024,18 +3024,19 @@ export default function FlowEditor({
                 </g>
               )
             })}
-            {/* Row gap "+" — full-width hit zone, rendered before arrow hit paths so arrows and controls have higher z-order */}
+            {/* Row gap "+" — split into clickable left-margin zone + hover-only body zone so arrows are not blocked */}
             {Array.from({ length: rows.length + 1 }, (_, ri) => {
               const gy = TM + HH + ri * RH
               const gx = LM / 2
               const isHov = hoveredRowGap === ri
               return (
                 <g key={`rowgap-${ri}`}>
+                  {/* Clickable hit zone limited to left margin where "+" icon appears */}
                   <rect
                     data-testid={`rowgap-hit-${ri}`}
                     x={0}
                     y={gy - 10}
-                    width={laneX(lanes.length - 1) + LW}
+                    width={LM}
                     height={20}
                     fill="transparent"
                     style={{ cursor: 'pointer' }}
@@ -3045,6 +3046,17 @@ export default function FlowEditor({
                       e.stopPropagation()
                       insertRowAt(ri)
                     }}
+                  />
+                  {/* Hover-detection zone across body (no click handler — arrows keep priority) */}
+                  <rect
+                    x={LM}
+                    y={gy - 10}
+                    width={laneX(lanes.length - 1) + LW - LM}
+                    height={20}
+                    fill="transparent"
+                    style={{ pointerEvents: 'auto' }}
+                    onMouseEnter={() => setHoveredRowGap(ri)}
+                    onMouseLeave={() => setHoveredRowGap(null)}
                   />
                   {isHov && (
                     <g data-testid={`rowgap-feedback-${ri}`} style={{ pointerEvents: 'none' }}>
