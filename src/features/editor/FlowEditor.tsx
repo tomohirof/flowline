@@ -38,6 +38,7 @@ import { DS } from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { useArrows } from './hooks/useArrows'
+import { useMoveAutoRepair } from './hooks/useMoveAutoRepair'
 import { uid } from '../../lib/uid'
 import { computeBridgeArrows } from './auto-connect'
 import { remapArrows, filterArrowsByDeletedKeys, calcArrowPath } from '../../lib/flow-engine'
@@ -523,6 +524,15 @@ export default function FlowEditor({
       lanes,
       autoConnect: editorSettings.autoConnect,
     })
+
+  const { triggerMoveRepairCheck } = useMoveAutoRepair({
+    arrows,
+    setArrows,
+    tasks,
+    rows,
+    addConfirmToast,
+    addSuccessToast,
+  })
 
   const fullSettingsRef = useRef<Record<string, unknown>>({})
   const settingsLoadedRef = useRef(false)
@@ -1017,6 +1027,7 @@ export default function FlowEditor({
     setSelTask(nk)
     const ri = rows.findIndex((r) => r.id === to.rid)
     if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
+    triggerMoveRepairCheck(nk, to.lid)
   }
   const cellClick = (lid: string, rid: string, _li: number, ri: number): void => {
     if (editArrowComment) {
