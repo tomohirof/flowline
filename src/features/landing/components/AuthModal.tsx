@@ -67,6 +67,12 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
             setMode('verify')
             return
           }
+          onClose()
+          if (onSuccess) {
+            onSuccess()
+          } else {
+            navigate('/flows')
+          }
         }
       } catch (err: unknown) {
         if (err instanceof ApiError && err.status === 403 && mode === 'login') {
