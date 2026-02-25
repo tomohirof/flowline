@@ -358,6 +358,34 @@ describe('AuthModal', () => {
       expect(mockNavigate).not.toHaveBeenCalledWith('/flows')
     })
 
+    it('should call onSuccess on register success when verification not needed', async () => {
+      const onSuccess = vi.fn()
+      const onClose = vi.fn()
+      mockRegister.mockResolvedValue({ needsVerification: false, email: 'a@b.com', name: 'Test' })
+
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={onClose} initialMode="register" onSuccess={onSuccess} />
+        </MemoryRouter>,
+      )
+
+      fireEvent.change(screen.getByPlaceholderText('お名前'), {
+        target: { value: 'Test' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+        target: { value: 'a@b.com' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+        target: { value: 'pass1234' },
+      })
+      fireEvent.click(screen.getByTestId('auth-submit'))
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalledOnce()
+      })
+      expect(mockNavigate).not.toHaveBeenCalledWith('/flows')
+    })
+
     it('should navigate to /flows when onSuccess is not provided', async () => {
       const onClose = vi.fn()
       mockLogin.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'Test' })
