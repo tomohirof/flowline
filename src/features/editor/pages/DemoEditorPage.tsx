@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { BRAND } from '../../../constants/brand'
 import { useDemoFlow } from '../hooks/useDemoFlow'
 import FlowEditor from '../FlowEditor'
 import { AuthModal } from '../../landing/components/AuthModal'
@@ -48,7 +49,7 @@ export function DemoEditorPage() {
         flow={flow}
         onSave={noop}
         saveStatus={saveStatus}
-        saveCtaLabel="ログインして保存"
+        saveCtaLabel={BRAND.demoSaveCta}
         onSaveCtaClick={handleSaveCtaClick}
         hideShare={true}
       />
