@@ -1133,12 +1133,12 @@ export default function FlowEditor({
   const swapInsertNodes = (draggedKey: string, targetKey: string): void => {
     const result = swapKeys(tasks, arrows, order, notes, draggedKey, targetKey)
     if (!result) return
-    setTasks(result.tasks)
+    setTasks(() => result.tasks)
     setNotes(result.notes)
     setOrder(result.order)
-    setArrows(result.arrows)
+    setArrows(() => result.arrows)
     setSelTask(result.newKeyA)
-    triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid)
+    triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid, result.arrows, result.tasks)
   }
   const moveMultiTasks = (
     anchorKey: string,
