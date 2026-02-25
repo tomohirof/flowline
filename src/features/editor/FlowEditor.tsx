@@ -531,7 +531,6 @@ export default function FlowEditor({
     tasks,
     rows,
     addConfirmToast,
-    addSuccessToast,
   })
 
   const fullSettingsRef = useRef<Record<string, unknown>>({})

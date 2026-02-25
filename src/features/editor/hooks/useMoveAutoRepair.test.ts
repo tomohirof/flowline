@@ -49,12 +49,10 @@ function renderAndTrigger(
 
 describe('useMoveAutoRepair', () => {
   let addConfirmToast: ReturnType<typeof vi.fn>
-  let addSuccessToast: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     vi.clearAllMocks()
     addConfirmToast = vi.fn()
-    addSuccessToast = vi.fn()
   })
 
   /* ======================================================= */
@@ -72,7 +70,7 @@ describe('useMoveAutoRepair', () => {
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r1',
         'l0',
       )
@@ -95,7 +93,7 @@ describe('useMoveAutoRepair', () => {
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r3',
         'l0',
       )
@@ -117,7 +115,7 @@ describe('useMoveAutoRepair', () => {
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r1',
         'l0',
       )
@@ -136,7 +134,7 @@ describe('useMoveAutoRepair', () => {
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r0',
         'l0',
       )
@@ -168,7 +166,7 @@ describe('useMoveAutoRepair', () => {
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r1',
         'l0',
       )
@@ -195,7 +193,7 @@ describe('useMoveAutoRepair', () => {
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r1',
         'l0',
       )
@@ -230,7 +228,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
 
       renderAndTrigger(
-        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r1',
         'l0',
       )
@@ -268,7 +266,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
 
       renderAndTrigger(
-        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r1',
         'l0',
       )
@@ -304,7 +302,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
 
       renderAndTrigger(
-        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r2',
         'l0',
       )
@@ -316,15 +314,12 @@ describe('useMoveAutoRepair', () => {
       expect(arrowAB!.comment).toBe('保持コメント')
     })
 
-    it('should show success toast after repair with correct arrow count', () => {
+    it('should pass crossingCount to addConfirmToast for useToast success message', () => {
       const initialArrows: InternalArrow[] = [
         mkArrow('a1', 'l0_r0', 'l0_r1'),
         mkArrow('a2', 'l0_r1', 'l0_r2'),
       ]
-      let currentArrows = [...initialArrows]
-      const setArrows = vi.fn((updater: (prev: InternalArrow[]) => InternalArrow[]) => {
-        currentArrows = updater(currentArrows)
-      }) as unknown as Dispatch<SetStateAction<InternalArrow[]>>
+      const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       const tasks: Record<string, TaskData> = {
         l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
@@ -334,17 +329,13 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
 
       renderAndTrigger(
-        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r1',
         'l0',
       )
 
-      addConfirmToast.mock.calls[0][0].onConfirm()
-
-      expect(addSuccessToast).toHaveBeenCalledOnce()
-      expect(addSuccessToast.mock.calls[0][0].message).toBe(
-        '↻ オートリペア: 2本の矢印を修復しました',
-      )
+      const toast = addConfirmToast.mock.calls[0][0]
+      expect(toast.crossingCount).toBe(2)
     })
   })
 
@@ -369,7 +360,7 @@ describe('useMoveAutoRepair', () => {
 
       expect(() => {
         renderAndTrigger(
-          { arrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+          { arrows, setArrows, tasks, rows, addConfirmToast },
           'l0_r0',
           'l0',
         )
@@ -390,7 +381,7 @@ describe('useMoveAutoRepair', () => {
       const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
 
       renderAndTrigger(
-        { arrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows, setArrows, tasks, rows, addConfirmToast },
         'l1_r1',
         'l1',
       )
@@ -420,7 +411,7 @@ describe('useMoveAutoRepair', () => {
       const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
 
       renderAndTrigger(
-        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast, addSuccessToast },
+        { arrows: initialArrows, setArrows, tasks, rows, addConfirmToast },
         'l0_r1',
         'l0',
       )

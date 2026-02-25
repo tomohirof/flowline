@@ -15,7 +15,6 @@ interface UseMoveAutoRepairOptions {
     onConfirm?: () => void
     crossingCount?: number
   }) => void
-  addSuccessToast: (toast: { message: string }) => void
 }
 
 interface PendingMove {
@@ -29,7 +28,6 @@ export function useMoveAutoRepair({
   tasks,
   rows,
   addConfirmToast,
-  addSuccessToast,
 }: UseMoveAutoRepairOptions) {
   const pendingMoveRef = useRef<PendingMove | null>(null)
 
@@ -78,13 +76,10 @@ export function useMoveAutoRepair({
 
           return [...filtered, ...newArrows]
         })
-        addSuccessToast({
-          message: `↻ オートリペア: ${arrowCount}本の矢印を修復しました`,
-        })
       },
       crossingCount: arrowCount,
     })
-  }, [arrows, tasks, rows, setArrows, addConfirmToast, addSuccessToast])
+  }, [arrows, tasks, rows, setArrows, addConfirmToast])
 
   const triggerMoveRepairCheck = (movedKey: string, laneId: string): void => {
     pendingMoveRef.current = { movedKey, laneId }
