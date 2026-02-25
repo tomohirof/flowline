@@ -170,6 +170,71 @@ export interface CrossLaneRewire {
  * - 新末尾の行インデックス > 旧末尾の行インデックス（下方向に伸びた場合のみ）
  * - 旧末尾から別レーンへの矢印が存在する
  */
+/* --------------------------------------------------------- */
+/* swapKeys — 2ノードの位置交換                               */
+/* --------------------------------------------------------- */
+
+export interface SwapResult {
+  tasks: Record<string, { label: string; lid: string; rid: string; nodeId: string; bg?: string; strokeColor?: string; dash?: string; shape?: 'diamond' }>
+  arrows: InternalArrow[]
+  order: string[]
+  notes: Record<string, string>
+  newKeyA: string
+  newKeyB: string
+}
+
+/**
+ * 2つのノードの位置（rid）を交換し、tasks/arrows/order/notes を更新した結果を返す。
+ * 同一レーン限定。異なるレーンや存在しないキーの場合は null を返す。
+ */
+export function swapKeys(
+  tasks: Record<string, { label: string; lid: string; rid: string; nodeId: string; bg?: string; strokeColor?: string; dash?: string; shape?: 'diamond' }>,
+  arrows: InternalArrow[],
+  order: string[],
+  notes: Record<string, string>,
+  draggedKey: string,
+  targetKey: string,
+): SwapResult | null {
+  const draggedTask = tasks[draggedKey]
+  const targetTask = tasks[targetKey]
+  if (!draggedTask || !targetTask) return null
+  if (draggedTask.lid !== targetTask.lid) return null
+  if (draggedTask.rid === targetTask.rid) return null
+
+  const ky = (lid: string, rid: string): string => `${lid}_${rid}`
+  const newKeyA = ky(draggedTask.lid, targetTask.rid)
+  const newKeyB = ky(targetTask.lid, draggedTask.rid)
+
+  // tasks
+  const newTasks = { ...tasks }
+  delete newTasks[draggedKey]
+  delete newTasks[targetKey]
+  newTasks[newKeyA] = { ...draggedTask, rid: targetTask.rid }
+  newTasks[newKeyB] = { ...targetTask, rid: draggedTask.rid }
+
+  // notes
+  const newNotes = { ...notes }
+  const noteA = newNotes[draggedKey]
+  const noteB = newNotes[targetKey]
+  delete newNotes[draggedKey]
+  delete newNotes[targetKey]
+  if (noteA) newNotes[newKeyA] = noteA
+  if (noteB) newNotes[newKeyB] = noteB
+
+  // order
+  const newOrder = order.map((k) =>
+    k === draggedKey ? newKeyA : k === targetKey ? newKeyB : k
+  )
+
+  // arrows: 2キー同時リマップ（temp キーで中間衝突回避）
+  const temp = `__swap_temp__`
+  let newArrows = remapArrows(arrows, draggedKey, temp)
+  newArrows = remapArrows(newArrows, targetKey, newKeyB)
+  newArrows = remapArrows(newArrows, temp, newKeyA)
+
+  return { tasks: newTasks, arrows: newArrows, order: newOrder, notes: newNotes, newKeyA, newKeyB }
+}
+
 export function detectCrossLaneRewire(
   currentChain: string[],
   proposedChain: string[],
