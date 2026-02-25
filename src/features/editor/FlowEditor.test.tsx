@@ -1152,7 +1152,8 @@ describe('empty row deletion (#192)', () => {
     expect(updatedEl!.tagName.toLowerCase()).toBe('g')
   })
 
-  it('should delete empty row when clicked', () => {
+  it('should delete empty row when clicked (after animation delay)', () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
     const flow = createMinimalFlow()
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
@@ -1160,8 +1161,15 @@ describe('empty row deletion (#192)', () => {
     const hitRect = document.querySelector('[data-testid="rownum-hit-0"]')!
     fireEvent.mouseEnter(hitRect)
     fireEvent.click(hitRect)
+    // Row still exists during animation
+    expect(document.querySelectorAll('[data-testid^="canvas-row-"]').length).toBe(initialRowCount)
+    // After animation delay, row is removed
+    act(() => {
+      vi.advanceTimersByTime(450)
+    })
     const newRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
     expect(newRowCount).toBe(initialRowCount - 1)
+    vi.useRealTimers()
   })
 
   it('should not delete row with nodes', () => {
@@ -1183,6 +1191,7 @@ describe('empty row deletion (#192)', () => {
   })
 
   it('should not delete the last remaining row', () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
     const flow = createMinimalFlow()
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
@@ -1191,6 +1200,9 @@ describe('empty row deletion (#192)', () => {
       const hitRect = document.querySelector('[data-testid="rownum-hit-0"]')!
       fireEvent.mouseEnter(hitRect)
       fireEvent.click(hitRect)
+      act(() => {
+        vi.advanceTimersByTime(450)
+      })
     }
     const afterDeleteCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
     expect(afterDeleteCount).toBe(1)
@@ -1201,8 +1213,139 @@ describe('empty row deletion (#192)', () => {
     const updatedEl = document.querySelector('[data-testid="canvas-row-0"]')
     expect(updatedEl!.tagName.toLowerCase()).toBe('text')
     fireEvent.click(hitRect)
+    act(() => {
+      vi.advanceTimersByTime(450)
+    })
     const finalCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
     expect(finalCount).toBe(1)
+    vi.useRealTimers()
+  })
+
+  // --- Row animation tests (#207) ---
+
+  it('should block row insert during animation (rowAnim lock)', () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const initialRowCount = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+
+    // First insert
+    const hitArea = document.querySelector('[data-testid="rowgap-hit-1"]')!
+    fireEvent.click(hitArea)
+    const afterFirstInsert = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(afterFirstInsert).toBe(initialRowCount + 1)
+
+    // Second insert during animation should be blocked
+    const hitArea2 = document.querySelector('[data-testid="rowgap-hit-0"]')!
+    fireEvent.click(hitArea2)
+    const afterSecondInsert = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(afterSecondInsert).toBe(initialRowCount + 1) // No change
+
+    // After animation lock expires, insert works again
+    act(() => {
+      vi.advanceTimersByTime(700)
+    })
+    const hitArea3 = document.querySelector('[data-testid="rowgap-hit-0"]')!
+    fireEvent.click(hitArea3)
+    const afterThirdInsert = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    expect(afterThirdInsert).toBe(initialRowCount + 2)
+
+    vi.useRealTimers()
+  })
+
+  it('should block row delete during animation (rowAnim lock)', () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Insert a row to get animation lock
+    const hitArea = document.querySelector('[data-testid="rowgap-hit-1"]')!
+    fireEvent.click(hitArea)
+
+    // Try to delete during animation — should be blocked
+    const deleteHit = document.querySelector('[data-testid="rownum-hit-0"]')!
+    fireEvent.mouseEnter(deleteHit)
+    fireEvent.click(deleteHit)
+    // Advance past delete delay — row should NOT be deleted (was blocked)
+    act(() => {
+      vi.advanceTimersByTime(450)
+    })
+
+    // Advance past add animation lock
+    act(() => {
+      vi.advanceTimersByTime(250)
+    })
+
+    // Now delete should work
+    const deleteHit2 = document.querySelector('[data-testid="rownum-hit-0"]')!
+    fireEvent.mouseEnter(deleteHit2)
+    fireEvent.click(deleteHit2)
+    act(() => {
+      vi.advanceTimersByTime(450)
+    })
+    // Verify row was deleted
+    const count = document.querySelectorAll('[data-testid^="canvas-row-"]').length
+    // Initial 7 + 1 inserted - 1 deleted = 7
+    expect(count).toBe(7)
+
+    vi.useRealTimers()
+  })
+
+  it('should show add animation overlay on row insert', () => {
+    const flow = createMinimalFlow()
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Insert a row
+    const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')!
+    fireEvent.click(hitArea)
+
+    // Animation overlay should be present
+    const overlay = container.querySelector('[data-testid="row-anim-overlay"]')
+    expect(overlay).toBeTruthy()
+  })
+
+  it('should show delete animation overlay on row delete', () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Delete a row
+    const deleteHit = container.querySelector('[data-testid="rownum-hit-0"]')!
+    fireEvent.mouseEnter(deleteHit)
+    fireEvent.click(deleteHit)
+
+    // Animation overlay should be present
+    const overlay = container.querySelector('[data-testid="row-anim-overlay"]')
+    expect(overlay).toBeTruthy()
+
+    // After delay, overlay disappears
+    act(() => {
+      vi.advanceTimersByTime(450)
+    })
+    const overlayAfter = container.querySelector('[data-testid="row-anim-overlay"]')
+    expect(overlayAfter).toBeNull()
+
+    vi.useRealTimers()
+  })
+
+  it('should clear add animation overlay after 700ms', () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Insert a row
+    const hitArea = container.querySelector('[data-testid="rowgap-hit-1"]')!
+    fireEvent.click(hitArea)
+
+    expect(container.querySelector('[data-testid="row-anim-overlay"]')).toBeTruthy()
+
+    act(() => {
+      vi.advanceTimersByTime(700)
+    })
+
+    expect(container.querySelector('[data-testid="row-anim-overlay"]')).toBeNull()
+
+    vi.useRealTimers()
   })
 })
 

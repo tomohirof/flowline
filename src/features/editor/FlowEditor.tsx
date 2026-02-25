@@ -462,8 +462,10 @@ export default function FlowEditor({
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
   const [hoveredRowNum, setHoveredRowNum] = useState<number | null>(null)
+  const [rowAnim, setRowAnim] = useState<{ type: 'add' | 'delete'; index: number } | null>(null)
   const [mermaidCopied, setMermaidCopied] = useState<boolean>(false)
   const mermaidTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const rowAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const {
     toasts,
     addConfirmToast,
@@ -565,6 +567,12 @@ export default function FlowEditor({
   useEffect(() => {
     return () => {
       if (mermaidTimerRef.current) clearTimeout(mermaidTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (rowAnimTimerRef.current) clearTimeout(rowAnimTimerRef.current)
     }
   }, [])
 
@@ -877,6 +885,7 @@ export default function FlowEditor({
     setHoveredLaneGap(null)
   }
   const insertRowAt = (i: number): void => {
+    if (rowAnim) return
     const newRowId = uid()
     setRows((prev) => {
       const n = [...prev]
@@ -885,14 +894,20 @@ export default function FlowEditor({
     })
     setHoveredRowGap(null)
     setRecentInsertedRow({ rowId: newRowId })
+    setRowAnim({ type: 'add', index: i })
+    rowAnimTimerRef.current = setTimeout(() => setRowAnim(null), 700)
   }
   const rmRowAt = (ri: number): void => {
-    if (rows.length <= 1) return
+    if (rows.length <= 1 || rowAnim) return
     const row = rows[ri]
     const hasNodes = Object.values(tasks).some((t) => t.rid === row.id)
     if (hasNodes) return
-    setRows((p) => p.filter((_, i) => i !== ri))
     setHoveredRowNum(null)
+    setRowAnim({ type: 'delete', index: ri })
+    rowAnimTimerRef.current = setTimeout(() => {
+      setRows((p) => p.filter((_, i) => i !== ri))
+      setRowAnim(null)
+    }, 450)
   }
   const cellFromPos = (sx: number, sy: number): CellInfo | null => {
     for (let li = 0; li < lanes.length; li++)
@@ -2500,7 +2515,7 @@ export default function FlowEditor({
               const rx = LM / 2
               const isEmptyRow = !Object.values(tasks).some((t) => t.rid === row.id)
               const isHoveredRow = hoveredRowNum === ri
-              const canDelete = isEmptyRow && rows.length > 1
+              const canDelete = isEmptyRow && rows.length > 1 && !rowAnim
               return (
                 <g key={`rownum-${ri}`}>
                   <rect
@@ -3285,6 +3300,99 @@ export default function FlowEditor({
                 />
               </g>
             )}
+
+            {/* Row add/delete animation overlay */}
+            {rowAnim &&
+              (() => {
+                const fullW = laneX(lanes.length - 1) + LW + 8
+                const ay = TM + HH + rowAnim.index * RH
+                const ac = T.accent
+                if (rowAnim.type === 'add') {
+                  return (
+                    <g data-testid="row-anim-overlay" style={{ pointerEvents: 'none' }}>
+                      <foreignObject
+                        x={0}
+                        y={ay}
+                        width={fullW}
+                        height={RH}
+                        style={{ overflow: 'visible' }}
+                      >
+                        <div className={styles.stampIn}>
+                          <div
+                            style={{
+                              width: '100%',
+                              height: RH,
+                              borderRadius: 6,
+                              border: `2px solid ${ac}40`,
+                              background: `${ac}08`,
+                            }}
+                          />
+                        </div>
+                      </foreignObject>
+                      <foreignObject
+                        x={LM}
+                        y={ay + 2}
+                        width={fullW - LM - 4}
+                        height={RH - 4}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div
+                          className={styles.floodIn}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            background: `linear-gradient(90deg, ${ac}CC, ${ac}44)`,
+                            borderRadius: 6,
+                          }}
+                        />
+                      </foreignObject>
+                    </g>
+                  )
+                }
+                if (rowAnim.type === 'delete') {
+                  return (
+                    <g data-testid="row-anim-overlay" style={{ pointerEvents: 'none' }}>
+                      <foreignObject
+                        x={0}
+                        y={ay}
+                        width={fullW}
+                        height={RH}
+                        style={{ overflow: 'visible' }}
+                      >
+                        <div className={styles.stampOut}>
+                          <div
+                            style={{
+                              width: '100%',
+                              height: RH,
+                              borderRadius: 6,
+                              border: '2px solid #E0606040',
+                              background: '#E0606008',
+                            }}
+                          />
+                        </div>
+                      </foreignObject>
+                      <foreignObject
+                        x={LM}
+                        y={ay + 2}
+                        width={fullW - LM - 4}
+                        height={RH - 4}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div
+                          className={styles.floodOut}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #E0606099, #E0606044)',
+                            borderRadius: 6,
+                          }}
+                        />
+                      </foreignObject>
+                    </g>
+                  )
+                }
+                return null
+              })()}
 
             {/* Row gap "+" — full-width hit zone, rendered last for top z-order */}
             {Array.from({ length: rows.length + 1 }, (_, ri) => {
