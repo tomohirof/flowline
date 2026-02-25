@@ -1968,3 +1968,73 @@ describe('arrow reorganization toast (#182)', () => {
     expect(container.querySelector('[data-testid="toast-confirm"]')).toBeNull()
   })
 })
+
+describe('z-order: arrow controls above row gap (#212)', () => {
+  it('should render arrow floating controls after row gap hit zones in SVG DOM order', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Click arrow to show floating controls
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+
+    const controls = container.querySelector('[data-testid="arrow-floating-controls"]')
+    expect(controls).toBeTruthy()
+
+    // Check DOM order within the full container (jsdom doesn't fully parse SVG children via svg.querySelectorAll)
+    const allElements = Array.from(container.querySelectorAll('*'))
+
+    const rowGapIndices = allElements
+      .map((el, i) => (el.getAttribute('data-testid')?.startsWith('rowgap-hit-') ? i : -1))
+      .filter((i) => i !== -1)
+    expect(rowGapIndices.length).toBeGreaterThan(0)
+    const lastRowGapIndex = Math.max(...rowGapIndices)
+
+    const controlsIndex = allElements.findIndex(
+      (el) => el.getAttribute('data-testid') === 'arrow-floating-controls',
+    )
+    expect(controlsIndex).not.toBe(-1)
+
+    // Floating controls should come AFTER row gaps in DOM = higher z-order in SVG
+    expect(controlsIndex).toBeGreaterThan(lastRowGapIndex)
+  })
+
+  it('should render connection handles after row gap hit zones in SVG DOM order', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Click node rect to select it and show connection handles
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.click(nodeRect!)
+
+    const handles = container.querySelectorAll('[data-testid="connection-handle"]')
+    expect(handles.length).toBeGreaterThan(0)
+
+    // Check DOM order within the full container (jsdom doesn't fully parse SVG children via svg.querySelectorAll)
+    const allElements = Array.from(container.querySelectorAll('*'))
+
+    const rowGapIndices = allElements
+      .map((el, i) => (el.getAttribute('data-testid')?.startsWith('rowgap-hit-') ? i : -1))
+      .filter((i) => i !== -1)
+    expect(rowGapIndices.length).toBeGreaterThan(0)
+    const lastRowGapIndex = Math.max(...rowGapIndices)
+
+    const handleIndex = allElements.findIndex(
+      (el) => el.getAttribute('data-testid') === 'connection-handle',
+    )
+    expect(handleIndex).not.toBe(-1)
+
+    expect(handleIndex).toBeGreaterThan(lastRowGapIndex)
+  })
+})

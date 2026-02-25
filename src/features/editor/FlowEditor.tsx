@@ -3032,6 +3032,63 @@ export default function FlowEditor({
               />
             ))}
 
+            {/* Row gap "+" — full-width hit zone, rendered before floating controls so controls have higher z-order */}
+            {Array.from({ length: rows.length + 1 }, (_, ri) => {
+              const gy = TM + HH + ri * RH
+              const gx = LM / 2
+              const isHov = hoveredRowGap === ri
+              return (
+                <g key={`rowgap-${ri}`}>
+                  <rect
+                    data-testid={`rowgap-hit-${ri}`}
+                    x={0}
+                    y={gy - 10}
+                    width={laneX(lanes.length - 1) + LW}
+                    height={20}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredRowGap(ri)}
+                    onMouseLeave={() => setHoveredRowGap(null)}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      insertRowAt(ri)
+                    }}
+                  />
+                  {isHov && (
+                    <g data-testid={`rowgap-feedback-${ri}`} style={{ pointerEvents: 'none' }}>
+                      <line
+                        x1={LM}
+                        y1={gy}
+                        x2={laneX(lanes.length - 1) + LW}
+                        y2={gy}
+                        stroke={T.accent}
+                        strokeWidth={1.5}
+                        strokeDasharray="4,3"
+                        opacity={0.3}
+                      />
+                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
+                      <line
+                        x1={gx - 4}
+                        y1={gy}
+                        x2={gx + 4}
+                        y2={gy}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                      <line
+                        x1={gx}
+                        y1={gy - 4}
+                        x2={gx}
+                        y2={gy + 4}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                    </g>
+                  )}
+                </g>
+              )
+            })}
+
             {/* Floating arrow controls */}
             {selArrow &&
               (() => {
@@ -3394,63 +3451,6 @@ export default function FlowEditor({
                 }
                 return null
               })()}
-
-            {/* Row gap "+" — full-width hit zone, rendered last for top z-order */}
-            {Array.from({ length: rows.length + 1 }, (_, ri) => {
-              const gy = TM + HH + ri * RH
-              const gx = LM / 2
-              const isHov = hoveredRowGap === ri
-              return (
-                <g key={`rowgap-${ri}`}>
-                  <rect
-                    data-testid={`rowgap-hit-${ri}`}
-                    x={0}
-                    y={gy - 10}
-                    width={laneX(lanes.length - 1) + LW}
-                    height={20}
-                    fill="transparent"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => setHoveredRowGap(ri)}
-                    onMouseLeave={() => setHoveredRowGap(null)}
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      insertRowAt(ri)
-                    }}
-                  />
-                  {isHov && (
-                    <g data-testid={`rowgap-feedback-${ri}`} style={{ pointerEvents: 'none' }}>
-                      <line
-                        x1={LM}
-                        y1={gy}
-                        x2={laneX(lanes.length - 1) + LW}
-                        y2={gy}
-                        stroke={T.accent}
-                        strokeWidth={1.5}
-                        strokeDasharray="4,3"
-                        opacity={0.3}
-                      />
-                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
-                      <line
-                        x1={gx - 4}
-                        y1={gy}
-                        x2={gx + 4}
-                        y2={gy}
-                        stroke="#fff"
-                        strokeWidth={1.5}
-                      />
-                      <line
-                        x1={gx}
-                        y1={gy - 4}
-                        x2={gx}
-                        y2={gy + 4}
-                        stroke="#fff"
-                        strokeWidth={1.5}
-                      />
-                    </g>
-                  )}
-                </g>
-              )
-            })}
           </svg>
         </div>
 
