@@ -11,13 +11,20 @@ const gitHash = (() => {
   }
 })()
 
-const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
+const appVersion = (() => {
+  try {
+    const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
+    return pkg.version ?? '0.0.0'
+  } catch {
+    return '0.0.0'
+  }
+})()
 
 export default defineConfig({
   plugins: [react()],
   define: {
     __GIT_HASH__: JSON.stringify(gitHash),
-    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_VERSION__: JSON.stringify(appVersion),
   },
   server: {
     proxy: {

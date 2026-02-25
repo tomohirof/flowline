@@ -1429,8 +1429,8 @@ export default function FlowEditor({
     const payload = {
       meta: {
         exportedAt: new Date().toISOString(),
-        appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0',
-        gitHash: typeof __GIT_HASH__ !== 'undefined' ? __GIT_HASH__ : 'unknown',
+        appVersion: __APP_VERSION__,
+        gitHash: __GIT_HASH__,
         url: window.location.href,
       },
       flow: {

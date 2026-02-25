@@ -18,6 +18,10 @@ function wasmMockPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [wasmMockPlugin()],
+  define: {
+    __GIT_HASH__: JSON.stringify('test-hash'),
+    __APP_VERSION__: JSON.stringify('0.0.0'),
+  },
   resolve: {
     alias: {
       '@resvg/resvg-wasm': path.resolve(__dirname, 'tests/helpers/mock-cf-resvg.ts'),
