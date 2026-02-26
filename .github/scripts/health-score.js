@@ -35,21 +35,46 @@ try {
 
 if (score < 0) score = 0
 
-const status = score >= 80 ? '✅' : '❌'
+// Status indicator: green (80+), yellow (60-79), red (<60)
+const indicator = score >= 80 ? '🟢' : score >= 60 ? '🟡' : '🔴'
 
-const lines = ['## 🤖 Repository Health', '', `Health Score: ${score} ${status}`, '']
+// Progress bar (20 chars wide)
+const filled = Math.round(score / 5)
+const empty = 20 - filled
+const bar = '█'.repeat(filled) + '░'.repeat(empty)
+
+const lines = [
+  '## 🏥 リポジトリ健康診断',
+  '',
+  `${indicator} **スコア: ${score} / 100**`,
+  '',
+  `\`${bar}\``,
+  '',
+]
 
 const total = categories.files + categories.dependencies + categories.exports + categories.types
 
 if (!knipAvailable) {
-  lines.push('knip result unavailable')
+  lines.push('> ⚠️ knip の結果を取得できませんでした')
 } else if (total > 0) {
-  if (categories.files > 0) lines.push(`Unused files: ${categories.files}`)
-  if (categories.dependencies > 0) lines.push(`Unused dependencies: ${categories.dependencies}`)
-  if (categories.exports > 0) lines.push(`Unused exports: ${categories.exports}`)
-  if (categories.types > 0) lines.push(`Unused types: ${categories.types}`)
+  lines.push('| 項目 | 件数 | 減点 |')
+  lines.push('|---|:---:|:---:|')
+  if (categories.files > 0)
+    lines.push(`| 📄 未使用ファイル | ${categories.files} | -${categories.files * 5} |`)
+  if (categories.dependencies > 0)
+    lines.push(
+      `| 📦 未使用パッケージ | ${categories.dependencies} | -${categories.dependencies * 5} |`,
+    )
+  if (categories.exports > 0)
+    lines.push(`| 📤 未使用エクスポート | ${categories.exports} | -${categories.exports * 5} |`)
+  if (categories.types > 0)
+    lines.push(`| 🏷️ 未使用の型定義 | ${categories.types} | -${categories.types * 5} |`)
+  lines.push('')
+  lines.push(
+    `> 💡 **ヒント:** \`npm run knip\` で詳細を確認し、不要なコードを削除するとスコアが上がります`,
+  )
 } else {
-  lines.push('No issues found 🎉')
+  lines.push('🎉 問題は見つかりませんでした！コードはきれいな状態です。')
 }
 
 lines.push('')

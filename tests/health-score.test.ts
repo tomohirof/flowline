@@ -26,11 +26,11 @@ function runScript(knipData: unknown): string {
 }
 
 describe('health-score.js', () => {
-  it('should output score 100 and no issues message when knip finds nothing', () => {
+  it('should output score 100 with celebration when knip finds nothing', () => {
     const report = runScript({ files: [], issues: [] })
-    expect(report).toContain('Health Score: 100')
-    expect(report).toContain('✅')
-    expect(report).toContain('No issues found')
+    expect(report).toContain('スコア: 100 / 100')
+    expect(report).toContain('🟢')
+    expect(report).toContain('問題は見つかりませんでした')
   })
 
   it('should deduct 5 points per unused file', () => {
@@ -38,8 +38,8 @@ describe('health-score.js', () => {
       files: ['a.ts', 'b.ts'],
       issues: [],
     })
-    expect(report).toContain('Health Score: 90')
-    expect(report).toContain('✅')
+    expect(report).toContain('スコア: 90 / 100')
+    expect(report).toContain('🟢')
   })
 
   it('should deduct 5 points per unused export/type/dependency in issues', () => {
@@ -57,31 +57,39 @@ describe('health-score.js', () => {
       ],
     })
     // 2 items * 5 = 10, score = 90
-    expect(report).toContain('Health Score: 90')
+    expect(report).toContain('スコア: 90 / 100')
   })
 
-  it('should show warning when score is below 80', () => {
+  it('should show yellow warning when score is 60-79', () => {
     const files = Array.from({ length: 5 }, (_, i) => `file${i}.ts`)
     const report = runScript({ files, issues: [] })
     // 100 - 25 = 75
-    expect(report).toContain('Health Score: 75')
-    expect(report).toContain('❌')
+    expect(report).toContain('スコア: 75 / 100')
+    expect(report).toContain('🟡')
+  })
+
+  it('should show red warning when score is below 60', () => {
+    const files = Array.from({ length: 10 }, (_, i) => `file${i}.ts`)
+    const report = runScript({ files, issues: [] })
+    // 100 - 50 = 50
+    expect(report).toContain('スコア: 50 / 100')
+    expect(report).toContain('🔴')
   })
 
   it('should clamp score to 0 when many unused items', () => {
     const files = Array.from({ length: 30 }, (_, i) => `file${i}.ts`)
     const report = runScript({ files, issues: [] })
-    expect(report).toContain('Health Score: 0')
-    expect(report).toContain('❌')
+    expect(report).toContain('スコア: 0 / 100')
+    expect(report).toContain('🔴')
   })
 
   it('should handle missing knip-output.json gracefully', () => {
     const report = runScript(null)
-    expect(report).toContain('Health Score: 100')
-    expect(report).toContain('knip result unavailable')
+    expect(report).toContain('スコア: 100 / 100')
+    expect(report).toContain('knip の結果を取得できませんでした')
   })
 
-  it('should include category breakdown in report', () => {
+  it('should include Japanese category breakdown in report', () => {
     const report = runScript({
       files: ['a.ts'],
       issues: [
@@ -95,16 +103,18 @@ describe('health-score.js', () => {
         },
       ],
     })
-    expect(report).toContain('Unused files: 1')
-    expect(report).toContain('Unused exports: 1')
-    expect(report).toContain('Unused dependencies: 1')
+    expect(report).toContain('未使用ファイル')
+    expect(report).toContain('未使用エクスポート')
+    expect(report).toContain('未使用パッケージ')
   })
 
-  it('should show no issues message when knip succeeds with zero counts', () => {
-    const report = runScript({ files: [], issues: [] })
-    expect(report).toContain('Health Score: 100')
-    expect(report).not.toContain('Unused files')
-    expect(report).toContain('No issues found')
+  it('should show progress bar', () => {
+    const report = runScript({
+      files: ['a.ts', 'b.ts'],
+      issues: [],
+    })
+    // Score 90 -> progress bar should have filled and empty portions
+    expect(report).toMatch(/[█]+[░]+/)
   })
 
   it('should handle malformed knip-output.json gracefully', () => {
@@ -117,7 +127,7 @@ describe('health-score.js', () => {
     const report = fs.readFileSync(reportPath, 'utf-8')
     fs.rmSync(tmpDir, { recursive: true })
 
-    expect(report).toContain('Health Score: 100')
-    expect(report).toContain('knip result unavailable')
+    expect(report).toContain('スコア: 100 / 100')
+    expect(report).toContain('knip の結果を取得できませんでした')
   })
 })
