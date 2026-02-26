@@ -299,7 +299,7 @@ describe('AI API', () => {
       const res = await postJson('/api/ai/flow-1/edit', { prompt: '整理して' }, env, cookie)
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.model).toBe('claude-sonnet-4-6-20250514')
+      expect(body.model).toBe('claude-sonnet-4-6')
     })
 
     it('should return haiku model for flow with exactly threshold-1 nodes', async () => {
@@ -312,6 +312,18 @@ describe('AI API', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.model).toBe('claude-haiku-4-5-20251001')
+    })
+
+    it('should return sonnet model for flow with exactly threshold nodes', async () => {
+      // Insert nodes to reach 10 total (1 already exists from beforeEach)
+      for (let i = 2; i <= 10; i++) {
+        insertNode(db, `node-${i}`, 'flow-1', 'lane-1', i - 1, `Task ${i}`, 0)
+      }
+      const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
+      const res = await postJson('/api/ai/flow-1/edit', { prompt: '整理して' }, env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.model).toBe('claude-sonnet-4-6')
     })
   })
 })

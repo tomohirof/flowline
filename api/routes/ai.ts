@@ -14,7 +14,7 @@ import type { LaneRow, NodeRow, ArrowRow } from '../lib/flow-transform'
 import { toLane, toNode, toArrow } from '../lib/flow-transform'
 
 const MODEL_HAIKU = 'claude-haiku-4-5-20251001'
-const MODEL_SONNET = 'claude-sonnet-4-6-20250514'
+const MODEL_SONNET = 'claude-sonnet-4-6'
 const COMPLEXITY_THRESHOLD = 10
 
 function selectModel(nodeCount: number): typeof MODEL_HAIKU | typeof MODEL_SONNET {
