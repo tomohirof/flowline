@@ -13,7 +13,13 @@ import {
 import type { LaneRow, NodeRow, ArrowRow } from '../lib/flow-transform'
 import { toLane, toNode, toArrow } from '../lib/flow-transform'
 
-const AI_MODEL = 'claude-sonnet-4-20250514'
+const MODEL_HAIKU = 'claude-haiku-4-5-20251001'
+const MODEL_SONNET = 'claude-sonnet-4-6-20250514'
+const COMPLEXITY_THRESHOLD = 10
+
+function selectModel(nodeCount: number): string {
+  return nodeCount >= COMPLEXITY_THRESHOLD ? MODEL_SONNET : MODEL_HAIKU
+}
 const MAX_PROMPT_LENGTH = 2000
 
 const ai = new Hono<AuthEnv>()
@@ -90,7 +96,7 @@ ai.post('/generate', async (c) => {
     const tool = buildFlowTool()
 
     const response = await createMessage(c.env.ANTHROPIC_API_KEY, {
-      model: AI_MODEL,
+      model: MODEL_HAIKU,
       max_tokens: 4096,
       system: buildSystemPrompt(),
       tools: [tool],
@@ -101,7 +107,7 @@ ai.post('/generate', async (c) => {
     const flowData = parseAiResponse(response)
     const flow = replaceTempIds(flowData)
 
-    return c.json({ flow })
+    return c.json({ flow, model: MODEL_HAIKU })
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e)
     console.error('AI generation failed:', detail)
@@ -164,6 +170,7 @@ ai.post('/:flowId/edit', async (c) => {
     .bind(flowId)
     .all<ArrowRow>()
 
+  const model = selectModel((nodesResult.results ?? []).length)
   const currentLanes = (lanesResult.results ?? []).map(toLane)
   const currentNodes = (nodesResult.results ?? []).map(toNode)
   const currentArrows = (arrowsResult.results ?? []).map(toArrow)
@@ -183,7 +190,7 @@ ai.post('/:flowId/edit', async (c) => {
     const tool = buildFlowTool()
 
     const response = await createMessage(c.env.ANTHROPIC_API_KEY, {
-      model: AI_MODEL,
+      model,
       max_tokens: 4096,
       system: buildSystemPrompt(),
       tools: [tool],
@@ -199,7 +206,7 @@ ai.post('/:flowId/edit', async (c) => {
     const flowData = parseAiResponse(response)
     const flow = replaceTempIds(flowData)
 
-    return c.json({ flow })
+    return c.json({ flow, model })
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e)
     console.error('AI edit failed:', detail)

@@ -213,6 +213,20 @@ describe('AI API', () => {
       const body = await res.json()
       expect(body.error).toContain('2000')
     })
+
+    it('should return model field in response', async () => {
+      const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
+      const res = await postJson(
+        '/api/ai/generate',
+        { prompt: '営業プロセスを作って' },
+        env,
+        cookie,
+      )
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.model).toBeDefined()
+      expect(body.model).toBe('claude-haiku-4-5-20251001')
+    })
   })
 
   // ========================================
@@ -266,6 +280,38 @@ describe('AI API', () => {
     it('should return 401 without auth', async () => {
       const res = await postJson('/api/ai/flow-1/edit', { prompt: 'edit' }, env)
       expect(res.status).toBe(401)
+    })
+
+    it('should return haiku model for flow with few nodes', async () => {
+      const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
+      const res = await postJson('/api/ai/flow-1/edit', { prompt: 'ノードを追加して' }, env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.model).toBe('claude-haiku-4-5-20251001')
+    })
+
+    it('should return sonnet model for flow with many nodes', async () => {
+      // Insert 10+ nodes to exceed threshold
+      for (let i = 2; i <= 11; i++) {
+        insertNode(db, `node-${i}`, 'flow-1', 'lane-1', i - 1, `Task ${i}`, 0)
+      }
+      const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
+      const res = await postJson('/api/ai/flow-1/edit', { prompt: '整理して' }, env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.model).toBe('claude-sonnet-4-6-20250514')
+    })
+
+    it('should return haiku model for flow with exactly threshold-1 nodes', async () => {
+      // Insert nodes to reach 9 total (1 already exists from beforeEach)
+      for (let i = 2; i <= 9; i++) {
+        insertNode(db, `node-${i}`, 'flow-1', 'lane-1', i - 1, `Task ${i}`, 0)
+      }
+      const cookie = await authCookie(AI_USER_ID, AI_USER_EMAIL)
+      const res = await postJson('/api/ai/flow-1/edit', { prompt: '整理して' }, env, cookie)
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.model).toBe('claude-haiku-4-5-20251001')
     })
   })
 })
