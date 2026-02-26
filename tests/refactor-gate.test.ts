@@ -94,4 +94,40 @@ describe('refactor-gate.js', () => {
     const { envVars } = runGate({ score: 30, mockPrCount: 3 })
     expect(envVars.NEEDS_REFACTOR).toBe('false')
   })
+
+  it('should default score to 100 when health-score.txt contains non-numeric value', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'refactor-gate-test-'))
+    const ghEnvPath = path.join(tmpDir, 'GITHUB_ENV')
+    fs.writeFileSync(ghEnvPath, '')
+    fs.writeFileSync(path.join(tmpDir, 'health-score.txt'), 'not-a-number')
+
+    const stdout = execSync(`node ${SCRIPT_PATH}`, {
+      cwd: tmpDir,
+      env: {
+        ...(process.env as Record<string, string>),
+        GITHUB_ENV: ghEnvPath,
+        MOCK_PR_COUNT: '0',
+      },
+      encoding: 'utf-8',
+    })
+
+    const envContent = fs.readFileSync(ghEnvPath, 'utf-8')
+    fs.rmSync(tmpDir, { recursive: true })
+
+    expect(envContent).toContain('HEALTH_SCORE=100')
+    expect(envContent).toContain('NEEDS_REFACTOR=false')
+    expect(stdout).toContain('non-numeric')
+  })
+
+  it('should throw when GITHUB_ENV is not set', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'refactor-gate-test-'))
+    fs.writeFileSync(path.join(tmpDir, 'health-score.txt'), '90')
+
+    const env = { ...(process.env as Record<string, string>), MOCK_PR_COUNT: '0' }
+    delete (env as Record<string, string | undefined>).GITHUB_ENV
+
+    expect(() => execSync(`node ${SCRIPT_PATH}`, { cwd: tmpDir, env, encoding: 'utf-8' })).toThrow()
+
+    fs.rmSync(tmpDir, { recursive: true })
+  })
 })
