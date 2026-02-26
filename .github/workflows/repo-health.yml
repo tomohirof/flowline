@@ -1,0 +1,26 @@
+name: Repo Health Check
+
+on:
+  pull_request:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install deps
+        run: npm ci
+      - name: Run knip
+        run: npx knip --reporter json > knip.json || true
+      - name: Calculate Health Score
+        run: node .github/scripts/health-score.js
+      - name: Comment PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: health-report.md
