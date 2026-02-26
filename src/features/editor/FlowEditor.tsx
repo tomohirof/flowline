@@ -3045,7 +3045,7 @@ export default function FlowEditor({
                         points={`${c.x},${c.y - DS} ${c.x + DS},${c.y} ${c.x},${c.y + DS} ${c.x - DS},${c.y}`}
                         fill={
                           isRepairTarget
-                            ? 'rgba(255, 140, 0, 0.12)'
+                            ? `${T.accent}1F`
                             : isConnTgt && isHov
                               ? `${T.accent}0A`
                               : task.bg || T.nodeFill
@@ -3089,7 +3089,7 @@ export default function FlowEditor({
                         height={TH}
                         fill={
                           isRepairTarget
-                            ? 'rgba(255, 140, 0, 0.12)'
+                            ? `${T.accent}1F`
                             : isConnTgt && isHov
                               ? `${T.accent}0A`
                               : task.bg || T.nodeFill
