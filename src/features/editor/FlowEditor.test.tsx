@@ -68,6 +68,7 @@ beforeEach(() => {
       autoConnect: true,
       autoAddRow: true,
       enterEditOnCreate: true,
+      autoRepair: true,
       showDotGrid: true,
       showOrderBadge: true,
     },
@@ -591,13 +592,14 @@ describe('editorSettings panel (#72)', () => {
     expect(screen.getAllByText('表示').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('should render all 6 setting checkboxes with correct data-testid', () => {
+  it('should render all 7 setting checkboxes with correct data-testid', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     const settingKeys = [
       'copyLabelOnSameRow',
       'autoConnect',
       'autoAddRow',
       'enterEditOnCreate',
+      'autoRepair',
       'showDotGrid',
       'showOrderBadge',
     ]
@@ -612,6 +614,7 @@ describe('editorSettings panel (#72)', () => {
     expect(screen.getAllByText('自動接続').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('自動行追加').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('作成後すぐ編集').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('自動修復').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('ドットグリッド').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('順番バッジ').length).toBeGreaterThanOrEqual(1)
   })
@@ -641,6 +644,11 @@ describe('editorSettings panel (#72)', () => {
     expect(screen.getAllByTestId('setting-autoConnect')[0].querySelector('svg')).toBeTruthy()
     expect(screen.getAllByTestId('setting-autoAddRow')[0].querySelector('svg')).toBeTruthy()
     expect(screen.getAllByTestId('setting-enterEditOnCreate')[0].querySelector('svg')).toBeTruthy()
+  })
+
+  it('should have autoRepair ON by default', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    expect(screen.getAllByTestId('setting-autoRepair')[0].querySelector('svg')).toBeTruthy()
   })
 
   it('should have showDotGrid and showOrderBadge ON by default', () => {
@@ -1431,6 +1439,25 @@ describe('editorSettings API sync (#89)', () => {
         method: 'PUT',
         body: expect.stringContaining('"copyLabelOnSameRow":true'),
       })
+    })
+  })
+
+  it('should restore autoRepair=false from API settings', async () => {
+    mockApiFetch.mockResolvedValueOnce({
+      settings: {
+        copyLabelOnSameRow: false,
+        autoConnect: true,
+        autoAddRow: true,
+        enterEditOnCreate: true,
+        autoRepair: false,
+        showDotGrid: true,
+        showOrderBadge: true,
+      },
+      profile: { name: 'Test User', email: 'test@example.com' },
+    })
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    await waitFor(() => {
+      expect(screen.getAllByTestId('setting-autoRepair')[0].querySelector('svg')).toBeNull()
     })
   })
 })
