@@ -87,7 +87,7 @@ export function useMoveAutoRepair({
     currentTasks: Record<string, TaskData>,
   ): void => {
     const chain = findChain(currentArrows, currentTasks, laneId)
-    if (chain.length < 3) return
+    if (chain.length < 2) return
     if (!chain.includes(movedKey)) return
 
     const { changed, current, proposed } = detectReorder(chain, currentTasks, rows)
