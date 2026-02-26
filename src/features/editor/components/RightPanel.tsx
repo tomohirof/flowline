@@ -51,7 +51,7 @@ export interface RightPanelProps {
 
   // Settings
   editorSettings: EditorSettings
-  updateEditorSetting: (key: string, value: unknown) => void
+  updateEditorSetting: (key: string, value: boolean) => void
 
   // Actions
   delTask: (id: string) => void
