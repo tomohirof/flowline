@@ -148,6 +148,36 @@ describe('findClosestUpstream', () => {
     const result = findClosestUpstream(tasks, rows, lanes, 1, 1, arrows)
     expect(result).toBe('N4')
   })
+
+  it('should prefer same-row isolated tail over previous-row flowTail (#265)', () => {
+    // Row 3: A → B (chain), Row 4: X (isolated), new node at Row 4 lane 1
+    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }, { id: 'r4' }]
+    const lanes = [{ id: 'l0' }, { id: 'l1' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      A: { lid: 'l0', rid: 'r3' },
+      B: { lid: 'l1', rid: 'r3' },
+      X: { lid: 'l0', rid: 'r4' },
+    }
+    const arrows = [{ id: 'a1', from: 'A', to: 'B', comment: '' }]
+    // New node at row4(r4), lane1(l1) — X is same-row isolated tail, B is flowTail at row3
+    const result = findClosestUpstream(tasks, rows, lanes, 4, 1, arrows)
+    expect(result).toBe('X')
+  })
+
+  it('should prefer same-row closest tail when multiple same-row tails exist', () => {
+    // Row 0: A → B (B is flowTail at l1), C is isolated at l2, new node at l3
+    const rows = [{ id: 'r0' }]
+    const lanes = [{ id: 'l0' }, { id: 'l1' }, { id: 'l2' }, { id: 'l3' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      A: { lid: 'l0', rid: 'r0' },
+      B: { lid: 'l1', rid: 'r0' },
+      C: { lid: 'l2', rid: 'r0' },
+    }
+    const arrows = [{ id: 'a1', from: 'A', to: 'B', comment: '' }]
+    const result = findClosestUpstream(tasks, rows, lanes, 0, 3, arrows)
+    // C is closer (l2 vs l1), both are same-row tails
+    expect(result).toBe('C')
+  })
 })
 
 describe('findCrossingArrows', () => {
