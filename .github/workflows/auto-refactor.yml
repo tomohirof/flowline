@@ -1,0 +1,60 @@
+name: Auto Refactor Pipeline
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  refactor-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install deps
+        run: npm ci
+      - name: Run knip
+        run: npx knip --reporter json > knip-output.json || true
+      - name: Calculate Health Score
+        run: node .github/scripts/health-score.js
+      - name: Refactor Gate
+        run: node .github/scripts/refactor-gate.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Summon Codex
+        if: env.NEEDS_REFACTOR == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const score = process.env.HEALTH_SCORE;
+            const body = [
+              '@codex',
+              '',
+              `Repository Health Score: ${score}`,
+              '',
+              'Please do the following:',
+              '1. Create a `codex/refactor-main` branch from main',
+              '2. Analyze knip results and codebase',
+              '3. Create `docs/refactor/strategy.md` with refactor strategy',
+              '4. Open a Draft Pull Request (target: main, label: ai-refactor)',
+              '',
+              'Constraints:',
+              '- DO NOT modify runtime code',
+              '- Only create strategy and plans',
+              '- Add label `ai-refactor` to the PR',
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `refactor: Repository Health improvement (score: ${score})`,
+              labels: ['ai-refactor'],
+              body,
+            });
