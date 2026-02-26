@@ -6,10 +6,11 @@ import os from 'os'
 
 const SCRIPT_PATH = path.resolve(import.meta.dirname, '../.github/scripts/health-score.js')
 
-function runScript(knipData: unknown): string {
+function runScript(knipData: unknown): { report: string; scoreTxt: string } {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'health-score-test-'))
   const knipPath = path.join(tmpDir, 'knip-output.json')
   const reportPath = path.join(tmpDir, 'health-report.md')
+  const scoreTxtPath = path.join(tmpDir, 'health-score.txt')
 
   if (knipData !== null) {
     fs.writeFileSync(knipPath, JSON.stringify(knipData))
@@ -21,20 +22,26 @@ function runScript(knipData: unknown): string {
   })
 
   const report = fs.readFileSync(reportPath, 'utf-8')
+  let scoreTxt = ''
+  try {
+    scoreTxt = fs.readFileSync(scoreTxtPath, 'utf-8')
+  } catch {
+    // file may not exist yet
+  }
   fs.rmSync(tmpDir, { recursive: true })
-  return report
+  return { report, scoreTxt }
 }
 
 describe('health-score.js', () => {
   it('should output score 100 with celebration when knip finds nothing', () => {
-    const report = runScript({ files: [], issues: [] })
+    const { report } = runScript({ files: [], issues: [] })
     expect(report).toContain('スコア: 100 / 100')
     expect(report).toContain('🟢')
     expect(report).toContain('問題は見つかりませんでした')
   })
 
   it('should deduct 5 points per unused file', () => {
-    const report = runScript({
+    const { report } = runScript({
       files: ['a.ts', 'b.ts'],
       issues: [],
     })
@@ -43,7 +50,7 @@ describe('health-score.js', () => {
   })
 
   it('should deduct 5 points per unused export/type/dependency in issues', () => {
-    const report = runScript({
+    const { report } = runScript({
       files: [],
       issues: [
         {
@@ -62,7 +69,7 @@ describe('health-score.js', () => {
 
   it('should show yellow warning when score is 60-79', () => {
     const files = Array.from({ length: 5 }, (_, i) => `file${i}.ts`)
-    const report = runScript({ files, issues: [] })
+    const { report } = runScript({ files, issues: [] })
     // 100 - 25 = 75
     expect(report).toContain('スコア: 75 / 100')
     expect(report).toContain('🟡')
@@ -70,7 +77,7 @@ describe('health-score.js', () => {
 
   it('should show red warning when score is below 60', () => {
     const files = Array.from({ length: 10 }, (_, i) => `file${i}.ts`)
-    const report = runScript({ files, issues: [] })
+    const { report } = runScript({ files, issues: [] })
     // 100 - 50 = 50
     expect(report).toContain('スコア: 50 / 100')
     expect(report).toContain('🔴')
@@ -78,19 +85,19 @@ describe('health-score.js', () => {
 
   it('should clamp score to 0 when many unused items', () => {
     const files = Array.from({ length: 30 }, (_, i) => `file${i}.ts`)
-    const report = runScript({ files, issues: [] })
+    const { report } = runScript({ files, issues: [] })
     expect(report).toContain('スコア: 0 / 100')
     expect(report).toContain('🔴')
   })
 
   it('should handle missing knip-output.json gracefully', () => {
-    const report = runScript(null)
+    const { report } = runScript(null)
     expect(report).toContain('スコア: 100 / 100')
     expect(report).toContain('knip の結果を取得できませんでした')
   })
 
   it('should include Japanese category breakdown in report', () => {
-    const report = runScript({
+    const { report } = runScript({
       files: ['a.ts'],
       issues: [
         {
@@ -109,11 +116,10 @@ describe('health-score.js', () => {
   })
 
   it('should show progress bar', () => {
-    const report = runScript({
+    const { report } = runScript({
       files: ['a.ts', 'b.ts'],
       issues: [],
     })
-    // Score 90 -> progress bar should have filled and empty portions
     expect(report).toMatch(/[█]+[░]+/)
   })
 
@@ -129,5 +135,21 @@ describe('health-score.js', () => {
 
     expect(report).toContain('スコア: 100 / 100')
     expect(report).toContain('knip の結果を取得できませんでした')
+  })
+
+  it('should write score to health-score.txt', () => {
+    const { scoreTxt } = runScript({
+      files: ['a.ts', 'b.ts'],
+      issues: [],
+    })
+    expect(scoreTxt).toBe('90')
+  })
+
+  it('should write score 0 to health-score.txt when many unused items', () => {
+    const { scoreTxt } = runScript({
+      files: Array.from({ length: 30 }, (_, i) => `file${i}.ts`),
+      issues: [],
+    })
+    expect(scoreTxt).toBe('0')
   })
 })
