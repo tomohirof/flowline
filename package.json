@@ -15,7 +15,8 @@
     "preview": "wrangler pages dev dist",
     "db:migrate": "wrangler d1 migrations apply FLOWLINE_DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply FLOWLINE_DB --remote",
-    "deploy": "npm run build && wrangler pages deploy dist"
+    "deploy": "npm run build && wrangler pages deploy dist",
+    "knip": "knip"
   },
   "dependencies": {
     "@resvg/resvg-wasm": "^2.6.2",
@@ -47,6 +48,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "jsdom": "^28.1.0",
+    "knip": "^5.85.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
