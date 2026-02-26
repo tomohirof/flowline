@@ -60,7 +60,7 @@ describe('useMoveAutoRepair', () => {
   /* ======================================================= */
 
   describe('skip conditions', () => {
-    it('should not show toast when lane has fewer than 3 nodes in chain', () => {
+    it('should not show toast for 2-node chain when order matches position', () => {
       const arrows: InternalArrow[] = [mkArrow('a1', 'l0_r0', 'l0_r1')]
       const tasks: Record<string, TaskData> = {
         l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
@@ -176,6 +176,26 @@ describe('useMoveAutoRepair', () => {
 
       expect(addConfirmToast).toHaveBeenCalledOnce()
       expect(addConfirmToast.mock.calls[0][0].crossingCount).toBe(2)
+    })
+
+    it('should show confirm toast for 2-node chain with reversed order', () => {
+      // B(row1) → A(row0): 上向き矢印 → トースト表示が期待される
+      const arrows: InternalArrow[] = [mkArrow('a1', 'l0_r1', 'l0_r0')]
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }]
+      const setArrows = vi.fn() as unknown as Dispatch<SetStateAction<InternalArrow[]>>
+
+      renderAndTrigger({ arrows, setArrows, tasks, rows, addConfirmToast }, 'l0_r0', 'l0')
+
+      expect(addConfirmToast).toHaveBeenCalledOnce()
+      const toast = addConfirmToast.mock.calls[0][0]
+      expect(toast.message).toBe('接続順を修復しますか？')
+      expect(toast.detail).toContain('A')
+      expect(toast.detail).toContain('B')
+      expect(toast.crossingCount).toBe(1)
     })
   })
 
