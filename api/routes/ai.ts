@@ -17,9 +17,10 @@ const MODEL_HAIKU = 'claude-haiku-4-5-20251001'
 const MODEL_SONNET = 'claude-sonnet-4-6-20250514'
 const COMPLEXITY_THRESHOLD = 10
 
-function selectModel(nodeCount: number): string {
+function selectModel(nodeCount: number): typeof MODEL_HAIKU | typeof MODEL_SONNET {
   return nodeCount >= COMPLEXITY_THRESHOLD ? MODEL_SONNET : MODEL_HAIKU
 }
+
 const MAX_PROMPT_LENGTH = 2000
 
 const ai = new Hono<AuthEnv>()
