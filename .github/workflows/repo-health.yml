@@ -30,24 +30,25 @@ jobs:
         run: echo "score=$(cat health-score.txt)" >> $GITHUB_OUTPUT
       - name: Invoke Codex (Low Health)
         if: steps.health.outputs.score < 80 && github.actor != 'codex[bot]'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
+            const body = [
+              '@codex',
+              '',
+              'Repository Health Score is below threshold.',
+              '',
+              'Create a refactor strategy.',
+              '',
+              'Requirements:',
+              '- Analyze repository health report',
+              '- Create docs/refactor/strategy.md',
+              '- Open a Draft Pull Request',
+              '- DO NOT modify runtime code',
+            ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `
-            @codex
-
-            Repository Health Score is below threshold.
-
-            Create a refactor strategy.
-
-            Requirements:
-            - Analyze repository health report
-            - Create docs/refactor/strategy.md
-            - Open a Draft Pull Request
-            - DO NOT modify runtime code
-            `
+              body,
             });
