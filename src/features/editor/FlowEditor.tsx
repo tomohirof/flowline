@@ -1165,7 +1165,8 @@ export default function FlowEditor({
     setOrder(result.order)
     setArrows(result.arrows)
     setSelTask(result.newKeyA)
-    if (editorSettings.autoRepair) triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid, result.arrows, result.tasks)
+    if (editorSettings.autoRepair)
+      triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid, result.arrows, result.tasks)
   }
   const moveMultiTasks = (
     anchorKey: string,
