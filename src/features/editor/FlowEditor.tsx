@@ -1259,6 +1259,8 @@ export default function FlowEditor({
       // 1クリック目 — ゴースト表示のみ
       setGhostCell({ li, ri, lid, rid })
       setGhostRowGap(null)
+      setSelTask(null)
+      setSelArrow(null)
       return
     }
     let label = '作業'
