@@ -51,10 +51,22 @@ export function findClosestUpstream(
     return bestKey
   }
 
-  // Try flow-connected tails first, fall back to all tails
+  // 1. Same-row tails: strongest signal (fixes #265)
+  const sameRowTails = tails.filter((k) => {
+    const task = tasks[k]
+    const tRi = rows.findIndex((r) => r.id === task.rid)
+    return tRi === newRi
+  })
+  if (sameRowTails.length > 0) {
+    const sameRowResult = findBest(sameRowTails)
+    if (sameRowResult) return sameRowResult
+  }
+
+  // 2. Flow-connected tails from previous rows
   const result = flowTails.length > 0 ? findBest(flowTails) : null
   if (result) return result
 
+  // 3. Fall back to all tails
   return findBest(tails)
 }
 
