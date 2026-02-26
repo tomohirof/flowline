@@ -80,3 +80,4 @@ if (!knipAvailable) {
 lines.push('')
 
 fs.writeFileSync('health-report.md', lines.join('\n'))
+fs.writeFileSync('health-score.txt', String(score))
