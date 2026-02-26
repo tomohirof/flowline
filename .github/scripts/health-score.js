@@ -1,6 +1,7 @@
 import fs from 'fs'
 
 let score = 100
+let knipAvailable = false
 const categories = {
   files: 0,
   dependencies: 0,
@@ -9,7 +10,8 @@ const categories = {
 }
 
 try {
-  const knip = JSON.parse(fs.readFileSync('knip.json', 'utf-8'))
+  const knip = JSON.parse(fs.readFileSync('knip-output.json', 'utf-8'))
+  knipAvailable = true
 
   categories.files = knip.files?.length || 0
 
@@ -28,7 +30,7 @@ try {
 
   score -= total * 5
 } catch {
-  // knip.json not found or invalid
+  // knip-output.json not found or invalid
 }
 
 if (score < 0) score = 0
@@ -39,13 +41,15 @@ const lines = ['## 🤖 Repository Health', '', `Health Score: ${score} ${status
 
 const total = categories.files + categories.dependencies + categories.exports + categories.types
 
-if (total > 0) {
+if (!knipAvailable) {
+  lines.push('knip result unavailable')
+} else if (total > 0) {
   if (categories.files > 0) lines.push(`Unused files: ${categories.files}`)
   if (categories.dependencies > 0) lines.push(`Unused dependencies: ${categories.dependencies}`)
   if (categories.exports > 0) lines.push(`Unused exports: ${categories.exports}`)
   if (categories.types > 0) lines.push(`Unused types: ${categories.types}`)
 } else {
-  lines.push('knip result unavailable')
+  lines.push('No issues found 🎉')
 }
 
 lines.push('')

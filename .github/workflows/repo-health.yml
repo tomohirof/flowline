@@ -2,6 +2,7 @@ name: Repo Health Check
 
 on:
   pull_request:
+    branches: [main]
 
 jobs:
   health:
@@ -17,10 +18,10 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: Run knip
-        run: npx knip --reporter json > knip.json || true
+        run: npx knip --reporter json > knip-output.json || true
       - name: Calculate Health Score
         run: node .github/scripts/health-score.js
       - name: Comment PR
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@331f54ebb48fdc5b5fef76776ff0c5ba2a5e28b3 # v2.9.2
         with:
           path: health-report.md

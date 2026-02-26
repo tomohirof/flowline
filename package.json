@@ -15,7 +15,8 @@
     "preview": "wrangler pages dev dist",
     "db:migrate": "wrangler d1 migrations apply FLOWLINE_DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply FLOWLINE_DB --remote",
-    "deploy": "npm run build && wrangler pages deploy dist"
+    "deploy": "npm run build && wrangler pages deploy dist",
+    "knip": "knip"
   },
   "dependencies": {
     "@resvg/resvg-wasm": "^2.6.2",
