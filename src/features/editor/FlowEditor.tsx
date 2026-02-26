@@ -3043,7 +3043,13 @@ export default function FlowEditor({
                     {isDiamond ? (
                       <polygon
                         points={`${c.x},${c.y - DS} ${c.x + DS},${c.y} ${c.x},${c.y + DS} ${c.x - DS},${c.y}`}
-                        fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
+                        fill={
+                          isRepairTarget
+                            ? `${T.accent}1F`
+                            : isConnTgt && isHov
+                              ? `${T.accent}0A`
+                              : task.bg || T.nodeFill
+                        }
                         stroke={
                           isRepairTarget
                             ? T.accent
@@ -3081,7 +3087,13 @@ export default function FlowEditor({
                         y={c.y - TH / 2}
                         width={TW}
                         height={TH}
-                        fill={isConnTgt && isHov ? `${T.accent}0A` : task.bg || T.nodeFill}
+                        fill={
+                          isRepairTarget
+                            ? `${T.accent}1F`
+                            : isConnTgt && isHov
+                              ? `${T.accent}0A`
+                              : task.bg || T.nodeFill
+                        }
                         stroke={
                           isRepairTarget
                             ? T.accent
