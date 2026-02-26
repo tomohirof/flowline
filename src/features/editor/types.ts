@@ -205,3 +205,13 @@ export interface EditorSnapshot {
   lanes: InternalLane[]
   rows: RowData[]
 }
+
+export interface EditorSettings {
+  copyLabelOnSameRow: boolean
+  autoConnect: boolean
+  autoAddRow: boolean
+  enterEditOnCreate: boolean
+  autoRepair: boolean
+  showDotGrid: boolean
+  showOrderBadge: boolean
+}

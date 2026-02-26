@@ -20,6 +20,7 @@ import type {
   ToolId,
   SideTool,
   EditorSnapshot,
+  EditorSettings,
   Flow,
   FlowSavePayload,
   SaveStatus,
@@ -302,15 +303,7 @@ export default function FlowEditor({
   const [showThemePicker, setShowThemePicker] = useState<boolean>(false)
   const [showShareDialog, setShowShareDialog] = useState<boolean>(false)
   const [shareToken, setShareToken] = useState<string | null>(flow.shareToken)
-  const [editorSettings, setEditorSettings] = useState<{
-    copyLabelOnSameRow: boolean
-    autoConnect: boolean
-    autoAddRow: boolean
-    enterEditOnCreate: boolean
-    autoRepair: boolean
-    showDotGrid: boolean
-    showOrderBadge: boolean
-  }>({
+  const [editorSettings, setEditorSettings] = useState<EditorSettings>({
     copyLabelOnSameRow: false,
     autoConnect: true,
     autoAddRow: true,

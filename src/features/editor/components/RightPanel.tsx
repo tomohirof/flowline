@@ -2,7 +2,15 @@ import { useState, useRef, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import styles from '../FlowEditor.module.css'
 import { PanelSection, PanelRow, PanelInput, PanelBtn } from './PanelParts'
-import type { Theme, ThemeId, TaskData, RowData, InternalLane, InternalArrow } from '../types'
+import type {
+  Theme,
+  ThemeId,
+  TaskData,
+  RowData,
+  InternalLane,
+  InternalArrow,
+  EditorSettings,
+} from '../types'
 import {
   PALETTES,
   THEMES,
@@ -11,16 +19,6 @@ import {
   LINE_COLORS,
   STROKE_STYLES,
 } from '../theme-constants'
-
-export interface EditorSettings {
-  copyLabelOnSameRow: boolean
-  autoConnect: boolean
-  autoAddRow: boolean
-  enterEditOnCreate: boolean
-  autoRepair: boolean
-  showDotGrid: boolean
-  showOrderBadge: boolean
-}
 
 export interface RightPanelProps {
   // Selection
