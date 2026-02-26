@@ -535,6 +535,7 @@ export default function FlowEditor({
     autoConnect: boolean
     autoAddRow: boolean
     enterEditOnCreate: boolean
+    autoRepair: boolean
     showDotGrid: boolean
     showOrderBadge: boolean
   }>({
@@ -542,6 +543,7 @@ export default function FlowEditor({
     autoConnect: true,
     autoAddRow: true,
     enterEditOnCreate: true,
+    autoRepair: true,
     showDotGrid: true,
     showOrderBadge: true,
   })
@@ -587,6 +589,9 @@ export default function FlowEditor({
             }),
             ...(typeof data.settings.enterEditOnCreate === 'boolean' && {
               enterEditOnCreate: data.settings.enterEditOnCreate,
+            }),
+            ...(typeof data.settings.autoRepair === 'boolean' && {
+              autoRepair: data.settings.autoRepair,
             }),
             ...(typeof data.settings.showDotGrid === 'boolean' && {
               showDotGrid: data.settings.showDotGrid,
@@ -1150,7 +1155,7 @@ export default function FlowEditor({
     setSelTask(nk)
     const ri = rows.findIndex((r) => r.id === to.rid)
     if (ri === rows.length - 1) setRows((p) => [...p, { id: uid() }])
-    triggerMoveRepairCheck(nk, to.lid, newArrows, newTasks)
+    if (editorSettings.autoRepair) triggerMoveRepairCheck(nk, to.lid, newArrows, newTasks)
   }
   const swapInsertNodes = (draggedKey: string, targetKey: string): void => {
     const result = swapKeys(tasks, arrows, order, notes, draggedKey, targetKey)
@@ -1160,7 +1165,7 @@ export default function FlowEditor({
     setOrder(result.order)
     setArrows(result.arrows)
     setSelTask(result.newKeyA)
-    triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid, result.arrows, result.tasks)
+    if (editorSettings.autoRepair) triggerMoveRepairCheck(result.newKeyA, tasks[draggedKey].lid, result.arrows, result.tasks)
   }
   const moveMultiTasks = (
     anchorKey: string,
@@ -1221,7 +1226,7 @@ export default function FlowEditor({
 
     for (const [, newK] of keyMap) {
       const pos = posMap.get(newK)!
-      triggerMoveRepairCheck(newK, pos.lid, newArrows, newTasks)
+      if (editorSettings.autoRepair) triggerMoveRepairCheck(newK, pos.lid, newArrows, newTasks)
     }
   }
   const cellClick = (lid: string, rid: string, _li: number, ri: number): void => {
@@ -2209,6 +2214,7 @@ export default function FlowEditor({
               { key: 'autoConnect', label: '自動接続' },
               { key: 'autoAddRow', label: '自動行追加' },
               { key: 'enterEditOnCreate', label: '作成後すぐ編集' },
+              { key: 'autoRepair', label: '自動修復' },
             ] as const
           ).map((s) => (
             <div
