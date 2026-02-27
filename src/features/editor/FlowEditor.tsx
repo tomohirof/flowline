@@ -257,6 +257,11 @@ export default function FlowEditor({
   const [zoom, setZoom] = useState<number>(1)
   const [hovered, setHovered] = useState<string | null>(null)
   const [hoveredLaneGap, setHoveredLaneGap] = useState<number | null>(null)
+  const [laneDropdown, setLaneDropdown] = useState<{
+    gapIndex: number
+    x: number
+    y: number
+  } | null>(null)
   const [hoveredRowGap, setHoveredRowGap] = useState<number | null>(null)
   const [ghostCell, setGhostCell] = useState<{
     li: number
@@ -724,6 +729,51 @@ export default function FlowEditor({
     })
     setHoveredLaneGap(null)
   }
+
+  // Lane group helpers
+  const isGroupParent = (lane: InternalLane): boolean =>
+    lane.groupRole === 'parent' && !!lane.groupId
+  const isGroupSub = (lane: InternalLane): boolean => lane.groupRole === 'sub' && !!lane.groupId
+  const getGroupWidth = (parentLane: InternalLane): number => {
+    if (!parentLane.groupId) return LW
+    const members = lanes.filter((l) => l.groupId === parentLane.groupId)
+    return members.length * LW + (members.length - 1) * G
+  }
+
+  const mergeLaneAt = (_gapIndex: number, targetLaneId: string): void => {
+    setLanes((prev) => {
+      const targetIdx = prev.findIndex((l) => l.id === targetLaneId)
+      if (targetIdx < 0) return prev
+
+      const target = prev[targetIdx]
+      const groupId = target.groupId || uid()
+      const n = [...prev]
+
+      if (!target.groupId) {
+        n[targetIdx] = { ...target, groupId, groupRole: 'parent' }
+      }
+
+      // Find the end of this group
+      let endIdx = targetIdx + 1
+      while (endIdx < n.length && n[endIdx].groupId === groupId) {
+        endIdx++
+      }
+
+      const subCount = n.filter((l) => l.groupId === groupId).length
+      n.splice(endIdx, 0, {
+        id: uid(),
+        name: `${target.name} (${subCount + 1})`,
+        ci: target.ci,
+        groupId,
+        groupRole: 'sub',
+      })
+
+      return n
+    })
+    setLaneDropdown(null)
+    setHoveredLaneGap(null)
+  }
+
   const insertRowAt = (i: number): void => {
     if (rowAnim) return
     if (ghostRowGap === i) {
@@ -1264,6 +1314,7 @@ export default function FlowEditor({
     setMultiSel(new Set())
     setEditArrowComment(null)
     setShowThemePicker(false)
+    setLaneDropdown(null)
     if (connectFrom) {
       setConnectFrom(null)
       setConnectDragPt(null)
@@ -1566,6 +1617,9 @@ export default function FlowEditor({
                 x = laneX(li),
                 isSel = selLane === lane.id,
                 fullH = HH + rows.length * RH
+              const isSub = isGroupSub(lane)
+              const isParent = isGroupParent(lane)
+              const headerW = isParent ? getGroupWidth(lane) : LW
               return (
                 <g key={`lane-${lane.id}`}>
                   <rect
@@ -1592,69 +1646,99 @@ export default function FlowEditor({
                       opacity={0.5}
                     />
                   )}
-                  <rect x={x} y={TM} width={LW} height={HH} rx={10} fill={T.laneHeaderBg} />
-                  <rect x={x} y={TM + HH - 10} width={LW} height={10} fill={T.laneHeaderBg} />
-                  <rect
-                    x={x + 16}
-                    y={TM + HH - 2.5}
-                    width={LW - 32}
-                    height={2}
-                    rx={1}
-                    fill={p.dot}
-                    opacity={T.laneAccentOpacity}
-                  />
-                  <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
-                  <rect
-                    x={x}
-                    y={TM}
-                    width={LW}
-                    height={HH}
-                    fill="transparent"
-                    style={{ cursor: 'pointer' }}
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      setSelLane(selLane === lane.id ? null : lane.id)
-                      setSelTask(null)
-                      setSelArrow(null)
-                      setMultiSel(new Set())
-                    }}
-                    onDoubleClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      setEditLane(lane.id)
-                      setSelLane(lane.id)
-                      setTimeout(() => inputRef.current?.focus(), 40)
-                    }}
-                  />
-                  {editLane === lane.id ? (
-                    <foreignObject x={x + 32} y={TM + 9} width={LW - 44} height={28}>
-                      <input
-                        ref={inputRef}
-                        value={lane.name}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const v = e.target.value
-                          setLanes((p2) =>
-                            p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)),
-                          )
-                        }}
-                        onBlur={() => setEditLane(null)}
-                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                          e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
-                        }
-                        className={styles.laneNameInput}
+                  {!isSub && (
+                    <>
+                      <rect
+                        x={x}
+                        y={TM}
+                        width={headerW}
+                        height={HH}
+                        rx={10}
+                        fill={T.laneHeaderBg}
                       />
-                    </foreignObject>
-                  ) : (
-                    <text
-                      x={x + 32}
-                      y={TM + HH / 2 + 1}
-                      dominantBaseline="central"
-                      fill={T.titleColor}
-                      fontSize={12.5}
-                      fontWeight={600}
-                      style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                    >
-                      {lane.name}
-                    </text>
+                      <rect
+                        x={x}
+                        y={TM + HH - 10}
+                        width={headerW}
+                        height={10}
+                        fill={T.laneHeaderBg}
+                      />
+                      <rect
+                        x={x + 16}
+                        y={TM + HH - 2.5}
+                        width={headerW - 32}
+                        height={2}
+                        rx={1}
+                        fill={p.dot}
+                        opacity={T.laneAccentOpacity}
+                      />
+                      <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
+                      <rect
+                        x={x}
+                        y={TM}
+                        width={headerW}
+                        height={HH}
+                        fill="transparent"
+                        style={{ cursor: 'pointer' }}
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          setSelLane(selLane === lane.id ? null : lane.id)
+                          setSelTask(null)
+                          setSelArrow(null)
+                          setMultiSel(new Set())
+                        }}
+                        onDoubleClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          setEditLane(lane.id)
+                          setSelLane(lane.id)
+                          setTimeout(() => inputRef.current?.focus(), 40)
+                        }}
+                      />
+                    </>
+                  )}
+                  {!isSub &&
+                    (editLane === lane.id ? (
+                      <foreignObject x={x + 32} y={TM + 9} width={headerW - 44} height={28}>
+                        <input
+                          ref={inputRef}
+                          value={lane.name}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const v = e.target.value
+                            setLanes((p2) =>
+                              p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)),
+                            )
+                          }}
+                          onBlur={() => setEditLane(null)}
+                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                            e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
+                          }
+                          className={styles.laneNameInput}
+                        />
+                      </foreignObject>
+                    ) : (
+                      <text
+                        x={x + 32}
+                        y={TM + HH / 2 + 1}
+                        dominantBaseline="central"
+                        fill={T.titleColor}
+                        fontSize={12.5}
+                        fontWeight={600}
+                        style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+                      >
+                        {lane.name}
+                      </text>
+                    ))}
+                  {isSub && (
+                    <line
+                      x1={x}
+                      y1={TM + 6}
+                      x2={x}
+                      y2={TM + HH + rows.length * RH}
+                      stroke={T.border}
+                      strokeWidth={1.5}
+                      strokeDasharray="4,3"
+                      opacity={0.4}
+                    />
                   )}
                   {rows.map((_, ri) =>
                     ri === 0 ? null : (
@@ -1775,7 +1859,11 @@ export default function FlowEditor({
                     onMouseLeave={() => setHoveredLaneGap(null)}
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation()
-                      insertLaneAt(gi)
+                      if (lanes.length === 0) {
+                        insertLaneAt(gi)
+                      } else {
+                        setLaneDropdown({ gapIndex: gi, x: gx, y: gy + 16 })
+                      }
                     }}
                   />
                   {isHov && (
@@ -1812,6 +1900,70 @@ export default function FlowEditor({
                 </g>
               )
             })}
+
+            {/* Lane dropdown menu */}
+            {laneDropdown && (
+              <foreignObject
+                x={laneDropdown.x - 100}
+                y={laneDropdown.y}
+                width={220}
+                height={300}
+                style={{ overflow: 'visible' }}
+              >
+                <div className={styles.laneDropdown} onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className={styles.laneDropdownItem}
+                    onClick={() => {
+                      insertLaneAt(laneDropdown.gapIndex)
+                      setLaneDropdown(null)
+                    }}
+                  >
+                    + 新しいレーンを追加
+                  </button>
+                  {(() => {
+                    const gi = laneDropdown.gapIndex
+                    const leftLane = gi > 0 ? lanes[gi - 1] : null
+                    const rightLane = gi < lanes.length ? lanes[gi] : null
+                    const candidates = [leftLane, rightLane].filter(
+                      (l): l is InternalLane => l !== null,
+                    )
+                    if (candidates.length === 0) return null
+                    return (
+                      <>
+                        <div className={styles.laneDropdownSeparator} />
+                        <div className={styles.laneDropdownLabel}>既存レーンに結合</div>
+                        {candidates.map((l) => {
+                          const displayName =
+                            l.groupRole === 'sub'
+                              ? lanes.find(
+                                  (p) => p.groupId === l.groupId && p.groupRole === 'parent',
+                                )?.name || l.name
+                              : l.name
+                          return (
+                            <button
+                              key={l.id}
+                              className={styles.laneDropdownItem}
+                              onClick={() =>
+                                mergeLaneAt(
+                                  laneDropdown.gapIndex,
+                                  l.groupRole === 'sub'
+                                    ? lanes.find(
+                                        (p) => p.groupId === l.groupId && p.groupRole === 'parent',
+                                      )?.id || l.id
+                                    : l.id,
+                                )
+                              }
+                            >
+                              {displayName} に結合
+                            </button>
+                          )
+                        })}
+                      </>
+                    )
+                  })()}
+                </div>
+              </foreignObject>
+            )}
 
             {rows.map((row, ri) => {
               const ry = TM + HH + ri * RH + RH / 2
