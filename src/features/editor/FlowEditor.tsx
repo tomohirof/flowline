@@ -3045,78 +3045,80 @@ export default function FlowEditor({
               })()}
 
             {/* Lane dropdown menu — rendered last for z-order */}
-            {laneDropdown && (() => {
-              const gi = laneDropdown.gapIndex
-              const leftLane = gi > 0 ? lanes[gi - 1] : null
-              const rightLane = gi < lanes.length ? lanes[gi] : null
-              const isInsideGroup =
-                leftLane &&
-                rightLane &&
-                !!leftLane.groupId &&
-                leftLane.groupId === rightLane.groupId
-              const dropdownX = Math.max(10, Math.min(laneDropdown.x - 100, totalW - 230))
-              return (
-              <foreignObject
-                x={dropdownX}
-                y={laneDropdown.y}
-                width={220}
-                height={300}
-                style={{ overflow: 'visible' }}
-              >
-                <div className={styles.laneDropdown} onClick={(e) => e.stopPropagation()}>
-                  {!isInsideGroup && (
-                    <button
-                      className={styles.laneDropdownItem}
-                      onClick={() => {
-                        insertLaneAt(laneDropdown.gapIndex)
-                        setLaneDropdown(null)
-                      }}
-                    >
-                      + 新しいレーンを追加
-                    </button>
-                  )}
-                  {(() => {
-                    const candidates = [leftLane, rightLane].filter(
-                      (l): l is InternalLane => l !== null,
-                    )
-                    if (candidates.length === 0) return null
-                    return (
-                      <>
-                        <div className={styles.laneDropdownSeparator} />
-                        <div className={styles.laneDropdownLabel}>既存レーンに結合</div>
-                        {candidates.map((l) => {
-                          const displayName =
-                            l.groupRole === 'sub'
-                              ? lanes.find(
-                                  (p) => p.groupId === l.groupId && p.groupRole === 'parent',
-                                )?.name || l.name
-                              : l.name
-                          return (
-                            <button
-                              key={l.id}
-                              className={styles.laneDropdownItem}
-                              onClick={() =>
-                                mergeLaneAt(
-                                  laneDropdown.gapIndex,
-                                  l.groupRole === 'sub'
-                                    ? lanes.find(
-                                        (p) => p.groupId === l.groupId && p.groupRole === 'parent',
-                                      )?.id || l.id
-                                    : l.id,
-                                )
-                              }
-                            >
-                              {displayName} に結合
-                            </button>
-                          )
-                        })}
-                      </>
-                    )
-                  })()}
-                </div>
-              </foreignObject>
-              )
-            })()}
+            {laneDropdown &&
+              (() => {
+                const gi = laneDropdown.gapIndex
+                const leftLane = gi > 0 ? lanes[gi - 1] : null
+                const rightLane = gi < lanes.length ? lanes[gi] : null
+                const isInsideGroup =
+                  leftLane &&
+                  rightLane &&
+                  !!leftLane.groupId &&
+                  leftLane.groupId === rightLane.groupId
+                const dropdownX = Math.max(10, Math.min(laneDropdown.x - 100, totalW - 230))
+                return (
+                  <foreignObject
+                    x={dropdownX}
+                    y={laneDropdown.y}
+                    width={220}
+                    height={300}
+                    style={{ overflow: 'visible' }}
+                  >
+                    <div className={styles.laneDropdown} onClick={(e) => e.stopPropagation()}>
+                      {!isInsideGroup && (
+                        <button
+                          className={styles.laneDropdownItem}
+                          onClick={() => {
+                            insertLaneAt(laneDropdown.gapIndex)
+                            setLaneDropdown(null)
+                          }}
+                        >
+                          + 新しいレーンを追加
+                        </button>
+                      )}
+                      {(() => {
+                        const candidates = [leftLane, rightLane].filter(
+                          (l): l is InternalLane => l !== null,
+                        )
+                        if (candidates.length === 0) return null
+                        return (
+                          <>
+                            <div className={styles.laneDropdownSeparator} />
+                            <div className={styles.laneDropdownLabel}>既存レーンに結合</div>
+                            {candidates.map((l) => {
+                              const displayName =
+                                l.groupRole === 'sub'
+                                  ? lanes.find(
+                                      (p) => p.groupId === l.groupId && p.groupRole === 'parent',
+                                    )?.name || l.name
+                                  : l.name
+                              return (
+                                <button
+                                  key={l.id}
+                                  className={styles.laneDropdownItem}
+                                  onClick={() =>
+                                    mergeLaneAt(
+                                      laneDropdown.gapIndex,
+                                      l.groupRole === 'sub'
+                                        ? lanes.find(
+                                            (p) =>
+                                              p.groupId === l.groupId && p.groupRole === 'parent',
+                                          )?.id || l.id
+                                        : l.id,
+                                    )
+                                  }
+                                >
+                                  {displayName} に結合
+                                </button>
+                              )
+                            })}
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </foreignObject>
+                )
+              })()}
           </svg>
         </div>
 
