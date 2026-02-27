@@ -200,6 +200,14 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             const p = PALETTES[lane.colorIndex % PALETTES.length]
             const x = laneX(li)
             const fullH = HH + rowCount * RH
+            const isSub = lane.groupRole === 'sub' && !!lane.groupId
+            const isParent = lane.groupRole === 'parent' && !!lane.groupId
+            const headerW = isParent
+              ? (() => {
+                  const members = sortedLanes.filter((l) => l.groupId === lane.groupId)
+                  return members.length * LW + (members.length - 1) * G
+                })()
+              : LW
             return (
               <g key={`lane-${lane.id}`}>
                 <rect
@@ -212,29 +220,58 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   stroke={T.laneBorder}
                   strokeWidth={0.5}
                 />
-                <rect x={x} y={TM} width={LW} height={HH} rx={10} fill={T.laneHeaderBg} />
-                <rect x={x} y={TM + HH - 10} width={LW} height={10} fill={T.laneHeaderBg} />
-                <rect
-                  x={x + 16}
-                  y={TM + HH - 2.5}
-                  width={LW - 32}
-                  height={2}
-                  rx={1}
-                  fill={p.dot}
-                  opacity={T.laneAccentOpacity}
-                />
-                <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
-                <text
-                  x={x + 32}
-                  y={TM + HH / 2 + 1}
-                  dominantBaseline="central"
-                  fill={T.titleColor}
-                  fontSize={12.5}
-                  fontWeight={600}
-                  style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                >
-                  {lane.name}
-                </text>
+                {!isSub && (
+                  <>
+                    <rect
+                      x={x}
+                      y={TM}
+                      width={headerW}
+                      height={HH}
+                      rx={10}
+                      fill={T.laneHeaderBg}
+                    />
+                    <rect
+                      x={x}
+                      y={TM + HH - 10}
+                      width={headerW}
+                      height={10}
+                      fill={T.laneHeaderBg}
+                    />
+                    <rect
+                      x={x + 16}
+                      y={TM + HH - 2.5}
+                      width={headerW - 32}
+                      height={2}
+                      rx={1}
+                      fill={p.dot}
+                      opacity={T.laneAccentOpacity}
+                    />
+                    <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
+                    <text
+                      x={x + 32}
+                      y={TM + HH / 2 + 1}
+                      dominantBaseline="central"
+                      fill={T.titleColor}
+                      fontSize={12.5}
+                      fontWeight={600}
+                      style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+                    >
+                      {lane.name}
+                    </text>
+                  </>
+                )}
+                {isSub && (
+                  <line
+                    x1={x}
+                    y1={TM + 6}
+                    x2={x}
+                    y2={TM + HH + rowCount * RH}
+                    stroke={T.laneBorder}
+                    strokeWidth={1.5}
+                    strokeDasharray="4,3"
+                    opacity={0.4}
+                  />
+                )}
                 {Array.from({ length: rowCount }, (_, ri) =>
                   ri === 0 ? null : (
                     <line
