@@ -3083,15 +3083,31 @@ export default function FlowEditor({
                         </button>
                       )}
                       {(() => {
+                        // グループ内のギャップでは結合候補を非表示
+                        if (isInsideGroup) return null
                         const candidates = [leftLane, rightLane].filter(
                           (l): l is InternalLane => l !== null,
                         )
                         if (candidates.length === 0) return null
+                        // 重複排除: 同じ結合先（親レーン）を指す候補を1つにまとめる
+                        const seen = new Set<string>()
+                        const uniqueCandidates = candidates.filter((l) => {
+                          const resolvedId =
+                            l.groupRole === 'sub'
+                              ? lanes.find(
+                                  (p) => p.groupId === l.groupId && p.groupRole === 'parent',
+                                )?.id || l.id
+                              : l.id
+                          if (seen.has(resolvedId)) return false
+                          seen.add(resolvedId)
+                          return true
+                        })
+                        if (uniqueCandidates.length === 0) return null
                         return (
                           <>
                             <div className={styles.laneDropdownSeparator} />
                             <div className={styles.laneDropdownLabel}>既存レーンに結合</div>
-                            {candidates.map((l) => {
+                            {uniqueCandidates.map((l) => {
                               const displayName =
                                 l.groupRole === 'sub'
                                   ? lanes.find(
