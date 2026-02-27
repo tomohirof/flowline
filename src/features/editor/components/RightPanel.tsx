@@ -58,6 +58,7 @@ export interface RightPanelProps {
   moveLane: (id: string, dir: number) => void
   rmLane: (id: string) => void
   ungroupLane: (laneId: string) => void
+  onShapeChange?: (taskKey: string, shape?: 'diamond') => void
   exportMermaid: () => string
   downloadJSON: () => void
 }
@@ -91,6 +92,7 @@ export const RightPanel = ({
   moveLane,
   rmLane,
   ungroupLane,
+  onShapeChange,
   exportMermaid,
   downloadJSON,
 }: RightPanelProps): ReactNode => {
@@ -318,9 +320,10 @@ export const RightPanel = ({
               return (
                 <div
                   key={s.label}
-                  onClick={() =>
+                  onClick={() => {
                     setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], shape: s.shape } }))
-                  }
+                    onShapeChange?.(selTask, s.shape)
+                  }}
                   style={{
                     flex: 1,
                     display: 'flex',

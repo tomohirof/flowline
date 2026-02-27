@@ -276,6 +276,7 @@ export default function FlowEditor({
   const [rowAnim, setRowAnim] = useState<{ type: 'add' | 'delete'; index: number } | null>(null)
   const rowAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bouncingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const suggestedLanesRef = useRef<Set<string>>(new Set())
   const {
     toasts,
     addConfirmToast,
@@ -1174,6 +1175,37 @@ export default function FlowEditor({
       prev.map((l) => (l.groupId === gid ? { ...l, groupId: undefined, groupRole: undefined } : l)),
     )
     addSuccessToast({ message: 'グループを解除しました' })
+  }
+
+  const suggestLaneSplit = (laneId: string): void => {
+    if (suggestedLanesRef.current.has(laneId)) return
+    const lane = lanes.find((l) => l.id === laneId)
+    if (!lane || lane.groupId) return
+    suggestedLanesRef.current.add(laneId)
+    setTimeout(() => {
+      addConfirmToast({
+        message: '◇ 並行パス用にレーンを分割しますか？',
+        detail: `「${lane.name}」を2列に分割して分岐先を配置できます`,
+        onConfirm: () => {
+          const groupId = uid()
+          setLanes((prev) => {
+            const idx = prev.findIndex((l) => l.id === laneId)
+            if (idx < 0) return prev
+            const n = [...prev]
+            n[idx] = { ...n[idx], groupId, groupRole: 'parent' }
+            n.splice(idx + 1, 0, {
+              id: uid(),
+              name: `${lane.name} (2)`,
+              ci: lane.ci,
+              groupId,
+              groupRole: 'sub',
+            })
+            return n
+          })
+          addSuccessToast({ message: 'レーンを分割しました' })
+        },
+      })
+    }, 500)
   }
 
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
@@ -3198,6 +3230,12 @@ export default function FlowEditor({
             moveLane={moveLane}
             rmLane={rmLane}
             ungroupLane={ungroupLane}
+            onShapeChange={(taskKey: string, shape?: 'diamond') => {
+              if (shape === 'diamond') {
+                const lid = taskKey.split('::')[0]
+                suggestLaneSplit(lid)
+              }
+            }}
             exportMermaid={exportMermaid}
             downloadJSON={downloadJSON}
           />
