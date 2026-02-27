@@ -1694,10 +1694,10 @@ export default function FlowEditor({
                 >
                   <rect
                     x={x}
-                    y={TM}
+                    y={isSub ? TM + HH : TM}
                     width={LW}
-                    height={fullH}
-                    rx={10}
+                    height={isSub ? fullH - HH : fullH}
+                    rx={isSub ? 0 : 10}
                     fill={T.laneBg}
                     stroke={T.laneBorder}
                     strokeWidth={0.5}
@@ -1705,10 +1705,10 @@ export default function FlowEditor({
                   {isSel && (
                     <rect
                       x={x + 1}
-                      y={TM + 1}
+                      y={isSub ? TM + HH + 1 : TM + 1}
                       width={LW - 2}
-                      height={fullH - 2}
-                      rx={9}
+                      height={isSub ? fullH - HH - 2 : fullH - 2}
+                      rx={isSub ? 0 : 9}
                       fill="none"
                       stroke={T.accent}
                       strokeWidth={1.5}

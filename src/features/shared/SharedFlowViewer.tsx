@@ -208,10 +208,10 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
               <g key={`lane-${lane.id}`}>
                 <rect
                   x={x}
-                  y={TM}
+                  y={isSub ? TM + HH : TM}
                   width={LW}
-                  height={fullH}
-                  rx={10}
+                  height={isSub ? fullH - HH : fullH}
+                  rx={isSub ? 0 : 10}
                   fill={T.laneBg}
                   stroke={T.laneBorder}
                   strokeWidth={0.5}
