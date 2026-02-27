@@ -1734,7 +1734,7 @@ export default function FlowEditor({
                       y1={TM + 6}
                       x2={x}
                       y2={TM + HH + rows.length * RH}
-                      stroke={T.border}
+                      stroke={T.laneBorder}
                       strokeWidth={1.5}
                       strokeDasharray="4,3"
                       opacity={0.4}
