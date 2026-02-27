@@ -44,6 +44,7 @@ import {
   calcArrowPath,
   calcMultiDropTargets,
 } from '../../lib/flow-engine'
+import { isGroupParent, isGroupSub, getGroupWidth } from '../../lib/lane-group-utils'
 
 // =============================================
 // Helpers: convert API data <-> internal state
@@ -275,6 +276,9 @@ export default function FlowEditor({
   const [rowAnim, setRowAnim] = useState<{ type: 'add' | 'delete'; index: number } | null>(null)
   const rowAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bouncingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [slidingLaneId, setSlidingLaneId] = useState<string | null>(null)
+  const slidingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const suggestedLanesRef = useRef<Set<string>>(new Set())
   const {
     toasts,
     addConfirmToast,
@@ -284,6 +288,12 @@ export default function FlowEditor({
     dismissToastByType,
     confirmToast,
   } = useToast()
+
+  const triggerLaneSlideIn = (laneId: string): void => {
+    setSlidingLaneId(laneId)
+    if (slidingTimerRef.current) clearTimeout(slidingTimerRef.current)
+    slidingTimerRef.current = setTimeout(() => setSlidingLaneId(null), 350)
+  }
 
   // Show/dismiss error toast based on saveStatus
   useEffect(() => {
@@ -393,6 +403,12 @@ export default function FlowEditor({
   useEffect(() => {
     return () => {
       if (bouncingTimerRef.current) clearTimeout(bouncingTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (slidingTimerRef.current) clearTimeout(slidingTimerRef.current)
     }
   }, [])
 
@@ -730,18 +746,8 @@ export default function FlowEditor({
     setHoveredLaneGap(null)
   }
 
-  // Lane group helpers
-  const isGroupParent = (lane: InternalLane): boolean =>
-    lane.groupRole === 'parent' && !!lane.groupId
-  const isGroupSub = (lane: InternalLane): boolean => lane.groupRole === 'sub' && !!lane.groupId
-  const getGroupWidth = (parentLane: InternalLane): number => {
-    if (!parentLane.groupId) return LW
-    const members = lanes.filter((l) => l.groupId === parentLane.groupId)
-    return members.length * LW + (members.length - 1) * G
-  }
-
-  // TODO(Phase 2): use gapIndex to insert sub-lane at clicked position instead of group tail
-  const mergeLaneAt = (_gapIndex: number, targetLaneId: string): void => {
+  const mergeLaneAt = (gapIndex: number, targetLaneId: string): void => {
+    const newLaneId = uid()
     setLanes((prev) => {
       const targetIdx = prev.findIndex((l) => l.id === targetLaneId)
       if (targetIdx < 0) return prev
@@ -754,15 +760,14 @@ export default function FlowEditor({
         n[targetIdx] = { ...target, groupId, groupRole: 'parent' }
       }
 
-      // Find the end of this group
-      let endIdx = targetIdx + 1
-      while (endIdx < n.length && n[endIdx].groupId === groupId) {
-        endIdx++
-      }
+      // gapIndex がグループ範囲内ならそこに挿入、範囲外ならグループ末尾
+      const groupStart = n.findIndex((l) => l.groupId === groupId)
+      const groupEnd = n.reduce((last, l, i) => (l.groupId === groupId ? i : last), groupStart)
+      const insertAt = gapIndex > groupStart && gapIndex <= groupEnd + 1 ? gapIndex : groupEnd + 1
 
       const subCount = n.filter((l) => l.groupId === groupId).length
-      n.splice(endIdx, 0, {
-        id: uid(),
+      n.splice(insertAt, 0, {
+        id: newLaneId,
         name: `${target.name} (${subCount + 1})`,
         ci: target.ci,
         groupId,
@@ -771,6 +776,7 @@ export default function FlowEditor({
 
       return n
     })
+    triggerLaneSlideIn(newLaneId)
     setLaneDropdown(null)
     setHoveredLaneGap(null)
   }
@@ -1146,7 +1152,18 @@ export default function FlowEditor({
   }
   const rmLane = (id: string): void => {
     if (lanes.length <= 1) return
-    setLanes((p) => p.filter((l) => l.id !== id))
+    // 親レーン削除時: 同一グループのサブレーンをグループ解除
+    const deleting = lanes.find((l) => l.id === id)
+    if (deleting && isGroupParent(deleting) && deleting.groupId) {
+      const gid = deleting.groupId
+      setLanes((p) =>
+        p
+          .filter((l) => l.id !== id)
+          .map((l) => (l.groupId === gid ? { ...l, groupId: undefined, groupRole: undefined } : l)),
+      )
+    } else {
+      setLanes((p) => p.filter((l) => l.id !== id))
+    }
     if (selLane === id) setSelLane(null)
     const rm = Object.keys(tasks).filter((x) => x.startsWith(id))
     if (rm.length) {
@@ -1158,6 +1175,55 @@ export default function FlowEditor({
       setOrder((p) => p.filter((x) => !rm.includes(x)))
       setArrows((p) => filterArrowsByDeletedKeys(p, new Set(rm)))
     }
+  }
+
+  const ungroupLane = (laneId: string): void => {
+    const lane = lanes.find((l) => l.id === laneId)
+    if (!lane?.groupId) return
+    const gid = lane.groupId
+    // Reset suggestion tracking so re-grouping the same lane is possible
+    const groupLaneIds = lanes.filter((l) => l.groupId === gid).map((l) => l.id)
+    for (const id of groupLaneIds) suggestedLanesRef.current.delete(id)
+    setLanes((prev) =>
+      prev.map((l) => (l.groupId === gid ? { ...l, groupId: undefined, groupRole: undefined } : l)),
+    )
+    addSuccessToast({ message: 'グループを解除しました' })
+  }
+
+  const suggestLaneSplit = (laneId: string): void => {
+    if (suggestedLanesRef.current.has(laneId)) return
+    const lane = lanes.find((l) => l.id === laneId)
+    if (!lane || lane.groupId) return
+    suggestedLanesRef.current.add(laneId)
+    const laneName = lane.name
+    setTimeout(() => {
+      addConfirmToast({
+        message: '◇ 並行パス用にレーンを分割しますか？',
+        detail: `「${laneName}」を2列に分割して分岐先を配置できます`,
+        confirmLabel: '分割する',
+        successMessage: 'レーンを分割しました',
+        onConfirm: () => {
+          const groupId = uid()
+          const newSubId = uid()
+          setLanes((prev) => {
+            const idx = prev.findIndex((l) => l.id === laneId)
+            if (idx < 0) return prev
+            if (prev[idx].groupId) return prev // Already grouped — avoid orphaning sub-lanes
+            const n = [...prev]
+            n[idx] = { ...n[idx], groupId, groupRole: 'parent' }
+            n.splice(idx + 1, 0, {
+              id: newSubId,
+              name: `${n[idx].name} (2)`,
+              ci: n[idx].ci,
+              groupId,
+              groupRole: 'sub',
+            })
+            return n
+          })
+          triggerLaneSlideIn(newSubId)
+        },
+      })
+    }, 500)
   }
 
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
@@ -1620,9 +1686,12 @@ export default function FlowEditor({
                 fullH = HH + rows.length * RH
               const isSub = isGroupSub(lane)
               const isParent = isGroupParent(lane)
-              const headerW = isParent ? getGroupWidth(lane) : LW
+              const headerW = isParent ? getGroupWidth(lane, lanes, LW, G) : LW
               return (
-                <g key={`lane-${lane.id}`}>
+                <g
+                  key={`lane-${lane.id}`}
+                  className={lane.id === slidingLaneId ? styles.laneSlideInAnim : undefined}
+                >
                   <rect
                     x={x}
                     y={TM}
@@ -3077,15 +3146,31 @@ export default function FlowEditor({
                         </button>
                       )}
                       {(() => {
+                        // グループ内のギャップでは結合候補を非表示
+                        if (isInsideGroup) return null
                         const candidates = [leftLane, rightLane].filter(
                           (l): l is InternalLane => l !== null,
                         )
                         if (candidates.length === 0) return null
+                        // 重複排除: 同じ結合先（親レーン）を指す候補を1つにまとめる
+                        const seen = new Set<string>()
+                        const uniqueCandidates = candidates.filter((l) => {
+                          const resolvedId =
+                            l.groupRole === 'sub'
+                              ? lanes.find(
+                                  (p) => p.groupId === l.groupId && p.groupRole === 'parent',
+                                )?.id || l.id
+                              : l.id
+                          if (seen.has(resolvedId)) return false
+                          seen.add(resolvedId)
+                          return true
+                        })
+                        if (uniqueCandidates.length === 0) return null
                         return (
                           <>
                             <div className={styles.laneDropdownSeparator} />
                             <div className={styles.laneDropdownLabel}>既存レーンに結合</div>
-                            {candidates.map((l) => {
+                            {uniqueCandidates.map((l) => {
                               const displayName =
                                 l.groupRole === 'sub'
                                   ? lanes.find(
@@ -3165,6 +3250,13 @@ export default function FlowEditor({
             startConnect={startConnect}
             moveLane={moveLane}
             rmLane={rmLane}
+            ungroupLane={ungroupLane}
+            onShapeChange={(taskKey: string, shape?: 'diamond') => {
+              if (shape === 'diamond') {
+                const lid = taskKey.split('_')[0]
+                suggestLaneSplit(lid)
+              }
+            }}
             exportMermaid={exportMermaid}
             downloadJSON={downloadJSON}
           />

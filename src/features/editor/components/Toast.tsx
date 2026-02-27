@@ -30,14 +30,14 @@ export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
                     onClick={() => onDismiss(toast.id)}
                     className={styles.skipBtn}
                   >
-                    スキップ
+                    {toast.skipLabel ?? 'スキップ'}
                   </button>
                   <button
                     data-testid="toast-organize-btn"
                     onClick={() => onConfirm(toast.id, toast.crossingCount)}
                     className={styles.organizeBtn}
                   >
-                    整理する
+                    {toast.confirmLabel ?? '整理する'}
                   </button>
                 </div>
               )}

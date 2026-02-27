@@ -9,6 +9,9 @@ export interface ToastData {
   onConfirm?: () => void
   onRetry?: () => void
   crossingCount?: number
+  confirmLabel?: string
+  skipLabel?: string
+  successMessage?: string
 }
 
 export function useToast() {
@@ -52,12 +55,13 @@ export function useToast() {
       const toast = prev.find((t) => t.id === id)
       if (!toast) return prev
       toast.onConfirm?.()
+      const successMsg = toast.successMessage ?? `${crossingCount ?? 1}本の矢印を整理しました`
       return [
         ...prev.filter((t) => t.id !== id),
         {
           id: uid(),
           type: 'success' as const,
-          message: `${crossingCount ?? 1}本の矢印を整理しました`,
+          message: successMsg,
         },
       ]
     })
