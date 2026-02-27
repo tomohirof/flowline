@@ -11,7 +11,11 @@ interface GateResult {
   stdout: string
 }
 
-function runGate(opts: { score?: number | null; mockPrCount?: number }): GateResult {
+function runGate(opts: {
+  score?: number | null
+  mockPrCount?: number
+  mockLastMergeLabel?: string
+}): GateResult {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'refactor-gate-test-'))
   const ghEnvPath = path.join(tmpDir, 'GITHUB_ENV')
   fs.writeFileSync(ghEnvPath, '')
@@ -27,6 +31,10 @@ function runGate(opts: { score?: number | null; mockPrCount?: number }): GateRes
 
   if (opts.mockPrCount !== undefined) {
     env.MOCK_PR_COUNT = String(opts.mockPrCount)
+  }
+
+  if (opts.mockLastMergeLabel !== undefined) {
+    env.MOCK_LAST_MERGE_LABEL = opts.mockLastMergeLabel
   }
 
   const stdout = execSync(`node ${SCRIPT_PATH}`, {
@@ -119,15 +127,39 @@ describe('refactor-gate.js', () => {
     expect(stdout).toContain('non-numeric')
   })
 
-  it('should throw when GITHUB_ENV is not set', () => {
+  it('should silently skip when GITHUB_ENV is not set', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'refactor-gate-test-'))
     fs.writeFileSync(path.join(tmpDir, 'health-score.txt'), '90')
 
     const env = { ...(process.env as Record<string, string>), MOCK_PR_COUNT: '0' }
     delete (env as Record<string, string | undefined>).GITHUB_ENV
 
-    expect(() => execSync(`node ${SCRIPT_PATH}`, { cwd: tmpDir, env, encoding: 'utf-8' })).toThrow()
+    // Should not throw — just does nothing when GITHUB_ENV is not set
+    expect(() =>
+      execSync(`node ${SCRIPT_PATH}`, { cwd: tmpDir, env, encoding: 'utf-8' }),
+    ).not.toThrow()
 
     fs.rmSync(tmpDir, { recursive: true })
+  })
+
+  it('should set NEEDS_REFACTOR=false when last merged PR has ai-refactor label (loop prevention)', () => {
+    const { envVars, stdout } = runGate({
+      score: 50,
+      mockPrCount: 0,
+      mockLastMergeLabel: 'ai-refactor',
+    })
+    expect(envVars.HEALTH_SCORE).toBe('50')
+    expect(envVars.NEEDS_REFACTOR).toBe('false')
+    expect(stdout).toContain('Loop prevention')
+  })
+
+  it('should set NEEDS_REFACTOR=true when last merged PR has no ai-refactor label and score < 80', () => {
+    const { envVars } = runGate({
+      score: 60,
+      mockPrCount: 0,
+      mockLastMergeLabel: 'other-label',
+    })
+    expect(envVars.HEALTH_SCORE).toBe('60')
+    expect(envVars.NEEDS_REFACTOR).toBe('true')
   })
 })
