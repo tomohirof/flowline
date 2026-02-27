@@ -731,8 +731,7 @@ export default function FlowEditor({
     setHoveredLaneGap(null)
   }
 
-  // TODO(Phase 2): use gapIndex to insert sub-lane at clicked position instead of group tail
-  const mergeLaneAt = (_gapIndex: number, targetLaneId: string): void => {
+  const mergeLaneAt = (gapIndex: number, targetLaneId: string): void => {
     setLanes((prev) => {
       const targetIdx = prev.findIndex((l) => l.id === targetLaneId)
       if (targetIdx < 0) return prev
@@ -745,14 +744,19 @@ export default function FlowEditor({
         n[targetIdx] = { ...target, groupId, groupRole: 'parent' }
       }
 
-      // Find the end of this group
-      let endIdx = targetIdx + 1
-      while (endIdx < n.length && n[endIdx].groupId === groupId) {
-        endIdx++
-      }
+      // gapIndex がグループ範囲内ならそこに挿入、範囲外ならグループ末尾
+      const groupStart = n.findIndex((l) => l.groupId === groupId)
+      const groupEnd = n.reduce(
+        (last, l, i) => (l.groupId === groupId ? i : last),
+        groupStart,
+      )
+      const insertAt =
+        gapIndex > groupStart && gapIndex <= groupEnd + 1
+          ? gapIndex
+          : groupEnd + 1
 
       const subCount = n.filter((l) => l.groupId === groupId).length
-      n.splice(endIdx, 0, {
+      n.splice(insertAt, 0, {
         id: uid(),
         name: `${target.name} (${subCount + 1})`,
         ci: target.ci,
