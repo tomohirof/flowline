@@ -66,6 +66,8 @@ export interface Lane {
   name: string
   colorIndex: number
   position: number
+  groupId?: string
+  groupRole?: 'parent' | 'sub'
 }
 
 export interface Node {
@@ -168,6 +170,8 @@ export interface InternalLane {
   id: string
   name: string
   ci: number
+  groupId?: string
+  groupRole?: 'parent' | 'sub'
 }
 
 export interface DragState {
