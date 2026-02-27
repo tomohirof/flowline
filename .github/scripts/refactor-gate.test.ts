@@ -1,11 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
 import { evaluateRefactorGate } from './refactor-gate.js'
 
-function makeDeps(overrides: {
-  score?: number
-  openPRs?: number
-  lastMergeIsRefactor?: boolean
-} = {}) {
+function makeDeps(
+  overrides: {
+    score?: number
+    openPRs?: number
+    lastMergeIsRefactor?: boolean
+  } = {},
+) {
   return {
     readScore: vi.fn(() => overrides.score ?? 100),
     countOpenPRs: vi.fn(() => overrides.openPRs ?? 0),
