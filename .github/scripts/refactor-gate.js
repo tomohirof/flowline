@@ -11,13 +11,12 @@ const HEALTH_THRESHOLD = 80
 export function evaluateRefactorGate({ readScore, countOpenPRs, checkLastMergeLabel }) {
   const score = readScore()
   const openCount = countOpenPRs()
-  const lastMergeIsRefactor = checkLastMergeLabel()
 
   let needsRefactor = false
 
   if (openCount > 0) {
     console.log('Healing Lock: ai-refactor PR already exists → skip')
-  } else if (lastMergeIsRefactor) {
+  } else if (checkLastMergeLabel()) {
     console.log('Loop prevention: last merged PR is ai-refactor → skip')
   } else if (score < HEALTH_THRESHOLD) {
     console.log(`Health Score ${score} < ${HEALTH_THRESHOLD} → needs refactor`)

@@ -58,48 +58,48 @@ function runGate(opts: {
 
 describe('refactor-gate.js', () => {
   it('should set NEEDS_REFACTOR=false when score >= 80 and no open PRs', () => {
-    const { envVars } = runGate({ score: 85, mockPrCount: 0 })
+    const { envVars } = runGate({ score: 85, mockPrCount: 0, mockLastMergeLabel: 'none' })
     expect(envVars.HEALTH_SCORE).toBe('85')
     expect(envVars.NEEDS_REFACTOR).toBe('false')
   })
 
   it('should set NEEDS_REFACTOR=true when score < 80 and no open PRs', () => {
-    const { envVars } = runGate({ score: 75, mockPrCount: 0 })
+    const { envVars } = runGate({ score: 75, mockPrCount: 0, mockLastMergeLabel: 'none' })
     expect(envVars.HEALTH_SCORE).toBe('75')
     expect(envVars.NEEDS_REFACTOR).toBe('true')
   })
 
   it('should set NEEDS_REFACTOR=false when score < 80 but open PR exists (Healing Lock)', () => {
-    const { envVars, stdout } = runGate({ score: 50, mockPrCount: 1 })
+    const { envVars, stdout } = runGate({ score: 50, mockPrCount: 1, mockLastMergeLabel: 'none' })
     expect(envVars.HEALTH_SCORE).toBe('50')
     expect(envVars.NEEDS_REFACTOR).toBe('false')
     expect(stdout).toContain('Healing Lock')
   })
 
   it('should default to score 100 when health-score.txt is missing', () => {
-    const { envVars } = runGate({ score: null, mockPrCount: 0 })
+    const { envVars } = runGate({ score: null, mockPrCount: 0, mockLastMergeLabel: 'none' })
     expect(envVars.HEALTH_SCORE).toBe('100')
     expect(envVars.NEEDS_REFACTOR).toBe('false')
   })
 
   it('should set NEEDS_REFACTOR=false when score is exactly 80', () => {
-    const { envVars } = runGate({ score: 80, mockPrCount: 0 })
+    const { envVars } = runGate({ score: 80, mockPrCount: 0, mockLastMergeLabel: 'none' })
     expect(envVars.NEEDS_REFACTOR).toBe('false')
   })
 
   it('should set NEEDS_REFACTOR=true when score is exactly 79', () => {
-    const { envVars } = runGate({ score: 79, mockPrCount: 0 })
+    const { envVars } = runGate({ score: 79, mockPrCount: 0, mockLastMergeLabel: 'none' })
     expect(envVars.NEEDS_REFACTOR).toBe('true')
   })
 
   it('should set NEEDS_REFACTOR=true when score is 0 and no open PRs', () => {
-    const { envVars } = runGate({ score: 0, mockPrCount: 0 })
+    const { envVars } = runGate({ score: 0, mockPrCount: 0, mockLastMergeLabel: 'none' })
     expect(envVars.HEALTH_SCORE).toBe('0')
     expect(envVars.NEEDS_REFACTOR).toBe('true')
   })
 
   it('should block when multiple open refactor PRs exist', () => {
-    const { envVars } = runGate({ score: 30, mockPrCount: 3 })
+    const { envVars } = runGate({ score: 30, mockPrCount: 3, mockLastMergeLabel: 'none' })
     expect(envVars.NEEDS_REFACTOR).toBe('false')
   })
 
@@ -115,6 +115,7 @@ describe('refactor-gate.js', () => {
         ...(process.env as Record<string, string>),
         GITHUB_ENV: ghEnvPath,
         MOCK_PR_COUNT: '0',
+        MOCK_LAST_MERGE_LABEL: 'none',
       },
       encoding: 'utf-8',
     })

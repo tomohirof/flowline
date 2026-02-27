@@ -46,10 +46,11 @@ describe('evaluateRefactorGate', () => {
     expect(result).toEqual({ score: 50, needsRefactor: false })
   })
 
-  it('should prioritize Healing Lock over loop prevention', () => {
+  it('should not call checkLastMergeLabel when Healing Lock is active', () => {
     const deps = makeDeps({ score: 50, openPRs: 1, lastMergeIsRefactor: true })
     const result = evaluateRefactorGate(deps)
     expect(result).toEqual({ score: 50, needsRefactor: false })
+    expect(deps.checkLastMergeLabel).not.toHaveBeenCalled()
   })
 
   it('should return needsRefactor=false when score is 0 but Healing Lock active', () => {
