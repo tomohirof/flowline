@@ -1166,6 +1166,16 @@ export default function FlowEditor({
     }
   }
 
+  const ungroupLane = (laneId: string): void => {
+    const lane = lanes.find((l) => l.id === laneId)
+    if (!lane?.groupId) return
+    const gid = lane.groupId
+    setLanes((prev) =>
+      prev.map((l) => (l.groupId === gid ? { ...l, groupId: undefined, groupRole: undefined } : l)),
+    )
+    addSuccessToast({ message: 'グループを解除しました' })
+  }
+
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
     const ft = tasks[arrow.from],
       tt = tasks[arrow.to]
@@ -3187,6 +3197,7 @@ export default function FlowEditor({
             startConnect={startConnect}
             moveLane={moveLane}
             rmLane={rmLane}
+            ungroupLane={ungroupLane}
             exportMermaid={exportMermaid}
             downloadJSON={downloadJSON}
           />

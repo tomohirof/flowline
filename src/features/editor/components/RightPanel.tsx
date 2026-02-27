@@ -57,6 +57,7 @@ export interface RightPanelProps {
   startConnect: (k: string) => void
   moveLane: (id: string, dir: number) => void
   rmLane: (id: string) => void
+  ungroupLane: (laneId: string) => void
   exportMermaid: () => string
   downloadJSON: () => void
 }
@@ -89,6 +90,7 @@ export const RightPanel = ({
   startConnect,
   moveLane,
   rmLane,
+  ungroupLane,
   exportMermaid,
   downloadJSON,
 }: RightPanelProps): ReactNode => {
@@ -674,6 +676,16 @@ export const RightPanel = ({
             <PanelBtn label="右へ →" color={T.accent} onClick={() => moveLane(selLane, 1)} />
           </div>
         </PanelSection>
+        {selLaneData.groupId && (
+          <PanelSection label="グループ">
+            <PanelBtn
+              label="グループ解除"
+              color={T.accent}
+              onClick={() => ungroupLane(selLane)}
+              full
+            />
+          </PanelSection>
+        )}
         <PanelSection label="操作">
           <PanelBtn label="レーンを削除" color="#E06060" onClick={() => rmLane(selLane)} full />
         </PanelSection>
