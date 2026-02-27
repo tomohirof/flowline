@@ -1196,6 +1196,8 @@ export default function FlowEditor({
       addConfirmToast({
         message: '◇ 並行パス用にレーンを分割しますか？',
         detail: `「${lane.name}」を2列に分割して分岐先を配置できます`,
+        confirmLabel: '分割する',
+        successMessage: 'レーンを分割しました',
         onConfirm: () => {
           const groupId = uid()
           const newSubId = uid()
@@ -1214,7 +1216,6 @@ export default function FlowEditor({
             return n
           })
           triggerLaneSlideIn(newSubId)
-          addSuccessToast({ message: 'レーンを分割しました' })
         },
       })
     }, 500)
@@ -3247,7 +3248,7 @@ export default function FlowEditor({
             ungroupLane={ungroupLane}
             onShapeChange={(taskKey: string, shape?: 'diamond') => {
               if (shape === 'diamond') {
-                const lid = taskKey.split('::')[0]
+                const lid = taskKey.split('_')[0]
                 suggestLaneSplit(lid)
               }
             }}
