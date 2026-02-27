@@ -1137,7 +1137,18 @@ export default function FlowEditor({
   }
   const rmLane = (id: string): void => {
     if (lanes.length <= 1) return
-    setLanes((p) => p.filter((l) => l.id !== id))
+    // 親レーン削除時: 同一グループのサブレーンをグループ解除
+    const deleting = lanes.find((l) => l.id === id)
+    if (deleting && isGroupParent(deleting) && deleting.groupId) {
+      const gid = deleting.groupId
+      setLanes((p) =>
+        p
+          .filter((l) => l.id !== id)
+          .map((l) => (l.groupId === gid ? { ...l, groupId: undefined, groupRole: undefined } : l)),
+      )
+    } else {
+      setLanes((p) => p.filter((l) => l.id !== id))
+    }
     if (selLane === id) setSelLane(null)
     const rm = Object.keys(tasks).filter((x) => x.startsWith(id))
     if (rm.length) {
