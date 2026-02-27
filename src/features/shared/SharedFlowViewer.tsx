@@ -222,14 +222,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                 />
                 {!isSub && (
                   <>
-                    <rect
-                      x={x}
-                      y={TM}
-                      width={headerW}
-                      height={HH}
-                      rx={10}
-                      fill={T.laneHeaderBg}
-                    />
+                    <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
                     <rect
                       x={x}
                       y={TM + HH - 10}
