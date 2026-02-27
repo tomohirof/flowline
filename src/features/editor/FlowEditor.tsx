@@ -65,6 +65,8 @@ function flowToInternalState(flow: Flow): {
     id: l.id,
     name: l.name,
     ci: l.colorIndex,
+    groupId: l.groupId,
+    groupRole: l.groupRole,
   }))
 
   // Build rows from nodes: collect unique rowIndex values
@@ -143,6 +145,8 @@ function internalStateToPayload(
     name: l.name,
     colorIndex: l.ci,
     position: i,
+    groupId: l.groupId,
+    groupRole: l.groupRole,
   }))
 
   // Build row id -> index map

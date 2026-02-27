@@ -5,6 +5,8 @@ const laneSchema = z.object({
   name: z.string().min(1),
   colorIndex: z.number().int().min(0),
   position: z.number().int().min(0),
+  groupId: z.string().optional(),
+  groupRole: z.enum(['parent', 'sub']).optional(),
 })
 
 const nodeSchema = z.object({
