@@ -406,6 +406,12 @@ export default function FlowEditor({
     }
   }, [])
 
+  useEffect(() => {
+    return () => {
+      if (slidingTimerRef.current) clearTimeout(slidingTimerRef.current)
+    }
+  }, [])
+
   const updateEditorSetting = useCallback(
     (key: string, value: boolean) => {
       setEditorSettings((prev) => ({ ...prev, [key]: value }))
@@ -1175,6 +1181,9 @@ export default function FlowEditor({
     const lane = lanes.find((l) => l.id === laneId)
     if (!lane?.groupId) return
     const gid = lane.groupId
+    // Reset suggestion tracking so re-grouping the same lane is possible
+    const groupLaneIds = lanes.filter((l) => l.groupId === gid).map((l) => l.id)
+    for (const id of groupLaneIds) suggestedLanesRef.current.delete(id)
     setLanes((prev) =>
       prev.map((l) => (l.groupId === gid ? { ...l, groupId: undefined, groupRole: undefined } : l)),
     )
@@ -1202,8 +1211,8 @@ export default function FlowEditor({
             n[idx] = { ...n[idx], groupId, groupRole: 'parent' }
             n.splice(idx + 1, 0, {
               id: newSubId,
-              name: `${lane.name} (2)`,
-              ci: lane.ci,
+              name: `${n[idx].name} (2)`,
+              ci: n[idx].ci,
               groupId,
               groupRole: 'sub',
             })

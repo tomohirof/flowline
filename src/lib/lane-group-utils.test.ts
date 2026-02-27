@@ -85,7 +85,7 @@ describe('lane-group-utils', () => {
       expect(getGroupWidth(lanes[0], lanes, LW, G)).toBe(406)
       expect(getGroupWidth(lanes[2], lanes, LW, G)).toBe(612)
     })
-    it('should return LW when gap is 0', () => {
+    it('should return n*LW when gap is 0', () => {
       const lanes = [
         { id: 'a', name: 'L1', ci: 0, groupId: 'g1', groupRole: 'parent' as const },
         { id: 'b', name: 'L2', ci: 0, groupId: 'g1', groupRole: 'sub' as const },
