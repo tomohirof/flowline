@@ -762,7 +762,8 @@
   .floodOut,
   .ghostPulseAnim,
   .ghostBounceAnim,
-  .repairPulseAnim {
+  .repairPulseAnim,
+  .laneSlideInAnim {
     animation: none;
   }
 }
@@ -895,4 +896,23 @@
   padding: 4px 12px;
   color: var(--theme-panel-label);
   font-size: 11px;
+}
+
+/* =============================================
+   Lane Slide-In Animation
+   ============================================= */
+
+@keyframes laneSlideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.laneSlideInAnim {
+  animation: laneSlideIn 300ms ease-out;
 }

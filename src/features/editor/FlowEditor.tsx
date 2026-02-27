@@ -276,6 +276,8 @@ export default function FlowEditor({
   const [rowAnim, setRowAnim] = useState<{ type: 'add' | 'delete'; index: number } | null>(null)
   const rowAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bouncingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [slidingLaneId, setSlidingLaneId] = useState<string | null>(null)
+  const slidingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const suggestedLanesRef = useRef<Set<string>>(new Set())
   const {
     toasts,
@@ -286,6 +288,12 @@ export default function FlowEditor({
     dismissToastByType,
     confirmToast,
   } = useToast()
+
+  const triggerLaneSlideIn = (laneId: string): void => {
+    setSlidingLaneId(laneId)
+    if (slidingTimerRef.current) clearTimeout(slidingTimerRef.current)
+    slidingTimerRef.current = setTimeout(() => setSlidingLaneId(null), 350)
+  }
 
   // Show/dismiss error toast based on saveStatus
   useEffect(() => {
@@ -733,6 +741,7 @@ export default function FlowEditor({
   }
 
   const mergeLaneAt = (gapIndex: number, targetLaneId: string): void => {
+    const newLaneId = uid()
     setLanes((prev) => {
       const targetIdx = prev.findIndex((l) => l.id === targetLaneId)
       if (targetIdx < 0) return prev
@@ -758,7 +767,7 @@ export default function FlowEditor({
 
       const subCount = n.filter((l) => l.groupId === groupId).length
       n.splice(insertAt, 0, {
-        id: uid(),
+        id: newLaneId,
         name: `${target.name} (${subCount + 1})`,
         ci: target.ci,
         groupId,
@@ -767,6 +776,7 @@ export default function FlowEditor({
 
       return n
     })
+    triggerLaneSlideIn(newLaneId)
     setLaneDropdown(null)
     setHoveredLaneGap(null)
   }
@@ -1188,13 +1198,14 @@ export default function FlowEditor({
         detail: `「${lane.name}」を2列に分割して分岐先を配置できます`,
         onConfirm: () => {
           const groupId = uid()
+          const newSubId = uid()
           setLanes((prev) => {
             const idx = prev.findIndex((l) => l.id === laneId)
             if (idx < 0) return prev
             const n = [...prev]
             n[idx] = { ...n[idx], groupId, groupRole: 'parent' }
             n.splice(idx + 1, 0, {
-              id: uid(),
+              id: newSubId,
               name: `${lane.name} (2)`,
               ci: lane.ci,
               groupId,
@@ -1202,6 +1213,7 @@ export default function FlowEditor({
             })
             return n
           })
+          triggerLaneSlideIn(newSubId)
           addSuccessToast({ message: 'レーンを分割しました' })
         },
       })
@@ -1670,7 +1682,10 @@ export default function FlowEditor({
               const isParent = isGroupParent(lane)
               const headerW = isParent ? getGroupWidth(lane, lanes, LW, G) : LW
               return (
-                <g key={`lane-${lane.id}`}>
+                <g
+                  key={`lane-${lane.id}`}
+                  className={lane.id === slidingLaneId ? styles.laneSlideInAnim : undefined}
+                >
                   <rect
                     x={x}
                     y={TM}
