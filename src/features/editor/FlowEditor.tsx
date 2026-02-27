@@ -740,6 +740,7 @@ export default function FlowEditor({
     return members.length * LW + (members.length - 1) * G
   }
 
+  // TODO(Phase 2): use gapIndex to insert sub-lane at clicked position instead of group tail
   const mergeLaneAt = (_gapIndex: number, targetLaneId: string): void => {
     setLanes((prev) => {
       const targetIdx = prev.findIndex((l) => l.id === targetLaneId)
@@ -3044,28 +3045,37 @@ export default function FlowEditor({
               })()}
 
             {/* Lane dropdown menu — rendered last for z-order */}
-            {laneDropdown && (
+            {laneDropdown && (() => {
+              const gi = laneDropdown.gapIndex
+              const leftLane = gi > 0 ? lanes[gi - 1] : null
+              const rightLane = gi < lanes.length ? lanes[gi] : null
+              const isInsideGroup =
+                leftLane &&
+                rightLane &&
+                !!leftLane.groupId &&
+                leftLane.groupId === rightLane.groupId
+              const dropdownX = Math.max(10, Math.min(laneDropdown.x - 100, totalW - 230))
+              return (
               <foreignObject
-                x={laneDropdown.x - 100}
+                x={dropdownX}
                 y={laneDropdown.y}
                 width={220}
                 height={300}
                 style={{ overflow: 'visible' }}
               >
                 <div className={styles.laneDropdown} onClick={(e) => e.stopPropagation()}>
-                  <button
-                    className={styles.laneDropdownItem}
-                    onClick={() => {
-                      insertLaneAt(laneDropdown.gapIndex)
-                      setLaneDropdown(null)
-                    }}
-                  >
-                    + 新しいレーンを追加
-                  </button>
+                  {!isInsideGroup && (
+                    <button
+                      className={styles.laneDropdownItem}
+                      onClick={() => {
+                        insertLaneAt(laneDropdown.gapIndex)
+                        setLaneDropdown(null)
+                      }}
+                    >
+                      + 新しいレーンを追加
+                    </button>
+                  )}
                   {(() => {
-                    const gi = laneDropdown.gapIndex
-                    const leftLane = gi > 0 ? lanes[gi - 1] : null
-                    const rightLane = gi < lanes.length ? lanes[gi] : null
                     const candidates = [leftLane, rightLane].filter(
                       (l): l is InternalLane => l !== null,
                     )
@@ -3105,7 +3115,8 @@ export default function FlowEditor({
                   })()}
                 </div>
               </foreignObject>
-            )}
+              )
+            })()}
           </svg>
         </div>
 
