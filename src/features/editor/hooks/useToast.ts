@@ -55,8 +55,7 @@ export function useToast() {
       const toast = prev.find((t) => t.id === id)
       if (!toast) return prev
       toast.onConfirm?.()
-      const successMsg =
-        toast.successMessage ?? `${crossingCount ?? 1}本の矢印を整理しました`
+      const successMsg = toast.successMessage ?? `${crossingCount ?? 1}本の矢印を整理しました`
       return [
         ...prev.filter((t) => t.id !== id),
         {

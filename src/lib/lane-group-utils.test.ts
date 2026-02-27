@@ -71,9 +71,7 @@ describe('lane-group-utils', () => {
       expect(getGroupWidth(lanes[0], lanes, LW, G)).toBe(406)
     })
     it('should return LW for single-member group', () => {
-      const lanes = [
-        { id: 'a', name: 'L1', ci: 0, groupId: 'g1', groupRole: 'parent' as const },
-      ]
+      const lanes = [{ id: 'a', name: 'L1', ci: 0, groupId: 'g1', groupRole: 'parent' as const }]
       expect(getGroupWidth(lanes[0], lanes, LW, G)).toBe(200)
     })
     it('should handle multiple separate groups correctly', () => {

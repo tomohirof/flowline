@@ -756,14 +756,8 @@ export default function FlowEditor({
 
       // gapIndex がグループ範囲内ならそこに挿入、範囲外ならグループ末尾
       const groupStart = n.findIndex((l) => l.groupId === groupId)
-      const groupEnd = n.reduce(
-        (last, l, i) => (l.groupId === groupId ? i : last),
-        groupStart,
-      )
-      const insertAt =
-        gapIndex > groupStart && gapIndex <= groupEnd + 1
-          ? gapIndex
-          : groupEnd + 1
+      const groupEnd = n.reduce((last, l, i) => (l.groupId === groupId ? i : last), groupStart)
+      const insertAt = gapIndex > groupStart && gapIndex <= groupEnd + 1 ? gapIndex : groupEnd + 1
 
       const subCount = n.filter((l) => l.groupId === groupId).length
       n.splice(insertAt, 0, {
