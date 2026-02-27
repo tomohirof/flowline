@@ -6,6 +6,7 @@ import styles from './SharedFlowViewer.module.css'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
 import { exitPt, entryPt, buildArrowPath, DS, type Point } from '../../lib/arrow-routing'
 import { formatRelativeTime } from '../../lib/relative-time'
+import { isGroupSub, isGroupParent, getGroupWidth } from '../../lib/lane-group-utils'
 import { TeaserModal } from './TeaserModal'
 import { BottomCTABar } from './BottomCTABar'
 
@@ -200,14 +201,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             const p = PALETTES[lane.colorIndex % PALETTES.length]
             const x = laneX(li)
             const fullH = HH + rowCount * RH
-            const isSub = lane.groupRole === 'sub' && !!lane.groupId
-            const isParent = lane.groupRole === 'parent' && !!lane.groupId
-            const headerW = isParent
-              ? (() => {
-                  const members = sortedLanes.filter((l) => l.groupId === lane.groupId)
-                  return members.length * LW + (members.length - 1) * G
-                })()
-              : LW
+            const isSub = isGroupSub(lane)
+            const isParent = isGroupParent(lane)
+            const headerW = isParent ? getGroupWidth(lane, sortedLanes, LW, G) : LW
             return (
               <g key={`lane-${lane.id}`}>
                 <rect

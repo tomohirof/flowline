@@ -44,6 +44,7 @@ import {
   calcArrowPath,
   calcMultiDropTargets,
 } from '../../lib/flow-engine'
+import { isGroupParent, isGroupSub, getGroupWidth } from '../../lib/lane-group-utils'
 
 // =============================================
 // Helpers: convert API data <-> internal state
@@ -728,16 +729,6 @@ export default function FlowEditor({
       return n
     })
     setHoveredLaneGap(null)
-  }
-
-  // Lane group helpers
-  const isGroupParent = (lane: InternalLane): boolean =>
-    lane.groupRole === 'parent' && !!lane.groupId
-  const isGroupSub = (lane: InternalLane): boolean => lane.groupRole === 'sub' && !!lane.groupId
-  const getGroupWidth = (parentLane: InternalLane): number => {
-    if (!parentLane.groupId) return LW
-    const members = lanes.filter((l) => l.groupId === parentLane.groupId)
-    return members.length * LW + (members.length - 1) * G
   }
 
   // TODO(Phase 2): use gapIndex to insert sub-lane at clicked position instead of group tail
@@ -1620,7 +1611,7 @@ export default function FlowEditor({
                 fullH = HH + rows.length * RH
               const isSub = isGroupSub(lane)
               const isParent = isGroupParent(lane)
-              const headerW = isParent ? getGroupWidth(lane) : LW
+              const headerW = isParent ? getGroupWidth(lane, lanes, LW, G) : LW
               return (
                 <g key={`lane-${lane.id}`}>
                   <rect
