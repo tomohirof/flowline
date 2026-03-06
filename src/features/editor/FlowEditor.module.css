@@ -916,3 +916,22 @@
 .laneSlideInAnim {
   animation: laneSlideIn 300ms ease-out;
 }
+
+/* =============================================
+   Toolbar Enter Animation
+   ============================================= */
+
+.toolbarEnter {
+  animation: tbIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes tbIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
