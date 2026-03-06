@@ -1776,7 +1776,11 @@ export default function FlowEditor({
             height={svgH}
             viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
             className={styles.svg}
-            style={{ minWidth: '100%', minHeight: '100%', cursor: draggingMemo ? 'grabbing' : undefined }}
+            style={{
+              minWidth: '100%',
+              minHeight: '100%',
+              cursor: draggingMemo ? 'grabbing' : undefined,
+            }}
             onMouseMove={onSvgMouseMove}
             onMouseUp={onSvgMouseUp}
             onMouseLeave={() => {
@@ -2846,9 +2850,7 @@ export default function FlowEditor({
                     onAction={(action) => {
                       if (action === 'reverse') {
                         setArrows((p) =>
-                          p.map((a) =>
-                            a.id === selArrow ? { ...a, from: a.to, to: a.from } : a,
-                          ),
+                          p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
                         )
                       } else if (action === 'comment') {
                         setEditArrowComment(selArrow)
@@ -3284,184 +3286,184 @@ export default function FlowEditor({
                 )
               })()}
 
-          {/* Memo Layer (sticky notes) */}
-          {Object.entries(memos).map(([k, m]) => {
-            const task = tasks[k]
-            if (!task) return null
-            const li = liMap[task.lid],
-              ri = riMap[task.rid]
-            if (li === undefined || ri === undefined) return null
-            const c = ct(li, ri)
-            const mh = measureMemoHeight(m.text || '', MEMO_W)
-            const mx = c.x + m.dx - MEMO_W / 2
-            const my = c.y + m.dy
-            const isDragging = draggingMemo?.key === k
-            const isEditing = editingMemo === k
-            const isHov = hoveredMemo === k
+            {/* Memo Layer (sticky notes) */}
+            {Object.entries(memos).map(([k, m]) => {
+              const task = tasks[k]
+              if (!task) return null
+              const li = liMap[task.lid],
+                ri = riMap[task.rid]
+              if (li === undefined || ri === undefined) return null
+              const c = ct(li, ri)
+              const mh = measureMemoHeight(m.text || '', MEMO_W)
+              const mx = c.x + m.dx - MEMO_W / 2
+              const my = c.y + m.dy
+              const isDragging = draggingMemo?.key === k
+              const isEditing = editingMemo === k
+              const isHov = hoveredMemo === k
 
-            return (
-              <g key={`memo-${k}`}>
-                {/* Dashed connector */}
-                <line
-                  x1={c.x}
-                  y1={c.y + TH / 2}
-                  x2={mx + MEMO_W / 2}
-                  y2={my}
-                  stroke={T.memoConnector}
-                  strokeWidth={1.2}
-                  opacity={0.5}
-                  strokeDasharray="4,3"
-                  style={{ pointerEvents: 'none' }}
-                />
-                <circle
-                  cx={c.x}
-                  cy={c.y + TH / 2}
-                  r={2.5}
-                  fill={T.memoConnector}
-                  opacity={0.6}
-                  style={{ pointerEvents: 'none' }}
-                />
-                <circle
-                  cx={mx + MEMO_W / 2}
-                  cy={my}
-                  r={2.5}
-                  fill={T.memoConnector}
-                  opacity={0.6}
-                  style={{ pointerEvents: 'none' }}
-                />
+              return (
+                <g key={`memo-${k}`}>
+                  {/* Dashed connector */}
+                  <line
+                    x1={c.x}
+                    y1={c.y + TH / 2}
+                    x2={mx + MEMO_W / 2}
+                    y2={my}
+                    stroke={T.memoConnector}
+                    strokeWidth={1.2}
+                    opacity={0.5}
+                    strokeDasharray="4,3"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <circle
+                    cx={c.x}
+                    cy={c.y + TH / 2}
+                    r={2.5}
+                    fill={T.memoConnector}
+                    opacity={0.6}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <circle
+                    cx={mx + MEMO_W / 2}
+                    cy={my}
+                    r={2.5}
+                    fill={T.memoConnector}
+                    opacity={0.6}
+                    style={{ pointerEvents: 'none' }}
+                  />
 
-                {!isEditing ? (
-                  <g
-                    onMouseDown={(e: React.MouseEvent) => onMemoMouseDown(k, e)}
-                    onMouseEnter={() => setHoveredMemo(k)}
-                    onMouseLeave={() => setHoveredMemo(null)}
-                    style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-                  >
-                    <rect
-                      x={mx}
-                      y={my}
-                      width={MEMO_W}
-                      height={mh}
-                      rx={7}
-                      fill={T.memoBg}
-                      stroke={isHov || isDragging ? T.memoBorderHover : T.memoBorder}
-                      strokeWidth={isHov || isDragging ? 1.2 : 0.7}
-                      opacity={0.96}
-                      style={{
-                        filter: isDragging
-                          ? 'drop-shadow(0 4px 12px rgba(180,160,0,0.2))'
-                          : 'drop-shadow(0 1px 3px rgba(180,160,0,0.08))',
-                      }}
-                    />
-                    {/* Grip dots on hover */}
-                    {isHov && !isDragging && (
-                      <g opacity={0.35}>
-                        {[0, 4, 8].map((dy) => (
-                          <g key={dy}>
-                            <circle
-                              cx={mx + MEMO_W - 10}
-                              cy={my + 10 + dy}
-                              r={1}
-                              fill={T.memoText}
-                            />
-                            <circle
-                              cx={mx + MEMO_W - 14}
-                              cy={my + 10 + dy}
-                              r={1}
-                              fill={T.memoText}
-                            />
-                          </g>
-                        ))}
-                      </g>
-                    )}
-                    {m.text ? (
-                      <foreignObject x={mx} y={my} width={MEMO_W} height={mh}>
-                        <div
+                  {!isEditing ? (
+                    <g
+                      onMouseDown={(e: React.MouseEvent) => onMemoMouseDown(k, e)}
+                      onMouseEnter={() => setHoveredMemo(k)}
+                      onMouseLeave={() => setHoveredMemo(null)}
+                      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                    >
+                      <rect
+                        x={mx}
+                        y={my}
+                        width={MEMO_W}
+                        height={mh}
+                        rx={7}
+                        fill={T.memoBg}
+                        stroke={isHov || isDragging ? T.memoBorderHover : T.memoBorder}
+                        strokeWidth={isHov || isDragging ? 1.2 : 0.7}
+                        opacity={0.96}
+                        style={{
+                          filter: isDragging
+                            ? 'drop-shadow(0 4px 12px rgba(180,160,0,0.2))'
+                            : 'drop-shadow(0 1px 3px rgba(180,160,0,0.08))',
+                        }}
+                      />
+                      {/* Grip dots on hover */}
+                      {isHov && !isDragging && (
+                        <g opacity={0.35}>
+                          {[0, 4, 8].map((dy) => (
+                            <g key={dy}>
+                              <circle
+                                cx={mx + MEMO_W - 10}
+                                cy={my + 10 + dy}
+                                r={1}
+                                fill={T.memoText}
+                              />
+                              <circle
+                                cx={mx + MEMO_W - 14}
+                                cy={my + 10 + dy}
+                                r={1}
+                                fill={T.memoText}
+                              />
+                            </g>
+                          ))}
+                        </g>
+                      )}
+                      {m.text ? (
+                        <foreignObject x={mx} y={my} width={MEMO_W} height={mh}>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              lineHeight: '1.55',
+                              color: T.memoText,
+                              fontFamily: 'inherit',
+                              padding: '5px 8px',
+                              wordBreak: 'break-all' as const,
+                              pointerEvents: 'none',
+                              userSelect: 'none' as const,
+                            }}
+                          >
+                            {m.text}
+                          </div>
+                        </foreignObject>
+                      ) : (
+                        <text
+                          x={mx + MEMO_W / 2}
+                          y={my + mh / 2}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={10}
+                          fill={T.memoConnector}
+                          style={{ fontFamily: 'inherit', pointerEvents: 'none' }}
+                        >
+                          クリックして入力
+                        </text>
+                      )}
+                    </g>
+                  ) : (
+                    <foreignObject x={mx - 1} y={my - 1} width={MEMO_W + 2} height={160}>
+                      <div
+                        style={{
+                          background: T.memoBg,
+                          border: `1.5px solid ${T.memoBorderHover}`,
+                          borderRadius: 7,
+                          padding: '2px',
+                          boxShadow: '0 4px 16px rgba(200,180,0,0.18)',
+                        }}
+                      >
+                        <textarea
+                          autoFocus
+                          value={m.text || ''}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                            setMemos((p) => ({ ...p, [k]: { ...p[k], text: e.target.value } }))
+                          }
+                          onBlur={() => {
+                            if (!memos[k]?.text) {
+                              setMemos((p) => {
+                                const n = { ...p }
+                                delete n[k]
+                                return n
+                              })
+                            }
+                            setEditingMemo(null)
+                          }}
+                          onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                            if (e.key === 'Escape') (e.target as HTMLTextAreaElement).blur()
+                          }}
+                          placeholder="メモを入力…"
                           style={{
+                            width: MEMO_W - 16,
+                            minHeight: 24,
+                            maxHeight: 160,
+                            resize: 'none' as const,
+                            border: 'none',
+                            outline: 'none',
+                            background: 'transparent',
                             fontSize: 11,
                             lineHeight: '1.55',
                             color: T.memoText,
                             fontFamily: 'inherit',
-                            padding: '5px 8px',
-                            wordBreak: 'break-all' as const,
-                            pointerEvents: 'none',
-                            userSelect: 'none' as const,
+                            padding: '4px 6px',
                           }}
-                        >
-                          {m.text}
-                        </div>
-                      </foreignObject>
-                    ) : (
-                      <text
-                        x={mx + MEMO_W / 2}
-                        y={my + mh / 2}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fontSize={10}
-                        fill={T.memoConnector}
-                        style={{ fontFamily: 'inherit', pointerEvents: 'none' }}
-                      >
-                        クリックして入力
-                      </text>
-                    )}
-                  </g>
-                ) : (
-                  <foreignObject x={mx - 1} y={my - 1} width={MEMO_W + 2} height={160}>
-                    <div
-                      style={{
-                        background: T.memoBg,
-                        border: `1.5px solid ${T.memoBorderHover}`,
-                        borderRadius: 7,
-                        padding: '2px',
-                        boxShadow: '0 4px 16px rgba(200,180,0,0.18)',
-                      }}
-                    >
-                      <textarea
-                        autoFocus
-                        value={m.text || ''}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                          setMemos((p) => ({ ...p, [k]: { ...p[k], text: e.target.value } }))
-                        }
-                        onBlur={() => {
-                          if (!memos[k]?.text) {
-                            setMemos((p) => {
-                              const n = { ...p }
-                              delete n[k]
-                              return n
-                            })
-                          }
-                          setEditingMemo(null)
-                        }}
-                        onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-                          if (e.key === 'Escape') (e.target as HTMLTextAreaElement).blur()
-                        }}
-                        placeholder="メモを入力…"
-                        style={{
-                          width: MEMO_W - 16,
-                          minHeight: 24,
-                          maxHeight: 160,
-                          resize: 'none' as const,
-                          border: 'none',
-                          outline: 'none',
-                          background: 'transparent',
-                          fontSize: 11,
-                          lineHeight: '1.55',
-                          color: T.memoText,
-                          fontFamily: 'inherit',
-                          padding: '4px 6px',
-                        }}
-                        onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
-                          const t = e.target as HTMLTextAreaElement
-                          t.style.height = 'auto'
-                          t.style.height = t.scrollHeight + 'px'
-                        }}
-                      />
-                    </div>
-                  </foreignObject>
-                )}
-              </g>
-            )
-          })}
+                          onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                            const t = e.target as HTMLTextAreaElement
+                            t.style.height = 'auto'
+                            t.style.height = t.scrollHeight + 'px'
+                          }}
+                        />
+                      </div>
+                    </foreignObject>
+                  )}
+                </g>
+              )
+            })}
           </svg>
         </div>
 

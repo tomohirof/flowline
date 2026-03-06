@@ -65,12 +65,8 @@ export function Toolbar({ x, y, items, onAction, theme }: ToolbarProps) {
               height={BTN_H}
               rx={8}
               fill="transparent"
-              onMouseEnter={(e) =>
-                (e.target as SVGRectElement).setAttribute('fill', item.hoverBg)
-              }
-              onMouseLeave={(e) =>
-                (e.target as SVGRectElement).setAttribute('fill', 'transparent')
-              }
+              onMouseEnter={(e) => (e.target as SVGRectElement).setAttribute('fill', item.hoverBg)}
+              onMouseLeave={(e) => (e.target as SVGRectElement).setAttribute('fill', 'transparent')}
             />
             <foreignObject
               x={bx + (BTN_W - ICON_SIZE) / 2}

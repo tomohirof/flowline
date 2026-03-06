@@ -34,19 +34,19 @@ interface ToolbarProps {
 
 ### Node Toolbar (on selTask)
 
-| Button | Action | Behavior |
-|--------|--------|----------|
+| Button  | Action    | Behavior                                 |
+| ------- | --------- | ---------------------------------------- |
 | Connect | `connect` | Set `connectFrom`, enter connection mode |
-| Memo | `memo` | Add/edit memo (sticky note in Phase 2) |
-| Delete | `delete` | Delete node + related arrows + memo |
+| Memo    | `memo`    | Add/edit memo (sticky note in Phase 2)   |
+| Delete  | `delete`  | Delete node + related arrows + memo      |
 
 ### Arrow Toolbar (on selArrow)
 
-| Button | Action | Behavior |
-|--------|--------|----------|
-| Reverse | `reverse` | Swap from/to |
+| Button  | Action    | Behavior            |
+| ------- | --------- | ------------------- |
+| Reverse | `reverse` | Swap from/to        |
 | Comment | `comment` | Inline comment edit |
-| Delete | `delete` | Delete arrow |
+| Delete  | `delete`  | Delete arrow        |
 
 ### Theme Additions
 
@@ -68,8 +68,8 @@ New: `memos: Record<string, MemoData>`
 ```typescript
 interface MemoData {
   text: string
-  dx: number  // X offset from node center
-  dy: number  // Y offset from node center
+  dx: number // X offset from node center
+  dy: number // Y offset from node center
 }
 ```
 
@@ -78,6 +78,7 @@ interface MemoData {
 Store JSON in existing `nodes.note` column (TEXT). No schema migration needed.
 
 Read-time detection:
+
 - Old format: `"plain text"` -> `{ text: "plain text", dx: default, dy: 46 }`
 - New format: `'{"text":"...","dx":50,"dy":46}'` -> parse as-is
 
@@ -122,15 +123,15 @@ memoConnector: string
 
 ## Affected Files
 
-| File | Phase | Changes |
-|------|-------|---------|
-| `src/features/editor/components/Toolbar.tsx` | 1 | New component |
-| `src/features/editor/FlowEditor.tsx` | 1+2 | Toolbar integration, notes->memos migration, memo rendering/drag |
-| `src/features/editor/components/RightPanel.tsx` | 2 | Update to `memos[selTask]?.text` |
-| `src/features/shared/SharedFlowViewer.tsx` | 2 | Sticky note + connector read-only display |
-| `src/features/editor/theme-constants.ts` | 1+2 | Toolbar + memo theme colors |
-| `src/lib/flow-engine.ts` | 2 | `SwapResult.notes` -> `SwapResult.memos` type change |
-| `src/features/editor/types.ts` | 2 | `MemoData` interface |
+| File                                            | Phase | Changes                                                          |
+| ----------------------------------------------- | ----- | ---------------------------------------------------------------- |
+| `src/features/editor/components/Toolbar.tsx`    | 1     | New component                                                    |
+| `src/features/editor/FlowEditor.tsx`            | 1+2   | Toolbar integration, notes->memos migration, memo rendering/drag |
+| `src/features/editor/components/RightPanel.tsx` | 2     | Update to `memos[selTask]?.text`                                 |
+| `src/features/shared/SharedFlowViewer.tsx`      | 2     | Sticky note + connector read-only display                        |
+| `src/features/editor/theme-constants.ts`        | 1+2   | Toolbar + memo theme colors                                      |
+| `src/lib/flow-engine.ts`                        | 2     | `SwapResult.notes` -> `SwapResult.memos` type change             |
+| `src/features/editor/types.ts`                  | 2     | `MemoData` interface                                             |
 
 ## Deprecations
 

@@ -391,13 +391,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                           style={{ pointerEvents: 'none' }}
                         />
                         <circle cx={c.x} cy={c.y + TH / 2} r={2.5} fill="#E8D44D" opacity={0.6} />
-                        <circle
-                          cx={mx + MEMO_W / 2}
-                          cy={my}
-                          r={2.5}
-                          fill="#E8D44D"
-                          opacity={0.6}
-                        />
+                        <circle cx={mx + MEMO_W / 2} cy={my} r={2.5} fill="#E8D44D" opacity={0.6} />
                         <rect
                           x={mx}
                           y={my}

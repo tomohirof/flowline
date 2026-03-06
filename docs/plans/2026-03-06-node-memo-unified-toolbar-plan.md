@@ -15,6 +15,7 @@
 ### Task 1: Add toolbar theme constants
 
 **Files:**
+
 - Modify: `src/features/editor/types.ts`
 - Modify: `src/features/editor/theme-constants.ts`
 
@@ -61,6 +62,7 @@ git commit -m "feat(#281): add toolbar theme constants"
 ### Task 2: Create Toolbar component with tests
 
 **Files:**
+
 - Create: `src/features/editor/components/Toolbar.tsx`
 - Create: `src/features/editor/components/Toolbar.test.tsx`
 
@@ -261,6 +263,7 @@ git commit -m "feat(#281): add unified Toolbar SVG component with tests"
 ### Task 3: Add toolbar CSS animation
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.module.css`
 
 **Step 1: Add toolbar entrance animation**
@@ -296,6 +299,7 @@ git commit -m "feat(#281): add toolbar entrance animation CSS"
 ### Task 4: Wire node toolbar into FlowEditor
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 **Step 1: Import Toolbar**
@@ -374,6 +378,7 @@ git commit -m "feat(#281): wire node toolbar into FlowEditor"
 ### Task 5: Replace arrow floating controls with Toolbar component
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 **Step 1: Replace the existing arrow-floating-controls section**
@@ -455,6 +460,7 @@ npm run dev
 ### Task 7: Add MemoData type and memo theme constants
 
 **Files:**
+
 - Modify: `src/features/editor/types.ts`
 - Modify: `src/features/editor/theme-constants.ts`
 
@@ -530,6 +536,7 @@ git commit -m "feat(#281): add MemoData type and memo theme constants"
 ### Task 8: Add memo parsing utility with tests
 
 **Files:**
+
 - Create: `src/features/editor/memo-utils.ts`
 - Create: `src/features/editor/memo-utils.test.ts`
 
@@ -658,6 +665,7 @@ git commit -m "feat(#281): add memo parsing/serialization utilities with tests"
 ### Task 9: Migrate notes to memos in FlowEditor
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 This is a large change. Key modifications:
@@ -731,6 +739,7 @@ git commit -m "refactor(#281): migrate notes to memos (MemoData with dx/dy)"
 ### Task 10: Add draggable memo rendering with tests
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 **Step 1: Add memo-related state**
@@ -808,6 +817,7 @@ git commit -m "feat(#281): add draggable memo rendering with connectors"
 ### Task 11: Update SharedFlowViewer for new memo format
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`
 
 **Step 1: Replace old note display with sticky-note memo**
@@ -815,6 +825,7 @@ git commit -m "feat(#281): add draggable memo rendering with connectors"
 Replace the inline note rect (16px below node) with the same sticky-note rendering as FlowEditor, but read-only (no drag, no edit).
 
 Use `parseNote` to convert `node.note` to `MemoData`, then render:
+
 - Dashed connector
 - Yellow memo rect with text
 - No interaction handlers
@@ -837,6 +848,7 @@ git commit -m "feat(#281): update SharedFlowViewer with sticky-note memo display
 ### Task 12: Update existing tests for memos migration
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx`
 - Modify: `src/lib/flow-engine.test.ts`
 - Modify: `src/features/shared/SharedFlowViewer.test.tsx`

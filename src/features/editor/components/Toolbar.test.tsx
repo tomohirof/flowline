@@ -39,9 +39,7 @@ describe('Toolbar', () => {
       <Toolbar
         x={100}
         y={50}
-        items={[
-          { icon: 'A', action: 'delete', color: '#E06060', hoverBg: '#FEE' },
-        ]}
+        items={[{ icon: 'A', action: 'delete', color: '#E06060', hoverBg: '#FEE' }]}
         onAction={onAction}
         theme={defaultTheme}
       />,
@@ -51,15 +49,7 @@ describe('Toolbar', () => {
   })
 
   it('should not render when items array is empty', () => {
-    renderInSvg(
-      <Toolbar
-        x={0}
-        y={0}
-        items={[]}
-        onAction={vi.fn()}
-        theme={defaultTheme}
-      />,
-    )
+    renderInSvg(<Toolbar x={0} y={0} items={[]} onAction={vi.fn()} theme={defaultTheme} />)
     expect(screen.queryByTestId('toolbar-pill')).not.toBeInTheDocument()
   })
 })
