@@ -359,10 +359,17 @@ export const RightPanel = ({
             value={memos[selTask]?.text || ''}
             placeholder="メモを追加…"
             onChange={(v: string) =>
-              setMemos((p2) => ({
-                ...p2,
-                [selTask]: { ...(p2[selTask] || { dx: 50, dy: 46 }), text: v },
-              }))
+              setMemos((p2) => {
+                if (!v) {
+                  const n = { ...p2 }
+                  delete n[selTask]
+                  return n
+                }
+                return {
+                  ...p2,
+                  [selTask]: { ...(p2[selTask] || { dx: 50, dy: 46 }), text: v },
+                }
+              })
             }
           />
         </PanelSection>

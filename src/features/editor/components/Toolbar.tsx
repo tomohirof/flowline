@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 
-export interface ToolbarItem {
+interface ToolbarItem {
   icon: ReactNode
   action: string
   color: string
