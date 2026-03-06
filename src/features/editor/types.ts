@@ -52,6 +52,14 @@ export interface Theme {
   inputBorder: string
   commentIconColor: string
   dangerColor: string
+  toolbarBg: string
+  toolbarBorder: string
+  toolbarShadow: string
+  memoBg: string
+  memoBorder: string
+  memoBorderHover: string
+  memoText: string
+  memoConnector: string
   laneGap: number
 }
 
@@ -162,6 +170,12 @@ export interface TaskData {
   shape?: 'diamond'
 }
 
+export interface MemoData {
+  text: string
+  dx: number
+  dy: number
+}
+
 export interface RowData {
   id: string
 }
@@ -205,7 +219,7 @@ export interface EditorSnapshot {
   tasks: Record<string, TaskData>
   order: string[]
   arrows: InternalArrow[]
-  notes: Record<string, string>
+  memos: Record<string, MemoData>
   lanes: InternalLane[]
   rows: RowData[]
 }

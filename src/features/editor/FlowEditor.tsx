@@ -6,10 +6,12 @@ import { AiAssistant } from './components/AiAssistant'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
 import { apiFetch } from '../../lib/api'
+import { Toolbar } from './components/Toolbar'
 import styles from './FlowEditor.module.css'
 import type {
   ThemeId,
   TaskData,
+  MemoData,
   RowData,
   InternalLane,
   InternalArrow,
@@ -25,6 +27,7 @@ import type {
   FlowSavePayload,
   SaveStatus,
 } from './types'
+import { parseNote, serializeMemo, MEMO_W, measureMemoHeight } from './memo-utils'
 import { PALETTES, THEMES } from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
 import { DS } from '../../lib/arrow-routing'
@@ -56,7 +59,7 @@ function flowToInternalState(flow: Flow): {
   tasks: Record<string, TaskData>
   order: string[]
   arrows: InternalArrow[]
-  notes: Record<string, string>
+  memos: Record<string, MemoData>
   title: string
   themeId: ThemeId
 } {
@@ -80,7 +83,7 @@ function flowToInternalState(flow: Flow): {
 
   // Build task map and order from nodes
   const tasks: Record<string, TaskData> = {}
-  const notes: Record<string, string> = {}
+  const memos: Record<string, MemoData> = {}
   const sortedNodes = [...flow.nodes].sort((a, b) => a.orderIndex - b.orderIndex)
 
   // We need stable mapping from (laneId, rowIndex) -> row id
@@ -102,7 +105,9 @@ function flowToInternalState(flow: Flow): {
         shape: (n.shape as 'diamond' | undefined) || undefined,
       }
       if (n.note) {
-        notes[key] = n.note
+        const li = lanes.findIndex((l) => l.id === n.laneId)
+        const memo = parseNote(n.note, li, lanes.length)
+        if (memo) memos[key] = memo
       }
       nodeIdToKey[n.id] = key
     }
@@ -127,7 +132,7 @@ function flowToInternalState(flow: Flow): {
 
   const themeId = (Object.keys(THEMES).includes(flow.themeId) ? flow.themeId : 'cloud') as ThemeId
 
-  return { lanes, rows, tasks, order, arrows, notes, title: flow.title, themeId }
+  return { lanes, rows, tasks, order, arrows, memos, title: flow.title, themeId }
 }
 
 function internalStateToPayload(
@@ -136,7 +141,7 @@ function internalStateToPayload(
   tasks: Record<string, TaskData>,
   order: string[],
   arrows: InternalArrow[],
-  notes: Record<string, string>,
+  memos: Record<string, MemoData>,
   title: string,
   themeId: ThemeId,
 ): FlowSavePayload {
@@ -168,7 +173,7 @@ function internalStateToPayload(
         laneId: task.lid,
         rowIndex: riMap[task.rid] ?? 0,
         label: task.label,
-        note: notes[k] || null,
+        note: memos[k] ? serializeMemo(memos[k]) : null,
         orderIndex: orderIdx,
         bg: task.bg || null,
         strokeColor: task.strokeColor || null,
@@ -219,6 +224,76 @@ interface FlowEditorProps {
 }
 
 // =============================================
+// Node Toolbar Icons
+// =============================================
+
+const IconConnect = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M15 3h6v6" />
+    <path d="M10 14L21 3" />
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+  </svg>
+)
+
+const IconMemo = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+)
+
+const IconTrash = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+)
+
+const IconReverse = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M8 3L4 7l4 4" />
+    <path d="M4 7h16" />
+    <path d="M16 21l4-4-4-4" />
+    <path d="M20 17H4" />
+  </svg>
+)
+
+// =============================================
 // FlowEditor Component
 // =============================================
 
@@ -242,7 +317,7 @@ export default function FlowEditor({
   const [rows, setRows] = useState<RowData[]>(initState.rows)
   const [tasks, setTasks] = useState<Record<string, TaskData>>(initState.tasks)
   const [order, setOrder] = useState<string[]>(initState.order)
-  const [notes, setNotes] = useState<Record<string, string>>(initState.notes)
+  const [memos, setMemos] = useState<Record<string, MemoData>>(initState.memos)
 
   const [editing, setEditing] = useState<string | null>(null)
   const [editLane, setEditLane] = useState<string | null>(null)
@@ -251,7 +326,15 @@ export default function FlowEditor({
   const [selArrow, setSelArrow] = useState<string | null>(null)
   const [editArrowComment, setEditArrowComment] = useState<string | null>(null)
   const [selLane, setSelLane] = useState<string | null>(null)
-  const [editNote, setEditNote] = useState<string | null>(null)
+  const [editingMemo, setEditingMemo] = useState<string | null>(null)
+  const [draggingMemo, setDraggingMemo] = useState<{
+    key: string
+    startX: number
+    startY: number
+    origDx: number
+    origDy: number
+  } | null>(null)
+  const [hoveredMemo, setHoveredMemo] = useState<string | null>(null)
   const [showExport, setShowExport] = useState<boolean>(false)
   const [title, setTitle] = useState<string>(initState.title)
   const [editTitle, setEditTitle] = useState<boolean>(false)
@@ -439,8 +522,8 @@ export default function FlowEditor({
   const prevMetaSnapRef = useRef<string>('')
 
   const buildPayload = useCallback((): FlowSavePayload => {
-    return internalStateToPayload(lanes, rows, tasks, order, arrows, notes, title, themeId)
-  }, [lanes, rows, tasks, order, arrows, notes, title, themeId])
+    return internalStateToPayload(lanes, rows, tasks, order, arrows, memos, title, themeId)
+  }, [lanes, rows, tasks, order, arrows, memos, title, themeId])
 
   // Re-initialize when flow prop changes (render-time state adjustment)
   const [prevFlowId, setPrevFlowId] = useState(flow.id)
@@ -452,7 +535,7 @@ export default function FlowEditor({
     setTasks(state.tasks)
     setOrder(state.order)
     setArrows(state.arrows)
-    setNotes(state.notes)
+    setMemos(state.memos)
     setTitle(state.title)
     setThemeId(state.themeId)
     setSelTask(null)
@@ -468,7 +551,7 @@ export default function FlowEditor({
   }, [prevFlowId])
 
   useEffect(() => {
-    const structSnap = JSON.stringify({ tasks, order, arrows, notes, lanes, rows })
+    const structSnap = JSON.stringify({ tasks, order, arrows, memos, lanes, rows })
     const metaSnap = JSON.stringify({ title, themeId })
 
     const structChanged =
@@ -483,7 +566,7 @@ export default function FlowEditor({
 
     prevStructSnapRef.current = structSnap
     prevMetaSnapRef.current = metaSnap
-  }, [tasks, order, arrows, notes, lanes, rows, title, themeId, onSave, buildPayload])
+  }, [tasks, order, arrows, memos, lanes, rows, title, themeId, onSave, buildPayload])
 
   // --- Undo / Redo ---
   const historyRef = useRef<string[]>([])
@@ -496,11 +579,11 @@ export default function FlowEditor({
         tasks,
         order,
         arrows,
-        notes,
+        memos,
         lanes: lanes.map((l) => ({ ...l })),
         rows: rows.map((r) => ({ ...r })),
       }),
-    [tasks, order, arrows, notes, lanes, rows],
+    [tasks, order, arrows, memos, lanes, rows],
   )
 
   // Save snapshot before each meaningful change
@@ -535,7 +618,7 @@ export default function FlowEditor({
       setTasks(d.tasks)
       setOrder(d.order)
       setArrows(d.arrows)
-      setNotes(d.notes)
+      setMemos(d.memos)
       setLanes(d.lanes)
       setRows(d.rows)
       setSelTask(null)
@@ -597,7 +680,7 @@ export default function FlowEditor({
         delete n[k]
         return n
       })
-      setNotes((p) => {
+      setMemos((p) => {
         const n = { ...p }
         delete n[k]
         return n
@@ -623,7 +706,7 @@ export default function FlowEditor({
       multiSel.forEach((k) => delete n[k])
       return n
     })
-    setNotes((p) => {
+    setMemos((p) => {
       const n = { ...p }
       multiSel.forEach((k) => delete n[k])
       return n
@@ -658,7 +741,7 @@ export default function FlowEditor({
           editing ||
           editLane ||
           editTitle ||
-          editNote ||
+          editingMemo ||
           (document.activeElement as HTMLElement)?.tagName === 'INPUT'
         )
           return
@@ -680,7 +763,7 @@ export default function FlowEditor({
           editing ||
           editLane ||
           editTitle ||
-          editNote ||
+          editingMemo ||
           (document.activeElement as HTMLElement)?.tagName === 'INPUT'
         )
           return
@@ -717,7 +800,7 @@ export default function FlowEditor({
     editing,
     editLane,
     editTitle,
-    editNote,
+    editingMemo,
     undo,
     redo,
     multiSel,
@@ -831,6 +914,15 @@ export default function FlowEditor({
     const r = svg.getBoundingClientRect()
     return { x: (cx - r.left) / zoom, y: (cy - r.top) / zoom }
   }
+  const onMemoMouseDown = (k: string, e: React.MouseEvent): void => {
+    if (editingMemo === k) return
+    e.stopPropagation()
+    e.preventDefault()
+    const m = memos[k]
+    if (!m) return
+    const pt = svgPt(e.clientX, e.clientY)
+    setDraggingMemo({ key: k, startX: pt.x, startY: pt.y, origDx: m.dx, origDy: m.dy })
+  }
   const onDragStart = (k: string, e: React.MouseEvent): void => {
     e.stopPropagation()
     e.preventDefault()
@@ -855,6 +947,18 @@ export default function FlowEditor({
     setActiveTool('connect')
   }
   const onSvgMouseMove = (e: React.MouseEvent): void => {
+    if (draggingMemo) {
+      const pt = svgPt(e.clientX, e.clientY)
+      setMemos((p) => ({
+        ...p,
+        [draggingMemo.key]: {
+          ...p[draggingMemo.key],
+          dx: draggingMemo.origDx + pt.x - draggingMemo.startX,
+          dy: draggingMemo.origDy + pt.y - draggingMemo.startY,
+        },
+      }))
+      return
+    }
     const pt = svgPt(e.clientX, e.clientY)
     if (connectFrom) {
       setConnectDragPt(pt)
@@ -898,6 +1002,18 @@ export default function FlowEditor({
     }
   }
   const onSvgMouseUp = (e: React.MouseEvent): void => {
+    if (draggingMemo) {
+      const m = memos[draggingMemo.key]
+      if (
+        m &&
+        Math.abs(m.dx - draggingMemo.origDx) < 3 &&
+        Math.abs(m.dy - draggingMemo.origDy) < 3
+      ) {
+        setEditingMemo(draggingMemo.key)
+      }
+      setDraggingMemo(null)
+      return
+    }
     if (connectFrom) {
       const pt = svgPt(e.clientX, e.clientY)
       for (const k of Object.keys(tasks)) {
@@ -962,8 +1078,8 @@ export default function FlowEditor({
     newTasks[nk] = { ...task, lid: to.lid, rid: to.rid }
     const newArrows = remapArrows(arrows, fk, nk)
     setTasks(newTasks)
-    if (notes[fk])
-      setNotes((p) => {
+    if (memos[fk])
+      setMemos((p) => {
         const n = { ...p }
         n[nk] = n[fk]
         delete n[fk]
@@ -977,10 +1093,10 @@ export default function FlowEditor({
     if (editorSettings.autoRepair) triggerMoveRepairCheck(nk, to.lid, newArrows, newTasks)
   }
   const swapInsertNodes = (draggedKey: string, targetKey: string): void => {
-    const result = swapKeys(tasks, arrows, order, notes, draggedKey, targetKey)
+    const result = swapKeys(tasks, arrows, order, memos, draggedKey, targetKey)
     if (!result) return
     setTasks(result.tasks)
-    setNotes(result.notes)
+    setMemos(result.memos)
     setOrder(result.order)
     setArrows(result.arrows)
     setSelTask(result.newKeyA)
@@ -1021,9 +1137,9 @@ export default function FlowEditor({
     }
     setTasks(newTasks)
 
-    setNotes((p) => {
+    setMemos((p) => {
       const n = { ...p }
-      const moved: [string, string][] = []
+      const moved: [string, MemoData][] = []
       for (const [oldK] of keyMap) {
         if (n[oldK]) moved.push([oldK, n[oldK]])
       }
@@ -1346,7 +1462,7 @@ export default function FlowEditor({
         rows,
         tasks,
         arrows,
-        notes,
+        memos,
         order,
       },
       recentActions: historyRef.current.slice(-3).map((s, i) => ({
@@ -1660,7 +1776,11 @@ export default function FlowEditor({
             height={svgH}
             viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
             className={styles.svg}
-            style={{ minWidth: '100%', minHeight: '100%' }}
+            style={{
+              minWidth: '100%',
+              minHeight: '100%',
+              cursor: draggingMemo ? 'grabbing' : undefined,
+            }}
             onMouseMove={onSvgMouseMove}
             onMouseUp={onSvgMouseUp}
             onMouseLeave={() => {
@@ -1676,6 +1796,7 @@ export default function FlowEditor({
                 setConnectFromPt(null)
                 setActiveTool('select')
               }
+              if (draggingMemo) setDraggingMemo(null)
             }}
           >
             {/* Lanes */}
@@ -2166,8 +2287,7 @@ export default function FlowEditor({
             {lanes.map((lane, li) =>
               rows.map((row, ri) => {
                 const k = ky(lane.id, row.id),
-                  task = tasks[k],
-                  note = notes[k]
+                  task = tasks[k]
                 if (!task) return null
                 const c = ct(li, ri),
                   p = PALETTES[lane.ci]
@@ -2456,61 +2576,7 @@ export default function FlowEditor({
                           : task.label}
                       </text>
                     )}
-                    {!isDiamond && note && !connectFrom && !dragging && (
-                      <g>
-                        <rect
-                          x={c.x - TW / 2 + 6}
-                          y={c.y + TH / 2 + 4}
-                          width={TW - 12}
-                          height={16}
-                          rx={4}
-                          fill="#FFFDE7"
-                          stroke="#F0E6A0"
-                          strokeWidth={0.5}
-                        />
-                        {editNote === k ? (
-                          <foreignObject
-                            x={c.x - TW / 2 + 8}
-                            y={c.y + TH / 2 + 4}
-                            width={TW - 16}
-                            height={16}
-                          >
-                            <input
-                              ref={inputRef}
-                              value={note}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setNotes((p2) => ({ ...p2, [k]: e.target.value }))
-                              }
-                              onBlur={() => setEditNote(null)}
-                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                                e.key === 'Enter' && !e.nativeEvent.isComposing && setEditNote(null)
-                              }
-                              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                              className={styles.noteEditInput}
-                            />
-                          </foreignObject>
-                        ) : (
-                          <text
-                            x={c.x}
-                            y={c.y + TH / 2 + 13}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fontSize={8}
-                            fill="#8D6E63"
-                            style={{ cursor: 'pointer' }}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation()
-                              const nk = k
-                              if (!notes[nk]) setNotes((p2) => ({ ...p2, [nk]: 'メモ' }))
-                              setEditNote(nk)
-                              setTimeout(() => inputRef.current?.focus(), 40)
-                            }}
-                          >
-                            {note.length > 14 ? note.slice(0, 14) + '…' : note}
-                          </text>
-                        )}
-                      </g>
-                    )}
+                    {/* Memo rendering is now handled by the dedicated MemoOverlay component */}
                   </g>
                 )
               }),
@@ -2750,111 +2816,52 @@ export default function FlowEditor({
               </defs>
             ))}
 
-            {/* Floating arrow controls */}
+            {/* Arrow Toolbar */}
             {selArrow &&
               (() => {
                 const ap = arrowPaths.find((x) => x.arrow.id === selArrow)
                 if (!ap) return null
                 const { mx, my } = ap.path
-                const bw = 96,
-                  bh = 30,
-                  br = bh / 2,
-                  by = my + 10
+                const arrow = ap.arrow
                 return (
-                  <g data-testid="arrow-floating-controls">
-                    <rect
-                      x={mx - bw / 2}
-                      y={by}
-                      width={bw}
-                      height={bh}
-                      rx={br}
-                      fill={T.nodeFill}
-                      stroke={T.commentBorder}
-                      strokeWidth={0.5}
-                      style={{ filter: `drop-shadow(0 2px 8px rgba(0,0,0,${isDark ? 0.3 : 0.1}))` }}
-                    />
-                    {/* Reverse */}
-                    <g
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation()
+                  <Toolbar
+                    x={mx}
+                    y={my + 10}
+                    items={[
+                      {
+                        icon: <IconReverse />,
+                        action: 'reverse',
+                        color: T.accent,
+                        hoverBg: `${T.accent}10`,
+                      },
+                      {
+                        icon: <IconMemo />,
+                        action: 'comment',
+                        color: arrow.comment ? '#E8A817' : T.commentIconColor,
+                        hoverBg: '#FFFDE7',
+                      },
+                      {
+                        icon: <IconTrash />,
+                        action: 'delete',
+                        color: T.dangerColor,
+                        hoverBg: '#FEE',
+                      },
+                    ]}
+                    onAction={(action) => {
+                      if (action === 'reverse') {
                         setArrows((p) =>
                           p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
                         )
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <rect x={mx - bw / 2} y={by} width={32} height={bh} fill="transparent" />
-                      <g transform={`translate(${mx - bw / 2 + 8},${by + 7})`}>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke={T.accent}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M8 3L4 7l4 4" />
-                          <path d="M4 7h16" />
-                          <path d="M16 21l4-4-4-4" />
-                          <path d="M20 17H4" />
-                        </svg>
-                      </g>
-                    </g>
-                    {/* Comment */}
-                    <g
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation()
+                      } else if (action === 'comment') {
                         setEditArrowComment(selArrow)
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <rect x={mx - 16} y={by} width={32} height={bh} fill="transparent" />
-                      <g transform={`translate(${mx - 8},${by + 7})`}>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke={T.commentIconColor}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                        </svg>
-                      </g>
-                    </g>
-                    {/* Delete */}
-                    <g
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation()
+                        setSelArrow(null)
+                      } else if (action === 'delete') {
                         setArrows((p) => p.filter((a) => a.id !== selArrow))
                         setSelArrow(null)
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <rect x={mx + bw / 2 - 32} y={by} width={32} height={bh} fill="transparent" />
-                      <g transform={`translate(${mx + bw / 2 - 24},${by + 7})`}>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke={T.dangerColor}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                          <line x1="10" y1="11" x2="10" y2="17" />
-                          <line x1="14" y1="11" x2="14" y2="17" />
-                        </svg>
-                      </g>
-                    </g>
-                  </g>
+                      }
+                    }}
+                    theme={T}
+                  />
                 )
               })()}
 
@@ -2896,6 +2903,67 @@ export default function FlowEditor({
                       }}
                     />
                   </foreignObject>
+                )
+              })()}
+
+            {/* Node Toolbar */}
+            {selTask &&
+              !connectFrom &&
+              !dragging &&
+              !editing &&
+              multiSel.size === 0 &&
+              tasks[selTask] &&
+              (() => {
+                const t = tasks[selTask]
+                const li = liMap[t.lid],
+                  ri = riMap[t.rid]
+                if (li === undefined || ri === undefined) return null
+                const c = ct(li, ri)
+                const hasMemo = !!memos[selTask]
+                return (
+                  <Toolbar
+                    x={c.x}
+                    y={c.y + (t.shape === 'diamond' ? DS : TH / 2) + 8}
+                    items={[
+                      {
+                        icon: <IconConnect />,
+                        action: 'connect',
+                        color: T.accent,
+                        hoverBg: `${T.accent}10`,
+                      },
+                      {
+                        icon: <IconMemo />,
+                        action: 'memo',
+                        color: hasMemo ? '#E8A817' : T.commentIconColor,
+                        hoverBg: '#FFFDE7',
+                      },
+                      {
+                        icon: <IconTrash />,
+                        action: 'delete',
+                        color: T.dangerColor,
+                        hoverBg: '#FEE',
+                      },
+                    ]}
+                    onAction={(action) => {
+                      if (action === 'connect') {
+                        setConnectFrom(selTask)
+                        setSelTask(null)
+                      } else if (action === 'memo') {
+                        const key = selTask!
+                        if (!memos[key]) {
+                          const t = tasks[key]
+                          const li = liMap[t.lid]
+                          const dx = li < lanes.length / 2 ? 50 : -50
+                          setMemos((p) => ({ ...p, [key]: { text: '', dx, dy: 46 } }))
+                        }
+                        setEditingMemo(key)
+                        setSelTask(null)
+                      } else if (action === 'delete') {
+                        delTask(selTask!)
+                      }
+                    }}
+                    theme={T}
+                  />
                 )
               })()}
 
@@ -3204,6 +3272,185 @@ export default function FlowEditor({
                   </foreignObject>
                 )
               })()}
+
+            {/* Memo Layer (sticky notes) */}
+            {Object.entries(memos).map(([k, m]) => {
+              const task = tasks[k]
+              if (!task) return null
+              const li = liMap[task.lid],
+                ri = riMap[task.rid]
+              if (li === undefined || ri === undefined) return null
+              const c = ct(li, ri)
+              const mh = measureMemoHeight(m.text || '', MEMO_W)
+              const mx = c.x + m.dx - MEMO_W / 2
+              const my = c.y + m.dy
+              const isDragging = draggingMemo?.key === k
+              const isEditing = editingMemo === k
+              const isHov = hoveredMemo === k
+
+              return (
+                <g key={`memo-${k}`}>
+                  {/* Dashed connector */}
+                  <line
+                    x1={c.x}
+                    y1={c.y + TH / 2}
+                    x2={mx + MEMO_W / 2}
+                    y2={my}
+                    stroke={T.memoConnector}
+                    strokeWidth={1.2}
+                    opacity={0.5}
+                    strokeDasharray="4,3"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <circle
+                    cx={c.x}
+                    cy={c.y + TH / 2}
+                    r={2.5}
+                    fill={T.memoConnector}
+                    opacity={0.6}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <circle
+                    cx={mx + MEMO_W / 2}
+                    cy={my}
+                    r={2.5}
+                    fill={T.memoConnector}
+                    opacity={0.6}
+                    style={{ pointerEvents: 'none' }}
+                  />
+
+                  {!isEditing ? (
+                    <g
+                      onMouseDown={(e: React.MouseEvent) => onMemoMouseDown(k, e)}
+                      onMouseEnter={() => setHoveredMemo(k)}
+                      onMouseLeave={() => setHoveredMemo(null)}
+                      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                    >
+                      <rect
+                        x={mx}
+                        y={my}
+                        width={MEMO_W}
+                        height={mh}
+                        rx={7}
+                        fill={T.memoBg}
+                        stroke={isHov || isDragging ? T.memoBorderHover : T.memoBorder}
+                        strokeWidth={isHov || isDragging ? 1.2 : 0.7}
+                        opacity={0.96}
+                        style={{
+                          filter: isDragging
+                            ? 'drop-shadow(0 4px 12px rgba(180,160,0,0.2))'
+                            : 'drop-shadow(0 1px 3px rgba(180,160,0,0.08))',
+                        }}
+                      />
+                      {/* Grip dots on hover */}
+                      {isHov && !isDragging && (
+                        <g opacity={0.35}>
+                          {[0, 4, 8].map((dy) => (
+                            <g key={dy}>
+                              <circle
+                                cx={mx + MEMO_W - 10}
+                                cy={my + 10 + dy}
+                                r={1}
+                                fill={T.memoText}
+                              />
+                              <circle
+                                cx={mx + MEMO_W - 14}
+                                cy={my + 10 + dy}
+                                r={1}
+                                fill={T.memoText}
+                              />
+                            </g>
+                          ))}
+                        </g>
+                      )}
+                      {m.text ? (
+                        <foreignObject x={mx} y={my} width={MEMO_W} height={mh}>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              lineHeight: '1.55',
+                              color: T.memoText,
+                              fontFamily: 'inherit',
+                              padding: '5px 8px',
+                              wordBreak: 'break-all' as const,
+                              pointerEvents: 'none',
+                              userSelect: 'none' as const,
+                            }}
+                          >
+                            {m.text}
+                          </div>
+                        </foreignObject>
+                      ) : (
+                        <text
+                          x={mx + MEMO_W / 2}
+                          y={my + mh / 2}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={10}
+                          fill={T.memoConnector}
+                          style={{ fontFamily: 'inherit', pointerEvents: 'none' }}
+                        >
+                          クリックして入力
+                        </text>
+                      )}
+                    </g>
+                  ) : (
+                    <foreignObject x={mx - 1} y={my - 1} width={MEMO_W + 2} height={160}>
+                      <div
+                        style={{
+                          background: T.memoBg,
+                          border: `1.5px solid ${T.memoBorderHover}`,
+                          borderRadius: 7,
+                          padding: '2px',
+                          boxShadow: '0 4px 16px rgba(200,180,0,0.18)',
+                        }}
+                      >
+                        <textarea
+                          autoFocus
+                          value={m.text || ''}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                            setMemos((p) => ({ ...p, [k]: { ...p[k], text: e.target.value } }))
+                          }
+                          onBlur={() => {
+                            if (!memos[k]?.text) {
+                              setMemos((p) => {
+                                const n = { ...p }
+                                delete n[k]
+                                return n
+                              })
+                            }
+                            setEditingMemo(null)
+                          }}
+                          onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                            if (e.key === 'Escape') (e.target as HTMLTextAreaElement).blur()
+                          }}
+                          placeholder="メモを入力…"
+                          style={{
+                            width: MEMO_W - 16,
+                            minHeight: 24,
+                            maxHeight: 160,
+                            resize: 'none' as const,
+                            border: 'none',
+                            outline: 'none',
+                            background: 'transparent',
+                            fontSize: 11,
+                            lineHeight: '1.55',
+                            color: T.memoText,
+                            fontFamily: 'inherit',
+                            padding: '4px 6px',
+                          }}
+                          onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                            const t = e.target as HTMLTextAreaElement
+                            t.style.height = 'auto'
+                            t.style.height = t.scrollHeight + 'px'
+                          }}
+                        />
+                      </div>
+                    </foreignObject>
+                  )}
+                </g>
+              )
+            })}
           </svg>
         </div>
 
@@ -3231,8 +3478,8 @@ export default function FlowEditor({
             selLane={selLane}
             tasks={tasks}
             setTasks={setTasks}
-            notes={notes}
-            setNotes={setNotes}
+            memos={memos}
+            setMemos={setMemos}
             arrows={arrows}
             setArrows={setArrows}
             lanes={lanes}
@@ -3332,7 +3579,7 @@ export default function FlowEditor({
           setTasks(state.tasks)
           setOrder(state.order)
           setArrows(state.arrows)
-          setNotes(state.notes)
+          setMemos(state.memos)
           setTitle(state.title)
           setSelTask(null)
           setSelArrow(null)

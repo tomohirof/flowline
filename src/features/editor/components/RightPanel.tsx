@@ -6,6 +6,7 @@ import type {
   Theme,
   ThemeId,
   TaskData,
+  MemoData,
   RowData,
   InternalLane,
   InternalArrow,
@@ -32,8 +33,8 @@ export interface RightPanelProps {
   // Data
   tasks: Record<string, TaskData>
   setTasks: React.Dispatch<React.SetStateAction<Record<string, TaskData>>>
-  notes: Record<string, string>
-  setNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  memos: Record<string, MemoData>
+  setMemos: React.Dispatch<React.SetStateAction<Record<string, MemoData>>>
   arrows: InternalArrow[]
   setArrows: React.Dispatch<React.SetStateAction<InternalArrow[]>>
   lanes: InternalLane[]
@@ -72,8 +73,8 @@ export const RightPanel = ({
   selLane,
   tasks,
   setTasks,
-  notes,
-  setNotes,
+  memos,
+  setMemos,
   arrows,
   setArrows,
   lanes,
@@ -355,9 +356,21 @@ export const RightPanel = ({
         </PanelSection>
         <PanelSection label="メモ">
           <PanelInput
-            value={notes[selTask] || ''}
+            value={memos[selTask]?.text || ''}
             placeholder="メモを追加…"
-            onChange={(v: string) => setNotes((p2) => ({ ...p2, [selTask]: v }))}
+            onChange={(v: string) =>
+              setMemos((p2) => {
+                if (!v) {
+                  const n = { ...p2 }
+                  delete n[selTask]
+                  return n
+                }
+                return {
+                  ...p2,
+                  [selTask]: { ...(p2[selTask] || { dx: 50, dy: 46 }), text: v },
+                }
+              })
+            }
           />
         </PanelSection>
         <PanelSection label="背景色">

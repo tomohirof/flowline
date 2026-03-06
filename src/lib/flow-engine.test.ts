@@ -774,16 +774,16 @@ describe('detectCrossLaneRewire', () => {
 /* ========================================================= */
 
 describe('swapKeys', () => {
-  it('should swap two keys in tasks, arrows, order, and notes', () => {
+  it('should swap two keys in tasks, arrows, order, and memos', () => {
     const tasks = {
       L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
       L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2' },
     }
     const arrows = [mkArrow({ from: 'L1_R1', to: 'L1_R2' })]
     const order = ['L1_R1', 'L1_R2']
-    const notes = { L1_R1: 'note-A' }
+    const memos = { L1_R1: { text: 'note-A', dx: 50, dy: 46 } }
 
-    const result = swapKeys(tasks, arrows, order, notes, 'L1_R1', 'L1_R2')
+    const result = swapKeys(tasks, arrows, order, memos, 'L1_R1', 'L1_R2')
 
     // tasks: 位置が交換されている
     expect(result!.tasks['L1_R2'].label).toBe('A')
@@ -798,9 +798,9 @@ describe('swapKeys', () => {
     // order: キーが更新されている
     expect(result!.order).toEqual(['L1_R2', 'L1_R1'])
 
-    // notes: キーが移動している
-    expect(result!.notes['L1_R2']).toBe('note-A')
-    expect(result!.notes['L1_R1']).toBeUndefined()
+    // memos: キーが移動している
+    expect(result!.memos['L1_R2']).toEqual({ text: 'note-A', dx: 50, dy: 46 })
+    expect(result!.memos['L1_R1']).toBeUndefined()
   })
 
   it('should return null when keys are in different lanes', () => {
@@ -849,17 +849,20 @@ describe('swapKeys', () => {
     expect(result!.order).toEqual(['L1_R3', 'L1_R2', 'L1_R1'])
   })
 
-  it('should swap notes for both nodes', () => {
+  it('should swap memos for both nodes', () => {
     const tasks = {
       L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
       L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2' },
     }
-    const notes = { L1_R1: 'note-A', L1_R2: 'note-B' }
+    const memos = {
+      L1_R1: { text: 'note-A', dx: 50, dy: 46 },
+      L1_R2: { text: 'note-B', dx: -50, dy: 46 },
+    }
 
-    const result = swapKeys(tasks, [], ['L1_R1', 'L1_R2'], notes, 'L1_R1', 'L1_R2')
+    const result = swapKeys(tasks, [], ['L1_R1', 'L1_R2'], memos, 'L1_R1', 'L1_R2')
 
-    expect(result!.notes['L1_R2']).toBe('note-A')
-    expect(result!.notes['L1_R1']).toBe('note-B')
+    expect(result!.memos['L1_R2']).toEqual({ text: 'note-A', dx: 50, dy: 46 })
+    expect(result!.memos['L1_R1']).toEqual({ text: 'note-B', dx: -50, dy: 46 })
   })
 
   it('should return null when dragged key does not exist', () => {

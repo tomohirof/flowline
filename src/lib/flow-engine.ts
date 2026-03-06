@@ -1,5 +1,5 @@
 import type { InternalArrow, ArrowPathResult } from './types'
-import type { TaskData } from '../features/editor/types'
+import type { TaskData, MemoData } from '../features/editor/types'
 import { exitPt, entryPt, buildArrowPath } from './arrow-routing'
 import type { Point } from './arrow-routing'
 
@@ -235,20 +235,20 @@ export interface SwapResult {
   tasks: Record<string, TaskData>
   arrows: InternalArrow[]
   order: string[]
-  notes: Record<string, string>
+  memos: Record<string, MemoData>
   newKeyA: string
   newKeyB: string
 }
 
 /**
- * 2つのノードの位置（rid）を交換し、tasks/arrows/order/notes を更新した結果を返す。
+ * 2つのノードの位置（rid）を交換し、tasks/arrows/order/memos を更新した結果を返す。
  * 同一レーン限定。異なるレーンや存在しないキーの場合は null を返す。
  */
 export function swapKeys(
   tasks: Record<string, TaskData>,
   arrows: InternalArrow[],
   order: string[],
-  notes: Record<string, string>,
+  memos: Record<string, MemoData>,
   draggedKey: string,
   targetKey: string,
 ): SwapResult | null {
@@ -269,14 +269,14 @@ export function swapKeys(
   newTasks[newKeyA] = { ...draggedTask, rid: targetTask.rid }
   newTasks[newKeyB] = { ...targetTask, rid: draggedTask.rid }
 
-  // notes
-  const newNotes = { ...notes }
-  const noteA = newNotes[draggedKey]
-  const noteB = newNotes[targetKey]
-  delete newNotes[draggedKey]
-  delete newNotes[targetKey]
-  if (noteA !== undefined) newNotes[newKeyA] = noteA
-  if (noteB !== undefined) newNotes[newKeyB] = noteB
+  // memos
+  const newMemos = { ...memos }
+  const memoA = newMemos[draggedKey]
+  const memoB = newMemos[targetKey]
+  delete newMemos[draggedKey]
+  delete newMemos[targetKey]
+  if (memoA !== undefined) newMemos[newKeyA] = memoA
+  if (memoB !== undefined) newMemos[newKeyB] = memoB
 
   // order
   const newOrder = order.map((k) => (k === draggedKey ? newKeyA : k === targetKey ? newKeyB : k))
@@ -287,7 +287,7 @@ export function swapKeys(
   newArrows = remapArrows(newArrows, targetKey, newKeyB)
   newArrows = remapArrows(newArrows, temp, newKeyA)
 
-  return { tasks: newTasks, arrows: newArrows, order: newOrder, notes: newNotes, newKeyA, newKeyB }
+  return { tasks: newTasks, arrows: newArrows, order: newOrder, memos: newMemos, newKeyA, newKeyB }
 }
 
 export function detectCrossLaneRewire(
