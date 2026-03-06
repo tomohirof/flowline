@@ -52,6 +52,9 @@ export interface Theme {
   inputBorder: string
   commentIconColor: string
   dangerColor: string
+  toolbarBg: string
+  toolbarBorder: string
+  toolbarShadow: string
   laneGap: number
 }
 

@@ -57,6 +57,9 @@ export const THEMES: Record<ThemeId, Theme> = {
     inputBorder: '#E0E0E8',
     commentIconColor: '#D09030',
     dangerColor: '#E06060',
+    toolbarBg: '#fff',
+    toolbarBorder: '#e8e6f0',
+    toolbarShadow: '0 4px 16px rgba(0,0,0,0.08)',
     laneGap: 6,
   },
   midnight: {
@@ -99,6 +102,9 @@ export const THEMES: Record<ThemeId, Theme> = {
     inputBorder: '#3A3A4C',
     commentIconColor: '#D4A050',
     dangerColor: '#E06060',
+    toolbarBg: '#2A2A38',
+    toolbarBorder: '#444458',
+    toolbarShadow: '0 4px 16px rgba(0,0,0,0.3)',
     laneGap: 6,
   },
   blueprint: {
@@ -141,6 +147,9 @@ export const THEMES: Record<ThemeId, Theme> = {
     inputBorder: '#D0D8E4',
     commentIconColor: '#D09030',
     dangerColor: '#E06060',
+    toolbarBg: '#fff',
+    toolbarBorder: '#D8DDE6',
+    toolbarShadow: '0 4px 16px rgba(0,0,0,0.08)',
     laneGap: 6,
   },
 }
