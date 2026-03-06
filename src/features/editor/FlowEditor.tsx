@@ -6,6 +6,7 @@ import { AiAssistant } from './components/AiAssistant'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
 import { apiFetch } from '../../lib/api'
+import { Toolbar } from './components/Toolbar'
 import styles from './FlowEditor.module.css'
 import type {
   ThemeId,
@@ -217,6 +218,58 @@ interface FlowEditorProps {
   onSaveCtaClick?: () => void
   hideShare?: boolean
 }
+
+// =============================================
+// Node Toolbar Icons
+// =============================================
+
+const IconConnect = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M15 3h6v6" />
+    <path d="M10 14L21 3" />
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+  </svg>
+)
+
+const IconMemo = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+)
+
+const IconTrash = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+)
 
 // =============================================
 // FlowEditor Component
@@ -2896,6 +2949,74 @@ export default function FlowEditor({
                       }}
                     />
                   </foreignObject>
+                )
+              })()}
+
+            {/* Node Toolbar */}
+            {selTask &&
+              !connectFrom &&
+              !dragging &&
+              !editing &&
+              multiSel.size === 0 &&
+              tasks[selTask] &&
+              (() => {
+                const t = tasks[selTask]
+                const li = liMap[t.lid],
+                  ri = riMap[t.rid]
+                if (li === undefined || ri === undefined) return null
+                const c = ct(li, ri)
+                const hasMemo = !!notes[selTask]
+                return (
+                  <Toolbar
+                    x={c.x}
+                    y={c.y + (t.shape === 'diamond' ? DS : TH / 2) + 8}
+                    items={[
+                      {
+                        icon: <IconConnect />,
+                        action: 'connect',
+                        color: T.accent,
+                        hoverBg: `${T.accent}10`,
+                      },
+                      {
+                        icon: <IconMemo />,
+                        action: 'memo',
+                        color: hasMemo ? '#E8A817' : T.commentIconColor,
+                        hoverBg: '#FFFDE7',
+                      },
+                      {
+                        icon: <IconTrash />,
+                        action: 'delete',
+                        color: T.dangerColor,
+                        hoverBg: '#FEE',
+                      },
+                    ]}
+                    onAction={(action) => {
+                      if (action === 'connect') {
+                        setConnectFrom(selTask)
+                        setSelTask(null)
+                      } else if (action === 'memo') {
+                        if (!notes[selTask]) setNotes((p) => ({ ...p, [selTask!]: 'メモ' }))
+                        setEditNote(selTask)
+                        setSelTask(null)
+                      } else if (action === 'delete') {
+                        const key = selTask!
+                        setTasks((p) => {
+                          const n = { ...p }
+                          delete n[key]
+                          return n
+                        })
+                        setArrows((p) => p.filter((a) => a.from !== key && a.to !== key))
+                        setNotes((p) => {
+                          const n = { ...p }
+                          delete n[key]
+                          return n
+                        })
+                        setOrder((p) => p.filter((k) => k !== key))
+                        setSelTask(null)
+                      }
+                    }}
+                    theme={T}
+                  />
                 )
               })()}
 
