@@ -102,7 +102,15 @@ flows.get('/', async (c) => {
              OR a.comment LIKE ? ESCAPE '\\' COLLATE NOCASE)
          ORDER BY f.updated_at DESC`,
       )
-      .bind(userId, ...projectBinds, likePattern, likePattern, likePattern, likePattern, likePattern)
+      .bind(
+        userId,
+        ...projectBinds,
+        likePattern,
+        likePattern,
+        likePattern,
+        likePattern,
+        likePattern,
+      )
       .all<FlowRow>()
     flowList = (result.results ?? []).map(toFlowSummary)
   } else {
