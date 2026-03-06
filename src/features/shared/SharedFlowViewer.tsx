@@ -7,6 +7,7 @@ import { calcLaneWidth } from '../editor/calcLaneWidth'
 import { exitPt, entryPt, buildArrowPath, DS, type Point } from '../../lib/arrow-routing'
 import { formatRelativeTime } from '../../lib/relative-time'
 import { isGroupSub, isGroupParent, getGroupWidth } from '../../lib/lane-group-utils'
+import { parseNote, measureMemoHeight, MEMO_W } from '../editor/memo-utils'
 import { TeaserModal } from './TeaserModal'
 import { BottomCTABar } from './BottomCTABar'
 
@@ -368,30 +369,66 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                     ? node.label.slice(0, isDiamond ? 8 : 10) + '…'
                     : node.label}
                 </text>
-                {!isDiamond && node.note && (
-                  <g>
-                    <rect
-                      x={c.x - TW / 2 + 6}
-                      y={c.y + TH / 2 + 4}
-                      width={TW - 12}
-                      height={16}
-                      rx={4}
-                      fill="#FFFDE7"
-                      stroke="#F0E6A0"
-                      strokeWidth={0.5}
-                    />
-                    <text
-                      x={c.x}
-                      y={c.y + TH / 2 + 13}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize={8}
-                      fill="#8D6E63"
-                    >
-                      {node.note.length > 14 ? node.note.slice(0, 14) + '…' : node.note}
-                    </text>
-                  </g>
-                )}
+                {!isDiamond &&
+                  node.note &&
+                  (() => {
+                    const memo = parseNote(node.note, li, sortedLanes.length)
+                    if (!memo) return null
+                    const mh = measureMemoHeight(memo.text, MEMO_W)
+                    const mx = c.x + memo.dx - MEMO_W / 2
+                    const my = c.y + memo.dy
+                    return (
+                      <g>
+                        <line
+                          x1={c.x}
+                          y1={c.y + TH / 2}
+                          x2={mx + MEMO_W / 2}
+                          y2={my}
+                          stroke="#E8D44D"
+                          strokeWidth={1.2}
+                          opacity={0.5}
+                          strokeDasharray="4,3"
+                          style={{ pointerEvents: 'none' }}
+                        />
+                        <circle cx={c.x} cy={c.y + TH / 2} r={2.5} fill="#E8D44D" opacity={0.6} />
+                        <circle
+                          cx={mx + MEMO_W / 2}
+                          cy={my}
+                          r={2.5}
+                          fill="#E8D44D"
+                          opacity={0.6}
+                        />
+                        <rect
+                          x={mx}
+                          y={my}
+                          width={MEMO_W}
+                          height={mh}
+                          rx={7}
+                          fill="#FFFDE7"
+                          stroke="#EED94E"
+                          strokeWidth={0.7}
+                          opacity={0.96}
+                          style={{ filter: 'drop-shadow(0 1px 3px rgba(180,160,0,0.08))' }}
+                        />
+                        <foreignObject x={mx} y={my} width={MEMO_W} height={mh}>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              lineHeight: '1.55',
+                              color: '#6D4C41',
+                              fontFamily: 'inherit',
+                              padding: '5px 8px',
+                              wordBreak: 'break-all',
+                              pointerEvents: 'none',
+                              userSelect: 'none',
+                            }}
+                          >
+                            {memo.text}
+                          </div>
+                        </foreignObject>
+                      </g>
+                    )
+                  })()}
               </g>
             )
           })}
