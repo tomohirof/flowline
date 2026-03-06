@@ -2707,3 +2707,53 @@ describe('Cmd+A select all (#240)', () => {
     expect(screen.getByText(/2件選択中/)).toBeInTheDocument()
   })
 })
+
+describe('toolbar z-order (#284)', () => {
+  it('should render node toolbar after memo layer in DOM order', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Click node to select it and show toolbar
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.click(nodeRect!)
+
+    // Click memo button (2nd toolbar button) to add a memo
+    const toolbarBtns = container.querySelectorAll('[data-testid="toolbar-btn"]')
+    expect(toolbarBtns.length).toBeGreaterThanOrEqual(2)
+    fireEvent.click(toolbarBtns[1])
+
+    // Type memo text and blur to confirm
+    const textarea = container.querySelector('textarea[placeholder="メモを入力…"]')
+    expect(textarea).toBeTruthy()
+    fireEvent.change(textarea!, { target: { value: 'テストメモ' } })
+    fireEvent.blur(textarea!)
+
+    // Verify memo exists
+    const memoNotes = container.querySelectorAll('[data-testid="memo-note"]')
+    expect(memoNotes.length).toBe(1)
+
+    // Re-select node to show toolbar again
+    fireEvent.click(nodeRect!)
+    const toolbar = container.querySelector('[data-testid="toolbar-pill"]')
+    expect(toolbar).toBeTruthy()
+
+    // Verify toolbar comes after memo-note elements in DOM order
+    const allElements = Array.from(container.querySelectorAll('*'))
+    const memoIndices = allElements
+      .map((el, i) => (el.getAttribute('data-testid') === 'memo-note' ? i : -1))
+      .filter((i) => i !== -1)
+    expect(memoIndices.length).toBeGreaterThan(0)
+    const lastMemoIndex = Math.max(...memoIndices)
+
+    const toolbarIndex = allElements.findIndex(
+      (el) => el.getAttribute('data-testid') === 'toolbar-pill',
+    )
+    expect(toolbarIndex).not.toBe(-1)
+    expect(toolbarIndex).toBeGreaterThan(lastMemoIndex)
+  })
+})

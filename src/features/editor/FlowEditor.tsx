@@ -2906,67 +2906,6 @@ export default function FlowEditor({
                 )
               })()}
 
-            {/* Node Toolbar */}
-            {selTask &&
-              !connectFrom &&
-              !dragging &&
-              !editing &&
-              multiSel.size === 0 &&
-              tasks[selTask] &&
-              (() => {
-                const t = tasks[selTask]
-                const li = liMap[t.lid],
-                  ri = riMap[t.rid]
-                if (li === undefined || ri === undefined) return null
-                const c = ct(li, ri)
-                const hasMemo = !!memos[selTask]
-                return (
-                  <Toolbar
-                    x={c.x}
-                    y={c.y + (t.shape === 'diamond' ? DS : TH / 2) + 8}
-                    items={[
-                      {
-                        icon: <IconConnect />,
-                        action: 'connect',
-                        color: T.accent,
-                        hoverBg: `${T.accent}10`,
-                      },
-                      {
-                        icon: <IconMemo />,
-                        action: 'memo',
-                        color: hasMemo ? '#E8A817' : T.commentIconColor,
-                        hoverBg: '#FFFDE7',
-                      },
-                      {
-                        icon: <IconTrash />,
-                        action: 'delete',
-                        color: T.dangerColor,
-                        hoverBg: '#FEE',
-                      },
-                    ]}
-                    onAction={(action) => {
-                      if (action === 'connect') {
-                        setConnectFrom(selTask)
-                        setSelTask(null)
-                      } else if (action === 'memo') {
-                        const key = selTask!
-                        if (!memos[key]) {
-                          const t = tasks[key]
-                          const li = liMap[t.lid]
-                          const dx = li < lanes.length / 2 ? 50 : -50
-                          setMemos((p) => ({ ...p, [key]: { text: '', dx, dy: 46 } }))
-                        }
-                        setEditingMemo(key)
-                        setSelTask(null)
-                      } else if (action === 'delete') {
-                        delTask(selTask!)
-                      }
-                    }}
-                    theme={T}
-                  />
-                )
-              })()}
-
             {/* Connection handles on hovered or selected nodes */}
             {!dragging &&
               !editing &&
@@ -3289,7 +3228,7 @@ export default function FlowEditor({
               const isHov = hoveredMemo === k
 
               return (
-                <g key={`memo-${k}`}>
+                <g key={`memo-${k}`} data-testid="memo-note">
                   {/* Dashed connector */}
                   <line
                     x1={c.x}
@@ -3451,6 +3390,67 @@ export default function FlowEditor({
                 </g>
               )
             })}
+
+            {/* Node Toolbar */}
+            {selTask &&
+              !connectFrom &&
+              !dragging &&
+              !editing &&
+              multiSel.size === 0 &&
+              tasks[selTask] &&
+              (() => {
+                const t = tasks[selTask]
+                const li = liMap[t.lid],
+                  ri = riMap[t.rid]
+                if (li === undefined || ri === undefined) return null
+                const c = ct(li, ri)
+                const hasMemo = !!memos[selTask]
+                return (
+                  <Toolbar
+                    x={c.x}
+                    y={c.y + (t.shape === 'diamond' ? DS : TH / 2) + 8}
+                    items={[
+                      {
+                        icon: <IconConnect />,
+                        action: 'connect',
+                        color: T.accent,
+                        hoverBg: `${T.accent}10`,
+                      },
+                      {
+                        icon: <IconMemo />,
+                        action: 'memo',
+                        color: hasMemo ? '#E8A817' : T.commentIconColor,
+                        hoverBg: '#FFFDE7',
+                      },
+                      {
+                        icon: <IconTrash />,
+                        action: 'delete',
+                        color: T.dangerColor,
+                        hoverBg: '#FEE',
+                      },
+                    ]}
+                    onAction={(action) => {
+                      if (action === 'connect') {
+                        setConnectFrom(selTask)
+                        setSelTask(null)
+                      } else if (action === 'memo') {
+                        const key = selTask!
+                        if (!memos[key]) {
+                          const t = tasks[key]
+                          const li = liMap[t.lid]
+                          const dx = li < lanes.length / 2 ? 50 : -50
+                          setMemos((p) => ({ ...p, [key]: { text: '', dx, dy: 46 } }))
+                        }
+                        setEditingMemo(key)
+                        setSelTask(null)
+                      } else if (action === 'delete') {
+                        delTask(selTask!)
+                      }
+                    }}
+                    theme={T}
+                  />
+                )
+              })()}
           </svg>
         </div>
 
