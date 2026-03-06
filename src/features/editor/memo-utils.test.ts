@@ -59,7 +59,7 @@ describe('measureMemoHeight', () => {
   })
 
   it('should return minimum height for short text', () => {
-    // cpl=12, 1 line → 1*17+14=31
+    // cpl=24, 'hi' width=2, 1 line → 1*17+14=31
     expect(measureMemoHeight('hi', 152)).toBe(31)
   })
 
@@ -71,6 +71,16 @@ describe('measureMemoHeight', () => {
   it('should handle multiline text', () => {
     const multiline = 'line1\nline2\nline3'
     expect(measureMemoHeight(multiline, 152)).toBeGreaterThan(30)
+  })
+
+  it('should account for CJK characters taking double width', () => {
+    // 12 CJK chars → width 24, fits in 1 line (cpl=24)
+    const cjk12 = 'あ'.repeat(12)
+    const h12 = measureMemoHeight(cjk12, 152)
+    // 13 CJK chars → width 26, wraps to 2 lines
+    const cjk13 = 'あ'.repeat(13)
+    const h13 = measureMemoHeight(cjk13, 152)
+    expect(h13).toBeGreaterThan(h12)
   })
 })
 

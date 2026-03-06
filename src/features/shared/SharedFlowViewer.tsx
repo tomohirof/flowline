@@ -384,22 +384,34 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                           y1={c.y + TH / 2}
                           x2={mx + MEMO_W / 2}
                           y2={my}
-                          stroke="#E8D44D"
+                          stroke={T.memoConnector}
                           strokeWidth={1.2}
                           opacity={0.5}
                           strokeDasharray="4,3"
                           style={{ pointerEvents: 'none' }}
                         />
-                        <circle cx={c.x} cy={c.y + TH / 2} r={2.5} fill="#E8D44D" opacity={0.6} />
-                        <circle cx={mx + MEMO_W / 2} cy={my} r={2.5} fill="#E8D44D" opacity={0.6} />
+                        <circle
+                          cx={c.x}
+                          cy={c.y + TH / 2}
+                          r={2.5}
+                          fill={T.memoConnector}
+                          opacity={0.6}
+                        />
+                        <circle
+                          cx={mx + MEMO_W / 2}
+                          cy={my}
+                          r={2.5}
+                          fill={T.memoConnector}
+                          opacity={0.6}
+                        />
                         <rect
                           x={mx}
                           y={my}
                           width={MEMO_W}
                           height={mh}
                           rx={7}
-                          fill="#FFFDE7"
-                          stroke="#EED94E"
+                          fill={T.memoBg}
+                          stroke={T.memoBorder}
                           strokeWidth={0.7}
                           opacity={0.96}
                           style={{ filter: 'drop-shadow(0 1px 3px rgba(180,160,0,0.08))' }}
@@ -409,7 +421,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                             style={{
                               fontSize: 11,
                               lineHeight: '1.55',
-                              color: '#6D4C41',
+                              color: T.memoText,
                               fontFamily: 'inherit',
                               padding: '5px 8px',
                               wordBreak: 'break-all',

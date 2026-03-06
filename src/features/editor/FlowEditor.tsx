@@ -2959,20 +2959,7 @@ export default function FlowEditor({
                         setEditingMemo(key)
                         setSelTask(null)
                       } else if (action === 'delete') {
-                        const key = selTask!
-                        setTasks((p) => {
-                          const n = { ...p }
-                          delete n[key]
-                          return n
-                        })
-                        setArrows((p) => p.filter((a) => a.from !== key && a.to !== key))
-                        setMemos((p) => {
-                          const n = { ...p }
-                          delete n[key]
-                          return n
-                        })
-                        setOrder((p) => p.filter((k) => k !== key))
-                        setSelTask(null)
+                        delTask(selTask!)
                       }
                     }}
                     theme={T}

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 export interface ToolbarItem {
   icon: ReactNode
@@ -26,6 +26,59 @@ const BTN_H = 30
 const PAD = 8
 const ICON_SIZE = 16
 
+function ToolbarButton({
+  item,
+  bx,
+  pillY,
+  onAction,
+}: {
+  item: ToolbarItem
+  bx: number
+  pillY: number
+  onAction: (action: string) => void
+}) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <g
+      data-testid="toolbar-btn"
+      style={{ cursor: 'pointer' }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onAction(item.action)
+      }}
+    >
+      <rect
+        x={bx}
+        y={pillY + 2}
+        width={BTN_W}
+        height={BTN_H}
+        rx={8}
+        fill={hovered ? item.hoverBg : 'transparent'}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      />
+      <foreignObject
+        x={bx + (BTN_W - ICON_SIZE) / 2}
+        y={pillY + 2 + (BTN_H - ICON_SIZE) / 2}
+        width={ICON_SIZE}
+        height={ICON_SIZE}
+      >
+        <div
+          style={{
+            color: item.color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          {item.icon}
+        </div>
+      </foreignObject>
+    </g>
+  )
+}
+
 export function Toolbar({ x, y, items, onAction, theme }: ToolbarProps) {
   if (items.length === 0) return null
   const pillW = items.length * BTN_W + PAD * 2
@@ -48,46 +101,7 @@ export function Toolbar({ x, y, items, onAction, theme }: ToolbarProps) {
       />
       {items.map((item, i) => {
         const bx = pillX + PAD + i * BTN_W
-        return (
-          <g
-            key={i}
-            data-testid="toolbar-btn"
-            style={{ cursor: 'pointer' }}
-            onClick={(e) => {
-              e.stopPropagation()
-              onAction(item.action)
-            }}
-          >
-            <rect
-              x={bx}
-              y={pillY + 2}
-              width={BTN_W}
-              height={BTN_H}
-              rx={8}
-              fill="transparent"
-              onMouseEnter={(e) => (e.target as SVGRectElement).setAttribute('fill', item.hoverBg)}
-              onMouseLeave={(e) => (e.target as SVGRectElement).setAttribute('fill', 'transparent')}
-            />
-            <foreignObject
-              x={bx + (BTN_W - ICON_SIZE) / 2}
-              y={pillY + 2 + (BTN_H - ICON_SIZE) / 2}
-              width={ICON_SIZE}
-              height={ICON_SIZE}
-            >
-              <div
-                style={{
-                  color: item.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none',
-                }}
-              >
-                {item.icon}
-              </div>
-            </foreignObject>
-          </g>
-        )
+        return <ToolbarButton key={i} item={item} bx={bx} pillY={pillY} onAction={onAction} />
       })}
     </g>
   )
