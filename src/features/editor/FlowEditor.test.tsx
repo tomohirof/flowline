@@ -2722,24 +2722,38 @@ describe('toolbar z-order (#284)', () => {
     expect(nodeRect).toBeTruthy()
     fireEvent.click(nodeRect!)
 
+    // Click memo button (2nd toolbar button) to add a memo
+    const toolbarBtns = container.querySelectorAll('[data-testid="toolbar-btn"]')
+    expect(toolbarBtns.length).toBeGreaterThanOrEqual(2)
+    fireEvent.click(toolbarBtns[1])
+
+    // Type memo text and blur to confirm
+    const textarea = container.querySelector('textarea[placeholder="メモを入力…"]')
+    expect(textarea).toBeTruthy()
+    fireEvent.change(textarea!, { target: { value: 'テストメモ' } })
+    fireEvent.blur(textarea!)
+
+    // Verify memo exists
+    const memoNotes = container.querySelectorAll('[data-testid="memo-note"]')
+    expect(memoNotes.length).toBe(1)
+
+    // Re-select node to show toolbar again
+    fireEvent.click(nodeRect!)
     const toolbar = container.querySelector('[data-testid="toolbar-pill"]')
     expect(toolbar).toBeTruthy()
 
-    // Verify toolbar comes after all memo-note elements in DOM order
+    // Verify toolbar comes after memo-note elements in DOM order
     const allElements = Array.from(container.querySelectorAll('*'))
     const memoIndices = allElements
       .map((el, i) => (el.getAttribute('data-testid') === 'memo-note' ? i : -1))
       .filter((i) => i !== -1)
+    expect(memoIndices.length).toBeGreaterThan(0)
+    const lastMemoIndex = Math.max(...memoIndices)
+
     const toolbarIndex = allElements.findIndex(
       (el) => el.getAttribute('data-testid') === 'toolbar-pill',
     )
-
-    // Even if no memos exist, toolbar should be near end of SVG
-    // When memos exist, toolbar must come after them
-    if (memoIndices.length > 0) {
-      const lastMemoIndex = Math.max(...memoIndices)
-      expect(toolbarIndex).toBeGreaterThan(lastMemoIndex)
-    }
     expect(toolbarIndex).not.toBe(-1)
+    expect(toolbarIndex).toBeGreaterThan(lastMemoIndex)
   })
 })
