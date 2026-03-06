@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { AuthEnv } from '../app'
 import { authMiddleware } from '../middleware/auth'
-import { createFlowSchema, updateFlowSchema } from '../lib/validators'
+import { createFlowSchema, updateFlowSchema, moveFlowSchema } from '../lib/validators'
 import { generateId } from '../lib/id'
 import {
   type FlowRow,
@@ -70,8 +70,19 @@ flows.get('/', async (c) => {
   const userId = c.get('userId')
   const db = c.env.FLOWLINE_DB
   const q = c.req.query('q')?.trim() ?? ''
+  const projectId = c.req.query('projectId')
 
   let flowList: ReturnType<typeof toFlowSummary>[]
+
+  // Build project filter clause and bindings
+  let projectClause = ''
+  const projectBinds: string[] = []
+  if (projectId === 'none') {
+    projectClause = ' AND f.project_id IS NULL'
+  } else if (projectId) {
+    projectClause = ' AND f.project_id = ?'
+    projectBinds.push(projectId)
+  }
 
   if (q) {
     const escaped = q.replace(/[%_\\]/g, '\\$&')
@@ -83,7 +94,7 @@ flows.get('/', async (c) => {
          LEFT JOIN lanes l ON l.flow_id = f.id
          LEFT JOIN arrows a ON a.flow_id = f.id
          WHERE f.user_id = ?
-           AND f.deleted_at IS NULL
+           AND f.deleted_at IS NULL${projectClause}
            AND (f.title LIKE ? ESCAPE '\\' COLLATE NOCASE
              OR n.label LIKE ? ESCAPE '\\' COLLATE NOCASE
              OR n.note LIKE ? ESCAPE '\\' COLLATE NOCASE
@@ -91,15 +102,15 @@ flows.get('/', async (c) => {
              OR a.comment LIKE ? ESCAPE '\\' COLLATE NOCASE)
          ORDER BY f.updated_at DESC`,
       )
-      .bind(userId, likePattern, likePattern, likePattern, likePattern, likePattern)
+      .bind(userId, ...projectBinds, likePattern, likePattern, likePattern, likePattern, likePattern)
       .all<FlowRow>()
     flowList = (result.results ?? []).map(toFlowSummary)
   } else {
     const result = await db
       .prepare(
-        'SELECT * FROM flows WHERE user_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC',
+        `SELECT * FROM flows f WHERE f.user_id = ? AND f.deleted_at IS NULL${projectClause} ORDER BY f.updated_at DESC`,
       )
-      .bind(userId)
+      .bind(userId, ...projectBinds)
       .all<FlowRow>()
     flowList = (result.results ?? []).map(toFlowSummary)
   }
@@ -551,6 +562,45 @@ flows.delete('/:id', async (c) => {
   }
 
   return c.json({ message: 'フローをゴミ箱に移動しました' })
+})
+
+// =============================================
+// PUT /:id/move - Move flow to a project
+// =============================================
+
+flows.put('/:id/move', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const flowId = c.req.param('id')
+
+  const ownership = await checkFlowOwnership(db, flowId, userId)
+  if (ownership.error === 'not_found') return c.json({ error: 'Flow not found' }, 404)
+  if (ownership.error === 'forbidden') return c.json({ error: 'Forbidden' }, 403)
+  if (ownership.deletedAt) return c.json({ error: 'Flow is deleted' }, 400)
+
+  const body = await c.req.json()
+  const parsed = moveFlowSchema.safeParse(body)
+  if (!parsed.success) return c.json({ error: 'Invalid input' }, 400)
+
+  const { projectId } = parsed.data
+
+  // Verify project belongs to user if not null
+  if (projectId !== null) {
+    const project = await db
+      .prepare('SELECT id FROM projects WHERE id = ? AND user_id = ?')
+      .bind(projectId, userId)
+      .first()
+    if (!project) return c.json({ error: 'Project not found' }, 404)
+  }
+
+  await db
+    .prepare(
+      "UPDATE flows SET project_id = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+    )
+    .bind(projectId, flowId)
+    .run()
+
+  return c.json({ ok: true })
 })
 
 export { flows }

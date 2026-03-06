@@ -123,6 +123,14 @@ export interface FlowSummary {
   themeId: string
   shareToken: string | null
   deletedAt: string | null
+  projectId: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Project {
+  id: string
+  name: string
   createdAt: string
   updatedAt: string
 }
