@@ -11,6 +11,7 @@ import styles from './FlowEditor.module.css'
 import type {
   ThemeId,
   TaskData,
+  MemoData,
   RowData,
   InternalLane,
   InternalArrow,
@@ -26,6 +27,7 @@ import type {
   FlowSavePayload,
   SaveStatus,
 } from './types'
+import { parseNote, serializeMemo } from './memo-utils'
 import { PALETTES, THEMES } from './theme-constants'
 import { calcLaneWidth } from './calcLaneWidth'
 import { DS } from '../../lib/arrow-routing'
@@ -57,7 +59,7 @@ function flowToInternalState(flow: Flow): {
   tasks: Record<string, TaskData>
   order: string[]
   arrows: InternalArrow[]
-  notes: Record<string, string>
+  memos: Record<string, MemoData>
   title: string
   themeId: ThemeId
 } {
@@ -81,7 +83,7 @@ function flowToInternalState(flow: Flow): {
 
   // Build task map and order from nodes
   const tasks: Record<string, TaskData> = {}
-  const notes: Record<string, string> = {}
+  const memos: Record<string, MemoData> = {}
   const sortedNodes = [...flow.nodes].sort((a, b) => a.orderIndex - b.orderIndex)
 
   // We need stable mapping from (laneId, rowIndex) -> row id
@@ -103,7 +105,9 @@ function flowToInternalState(flow: Flow): {
         shape: (n.shape as 'diamond' | undefined) || undefined,
       }
       if (n.note) {
-        notes[key] = n.note
+        const li = lanes.findIndex((l) => l.id === n.laneId)
+        const memo = parseNote(n.note, li, lanes.length)
+        if (memo) memos[key] = memo
       }
       nodeIdToKey[n.id] = key
     }
@@ -128,7 +132,7 @@ function flowToInternalState(flow: Flow): {
 
   const themeId = (Object.keys(THEMES).includes(flow.themeId) ? flow.themeId : 'cloud') as ThemeId
 
-  return { lanes, rows, tasks, order, arrows, notes, title: flow.title, themeId }
+  return { lanes, rows, tasks, order, arrows, memos, title: flow.title, themeId }
 }
 
 function internalStateToPayload(
@@ -137,7 +141,7 @@ function internalStateToPayload(
   tasks: Record<string, TaskData>,
   order: string[],
   arrows: InternalArrow[],
-  notes: Record<string, string>,
+  memos: Record<string, MemoData>,
   title: string,
   themeId: ThemeId,
 ): FlowSavePayload {
@@ -169,7 +173,7 @@ function internalStateToPayload(
         laneId: task.lid,
         rowIndex: riMap[task.rid] ?? 0,
         label: task.label,
-        note: notes[k] || null,
+        note: memos[k] ? serializeMemo(memos[k]) : null,
         orderIndex: orderIdx,
         bg: task.bg || null,
         strokeColor: task.strokeColor || null,
@@ -313,7 +317,7 @@ export default function FlowEditor({
   const [rows, setRows] = useState<RowData[]>(initState.rows)
   const [tasks, setTasks] = useState<Record<string, TaskData>>(initState.tasks)
   const [order, setOrder] = useState<string[]>(initState.order)
-  const [notes, setNotes] = useState<Record<string, string>>(initState.notes)
+  const [memos, setMemos] = useState<Record<string, MemoData>>(initState.memos)
 
   const [editing, setEditing] = useState<string | null>(null)
   const [editLane, setEditLane] = useState<string | null>(null)
@@ -322,7 +326,7 @@ export default function FlowEditor({
   const [selArrow, setSelArrow] = useState<string | null>(null)
   const [editArrowComment, setEditArrowComment] = useState<string | null>(null)
   const [selLane, setSelLane] = useState<string | null>(null)
-  const [editNote, setEditNote] = useState<string | null>(null)
+  const [editingMemo, setEditingMemo] = useState<string | null>(null)
   const [showExport, setShowExport] = useState<boolean>(false)
   const [title, setTitle] = useState<string>(initState.title)
   const [editTitle, setEditTitle] = useState<boolean>(false)
@@ -510,8 +514,8 @@ export default function FlowEditor({
   const prevMetaSnapRef = useRef<string>('')
 
   const buildPayload = useCallback((): FlowSavePayload => {
-    return internalStateToPayload(lanes, rows, tasks, order, arrows, notes, title, themeId)
-  }, [lanes, rows, tasks, order, arrows, notes, title, themeId])
+    return internalStateToPayload(lanes, rows, tasks, order, arrows, memos, title, themeId)
+  }, [lanes, rows, tasks, order, arrows, memos, title, themeId])
 
   // Re-initialize when flow prop changes (render-time state adjustment)
   const [prevFlowId, setPrevFlowId] = useState(flow.id)
@@ -523,7 +527,7 @@ export default function FlowEditor({
     setTasks(state.tasks)
     setOrder(state.order)
     setArrows(state.arrows)
-    setNotes(state.notes)
+    setMemos(state.memos)
     setTitle(state.title)
     setThemeId(state.themeId)
     setSelTask(null)
@@ -539,7 +543,7 @@ export default function FlowEditor({
   }, [prevFlowId])
 
   useEffect(() => {
-    const structSnap = JSON.stringify({ tasks, order, arrows, notes, lanes, rows })
+    const structSnap = JSON.stringify({ tasks, order, arrows, memos, lanes, rows })
     const metaSnap = JSON.stringify({ title, themeId })
 
     const structChanged =
@@ -554,7 +558,7 @@ export default function FlowEditor({
 
     prevStructSnapRef.current = structSnap
     prevMetaSnapRef.current = metaSnap
-  }, [tasks, order, arrows, notes, lanes, rows, title, themeId, onSave, buildPayload])
+  }, [tasks, order, arrows, memos, lanes, rows, title, themeId, onSave, buildPayload])
 
   // --- Undo / Redo ---
   const historyRef = useRef<string[]>([])
@@ -567,11 +571,11 @@ export default function FlowEditor({
         tasks,
         order,
         arrows,
-        notes,
+        memos,
         lanes: lanes.map((l) => ({ ...l })),
         rows: rows.map((r) => ({ ...r })),
       }),
-    [tasks, order, arrows, notes, lanes, rows],
+    [tasks, order, arrows, memos, lanes, rows],
   )
 
   // Save snapshot before each meaningful change
@@ -606,7 +610,7 @@ export default function FlowEditor({
       setTasks(d.tasks)
       setOrder(d.order)
       setArrows(d.arrows)
-      setNotes(d.notes)
+      setMemos(d.memos)
       setLanes(d.lanes)
       setRows(d.rows)
       setSelTask(null)
@@ -668,7 +672,7 @@ export default function FlowEditor({
         delete n[k]
         return n
       })
-      setNotes((p) => {
+      setMemos((p) => {
         const n = { ...p }
         delete n[k]
         return n
@@ -694,7 +698,7 @@ export default function FlowEditor({
       multiSel.forEach((k) => delete n[k])
       return n
     })
-    setNotes((p) => {
+    setMemos((p) => {
       const n = { ...p }
       multiSel.forEach((k) => delete n[k])
       return n
@@ -729,7 +733,7 @@ export default function FlowEditor({
           editing ||
           editLane ||
           editTitle ||
-          editNote ||
+          editingMemo ||
           (document.activeElement as HTMLElement)?.tagName === 'INPUT'
         )
           return
@@ -751,7 +755,7 @@ export default function FlowEditor({
           editing ||
           editLane ||
           editTitle ||
-          editNote ||
+          editingMemo ||
           (document.activeElement as HTMLElement)?.tagName === 'INPUT'
         )
           return
@@ -788,7 +792,7 @@ export default function FlowEditor({
     editing,
     editLane,
     editTitle,
-    editNote,
+    editingMemo,
     undo,
     redo,
     multiSel,
@@ -1033,8 +1037,8 @@ export default function FlowEditor({
     newTasks[nk] = { ...task, lid: to.lid, rid: to.rid }
     const newArrows = remapArrows(arrows, fk, nk)
     setTasks(newTasks)
-    if (notes[fk])
-      setNotes((p) => {
+    if (memos[fk])
+      setMemos((p) => {
         const n = { ...p }
         n[nk] = n[fk]
         delete n[fk]
@@ -1048,10 +1052,10 @@ export default function FlowEditor({
     if (editorSettings.autoRepair) triggerMoveRepairCheck(nk, to.lid, newArrows, newTasks)
   }
   const swapInsertNodes = (draggedKey: string, targetKey: string): void => {
-    const result = swapKeys(tasks, arrows, order, notes, draggedKey, targetKey)
+    const result = swapKeys(tasks, arrows, order, memos, draggedKey, targetKey)
     if (!result) return
     setTasks(result.tasks)
-    setNotes(result.notes)
+    setMemos(result.memos)
     setOrder(result.order)
     setArrows(result.arrows)
     setSelTask(result.newKeyA)
@@ -1092,9 +1096,9 @@ export default function FlowEditor({
     }
     setTasks(newTasks)
 
-    setNotes((p) => {
+    setMemos((p) => {
       const n = { ...p }
-      const moved: [string, string][] = []
+      const moved: [string, MemoData][] = []
       for (const [oldK] of keyMap) {
         if (n[oldK]) moved.push([oldK, n[oldK]])
       }
@@ -1417,7 +1421,7 @@ export default function FlowEditor({
         rows,
         tasks,
         arrows,
-        notes,
+        memos,
         order,
       },
       recentActions: historyRef.current.slice(-3).map((s, i) => ({
@@ -2238,7 +2242,7 @@ export default function FlowEditor({
               rows.map((row, ri) => {
                 const k = ky(lane.id, row.id),
                   task = tasks[k],
-                  note = notes[k]
+                  memo = memos[k]
                 if (!task) return null
                 const c = ct(li, ri),
                   p = PALETTES[lane.ci]
@@ -2527,61 +2531,7 @@ export default function FlowEditor({
                           : task.label}
                       </text>
                     )}
-                    {!isDiamond && note && !connectFrom && !dragging && (
-                      <g>
-                        <rect
-                          x={c.x - TW / 2 + 6}
-                          y={c.y + TH / 2 + 4}
-                          width={TW - 12}
-                          height={16}
-                          rx={4}
-                          fill="#FFFDE7"
-                          stroke="#F0E6A0"
-                          strokeWidth={0.5}
-                        />
-                        {editNote === k ? (
-                          <foreignObject
-                            x={c.x - TW / 2 + 8}
-                            y={c.y + TH / 2 + 4}
-                            width={TW - 16}
-                            height={16}
-                          >
-                            <input
-                              ref={inputRef}
-                              value={note}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setNotes((p2) => ({ ...p2, [k]: e.target.value }))
-                              }
-                              onBlur={() => setEditNote(null)}
-                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                                e.key === 'Enter' && !e.nativeEvent.isComposing && setEditNote(null)
-                              }
-                              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                              className={styles.noteEditInput}
-                            />
-                          </foreignObject>
-                        ) : (
-                          <text
-                            x={c.x}
-                            y={c.y + TH / 2 + 13}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fontSize={8}
-                            fill="#8D6E63"
-                            style={{ cursor: 'pointer' }}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation()
-                              const nk = k
-                              if (!notes[nk]) setNotes((p2) => ({ ...p2, [nk]: 'メモ' }))
-                              setEditNote(nk)
-                              setTimeout(() => inputRef.current?.focus(), 40)
-                            }}
-                          >
-                            {note.length > 14 ? note.slice(0, 14) + '…' : note}
-                          </text>
-                        )}
-                      </g>
-                    )}
+                    {/* Memo rendering is now handled by the dedicated MemoOverlay component */}
                   </g>
                 )
               }),
@@ -2926,7 +2876,7 @@ export default function FlowEditor({
                   ri = riMap[t.rid]
                 if (li === undefined || ri === undefined) return null
                 const c = ct(li, ri)
-                const hasMemo = !!notes[selTask]
+                const hasMemo = !!memos[selTask]
                 return (
                   <Toolbar
                     x={c.x}
@@ -2956,8 +2906,14 @@ export default function FlowEditor({
                         setConnectFrom(selTask)
                         setSelTask(null)
                       } else if (action === 'memo') {
-                        if (!notes[selTask]) setNotes((p) => ({ ...p, [selTask!]: 'メモ' }))
-                        setEditNote(selTask)
+                        const key = selTask!
+                        if (!memos[key]) {
+                          const t = tasks[key]
+                          const li = liMap[t.lid]
+                          const dx = li < lanes.length / 2 ? 50 : -50
+                          setMemos((p) => ({ ...p, [key]: { text: '', dx, dy: 46 } }))
+                        }
+                        setEditingMemo(key)
                         setSelTask(null)
                       } else if (action === 'delete') {
                         const key = selTask!
@@ -2967,7 +2923,7 @@ export default function FlowEditor({
                           return n
                         })
                         setArrows((p) => p.filter((a) => a.from !== key && a.to !== key))
-                        setNotes((p) => {
+                        setMemos((p) => {
                           const n = { ...p }
                           delete n[key]
                           return n
@@ -3313,8 +3269,8 @@ export default function FlowEditor({
             selLane={selLane}
             tasks={tasks}
             setTasks={setTasks}
-            notes={notes}
-            setNotes={setNotes}
+            memos={memos}
+            setMemos={setMemos}
             arrows={arrows}
             setArrows={setArrows}
             lanes={lanes}
@@ -3414,7 +3370,7 @@ export default function FlowEditor({
           setTasks(state.tasks)
           setOrder(state.order)
           setArrows(state.arrows)
-          setNotes(state.notes)
+          setMemos(state.memos)
           setTitle(state.title)
           setSelTask(null)
           setSelArrow(null)

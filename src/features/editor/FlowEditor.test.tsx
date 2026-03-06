@@ -963,37 +963,9 @@ describe('IME composition Enter (#87)', () => {
     vi.useRealTimers()
   })
 
-  it('should keep note input open when Enter is pressed during IME composition', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true })
-    const flow = createMinimalFlow()
-    flow.nodes = [
-      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: 'メモ内容', orderIndex: 0 },
-    ]
-    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
-
-    // Find the note text element and click it to enter note edit mode
-    const noteTexts = container.querySelectorAll('text')
-    const noteText = Array.from(noteTexts).find((t) => t.textContent === 'メモ内容')
-    expect(noteText).toBeTruthy()
-    fireEvent.click(noteText!)
-
-    // Advance timers to allow the setTimeout for focus to fire
-    vi.advanceTimersByTime(50)
-
-    // Wait for the note edit input to appear
-    const noteInput = document.querySelector('input[class*="noteEditInput"]') as HTMLInputElement
-    expect(noteInput).toBeTruthy()
-
-    // Press Enter with isComposing=true (simulating IME composition)
-    fireEvent.keyDown(noteInput, { key: 'Enter', isComposing: true })
-
-    // Note edit input should still be visible
-    const noteInputAfter = document.querySelector(
-      'input[class*="noteEditInput"]',
-    ) as HTMLInputElement
-    expect(noteInputAfter).toBeTruthy()
-    vi.useRealTimers()
-  })
+  // Old inline note editing was removed in the notes→memos migration.
+  // Memo editing is now handled by the MemoOverlay component.
+  it.skip('should keep note input open when Enter is pressed during IME composition', () => {})
 
   it('should keep lane name input open when Enter is pressed during IME composition', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
@@ -2630,7 +2602,7 @@ describe('JSON export (#235)', () => {
     expect(data.flow.lanes).toEqual([])
     expect(data.flow.tasks).toEqual({})
     expect(data.flow.arrows).toEqual([])
-    expect(data.flow.notes).toEqual({})
+    expect(data.flow.memos).toEqual({})
     expect(data.flow.order).toEqual([])
     expect(data.recentActions).toEqual([])
   })
