@@ -2283,8 +2283,7 @@ export default function FlowEditor({
             {lanes.map((lane, li) =>
               rows.map((row, ri) => {
                 const k = ky(lane.id, row.id),
-                  task = tasks[k],
-                  memo = memos[k]
+                  task = tasks[k]
                 if (!task) return null
                 const c = ct(li, ri),
                   p = PALETTES[lane.ci]
