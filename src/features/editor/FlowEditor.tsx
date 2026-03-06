@@ -271,6 +271,24 @@ const IconTrash = () => (
   </svg>
 )
 
+const IconReverse = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M8 3L4 7l4 4" />
+    <path d="M4 7h16" />
+    <path d="M16 21l4-4-4-4" />
+    <path d="M20 17H4" />
+  </svg>
+)
+
 // =============================================
 // FlowEditor Component
 // =============================================
@@ -2803,111 +2821,54 @@ export default function FlowEditor({
               </defs>
             ))}
 
-            {/* Floating arrow controls */}
+            {/* Arrow Toolbar */}
             {selArrow &&
               (() => {
                 const ap = arrowPaths.find((x) => x.arrow.id === selArrow)
                 if (!ap) return null
                 const { mx, my } = ap.path
-                const bw = 96,
-                  bh = 30,
-                  br = bh / 2,
-                  by = my + 10
+                const arrow = ap.arrow
                 return (
-                  <g data-testid="arrow-floating-controls">
-                    <rect
-                      x={mx - bw / 2}
-                      y={by}
-                      width={bw}
-                      height={bh}
-                      rx={br}
-                      fill={T.nodeFill}
-                      stroke={T.commentBorder}
-                      strokeWidth={0.5}
-                      style={{ filter: `drop-shadow(0 2px 8px rgba(0,0,0,${isDark ? 0.3 : 0.1}))` }}
-                    />
-                    {/* Reverse */}
-                    <g
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation()
+                  <Toolbar
+                    x={mx}
+                    y={my + 10}
+                    items={[
+                      {
+                        icon: <IconReverse />,
+                        action: 'reverse',
+                        color: T.accent,
+                        hoverBg: `${T.accent}10`,
+                      },
+                      {
+                        icon: <IconMemo />,
+                        action: 'comment',
+                        color: arrow.comment ? '#E8A817' : T.commentIconColor,
+                        hoverBg: '#FFFDE7',
+                      },
+                      {
+                        icon: <IconTrash />,
+                        action: 'delete',
+                        color: T.dangerColor,
+                        hoverBg: '#FEE',
+                      },
+                    ]}
+                    onAction={(action) => {
+                      if (action === 'reverse') {
                         setArrows((p) =>
-                          p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
+                          p.map((a) =>
+                            a.id === selArrow ? { ...a, from: a.to, to: a.from } : a,
+                          ),
                         )
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <rect x={mx - bw / 2} y={by} width={32} height={bh} fill="transparent" />
-                      <g transform={`translate(${mx - bw / 2 + 8},${by + 7})`}>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke={T.accent}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M8 3L4 7l4 4" />
-                          <path d="M4 7h16" />
-                          <path d="M16 21l4-4-4-4" />
-                          <path d="M20 17H4" />
-                        </svg>
-                      </g>
-                    </g>
-                    {/* Comment */}
-                    <g
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation()
+                      } else if (action === 'comment') {
                         setEditArrowComment(selArrow)
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <rect x={mx - 16} y={by} width={32} height={bh} fill="transparent" />
-                      <g transform={`translate(${mx - 8},${by + 7})`}>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke={T.commentIconColor}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                        </svg>
-                      </g>
-                    </g>
-                    {/* Delete */}
-                    <g
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation()
+                        setSelArrow(null)
+                      } else if (action === 'delete') {
                         setArrows((p) => p.filter((a) => a.id !== selArrow))
                         setSelArrow(null)
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <rect x={mx + bw / 2 - 32} y={by} width={32} height={bh} fill="transparent" />
-                      <g transform={`translate(${mx + bw / 2 - 24},${by + 7})`}>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke={T.dangerColor}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                          <line x1="10" y1="11" x2="10" y2="17" />
-                          <line x1="14" y1="11" x2="14" y2="17" />
-                        </svg>
-                      </g>
-                    </g>
-                  </g>
+                      }
+                    }}
+                    theme={T}
+                  />
                 )
               })()}
 

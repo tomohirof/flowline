@@ -173,7 +173,7 @@ describe('floating arrow controls (#46)', () => {
     const { container } = render(
       <FlowEditor flow={createFlowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
     )
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeNull()
   })
 
   it('should show floating controls when arrow is clicked', () => {
@@ -183,7 +183,7 @@ describe('floating arrow controls (#46)', () => {
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     expect(arrowHit).toBeTruthy()
     fireEvent.click(arrowHit!)
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeTruthy()
   })
 
   it('should hide floating controls when arrow is clicked again (toggle)', () => {
@@ -193,11 +193,11 @@ describe('floating arrow controls (#46)', () => {
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     expect(arrowHit).toBeTruthy()
     fireEvent.click(arrowHit!)
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeTruthy()
     // Click same arrow again to deselect
     const arrowHit2 = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     fireEvent.click(arrowHit2!)
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeNull()
   })
 
   it('should delete arrow when delete button is clicked', () => {
@@ -207,7 +207,7 @@ describe('floating arrow controls (#46)', () => {
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     expect(arrowHit).toBeTruthy()
     fireEvent.click(arrowHit!)
-    const controls = container.querySelector('[data-testid="arrow-floating-controls"]')
+    const controls = container.querySelector('[data-testid="toolbar-pill"]')
     expect(controls).toBeTruthy()
     // Find clickable groups (reverse, comment, delete)
     const clickableGroups = Array.from(controls!.querySelectorAll(':scope > g')).filter(
@@ -219,7 +219,7 @@ describe('floating arrow controls (#46)', () => {
     // Arrow should be removed
     expect(container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')).toBeNull()
     // Floating controls should be gone
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeNull()
   })
 
   it('should hide floating controls when Escape is pressed', () => {
@@ -228,9 +228,9 @@ describe('floating arrow controls (#46)', () => {
     )
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     fireEvent.click(arrowHit!)
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeTruthy()
     fireEvent.keyDown(window, { key: 'Escape' })
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeNull()
   })
 
   it('should hide floating controls when background is clicked', () => {
@@ -239,12 +239,12 @@ describe('floating arrow controls (#46)', () => {
     )
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     fireEvent.click(arrowHit!)
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeTruthy()
     // Click the SVG background
     const svg = container.querySelector('[data-testid="canvas-svg"]')
     expect(svg).toBeTruthy()
     fireEvent.click(svg!)
-    expect(container.querySelector('[data-testid="arrow-floating-controls"]')).toBeNull()
+    expect(container.querySelector('[data-testid="toolbar-pill"]')).toBeNull()
   })
 })
 
@@ -549,7 +549,7 @@ describe('auto-save payload optimization', () => {
     fireEvent.click(arrowHit!)
 
     // Delete the arrow via floating controls
-    const controls = container.querySelector('[data-testid="arrow-floating-controls"]')
+    const controls = container.querySelector('[data-testid="toolbar-pill"]')
     expect(controls).toBeTruthy()
     const clickableGroups = Array.from(controls!.querySelectorAll(':scope > g')).filter(
       (g) => (g as HTMLElement).style.cursor === 'pointer',
@@ -1042,7 +1042,7 @@ describe('IME composition Enter (#87)', () => {
     fireEvent.click(arrowHit!)
 
     // Click comment button on floating controls to enter edit mode
-    const controls = container.querySelector('[data-testid="arrow-floating-controls"]')
+    const controls = container.querySelector('[data-testid="toolbar-pill"]')
     expect(controls).toBeTruthy()
     const clickableGroups = Array.from(controls!.querySelectorAll(':scope > g')).filter(
       (g) => (g as HTMLElement).style.cursor === 'pointer',
@@ -2058,7 +2058,7 @@ describe('z-order: arrow controls above row gap (#212)', () => {
     expect(arrowHit).toBeTruthy()
     fireEvent.click(arrowHit!)
 
-    const controls = container.querySelector('[data-testid="arrow-floating-controls"]')
+    const controls = container.querySelector('[data-testid="toolbar-pill"]')
     expect(controls).toBeTruthy()
 
     // Check DOM order within the full container (jsdom doesn't fully parse SVG children via svg.querySelectorAll)
@@ -2071,7 +2071,7 @@ describe('z-order: arrow controls above row gap (#212)', () => {
     const lastRowGapIndex = Math.max(...rowGapIndices)
 
     const controlsIndex = allElements.findIndex(
-      (el) => el.getAttribute('data-testid') === 'arrow-floating-controls',
+      (el) => el.getAttribute('data-testid') === 'toolbar-pill',
     )
     expect(controlsIndex).not.toBe(-1)
 
