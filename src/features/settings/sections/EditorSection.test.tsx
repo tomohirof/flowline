@@ -28,24 +28,24 @@ describe('EditorSection', () => {
 
   it('should render all editor setting rows', () => {
     render(<EditorSection settings={defaultSettings} onToggle={vi.fn()} onSet={vi.fn()} />)
-    expect(screen.getByText('同じ行にノード作成時、テキストをコピー')).toBeInTheDocument()
-    expect(screen.getByText('自動接続')).toBeInTheDocument()
-    expect(screen.getByText('最終行で自動行追加')).toBeInTheDocument()
-    expect(screen.getByText('作成後すぐに編集')).toBeInTheDocument()
+    expect(screen.getByText('editor.nodeCreation.copyLabel')).toBeInTheDocument()
+    expect(screen.getByText('editor.nodeCreation.autoConnect')).toBeInTheDocument()
+    expect(screen.getByText('editor.nodeCreation.autoAddRow')).toBeInTheDocument()
+    expect(screen.getByText('editor.nodeCreation.editOnCreate')).toBeInTheDocument()
   })
 
   it('should render section titles', () => {
     render(<EditorSection settings={defaultSettings} onToggle={vi.fn()} onSet={vi.fn()} />)
-    expect(screen.getByText('ノード作成')).toBeInTheDocument()
-    expect(screen.getByText('接続線のデフォルト')).toBeInTheDocument()
-    expect(screen.getByText('デフォルトテーマ')).toBeInTheDocument()
+    expect(screen.getByText('editor.nodeCreation.title')).toBeInTheDocument()
+    expect(screen.getByText('editor.arrowDefault.title')).toBeInTheDocument()
+    expect(screen.getByText('editor.theme.title')).toBeInTheDocument()
   })
 
-  it('should render arrow style tags (実線, 破線, 点線)', () => {
+  it('should render arrow style tags', () => {
     render(<EditorSection settings={defaultSettings} onToggle={vi.fn()} onSet={vi.fn()} />)
-    expect(screen.getByText('実線')).toBeInTheDocument()
-    expect(screen.getByText('破線')).toBeInTheDocument()
-    expect(screen.getByText('点線')).toBeInTheDocument()
+    expect(screen.getByText('editor.arrowDefault.solid')).toBeInTheDocument()
+    expect(screen.getByText('editor.arrowDefault.dashed')).toBeInTheDocument()
+    expect(screen.getByText('editor.arrowDefault.dotted')).toBeInTheDocument()
   })
 
   it('should render theme tags (Cloud, Midnight, Blueprint)', () => {
@@ -57,9 +57,9 @@ describe('EditorSection', () => {
 
   it('should mark the active arrow style tag', () => {
     render(<EditorSection settings={defaultSettings} onToggle={vi.fn()} onSet={vi.fn()} />)
-    const solidBtn = screen.getByText('実線')
+    const solidBtn = screen.getByText('editor.arrowDefault.solid')
     expect(solidBtn).toHaveAttribute('aria-pressed', 'true')
-    const dashedBtn = screen.getByText('破線')
+    const dashedBtn = screen.getByText('editor.arrowDefault.dashed')
     expect(dashedBtn).toHaveAttribute('aria-pressed', 'false')
   })
 
@@ -84,7 +84,7 @@ describe('EditorSection', () => {
     const user = userEvent.setup()
     const onSet = vi.fn()
     render(<EditorSection settings={defaultSettings} onToggle={vi.fn()} onSet={onSet} />)
-    await user.click(screen.getByText('破線'))
+    await user.click(screen.getByText('editor.arrowDefault.dashed'))
     expect(onSet).toHaveBeenCalledWith('defaultArrowStyle', 'dashed')
   })
 
@@ -99,8 +99,8 @@ describe('EditorSection', () => {
   it('should reflect different defaultArrowStyle setting', () => {
     const settings = { ...defaultSettings, defaultArrowStyle: 'dashed' }
     render(<EditorSection settings={settings} onToggle={vi.fn()} onSet={vi.fn()} />)
-    expect(screen.getByText('破線')).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByText('実線')).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByText('editor.arrowDefault.dashed')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('editor.arrowDefault.solid')).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('should reflect different defaultTheme setting', () => {

@@ -1,12 +1,8 @@
 /**
- * 日付文字列を相対時間に変換する
- * - 1分未満: "たった今"
- * - 1時間未満: "N分前"
- * - 1日未満: "N時間前"
- * - 7日未満: "N日前"
- * - それ以上: "YYYY/MM/DD"
+ * Format a date string as relative time, locale-aware.
+ * Uses Intl.RelativeTimeFormat for proper i18n.
  */
-export function formatRelativeTime(dateString: string): string {
+export function formatRelativeTime(dateString: string, lang: string = 'ja'): string {
   const date = new Date(dateString)
 
   if (isNaN(date.getTime())) {
@@ -20,24 +16,27 @@ export function formatRelativeTime(dateString: string): string {
   const diffHours = Math.floor(diffMinutes / 60)
   const diffDays = Math.floor(diffHours / 24)
 
+  const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' })
+
   if (diffMinutes < 1) {
-    return 'たった今'
+    return rtf.format(0, 'second')
   }
 
   if (diffHours < 1) {
-    return `${diffMinutes}分前`
+    return rtf.format(-diffMinutes, 'minute')
   }
 
   if (diffDays < 1) {
-    return `${diffHours}時間前`
+    return rtf.format(-diffHours, 'hour')
   }
 
   if (diffDays < 7) {
-    return `${diffDays}日前`
+    return rtf.format(-diffDays, 'day')
   }
 
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}/${month}/${day}`
+  return date.toLocaleDateString(lang, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
 }

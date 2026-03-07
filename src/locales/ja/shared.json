@@ -1,0 +1,18 @@
+{
+  "createdWith": "が {{appName}} で作成",
+  "lanes": "レーン",
+  "nodes": "ノード",
+  "updated": "更新",
+  "errorLoad": "共有フローの読み込みに失敗しました",
+  "errorNoToken": "共有トークンが指定されていません",
+  "footer": "Flowlineで作成",
+  "createdBy": "Flowline で作成されたフロー",
+  "createCta": "Flowline でフロー図を作成",
+  "ctaFeatures": "無料で始める · チームで共有 · Mermaid対応",
+  "topLink": "Flowline トップへ",
+  "viewButton": "フロー図を表示する",
+  "viewBadge": "閲覧モード",
+  "freeText": "閲覧は無料 · ログイン不要",
+  "demoTryLink": "今すぐ試す（ログイン不要）→",
+  "demoSaveCta": "ログインして保存"
+}

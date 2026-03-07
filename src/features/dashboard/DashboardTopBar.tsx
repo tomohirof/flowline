@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { BRAND } from '../../constants/brand'
 import styles from './DashboardTopBar.module.css'
 
@@ -14,6 +15,7 @@ export function DashboardTopBar({
   userName,
   onToggleMenu,
 }: DashboardTopBarProps) {
+  const { t } = useTranslation(['dashboard', 'common'])
   const initial = userName ? userName.charAt(0).toUpperCase() : 'U'
 
   return (
@@ -33,7 +35,7 @@ export function DashboardTopBar({
           data-testid="search-input"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="ファイルを検索…"
+          placeholder={t('dashboard:search')}
           className={styles.searchInput}
         />
       </div>
@@ -45,8 +47,8 @@ export function DashboardTopBar({
         data-testid="user-avatar"
         onClick={onToggleMenu}
         className={styles.avatar}
-        title={`${userName} - メニュー`}
-        aria-label="メニュー"
+        title={t('dashboard:menuFor', { userName })}
+        aria-label={t('common:menu')}
       >
         {initial}
       </button>

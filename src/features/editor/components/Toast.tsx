@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { ToastData } from '../hooks/useToast'
 import styles from './Toast.module.css'
 
@@ -8,6 +9,7 @@ interface ToastListProps {
 }
 
 export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
+  const { t } = useTranslation('editor')
   if (toasts.length === 0) return null
 
   return (
@@ -30,14 +32,14 @@ export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
                     onClick={() => onDismiss(toast.id)}
                     className={styles.skipBtn}
                   >
-                    {toast.skipLabel ?? 'スキップ'}
+                    {toast.skipLabel ?? t('toast.skip')}
                   </button>
                   <button
                     data-testid="toast-organize-btn"
                     onClick={() => onConfirm(toast.id, toast.crossingCount)}
                     className={styles.organizeBtn}
                   >
-                    {toast.confirmLabel ?? '整理する'}
+                    {toast.confirmLabel ?? t('toast.organize')}
                   </button>
                 </div>
               )}
@@ -48,7 +50,7 @@ export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
                     onClick={() => onDismiss(toast.id)}
                     className={styles.skipBtn}
                   >
-                    閉じる
+                    {t('toast.close')}
                   </button>
                   {toast.onRetry && (
                     <button
@@ -56,7 +58,7 @@ export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
                       onClick={() => toast.onRetry?.()}
                       className={styles.retryBtn}
                     >
-                      再試行
+                      {t('toast.retry')}
                     </button>
                   )}
                 </div>

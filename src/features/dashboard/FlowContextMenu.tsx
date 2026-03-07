@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import styles from './FlowContextMenu.module.css'
 
 interface FlowContextMenuProps {
@@ -32,6 +33,7 @@ export function FlowContextMenu({
   onRestore,
   onPermanentDelete,
 }: FlowContextMenuProps) {
+  const { t } = useTranslation(['dashboard', 'common'])
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -46,16 +48,20 @@ export function FlowContextMenu({
 
   const items: (MenuItem | 'sep')[] = isTrash
     ? [
-        { label: '復元', action: () => onRestore?.() },
+        { label: t('dashboard:action.restore'), action: () => onRestore?.() },
         'sep',
-        { label: '完全に削除', action: () => onPermanentDelete?.(), danger: true },
+        {
+          label: t('dashboard:action.permanentDelete'),
+          action: () => onPermanentDelete?.(),
+          danger: true,
+        },
       ]
     : [
-        { label: '開く', action: onOpen },
-        { label: '名前を変更', action: onRename },
-        { label: '複製', action: onDuplicate },
+        { label: t('common:open'), action: onOpen },
+        { label: t('dashboard:action.rename'), action: onRename },
+        { label: t('dashboard:action.duplicate'), action: onDuplicate },
         'sep',
-        { label: '削除', action: onDelete, danger: true },
+        { label: t('common:delete'), action: onDelete, danger: true },
       ]
 
   return (

@@ -56,7 +56,7 @@ describe('ShareDialog', () => {
     renderDialog()
 
     expect(screen.getByTestId('share-dialog')).toBeInTheDocument()
-    expect(screen.getByText('共有設定')).toBeInTheDocument()
+    expect(screen.getByText('share.title')).toBeInTheDocument()
   })
 
   it('should show share toggle in off state when no shareToken', () => {
@@ -202,7 +202,7 @@ describe('ShareDialog', () => {
     await user.click(screen.getByTestId('copy-share-url'))
 
     await waitFor(() => {
-      expect(screen.getByText('コピーしました')).toBeInTheDocument()
+      expect(screen.getByText('share.copyDone')).toBeInTheDocument()
     })
   })
 

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { BRAND } from './constants/brand'
 import { LoadingSpinner } from './components/LoadingSpinner'
 import { FlowEditorPage } from './features/editor/pages/FlowEditorPage'
@@ -12,6 +13,7 @@ import { DemoEditorPage } from './features/editor/pages/DemoEditorPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 
 function Header() {
+  const { t } = useTranslation()
   const { user, loading, logout } = useAuth()
   const location = useLocation()
 
@@ -44,13 +46,13 @@ function Header() {
           <div>
             <span data-testid="user-name">{user.name}</span>
             <button onClick={logout} data-testid="logout-button">
-              ログアウト
+              {t('logout')}
             </button>
           </div>
         ) : (
           <div>
-            <Link to="/login">ログイン</Link>
-            <Link to="/register">新規登録</Link>
+            <Link to="/login">{t('login')}</Link>
+            <Link to="/register">{t('register')}</Link>
           </div>
         )}
       </nav>

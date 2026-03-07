@@ -55,14 +55,14 @@ describe('LandingPage', () => {
 
   it('ログインボタンクリックでAuthModalが表示される', async () => {
     renderPage()
-    fireEvent.click(screen.getByText('ログイン'))
+    fireEvent.click(screen.getByText('nav.login'))
     expect(screen.getByTestId('auth-modal')).toBeInTheDocument()
   })
 
   it('無料で始めるボタンクリックでAuthModalが新規登録モードで表示される', async () => {
     renderPage()
-    fireEvent.click(screen.getAllByText(/無料で始める/)[0])
+    fireEvent.click(screen.getAllByText(/brand\.ctaButton/)[0])
     expect(screen.getByTestId('auth-modal')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('お名前')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('form.name')).toBeInTheDocument()
   })
 })

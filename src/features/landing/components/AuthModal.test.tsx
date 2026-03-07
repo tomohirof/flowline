@@ -55,9 +55,9 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    expect(screen.getByPlaceholderText('メールアドレス')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('パスワード')).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('お名前')).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
   })
 
   it('新規登録モードで名前・メール・パスワード入力を表示する', () => {
@@ -66,9 +66,9 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
       </MemoryRouter>,
     )
-    expect(screen.getByPlaceholderText('お名前')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('メールアドレス')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('パスワード')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('form.name')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
   })
 
   it('タブクリックでモード切替できる', () => {
@@ -77,9 +77,9 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    expect(screen.queryByPlaceholderText('お名前')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByText('新規登録'))
-    expect(screen.getByPlaceholderText('お名前')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('register'))
+    expect(screen.getByPlaceholderText('form.name')).toBeInTheDocument()
   })
 
   it('ログイン成功時にonCloseが呼ばれ /flows に遷移する', async () => {
@@ -90,10 +90,10 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={onClose} initialMode="login" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'a@b.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
@@ -113,18 +113,18 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={onClose} initialMode="register" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('お名前'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.name'), { target: { value: 'Test' } })
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'a@b.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
       expect(mockRegister).toHaveBeenCalledWith('a@b.com', 'password123', 'Test')
-      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
       expect(screen.getByText('a@b.com')).toBeInTheDocument()
     })
   })
@@ -136,20 +136,20 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('お名前'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.name'), { target: { value: 'Test' } })
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'a@b.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
-      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByText(/メールアドレスを変更/))
-    expect(screen.getByPlaceholderText('お名前')).toBeInTheDocument()
+    fireEvent.click(screen.getByText(/verifyEmail\.changeEmail/))
+    expect(screen.getByPlaceholderText('form.name')).toBeInTheDocument()
   })
 
   it('should not show tabs in verify mode', async () => {
@@ -159,20 +159,20 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('お名前'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.name'), { target: { value: 'Test' } })
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'a@b.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
-      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
     })
-    expect(screen.queryByText('ログイン')).not.toBeInTheDocument()
-    expect(screen.queryByText('新規登録')).not.toBeInTheDocument()
+    expect(screen.queryByText('login')).not.toBeInTheDocument()
+    expect(screen.queryByText('register')).not.toBeInTheDocument()
   })
 
   it('should not call onClose or navigate after registration', async () => {
@@ -183,17 +183,17 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={onClose} initialMode="register" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('お名前'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.name'), { target: { value: 'Test' } })
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'a@b.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
-      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
     })
     expect(onClose).not.toHaveBeenCalled()
     expect(mockNavigate).not.toHaveBeenCalled()
@@ -206,16 +206,16 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'unverified@example.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
-      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
       expect(screen.getByText('unverified@example.com')).toBeInTheDocument()
     })
   })
@@ -228,22 +228,22 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'unverified@example.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
-      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByText('確認メールを再送する'))
+    fireEvent.click(screen.getByText('verifyEmail.resend'))
 
     await waitFor(() => {
       expect(mockResendVerification).toHaveBeenCalledWith('unverified@example.com')
-      expect(screen.getByText('確認メールを再送しました')).toBeInTheDocument()
+      expect(screen.getByText('emailResent')).toBeInTheDocument()
     })
   })
 
@@ -254,10 +254,10 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'a@b.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
@@ -274,21 +274,21 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
       target: { value: 'unverified@example.com' },
     })
-    fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByTestId('auth-submit'))
 
     await waitFor(() => {
-      expect(screen.getByText('メールを確認してください')).toBeInTheDocument()
+      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByText(/ログイン画面に戻る/))
-    expect(screen.getByPlaceholderText('メールアドレス')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('パスワード')).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('お名前')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText(/verifyEmail\.backToLogin/))
+    expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
   })
 
   it('Googleログインボタンクリックで「準備中」メッセージを表示する', () => {
@@ -298,7 +298,7 @@ describe('AuthModal', () => {
       </MemoryRouter>,
     )
     fireEvent.click(screen.getByText(/Google/))
-    expect(screen.getByText(/準備中/)).toBeInTheDocument()
+    expect(screen.getByText(/googleLoginPending/)).toBeInTheDocument()
   })
 
   it('オーバーレイクリックでonCloseが呼ばれない', () => {
@@ -319,7 +319,7 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={onClose} initialMode="login" />
       </MemoryRouter>,
     )
-    fireEvent.click(screen.getByLabelText('閉じる'))
+    fireEvent.click(screen.getByLabelText('close'))
     expect(onClose).toHaveBeenCalled()
   })
 
@@ -329,7 +329,7 @@ describe('AuthModal', () => {
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    expect(screen.getByLabelText('閉じる')).toBeInTheDocument()
+    expect(screen.getByLabelText('close')).toBeInTheDocument()
   })
 
   describe('onSuccess callback', () => {
@@ -344,10 +344,10 @@ describe('AuthModal', () => {
         </MemoryRouter>,
       )
 
-      fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      fireEvent.change(screen.getByPlaceholderText('form.email'), {
         target: { value: 'a@b.com' },
       })
-      fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      fireEvent.change(screen.getByPlaceholderText('form.password'), {
         target: { value: 'pass1234' },
       })
       fireEvent.click(screen.getByTestId('auth-submit'))
@@ -369,13 +369,13 @@ describe('AuthModal', () => {
         </MemoryRouter>,
       )
 
-      fireEvent.change(screen.getByPlaceholderText('お名前'), {
+      fireEvent.change(screen.getByPlaceholderText('form.name'), {
         target: { value: 'Test' },
       })
-      fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      fireEvent.change(screen.getByPlaceholderText('form.email'), {
         target: { value: 'a@b.com' },
       })
-      fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      fireEvent.change(screen.getByPlaceholderText('form.password'), {
         target: { value: 'pass1234' },
       })
       fireEvent.click(screen.getByTestId('auth-submit'))
@@ -396,10 +396,10 @@ describe('AuthModal', () => {
         </MemoryRouter>,
       )
 
-      fireEvent.change(screen.getByPlaceholderText('メールアドレス'), {
+      fireEvent.change(screen.getByPlaceholderText('form.email'), {
         target: { value: 'a@b.com' },
       })
-      fireEvent.change(screen.getByPlaceholderText('パスワード'), {
+      fireEvent.change(screen.getByPlaceholderText('form.password'), {
         target: { value: 'pass1234' },
       })
       fireEvent.click(screen.getByTestId('auth-submit'))

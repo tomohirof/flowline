@@ -24,25 +24,25 @@ describe('Footer', () => {
     expect(screen.getByText(BRAND.copyright)).toBeInTheDocument()
   })
 
-  it('should render link "プライバシーポリシー"', () => {
+  it('should render privacy link (i18n key)', () => {
     render(<Footer />)
-    expect(screen.getByText('プライバシーポリシー')).toBeInTheDocument()
+    expect(screen.getByText('footer.privacy')).toBeInTheDocument()
   })
 
-  it('should render link "利用規約"', () => {
+  it('should render terms link (i18n key)', () => {
     render(<Footer />)
-    expect(screen.getByText('利用規約')).toBeInTheDocument()
+    expect(screen.getByText('footer.terms')).toBeInTheDocument()
   })
 
-  it('should render link "お問い合わせ"', () => {
+  it('should render contact link (i18n key)', () => {
     render(<Footer />)
-    expect(screen.getByText('お問い合わせ')).toBeInTheDocument()
+    expect(screen.getByText('footer.contact')).toBeInTheDocument()
   })
 
   it('should use button elements for links', () => {
     render(<Footer />)
-    expect(screen.getByText('プライバシーポリシー').tagName).toBe('BUTTON')
-    expect(screen.getByText('利用規約').tagName).toBe('BUTTON')
-    expect(screen.getByText('お問い合わせ').tagName).toBe('BUTTON')
+    expect(screen.getByText('footer.privacy').tagName).toBe('BUTTON')
+    expect(screen.getByText('footer.terms').tagName).toBe('BUTTON')
+    expect(screen.getByText('footer.contact').tagName).toBe('BUTTON')
   })
 })

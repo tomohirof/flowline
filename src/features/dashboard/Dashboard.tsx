@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import type { FlowListResponse, FlowSummary, FlowDetailResponse } from '../editor/types'
@@ -39,6 +40,7 @@ const CreateCardIcon = () => (
 )
 
 export function Dashboard() {
+  const { t, i18n } = useTranslation(['dashboard', 'common'])
   const [flows, setFlows] = useState<FlowSummary[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -79,22 +81,25 @@ export function Dashboard() {
 
   const initialLoadDone = useRef(false)
 
-  const loadFlows = useCallback(async (query?: string) => {
-    try {
-      if (!initialLoadDone.current) {
-        setLoading(true)
+  const loadFlows = useCallback(
+    async (query?: string) => {
+      try {
+        if (!initialLoadDone.current) {
+          setLoading(true)
+        }
+        setError(null)
+        const url = query ? `/flows?q=${encodeURIComponent(query)}` : '/flows'
+        const data = await apiFetch<FlowListResponse>(url)
+        setFlows(data.flows)
+        initialLoadDone.current = true
+      } catch {
+        setError(t('dashboard:toast.errorFetchFlows'))
+      } finally {
+        setLoading(false)
       }
-      setError(null)
-      const url = query ? `/flows?q=${encodeURIComponent(query)}` : '/flows'
-      const data = await apiFetch<FlowListResponse>(url)
-      setFlows(data.flows)
-      initialLoadDone.current = true
-    } catch {
-      setError('フロー一覧の取得に失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    },
+    [t],
+  )
 
   const loadTrashFlows = useCallback(async () => {
     try {
@@ -102,11 +107,11 @@ export function Dashboard() {
       const data = await apiFetch<FlowListResponse>('/flows/trash')
       setTrashFlows(data.flows)
     } catch {
-      setError('ゴミ箱の取得に失敗しました')
+      setError(t('dashboard:toast.errorFetchTrash'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   // Debounced search
   useEffect(() => {
@@ -155,7 +160,7 @@ export function Dashboard() {
       })
       navigate(`/flows/${data.flow.id}`)
     } catch {
-      setError('フローの作成に失敗しました')
+      setError(t('dashboard:toast.errorCreate'))
       setCreating(false)
     }
   }
@@ -163,9 +168,9 @@ export function Dashboard() {
   const handleDelete = (id: string, title: string) => {
     if (deletingId) return
     setModal({
-      title: 'ゴミ箱に移動',
-      message: `「${title}」をゴミ箱に移動しますか？`,
-      confirmLabel: '移動する',
+      title: t('dashboard:confirm.moveToTrashTitle'),
+      message: t('dashboard:confirm.moveToTrashMessage', { title }),
+      confirmLabel: t('dashboard:confirm.moveToTrashConfirm'),
       danger: true,
       onConfirm: async () => {
         setModal(null)
@@ -173,9 +178,9 @@ export function Dashboard() {
         try {
           await apiFetch(`/flows/${id}`, { method: 'DELETE' })
           setFlows((prev) => prev.filter((f) => f.id !== id))
-          setToast({ message: 'ゴミ箱に移動しました', icon: '🗑' })
+          setToast({ message: t('dashboard:toast.movedToTrash'), icon: '🗑' })
         } catch {
-          setError('フローの削除に失敗しました')
+          setError(t('dashboard:toast.errorDelete'))
         } finally {
           setDeletingId(null)
         }
@@ -187,17 +192,17 @@ export function Dashboard() {
     try {
       await apiFetch(`/flows/${id}/restore`, { method: 'POST' })
       setTrashFlows((prev) => prev.filter((f) => f.id !== id))
-      setToast({ message: 'フローを復元しました', icon: '♻️' })
+      setToast({ message: t('dashboard:toast.restored'), icon: '♻️' })
     } catch {
-      setError('フローの復元に失敗しました')
+      setError(t('dashboard:toast.errorRestore'))
     }
   }
 
   const handlePermanentDelete = (id: string, title: string) => {
     setModal({
-      title: '完全に削除',
-      message: `完全に削除すると復元できません。「${title}」を本当に削除しますか？`,
-      confirmLabel: '完全に削除',
+      title: t('dashboard:confirm.permanentDeleteTitle'),
+      message: t('dashboard:confirm.permanentDeleteMessage', { title }),
+      confirmLabel: t('dashboard:confirm.permanentDeleteConfirm'),
       danger: true,
       onConfirm: async () => {
         setModal(null)
@@ -205,7 +210,7 @@ export function Dashboard() {
           await apiFetch(`/flows/${id}/permanent`, { method: 'DELETE' })
           setTrashFlows((prev) => prev.filter((f) => f.id !== id))
         } catch {
-          setError('フローの完全削除に失敗しました')
+          setError(t('dashboard:toast.errorPermanentDelete'))
         }
       },
     })
@@ -221,7 +226,7 @@ export function Dashboard() {
         body: JSON.stringify({ title: newTitle }),
       })
     } catch {
-      setError('フロー名の変更に失敗しました')
+      setError(t('dashboard:toast.errorRename'))
       // Revert on failure
       const trimmed = searchQuery.trim()
       loadFlows(trimmed || undefined)
@@ -299,7 +304,7 @@ export function Dashboard() {
       const result = await apiFetch<{ flow: { id: string } }>('/flows', {
         method: 'POST',
         body: JSON.stringify({
-          title: `コピー ${original.title}`,
+          title: `${t('dashboard:action.copyPrefix')} ${original.title}`,
           themeId: original.themeId,
           lanes: newLanes,
           nodes: newNodes,
@@ -309,7 +314,7 @@ export function Dashboard() {
 
       navigate(`/flows/${result.flow.id}`)
     } catch {
-      setError('フローの複製に失敗しました')
+      setError(t('dashboard:toast.errorDuplicate'))
     } finally {
       setDuplicatingId(null)
     }
@@ -353,10 +358,10 @@ export function Dashboard() {
               <div className={styles.subheader}>
                 <h1 className={styles.title}>
                   {selectedNav === 'trash'
-                    ? 'ゴミ箱'
+                    ? t('dashboard:title.trash')
                     : selectedNav === 'shared'
-                      ? '共有ファイル'
-                      : 'マイフロー'}
+                      ? t('dashboard:title.shared')
+                      : t('dashboard:title.myFlows')}
                 </h1>
                 {selectedNav !== 'trash' && (
                   <div className={styles.controls}>
@@ -366,8 +371,8 @@ export function Dashboard() {
                       onChange={(e) => setSortMode(e.target.value as SortMode)}
                       className={styles.sortSelect}
                     >
-                      <option value="updated">更新日</option>
-                      <option value="name">名前</option>
+                      <option value="updated">{t('dashboard:sort.updatedAt')}</option>
+                      <option value="name">{t('dashboard:sort.name')}</option>
                     </select>
 
                     <div className={styles.viewToggle}>
@@ -375,7 +380,7 @@ export function Dashboard() {
                         data-testid="view-grid-button"
                         onClick={() => setViewMode('grid')}
                         className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-                        aria-label="グリッド表示"
+                        aria-label={t('dashboard:view.grid')}
                       >
                         ▦
                       </button>
@@ -383,7 +388,7 @@ export function Dashboard() {
                         data-testid="view-list-button"
                         onClick={() => setViewMode('list')}
                         className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-                        aria-label="リスト表示"
+                        aria-label={t('dashboard:view.list')}
                       >
                         ☰
                       </button>
@@ -404,8 +409,8 @@ export function Dashboard() {
                 trashFlows.length === 0 ? (
                   <div data-testid="trash-empty" className={styles.empty}>
                     <div className={styles.emptyIcon}>▢</div>
-                    <p className={styles.emptyTitle}>ゴミ箱は空です</p>
-                    <p className={styles.emptySubtitle}>削除したフローはここに表示されます</p>
+                    <p className={styles.emptyTitle}>{t('dashboard:empty.trash')}</p>
+                    <p className={styles.emptySubtitle}>{t('dashboard:empty.trashDesc')}</p>
                   </div>
                 ) : (
                   <div data-testid="trash-grid" className={styles.grid}>
@@ -432,11 +437,11 @@ export function Dashboard() {
                     <div className={styles.emptyIcon}>⊡</div>
                     <p className={styles.emptyTitle}>
                       {searchQuery.trim()
-                        ? '検索条件に一致する共有フローがありません'
-                        : '共有中のフローはありません'}
+                        ? t('dashboard:empty.sharedSearch')
+                        : t('dashboard:empty.sharedNoFlows')}
                     </p>
                     {!searchQuery.trim() && (
-                      <p className={styles.emptySubtitle}>フローを共有するとここに表示されます</p>
+                      <p className={styles.emptySubtitle}>{t('dashboard:empty.sharedEmpty')}</p>
                     )}
                   </div>
                 ) : (
@@ -444,13 +449,11 @@ export function Dashboard() {
                     <div className={styles.emptyIcon}>+</div>
                     <p className={styles.emptyTitle}>
                       {searchQuery.trim()
-                        ? '検索条件に一致するフローがありません'
-                        : 'フローがまだありません。新規作成してみましょう！'}
+                        ? t('dashboard:empty.noFlowsSearch')
+                        : t('dashboard:empty.noFlows')}
                     </p>
                     {!searchQuery.trim() && (
-                      <p className={styles.emptySubtitle}>
-                        下のボタンから最初のフローを作成できます
-                      </p>
+                      <p className={styles.emptySubtitle}>{t('dashboard:empty.noFlowsDesc')}</p>
                     )}
                     {!searchQuery.trim() && (
                       <button
@@ -462,7 +465,7 @@ export function Dashboard() {
                       >
                         <CreateCardIcon />
                         <span className={styles.createCardText}>
-                          {creating ? '作成中...' : '新規作成'}
+                          {creating ? t('dashboard:action.creating') : t('dashboard:action.create')}
                         </span>
                       </button>
                     )}
@@ -479,7 +482,7 @@ export function Dashboard() {
                     >
                       <CreateCardIcon />
                       <span className={styles.createCardText}>
-                        {creating ? '作成中...' : '新規作成'}
+                        {creating ? t('dashboard:action.creating') : t('dashboard:action.create')}
                       </span>
                     </button>
                   )}
@@ -501,9 +504,11 @@ export function Dashboard() {
                 <div data-testid="dashboard-list" className={styles.list}>
                   {/* List header */}
                   <div className={styles.listHeader}>
-                    <span className={styles.listHeaderName}>名前</span>
-                    <span className={styles.listHeaderUpdated}>更新日</span>
-                    <span className={styles.listHeaderLanes}>レーン</span>
+                    <span className={styles.listHeaderName}>{t('dashboard:table.name')}</span>
+                    <span className={styles.listHeaderUpdated}>
+                      {t('dashboard:table.updatedAt')}
+                    </span>
+                    <span className={styles.listHeaderLanes}>{t('dashboard:table.lanes')}</span>
                     <span className={styles.listHeaderActions} />
                   </div>
                   {displayedFlows.map((flow) => (
@@ -525,11 +530,13 @@ export function Dashboard() {
                             data-testid={`share-badge-${flow.id}`}
                             className={styles.shareBadge}
                           >
-                            共有中
+                            {t('dashboard:action.shared')}
                           </span>
                         )}
                       </div>
-                      <div className={styles.listUpdated}>{formatRelativeTime(flow.updatedAt)}</div>
+                      <div className={styles.listUpdated}>
+                        {formatRelativeTime(flow.updatedAt, i18n.language)}
+                      </div>
                       <div className={styles.listLanes}>
                         {laneColors.map((color, i) => (
                           <span
@@ -547,7 +554,7 @@ export function Dashboard() {
                             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
                             handleContextMenu(flow.id, rect.left, rect.bottom)
                           }}
-                          aria-label="メニュー"
+                          aria-label={t('common:menu')}
                         >
                           &#x22EF;
                         </button>

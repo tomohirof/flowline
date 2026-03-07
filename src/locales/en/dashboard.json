@@ -1,0 +1,77 @@
+{
+  "title": {
+    "myFlows": "My Flows",
+    "shared": "Shared Files",
+    "trash": "Trash"
+  },
+  "sort": {
+    "updatedAt": "Updated",
+    "name": "Name"
+  },
+  "view": {
+    "grid": "Grid view",
+    "list": "List view"
+  },
+  "action": {
+    "create": "Create new",
+    "creating": "Creating...",
+    "restore": "Restore",
+    "permanentDelete": "Delete permanently",
+    "rename": "Rename",
+    "duplicate": "Duplicate",
+    "shared": "Shared",
+    "deleting": "Deleting...",
+    "copyPrefix": "Copy of"
+  },
+  "empty": {
+    "noFlows": "No flows yet. Create your first one!",
+    "noFlowsSearch": "No flows match your search",
+    "noFlowsDesc": "Create your first flow with the button below",
+    "trash": "Trash is empty",
+    "trashDesc": "Deleted flows will appear here",
+    "sharedSearch": "No shared flows match your search",
+    "sharedNoFlows": "No shared flows",
+    "sharedEmpty": "Shared flows will appear here"
+  },
+  "confirm": {
+    "moveToTrashTitle": "Move to trash",
+    "moveToTrashMessage": "Move \"{{title}}\" to trash?",
+    "moveToTrashConfirm": "Move",
+    "permanentDeleteTitle": "Delete permanently",
+    "permanentDeleteMessage": "This cannot be undone. Are you sure you want to permanently delete \"{{title}}\"?",
+    "permanentDeleteConfirm": "Delete permanently"
+  },
+  "toast": {
+    "movedToTrash": "Moved to trash",
+    "restored": "Flow restored",
+    "errorFetchFlows": "Failed to load flows",
+    "errorFetchTrash": "Failed to load trash",
+    "errorCreate": "Failed to create flow",
+    "errorDelete": "Failed to delete flow",
+    "errorRestore": "Failed to restore flow",
+    "errorPermanentDelete": "Failed to permanently delete flow",
+    "errorRename": "Failed to rename flow",
+    "errorDuplicate": "Failed to duplicate flow"
+  },
+  "table": {
+    "name": "Name",
+    "updatedAt": "Updated",
+    "lanes": "Lanes"
+  },
+  "search": "Search files…",
+  "menuFor": "{{userName}} - Menu",
+  "sidebar": {
+    "recent": "Recent",
+    "allFiles": "All Files",
+    "shared": "Shared Files",
+    "drafts": "Drafts",
+    "trash": "Trash",
+    "teams": "Teams",
+    "teamProduct": "Product Team",
+    "teamBackoffice": "Back Office",
+    "proPlanMessage": "Get team sharing and version history with the Pro plan",
+    "showPlan": "View plans"
+  },
+  "deleteTime": "Deleted: {{time}}",
+  "updateTime": "Updated: {{time}}"
+}

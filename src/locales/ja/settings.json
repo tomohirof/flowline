@@ -1,0 +1,96 @@
+{
+  "nav": {
+    "profile": "プロフィール",
+    "editor": "エディタ",
+    "interaction": "操作",
+    "display": "表示",
+    "notification": "通知",
+    "security": "セキュリティ"
+  },
+  "profile": {
+    "title": "プロフィール",
+    "desc": "アカウント情報を管理します",
+    "name": "名前",
+    "namePlaceholder": "名前",
+    "email": "メールアドレス"
+  },
+  "editor": {
+    "nodeCreation": {
+      "title": "ノード作成",
+      "desc": "新しいノードを作成する際の挙動を設定します",
+      "copyLabel": "同じ行にノード作成時、テキストをコピー",
+      "copyLabelDesc": "隣のレーンの同じ行にノードを作成すると、元のノードのラベルが引き継がれます",
+      "autoConnect": "自動接続",
+      "autoConnectDesc": "新規ノードを前のノードに自動で矢印接続します",
+      "autoAddRow": "最終行で自動行追加",
+      "autoAddRowDesc": "最後の行にノードを配置すると、新しい空行が自動追加されます",
+      "editOnCreate": "作成後すぐに編集",
+      "editOnCreateDesc": "ノード作成後、自動的にラベル編集モードに入ります"
+    },
+    "arrowDefault": {
+      "title": "接続線のデフォルト",
+      "desc": "新しい接続線の初期スタイルを設定します",
+      "lineStyle": "線のスタイル",
+      "solid": "実線",
+      "dashed": "破線",
+      "dotted": "点線"
+    },
+    "theme": {
+      "title": "デフォルトテーマ",
+      "desc": "新規ファイルのテーマ"
+    }
+  },
+  "interaction": {
+    "title": "操作設定",
+    "desc": "マウスやキーボードの操作方法をカスタマイズします",
+    "doubleClickEdit": "ダブルクリックで編集",
+    "doubleClickEditDesc": "OFFの場合、シングルクリックで編集モードに入ります",
+    "undoShortcut": "\u2318Z / Ctrl+Z でundo",
+    "undoShortcutDesc": "キーボードショートカットによる操作の取り消し（常にON）",
+    "deleteShortcut": "Delete / Backspace で削除",
+    "deleteShortcutDesc": "選択中のノードや矢印をキーで削除（常にON）"
+  },
+  "display": {
+    "title": "表示設定",
+    "desc": "エディタの見た目をカスタマイズします",
+    "dotGrid": "ドットグリッド表示",
+    "dotGridDesc": "キャンバスにドットグリッドを表示します",
+    "orderBadge": "ノード順番バッジ",
+    "orderBadgeDesc": "ノードの順番を示すバッジを表示します",
+    "laneColorBar": "レーンカラーバー",
+    "laneColorBarDesc": "レーンヘッダーにカラーバーを表示します",
+    "language": "言語 / Language",
+    "languageDesc": "UIの表示言語を切り替えます"
+  },
+  "notification": {
+    "title": "通知設定",
+    "desc": "メールやアプリ内の通知を管理します",
+    "email": "メール通知",
+    "emailDesc": "共有ファイルの更新やコメント時にメール通知を受け取る",
+    "browser": "ブラウザ通知",
+    "browserDesc": "リアルタイム編集の通知をブラウザで受け取る"
+  },
+  "security": {
+    "title": "セキュリティ",
+    "desc": "アカウントの安全性を管理します",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "newPasswordPlaceholder": "8文字以上",
+    "passwordChanged": "パスワードを変更しました",
+    "changePassword": "パスワードを変更",
+    "passwordChangeFailed": "パスワードの変更に失敗しました",
+    "dangerZone": "危険ゾーン",
+    "deleteAccountWarning": "アカウントを削除すると、すべてのデータが完全に消去されます。この操作は取り消せません。",
+    "deleteAccountConfirm": "本当に削除する",
+    "deleteAccount": "アカウントを削除",
+    "deleteAccountFailed": "アカウントの削除に失敗しました"
+  },
+  "status": {
+    "saving": "保存中...",
+    "saved": "保存済み",
+    "saveFailed": "保存失敗",
+    "loadError": "設定の取得に失敗しました",
+    "saveError": "設定の保存に失敗しました",
+    "menu": "メニュー"
+  }
+}

@@ -192,7 +192,7 @@ describe('AiAssistant', () => {
       expect(screen.getByTestId('ai-error')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('AIリクエストに失敗しました')).toBeInTheDocument()
+    expect(screen.getByText('ai.errorRequest')).toBeInTheDocument()
   })
 
   // ========================================
@@ -209,7 +209,7 @@ describe('AiAssistant', () => {
     await user.click(screen.getByTestId('ai-submit-btn'))
 
     expect(screen.getByTestId('ai-error')).toBeInTheDocument()
-    expect(screen.getByText('プロンプトを入力してください')).toBeInTheDocument()
+    expect(screen.getByText('ai.emptyPrompt')).toBeInTheDocument()
 
     // API should not have been called
     expect(mockApiFetch).not.toHaveBeenCalled()
@@ -225,7 +225,7 @@ describe('AiAssistant', () => {
     await user.click(screen.getByTestId('ai-submit-btn'))
 
     expect(screen.getByTestId('ai-error')).toBeInTheDocument()
-    expect(screen.getByText('プロンプトを入力してください')).toBeInTheDocument()
+    expect(screen.getByText('ai.emptyPrompt')).toBeInTheDocument()
     expect(mockApiFetch).not.toHaveBeenCalled()
   })
 

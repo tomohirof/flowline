@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../hooks/useAuth'
 import { ApiError } from '../../../lib/api'
 import styles from './AuthModal.module.css'
@@ -15,6 +16,7 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModalProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation(['auth', 'common'])
   const { login, register, resendVerification } = useAuth()
 
   const [mode, setMode] = useState<AuthMode>(initialMode)
@@ -86,13 +88,13 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
         } else if (err instanceof Error) {
           setError(err.message)
         } else {
-          setError('エラーが発生しました')
+          setError(t('auth:error'))
         }
       } finally {
         setSubmitting(false)
       }
     },
-    [mode, email, password, name, login, register, onClose, navigate, onSuccess],
+    [mode, email, password, name, login, register, onClose, navigate, onSuccess, t],
   )
 
   const handleResend = useCallback(async () => {
@@ -100,32 +102,32 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
     setError(null)
     try {
       await resendVerification(verifyEmail)
-      setInfo('確認メールを再送しました')
+      setInfo(t('auth:emailResent'))
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message)
       } else {
-        setError('再送に失敗しました')
+        setError(t('auth:emailResendFailed'))
       }
     } finally {
       setSubmitting(false)
     }
-  }, [verifyEmail, resendVerification])
+  }, [verifyEmail, resendVerification, t])
 
   const handleGoogleClick = useCallback(() => {
-    setInfo('Googleログインは準備中です')
-  }, [])
+    setInfo(t('auth:googleLoginPending'))
+  }, [t])
 
   const handleForgotClick = useCallback(() => {
-    setInfo('パスワードリセットは準備中です')
-  }, [])
+    setInfo(t('auth:passwordResetPending'))
+  }, [t])
 
   if (!isOpen) return null
 
   return (
     <div className={styles.overlay} data-testid="auth-modal-overlay">
       <div className={styles.modal} data-testid="auth-modal">
-        <button className={styles.closeBtn} onClick={onClose} aria-label="閉じる">
+        <button className={styles.closeBtn} onClick={onClose} aria-label={t('auth:close')}>
           &#x2715;
         </button>
         {mode !== 'verify' && (
@@ -134,13 +136,13 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
               className={`${styles.tab} ${mode === 'login' ? styles.tabActive : ''}`}
               onClick={() => switchMode('login')}
             >
-              ログイン
+              {t('auth:login')}
             </button>
             <button
               className={`${styles.tab} ${mode === 'register' ? styles.tabActive : ''}`}
               onClick={() => switchMode('register')}
             >
-              新規登録
+              {t('auth:register')}
             </button>
           </div>
         )}
@@ -170,26 +172,26 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
               </svg>
             </div>
-            <h2 className={styles.verifyTitle}>メールを確認してください</h2>
+            <h2 className={styles.verifyTitle}>{t('auth:verifyEmail.title')}</h2>
             <div className={styles.verifyEmailCard}>{verifyEmail}</div>
-            <p className={styles.verifyText}>
-              メール内のリンクをクリックしてアカウントを有効化してください。
-            </p>
-            <p className={styles.verifyNote}>迷惑メールフォルダも確認してください</p>
+            <p className={styles.verifyText}>{t('auth:verifyEmail.description')}</p>
+            <p className={styles.verifyNote}>{t('auth:verifyEmail.checkSpam')}</p>
             <button
               type="button"
               className={styles.submitBtn}
               onClick={handleResend}
               disabled={submitting}
             >
-              {submitting ? '送信中...' : '確認メールを再送する'}
+              {submitting ? t('auth:verifyEmail.resending') : t('auth:verifyEmail.resend')}
             </button>
             <button
               type="button"
               className={styles.backLink}
               onClick={() => switchMode(verifySource)}
             >
-              {verifySource === 'login' ? '← ログイン画面に戻る' : '← メールアドレスを変更する'}
+              {verifySource === 'login'
+                ? t('auth:verifyEmail.backToLogin')
+                : t('auth:verifyEmail.changeEmail')}
             </button>
           </div>
         ) : (
@@ -200,7 +202,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                   <input
                     className={styles.input}
                     type="text"
-                    placeholder="お名前"
+                    placeholder={t('auth:form.name')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -212,7 +214,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 <input
                   className={styles.input}
                   type="email"
-                  placeholder="メールアドレス"
+                  placeholder={t('auth:form.email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -223,7 +225,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 <input
                   className={styles.input}
                   type="password"
-                  placeholder="パスワード"
+                  placeholder={t('auth:form.password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -233,7 +235,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
 
               {mode === 'login' && (
                 <button type="button" className={styles.forgotLink} onClick={handleForgotClick}>
-                  パスワードをお忘れですか？
+                  {t('auth:form.forgotPassword')}
                 </button>
               )}
 
@@ -243,18 +245,22 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 disabled={submitting}
                 data-testid="auth-submit"
               >
-                {submitting ? '処理中...' : mode === 'login' ? 'ログイン' : 'アカウント作成'}
+                {submitting
+                  ? t('auth:form.processing')
+                  : mode === 'login'
+                    ? t('auth:form.loginButton')
+                    : t('auth:form.createAccount')}
               </button>
             </form>
 
             <div className={styles.divider}>
               <span className={styles.dividerLine} />
-              <span>または</span>
+              <span>{t('common:or')}</span>
               <span className={styles.dividerLine} />
             </div>
 
             <button className={styles.googleBtn} onClick={handleGoogleClick}>
-              Googleで続ける
+              {t('auth:form.continueWithGoogle')}
             </button>
           </>
         )}

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Settings } from '../types'
 import { Section } from '../components/Section'
 import { SettingRow } from '../components/SettingRow'
@@ -9,12 +10,13 @@ interface NotificationSectionProps {
 }
 
 export function NotificationSection({ settings, onToggle }: NotificationSectionProps) {
+  const { t } = useTranslation('settings')
   return (
-    <Section title="通知設定" desc="メールやアプリ内の通知を管理します">
-      <SettingRow label="メール通知" desc="共有ファイルの更新やコメント時にメール通知を受け取る">
+    <Section title={t('notification.title')} desc={t('notification.desc')}>
+      <SettingRow label={t('notification.email')} desc={t('notification.emailDesc')}>
         <Toggle checked={settings.notifications} onChange={() => onToggle('notifications')} />
       </SettingRow>
-      <SettingRow label="ブラウザ通知" desc="リアルタイム編集の通知をブラウザで受け取る">
+      <SettingRow label={t('notification.browser')} desc={t('notification.browserDesc')}>
         <Toggle checked={false} onChange={() => {}} />
       </SettingRow>
     </Section>

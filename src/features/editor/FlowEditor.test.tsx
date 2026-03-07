@@ -268,7 +268,7 @@ describe('connection drag handles (#47)', () => {
   it('should update status bar hint text', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     const statusHints = document.querySelectorAll('[class*="statusTextHint"]')
-    const hintText = Array.from(statusHints).find((el) => el.textContent?.includes('○:接続'))
+    const hintText = Array.from(statusHints).find((el) => el.textContent?.includes('hint.normal'))
     expect(hintText).toBeTruthy()
   })
 })
@@ -282,7 +282,7 @@ describe('file button (#48)', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
     const fileBtn = screen.getAllByTestId('file-button')[0]
     expect(fileBtn).toBeTruthy()
-    expect(fileBtn.textContent).toContain('ファイル')
+    expect(fileBtn.textContent).toContain('fileButton')
   })
 
   it('should navigate to dashboard on click', async () => {
@@ -402,7 +402,7 @@ describe('right panel - arrow styling sections (#52)', () => {
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     expect(arrowHit).toBeTruthy()
     fireEvent.click(arrowHit!)
-    expect(screen.getAllByText('線の色').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.arrowColor').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should show line style section when arrow is selected', () => {
@@ -412,7 +412,7 @@ describe('right panel - arrow styling sections (#52)', () => {
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     expect(arrowHit).toBeTruthy()
     fireEvent.click(arrowHit!)
-    expect(screen.getAllByText('線の種類').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.arrowStyle').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should render 10 line color swatches', () => {
@@ -421,7 +421,7 @@ describe('right panel - arrow styling sections (#52)', () => {
     )
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     fireEvent.click(arrowHit!)
-    const colorLabel = screen.getAllByText('線の色')[0]
+    const colorLabel = screen.getAllByText('rightPanel.arrowColor')[0]
     const colorSection = colorLabel.closest('div')?.parentElement
     const swatches = colorSection?.querySelectorAll('[title]')
     expect(swatches?.length).toBe(10)
@@ -433,7 +433,7 @@ describe('right panel - arrow styling sections (#52)', () => {
     )
     const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
     fireEvent.click(arrowHit!)
-    const styleLabel = screen.getAllByText('線の種類')[0]
+    const styleLabel = screen.getAllByText('rightPanel.arrowStyle')[0]
     const styleSection = styleLabel.closest('div')?.parentElement
     const svgPreviews = styleSection?.querySelectorAll('svg')
     expect(svgPreviews?.length).toBe(4)
@@ -455,7 +455,7 @@ describe('right panel - node styling sections (#51, #52)', () => {
     const nodeRects = container.querySelectorAll('rect[rx="10"]')
     const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
     if (nodeRect) await userEvent.click(nodeRect)
-    expect(screen.getAllByText('背景色').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.bgColor').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should show stroke color section when node is selected', async () => {
@@ -465,7 +465,7 @@ describe('right panel - node styling sections (#51, #52)', () => {
     const nodeRects = container.querySelectorAll('rect[rx="10"]')
     const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
     if (nodeRect) await userEvent.click(nodeRect)
-    expect(screen.getAllByText('枠の色').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.borderColor').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should show stroke style section when node is selected', async () => {
@@ -475,7 +475,7 @@ describe('right panel - node styling sections (#51, #52)', () => {
     const nodeRects = container.querySelectorAll('rect[rx="10"]')
     const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
     if (nodeRect) await userEvent.click(nodeRect)
-    expect(screen.getAllByText('枠の種類').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.borderStyle').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should render 10 background color swatches for light theme', async () => {
@@ -486,7 +486,7 @@ describe('right panel - node styling sections (#51, #52)', () => {
     const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
     if (nodeRect) await userEvent.click(nodeRect)
     // Find the 背景色 section - search for element with title attributes (swatches)
-    const bgLabels = screen.getAllByText('背景色')
+    const bgLabels = screen.getAllByText('rightPanel.bgColor')
     const bgLabel = bgLabels[0]
     const bgSection = bgLabel.closest('div')?.parentElement
     const swatches = bgSection?.querySelectorAll('[title]')
@@ -588,8 +588,8 @@ describe('auto-save payload optimization', () => {
 describe('editorSettings panel (#72)', () => {
   it('should show behavior and display setting sections when nothing selected', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
-    expect(screen.getAllByText('挙動').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('表示').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.behavior').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.display').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should render all 7 setting checkboxes with correct data-testid', () => {
@@ -610,13 +610,13 @@ describe('editorSettings panel (#72)', () => {
 
   it('should render correct labels for all settings', () => {
     render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
-    expect(screen.getAllByText('同行テキストコピー').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('自動接続').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('自動行追加').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('作成後すぐ編集').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('自動修復').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('ドットグリッド').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('順番バッジ').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.behaviorCopyLabel').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.behaviorAutoConnect').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.behaviorAutoAddRow').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.behaviorEditOnCreate').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.behaviorAutoRepair').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.displayDotGrid').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.displayOrderBadge').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should toggle autoConnect setting when checkbox is clicked', async () => {
@@ -668,7 +668,7 @@ describe('editorSettings panel (#72)', () => {
     )
     if (nodeRect) await userEvent.click(nodeRect)
     // When node selected, right panel shows node properties, not settings
-    expect(screen.getAllByText('背景色').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('rightPanel.bgColor').length).toBeGreaterThanOrEqual(1)
   })
 })
 
@@ -736,7 +736,7 @@ describe('Multi-select (#76)', () => {
     fireEvent.click(rects[1], { shiftKey: true })
 
     // Panel header should show "2件選択"
-    expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('selectedCount').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should clear multi-select on normal click', async () => {
@@ -777,9 +777,7 @@ describe('Multi-select (#76)', () => {
   it('should show Shift+click hint in default status bar', () => {
     render(<FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />)
     const hints = document.querySelectorAll('[class*="statusTextHint"]')
-    const shiftHint = Array.from(hints).find((el) =>
-      el.textContent?.includes('Shift+クリック:複数選択'),
-    )
+    const shiftHint = Array.from(hints).find((el) => el.textContent?.includes('hint.normal'))
     expect(shiftHint).toBeTruthy()
   })
 
@@ -793,7 +791,7 @@ describe('Multi-select (#76)', () => {
     fireEvent.click(rects[1], { shiftKey: true })
 
     const hints = document.querySelectorAll('[class*="statusTextHint"]')
-    const multiHint = Array.from(hints).find((el) => el.textContent?.includes('件選択中'))
+    const multiHint = Array.from(hints).find((el) => el.textContent?.includes('hint.multiSelect'))
     expect(multiHint).toBeTruthy()
   })
 
@@ -824,13 +822,13 @@ describe('Multi-select (#76)', () => {
 
     // Normal click on first node to select it
     fireEvent.click(rects[0])
-    expect(screen.getAllByText('ノード').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('propertyNode').length).toBeGreaterThanOrEqual(1)
 
     // Shift+click on second node - should seed first node into multiSel too
     fireEvent.click(rects[1], { shiftKey: true })
 
     // Both nodes should be in multi-select: 2件選択
-    expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('selectedCount').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should not start drag when Shift+mouseDown on node (#88)', async () => {
@@ -848,7 +846,7 @@ describe('Multi-select (#76)', () => {
     fireEvent.click(rects[1], { shiftKey: true })
 
     // Multi-select should work: "2件選択" should be visible
-    expect(screen.getAllByText('2件選択').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('selectedCount').length).toBeGreaterThanOrEqual(1)
   })
 })
 
@@ -1025,13 +1023,13 @@ describe('IME composition Enter (#87)', () => {
     // Wait for the arrow comment input to appear
     await waitFor(() => {
       const commentInput = container.querySelector(
-        'input[placeholder="コメント…"]',
+        'input[placeholder="arrowCommentPlaceholder"]',
       ) as HTMLInputElement
       expect(commentInput).toBeTruthy()
     })
 
     const commentInput = container.querySelector(
-      'input[placeholder="コメント…"]',
+      'input[placeholder="arrowCommentPlaceholder"]',
     ) as HTMLInputElement
 
     // Press Enter with isComposing=true (simulating IME composition)
@@ -1039,7 +1037,7 @@ describe('IME composition Enter (#87)', () => {
 
     // Arrow comment input should still be visible
     const commentInputAfter = container.querySelector(
-      'input[placeholder="コメント…"]',
+      'input[placeholder="arrowCommentPlaceholder"]',
     ) as HTMLInputElement
     expect(commentInputAfter).toBeTruthy()
   })
@@ -1458,7 +1456,7 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
    * The button is in the right panel (default state, nothing selected).
    */
   const clickMermaidCopyButton = async (writeTextSpy: ReturnType<typeof vi.fn>) => {
-    const btns = screen.getAllByText('Mermaid コードをコピー')
+    const btns = screen.getAllByText('rightPanel.mermaidCopy')
     await userEvent.click(btns[0])
     await waitFor(() => {
       expect(writeTextSpy).toHaveBeenCalled()
@@ -1486,7 +1484,7 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
     }
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     const mermaid = await clickMermaidCopyButton(writeTextSpy)
-    expect(mermaid).toContain('%% Flowline')
+    expect(mermaid).toContain('%% mermaidComment')
     expect(mermaid).toContain('flowchart LR')
     expect(mermaid).not.toContain('subgraph 企画')
     expect(mermaid).not.toContain('subgraph 開発')
@@ -1720,12 +1718,12 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
       arrows: [],
     }
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
-    const btn = screen.getByText('Mermaid コードをコピー')
+    const btn = screen.getByText('rightPanel.mermaidCopy')
     await userEvent.click(btn)
     await waitFor(() => {
       expect(writeTextSpy).toHaveBeenCalled()
     })
-    expect(screen.getByText('✓ コピーしました')).toBeInTheDocument()
+    expect(screen.getByText('rightPanel.mermaidCopied')).toBeInTheDocument()
   })
 
   it('should revert Mermaid copy button label after 1.5 seconds', async () => {
@@ -1740,16 +1738,16 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
       arrows: [],
     }
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
-    const btn = screen.getByText('Mermaid コードをコピー')
+    const btn = screen.getByText('rightPanel.mermaidCopy')
     await userEvent.click(btn)
     await waitFor(() => {
       expect(writeTextSpy).toHaveBeenCalled()
     })
-    expect(screen.getByText('✓ コピーしました')).toBeInTheDocument()
+    expect(screen.getByText('rightPanel.mermaidCopied')).toBeInTheDocument()
     act(() => {
       vi.advanceTimersByTime(1500)
     })
-    expect(screen.getByText('Mermaid コードをコピー')).toBeInTheDocument()
+    expect(screen.getByText('rightPanel.mermaidCopy')).toBeInTheDocument()
     vi.useRealTimers()
   })
 
@@ -1769,14 +1767,14 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
       arrows: [],
     }
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
-    const btn = screen.getByText('Mermaid コードをコピー')
+    const btn = screen.getByText('rightPanel.mermaidCopy')
     await userEvent.click(btn)
     await waitFor(() => {
       expect(writeTextSpy).toHaveBeenCalled()
     })
     // Label should remain unchanged on failure
-    expect(screen.getByText('Mermaid コードをコピー')).toBeInTheDocument()
-    expect(screen.queryByText('✓ コピーしました')).not.toBeInTheDocument()
+    expect(screen.getByText('rightPanel.mermaidCopy')).toBeInTheDocument()
+    expect(screen.queryByText('rightPanel.mermaidCopied')).not.toBeInTheDocument()
   })
 })
 
@@ -2108,7 +2106,7 @@ describe('2-click confirm UX (#219)', () => {
 
       // Ghost should be visible
       const ghostTexts = Array.from(container.querySelectorAll('text')).filter(
-        (t) => t.textContent === 'クリックで確定',
+        (t) => t.textContent === 'ghostClickConfirm',
       )
       expect(ghostTexts.length).toBeGreaterThanOrEqual(1)
 
@@ -2142,7 +2140,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be visible
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(true)
 
@@ -2152,7 +2150,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be gone
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(false)
     })
@@ -2171,7 +2169,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be visible
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(true)
 
@@ -2182,7 +2180,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be gone
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(false)
     })
@@ -2201,7 +2199,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be visible
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(true)
 
@@ -2211,7 +2209,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be gone
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(false)
     })
@@ -2241,7 +2239,7 @@ describe('2-click confirm UX (#219)', () => {
       fireEvent.click(cell1!)
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(true)
 
@@ -2249,7 +2247,7 @@ describe('2-click confirm UX (#219)', () => {
       fireEvent.mouseLeave(cell1!)
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(false)
 
@@ -2257,7 +2255,7 @@ describe('2-click confirm UX (#219)', () => {
       fireEvent.click(cell2!)
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(true)
 
@@ -2288,7 +2286,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be visible (dashed line with "クリックで確定" text)
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(true)
 
@@ -2312,7 +2310,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be visible
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(true)
 
@@ -2322,7 +2320,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be gone
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(false)
     })
@@ -2337,7 +2335,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be visible
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(true)
 
@@ -2347,7 +2345,7 @@ describe('2-click confirm UX (#219)', () => {
       // Ghost should be gone
       expect(
         Array.from(container.querySelectorAll('text')).some(
-          (t) => t.textContent === 'クリックで確定',
+          (t) => t.textContent === 'ghostClickConfirm',
         ),
       ).toBe(false)
     })
@@ -2539,14 +2537,14 @@ describe('JSON export (#235)', () => {
   }
 
   const clickJSONDownloadButton = async () => {
-    const btn = screen.getByText('JSON をダウンロード')
+    const btn = screen.getByText('rightPanel.jsonDownload')
     await userEvent.click(btn)
   }
 
   it('should render JSON download button in export panel', () => {
     const flow = createMinimalFlow()
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
-    expect(screen.getByText('JSON をダウンロード')).toBeInTheDocument()
+    expect(screen.getByText('rightPanel.jsonDownload')).toBeInTheDocument()
   })
 
   it('should export valid JSON with meta, flow, and recentActions fields', async () => {
@@ -2612,7 +2610,7 @@ describe('JSON export (#235)', () => {
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     setupDownloadMock()
     await clickJSONDownloadButton()
-    expect(screen.getByText('✓ ダウンロードしました')).toBeInTheDocument()
+    expect(screen.getByText('rightPanel.jsonDownloaded')).toBeInTheDocument()
   })
 
   it('should revert download button label after 1.5 seconds', async () => {
@@ -2621,14 +2619,14 @@ describe('JSON export (#235)', () => {
     setupDownloadMock()
     // Enable fake timers after render to avoid blocking useEffect timers
     vi.useFakeTimers()
-    const btn = screen.getByText('JSON をダウンロード')
+    const btn = screen.getByText('rightPanel.jsonDownload')
     // Use fireEvent instead of userEvent to avoid async timer conflicts
     fireEvent.click(btn)
-    expect(screen.getByText('✓ ダウンロードしました')).toBeInTheDocument()
+    expect(screen.getByText('rightPanel.jsonDownloaded')).toBeInTheDocument()
     act(() => {
       vi.advanceTimersByTime(1500)
     })
-    expect(screen.getByText('JSON をダウンロード')).toBeInTheDocument()
+    expect(screen.getByText('rightPanel.jsonDownload')).toBeInTheDocument()
     vi.useRealTimers()
   })
 
@@ -2646,7 +2644,7 @@ describe('JSON export (#235)', () => {
     const flow = createMinimalFlow()
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     setupDownloadMock()
-    fireEvent.click(screen.getByText('JSON をダウンロード'))
+    fireEvent.click(screen.getByText('rightPanel.jsonDownload'))
     expect(URL.revokeObjectURL).not.toHaveBeenCalled()
     act(() => {
       vi.advanceTimersByTime(100)
@@ -2683,7 +2681,7 @@ describe('Cmd+A select all (#240)', () => {
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     fireEvent.keyDown(document, { key: 'a', metaKey: true })
     // All 3 nodes should be selected — status bar shows "3件選択中"
-    expect(screen.getByText(/3件選択中/)).toBeInTheDocument()
+    expect(screen.getByText(/hint\.multiSelect/)).toBeInTheDocument()
   })
 
   it('should not select all when no nodes exist', () => {
@@ -2691,7 +2689,7 @@ describe('Cmd+A select all (#240)', () => {
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     fireEvent.keyDown(document, { key: 'a', metaKey: true })
     // No "件選択中" text should appear
-    expect(screen.queryByText(/件選択中/)).toBeNull()
+    expect(screen.queryByText(/hint\.multiSelect/)).toBeNull()
   })
 
   it('should work with Ctrl+A (Windows)', () => {
@@ -2704,7 +2702,7 @@ describe('Cmd+A select all (#240)', () => {
     }
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     fireEvent.keyDown(document, { key: 'a', ctrlKey: true })
-    expect(screen.getByText(/2件選択中/)).toBeInTheDocument()
+    expect(screen.getByText(/hint\.multiSelect/)).toBeInTheDocument()
   })
 })
 
@@ -2728,7 +2726,7 @@ describe('toolbar z-order (#284)', () => {
     fireEvent.click(toolbarBtns[1])
 
     // Type memo text and blur to confirm
-    const textarea = container.querySelector('textarea[placeholder="メモを入力…"]')
+    const textarea = container.querySelector('textarea[placeholder="memoPlaceholder"]')
     expect(textarea).toBeTruthy()
     fireEvent.change(textarea!, { target: { value: 'テストメモ' } })
     fireEvent.blur(textarea!)

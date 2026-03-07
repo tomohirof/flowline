@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { BRAND } from '../../constants/brand'
 import styles from './DashboardSkeleton.module.css'
 
@@ -7,11 +8,12 @@ const TEAM_WIDTHS = [120, 100]
 const TAB_WIDTHS = [60, 70, 80]
 
 export function DashboardSkeleton() {
+  const { t } = useTranslation('common')
   return (
     <div
       data-testid="dashboard-skeleton"
       className={styles.skeleton}
-      aria-label="読み込み中"
+      aria-label={t('loadingAria')}
       role="status"
     >
       {/* Topbar */}

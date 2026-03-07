@@ -12,7 +12,7 @@ describe('LoadingSpinner', () => {
     render(<LoadingSpinner />)
     const el = screen.getByRole('status')
     expect(el).toBeInTheDocument()
-    expect(el).toHaveAttribute('aria-label', '読み込み中')
+    expect(el).toHaveAttribute('aria-label', 'loadingAria')
   })
 
   it('should render logo initial "F"', () => {
@@ -22,7 +22,7 @@ describe('LoadingSpinner', () => {
 
   it('should render loading text', () => {
     render(<LoadingSpinner />)
-    expect(screen.getByText('読み込み中...')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
   })
 
   it('should apply fullScreen class when fullScreen prop is true', () => {

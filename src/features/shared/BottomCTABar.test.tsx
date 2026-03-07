@@ -27,17 +27,17 @@ describe('BottomCTABar', () => {
 
   it('should display CTA heading text', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
-    expect(screen.getByText(BRAND.sharedCreateCta)).toBeInTheDocument()
+    expect(screen.getByText('createCta')).toBeInTheDocument()
   })
 
   it('should display sub text', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
-    expect(screen.getByText(BRAND.sharedCtaFeatures)).toBeInTheDocument()
+    expect(screen.getByText('ctaFeatures')).toBeInTheDocument()
   })
 
   it('should have CTA link pointing to absolute URL', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
-    const link = screen.getByRole('link', { name: BRAND.ctaButtonShared })
+    const link = screen.getByRole('link', { name: 'brand.ctaButtonShared' })
     expect(link).toHaveAttribute('href', 'https://flowline.six1.jp/')
   })
 
@@ -50,6 +50,6 @@ describe('BottomCTABar', () => {
 
   it('should have aria-label on close button for accessibility', () => {
     render(<BottomCTABar visible={true} onClose={vi.fn()} />)
-    expect(screen.getByTestId('bottom-cta-close')).toHaveAttribute('aria-label', '閉じる')
+    expect(screen.getByTestId('bottom-cta-close')).toHaveAttribute('aria-label', 'close')
   })
 })

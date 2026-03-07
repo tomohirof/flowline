@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { BRAND } from '../constants/brand'
 import styles from './LoadingSpinner.module.css'
 
@@ -6,14 +7,16 @@ interface LoadingSpinnerProps {
 }
 
 export function LoadingSpinner({ fullScreen }: LoadingSpinnerProps) {
+  const { t } = useTranslation()
+
   return (
     <div
       className={`${styles.spinner}${fullScreen ? ` ${styles.fullScreen}` : ''}`}
       role="status"
-      aria-label="読み込み中"
+      aria-label={t('loadingAria')}
     >
       <div className={styles.logo}>{BRAND.logoInitial}</div>
-      <span className={styles.text}>読み込み中...</span>
+      <span className={styles.text}>{t('loading')}</span>
     </div>
   )
 }

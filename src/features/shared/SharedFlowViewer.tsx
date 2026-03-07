@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { BRAND } from '../../constants/brand'
 import { PALETTES, THEMES } from '../editor/theme-constants'
@@ -16,6 +17,7 @@ interface SharedFlowViewerProps {
 }
 
 export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
+  const { t, i18n } = useTranslation('shared')
   const themeId = (Object.keys(THEMES).includes(flow.themeId) ? flow.themeId : 'cloud') as ThemeId
   const T = THEMES[themeId]
   const isDark = themeId === 'midnight'
@@ -167,7 +169,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
               </div>
               <div className={styles.authorText}>
                 <span className={styles.authorName}>{flow.authorName}</span>
-                <span className={styles.authorSub}>が {BRAND.name} で作成</span>
+                <span className={styles.authorSub}>
+                  {t('createdWith', { appName: BRAND.name })}
+                </span>
               </div>
             </div>
           )}
@@ -186,8 +190,8 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
               })}
             </div>
             <span>
-              {sortedLanes.length} レーン · {flow.nodes.length} ノード · 更新{' '}
-              {formatRelativeTime(flow.updatedAt)}
+              {sortedLanes.length} {t('lanes')} · {flow.nodes.length} {t('nodes')} · {t('updated')}{' '}
+              {formatRelativeTime(flow.updatedAt, i18n.language)}
             </span>
           </div>
         </div>
@@ -500,7 +504,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           <div className={styles.footerIcon} style={{ background: logoGradient }}>
             {BRAND.logoInitial}
           </div>
-          <span className={styles.footerText}>{BRAND.sharedFooter}</span>
+          <span className={styles.footerText}>{t('footer')}</span>
         </a>
         <div className={styles.zoomControls}>
           <button className={styles.zoomBtn} onClick={() => setZoom((z) => Math.min(2, z + 0.1))}>

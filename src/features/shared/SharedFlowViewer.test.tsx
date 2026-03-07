@@ -41,7 +41,7 @@ describe('SharedFlowViewer', () => {
 
   it('should not render viewModeBadge', () => {
     render(<SharedFlowViewer flow={mockFlow} />)
-    expect(screen.queryByText('閲覧モード')).toBeNull()
+    expect(screen.queryByText('viewBadge')).toBeNull()
   })
 
   it('should not render flow title in titleBar', () => {
@@ -86,26 +86,26 @@ describe('SharedFlowViewer', () => {
     render(<SharedFlowViewer flow={flowWithAuthor} />)
     const hero = screen.getByTestId('shared-title-hero')
     expect(hero.textContent).toContain('Test Author')
-    expect(hero.textContent).toContain('Flowline で作成')
+    expect(hero.textContent).toContain('createdWith')
   })
 
   it('should not render author row when authorName is not provided', () => {
     render(<SharedFlowViewer flow={mockFlow} />)
     const hero = screen.getByTestId('shared-title-hero')
-    expect(hero.textContent).not.toContain('で作成')
+    expect(hero.textContent).not.toContain('createdWith')
   })
 
   it('should display meta info with lane and node counts', () => {
     render(<SharedFlowViewer flow={mockFlow} />)
     const hero = screen.getByTestId('shared-title-hero')
-    expect(hero.textContent).toContain('1 レーン')
-    expect(hero.textContent).toContain('1 ノード')
+    expect(hero.textContent).toContain('1 lanes')
+    expect(hero.textContent).toContain('1 nodes')
   })
 
   it('should render brand logo in footer', () => {
     render(<SharedFlowViewer flow={mockFlow} />)
     const footer = screen.getByTestId('shared-flow-footer')
-    expect(footer.textContent).toContain('Flowline')
+    expect(footer.textContent).toContain('footer')
   })
 
   it('should render logo in titleBar as a link to Flowline', () => {

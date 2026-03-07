@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Settings } from '../types'
 import { Section } from '../components/Section'
 import { SettingRow } from '../components/SettingRow'
@@ -9,26 +10,24 @@ interface InteractionSectionProps {
 }
 
 export function InteractionSection({ settings, onToggle }: InteractionSectionProps) {
+  const { t } = useTranslation('settings')
   return (
-    <Section title="操作設定" desc="マウスやキーボードの操作方法をカスタマイズします">
+    <Section title={t('interaction.title')} desc={t('interaction.desc')}>
       <SettingRow
-        label="ダブルクリックで編集"
-        desc="OFFの場合、シングルクリックで編集モードに入ります"
+        label={t('interaction.doubleClickEdit')}
+        desc={t('interaction.doubleClickEditDesc')}
       >
         <Toggle
           checked={settings.doubleClickToEdit}
           onChange={() => onToggle('doubleClickToEdit')}
         />
       </SettingRow>
-      <SettingRow
-        label={'\u2318Z / Ctrl+Z でundo'}
-        desc="キーボードショートカットによる操作の取り消し（常にON）"
-      >
+      <SettingRow label={t('interaction.undoShortcut')} desc={t('interaction.undoShortcutDesc')}>
         <Toggle checked={true} onChange={() => {}} disabled />
       </SettingRow>
       <SettingRow
-        label="Delete / Backspace で削除"
-        desc="選択中のノードや矢印をキーで削除（常にON）"
+        label={t('interaction.deleteShortcut')}
+        desc={t('interaction.deleteShortcutDesc')}
       >
         <Toggle checked={true} onChange={() => {}} disabled />
       </SettingRow>

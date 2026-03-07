@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { BRAND } from '../../constants/brand'
 import { PALETTES } from '../editor/theme-constants'
 import styles from './TeaserModal.module.css'
@@ -19,6 +20,7 @@ export function TeaserModal({
   isDark = false,
   onClose,
 }: TeaserModalProps) {
+  const { t } = useTranslation('shared')
   return (
     <div
       className={`${styles.overlay}${isDark ? ` ${styles.overlayDark}` : ''}`}
@@ -34,7 +36,7 @@ export function TeaserModal({
         <h2 className={`${styles.flowTitle}${isDark ? ` ${styles.flowTitleDark}` : ''}`}>
           {flowTitle}
         </h2>
-        <p className={styles.subtitle}>{BRAND.sharedCreatedBy}</p>
+        <p className={styles.subtitle}>{t('createdBy')}</p>
         <div className={styles.meta}>
           {laneColors.map((colorIndex, i) => (
             <div
@@ -45,14 +47,14 @@ export function TeaserModal({
             />
           ))}
           <span className={styles.metaText}>
-            {laneCount} レーン · {nodeCount} ノード
+            {laneCount} {t('lanes')} · {nodeCount} {t('nodes')}
           </span>
         </div>
         <button className={styles.ctaButton} onClick={onClose}>
-          {BRAND.sharedViewButton}
+          {t('viewButton')}
         </button>
         <a href={BRAND.flowsUrl} className={styles.freeLink}>
-          {BRAND.sharedFreeText}
+          {t('freeText')}
         </a>
       </div>
     </div>

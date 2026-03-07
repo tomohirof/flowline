@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Section } from '../components/Section'
 import styles from './SecuritySection.module.css'
 
@@ -8,6 +9,7 @@ interface SecuritySectionProps {
 }
 
 export function SecuritySection({ onPasswordChange, onDeleteAccount }: SecuritySectionProps) {
+  const { t } = useTranslation('settings')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -39,16 +41,16 @@ export function SecuritySection({ onPasswordChange, onDeleteAccount }: SecurityS
     try {
       await onDeleteAccount()
     } catch (e) {
-      setDeleteError(e instanceof Error ? e.message : 'アカウントの削除に失敗しました')
+      setDeleteError(e instanceof Error ? e.message : t('security.deleteAccountFailed'))
       setConfirmDelete(false)
     }
   }
 
   return (
-    <Section title="セキュリティ" desc="アカウントの安全性を管理します">
+    <Section title={t('security.title')} desc={t('security.desc')}>
       <div className={styles.wrapper}>
         <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>現在のパスワード</label>
+          <label className={styles.fieldLabel}>{t('security.currentPassword')}</label>
           <input
             type="password"
             className={styles.input}
@@ -60,11 +62,11 @@ export function SecuritySection({ onPasswordChange, onDeleteAccount }: SecurityS
         </div>
 
         <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>新しいパスワード</label>
+          <label className={styles.fieldLabel}>{t('security.newPassword')}</label>
           <input
             type="password"
             className={styles.input}
-            placeholder="8文字以上"
+            placeholder={t('security.newPasswordPlaceholder')}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             data-testid="new-password-input"
@@ -78,7 +80,7 @@ export function SecuritySection({ onPasswordChange, onDeleteAccount }: SecurityS
         )}
         {passwordSuccess && (
           <div className={styles.successMsg} data-testid="password-success">
-            パスワードを変更しました
+            {t('security.passwordChanged')}
           </div>
         )}
 
@@ -87,15 +89,13 @@ export function SecuritySection({ onPasswordChange, onDeleteAccount }: SecurityS
           onClick={handlePasswordSubmit}
           data-testid="change-password-button"
         >
-          パスワードを変更
+          {t('security.changePassword')}
         </button>
       </div>
 
       <div className={styles.dangerZone}>
-        <h4 className={styles.dangerTitle}>危険ゾーン</h4>
-        <p className={styles.dangerDesc}>
-          アカウントを削除すると、すべてのデータが完全に消去されます。この操作は取り消せません。
-        </p>
+        <h4 className={styles.dangerTitle}>{t('security.dangerZone')}</h4>
+        <p className={styles.dangerDesc}>{t('security.deleteAccountWarning')}</p>
         {deleteError && (
           <div className={styles.errorMsg} data-testid="delete-error">
             {deleteError}
@@ -106,7 +106,7 @@ export function SecuritySection({ onPasswordChange, onDeleteAccount }: SecurityS
           onClick={handleDelete}
           data-testid="delete-account-button"
         >
-          {confirmDelete ? '本当に削除する' : 'アカウントを削除'}
+          {confirmDelete ? t('security.deleteAccountConfirm') : t('security.deleteAccount')}
         </button>
       </div>
     </Section>

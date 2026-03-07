@@ -178,12 +178,12 @@ describe('SettingsPage', () => {
     })
 
     const sidebar = screen.getByTestId('settings-sidebar')
-    expect(sidebar).toHaveTextContent('プロフィール')
-    expect(sidebar).toHaveTextContent('エディタ')
-    expect(sidebar).toHaveTextContent('操作')
-    expect(sidebar).toHaveTextContent('表示')
-    expect(sidebar).toHaveTextContent('通知')
-    expect(sidebar).toHaveTextContent('セキュリティ')
+    expect(sidebar).toHaveTextContent('nav.profile')
+    expect(sidebar).toHaveTextContent('nav.editor')
+    expect(sidebar).toHaveTextContent('nav.interaction')
+    expect(sidebar).toHaveTextContent('nav.display')
+    expect(sidebar).toHaveTextContent('nav.notification')
+    expect(sidebar).toHaveTextContent('nav.security')
   })
 
   // === デフォルト表示 ===
@@ -195,7 +195,7 @@ describe('SettingsPage', () => {
       expect(screen.getByTestId('settings-content')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('アカウント情報を管理します')).toBeInTheDocument()
+    expect(screen.getByText('profile.desc')).toBeInTheDocument()
   })
 
   // === セクション切替 ===
@@ -210,7 +210,7 @@ describe('SettingsPage', () => {
 
     await user.click(screen.getByTestId('nav-editor'))
 
-    expect(screen.getByText('ノード作成')).toBeInTheDocument()
+    expect(screen.getByText('editor.nodeCreation.title')).toBeInTheDocument()
   })
 
   it('should switch to display section when nav clicked', async () => {
@@ -224,7 +224,7 @@ describe('SettingsPage', () => {
 
     await user.click(screen.getByTestId('nav-display'))
 
-    expect(screen.getByText('表示設定')).toBeInTheDocument()
+    expect(screen.getByText('display.title')).toBeInTheDocument()
   })
 
   it('should switch to notifications section when nav clicked', async () => {
@@ -238,7 +238,7 @@ describe('SettingsPage', () => {
 
     await user.click(screen.getByTestId('nav-notifications'))
 
-    expect(screen.getByText('通知設定')).toBeInTheDocument()
+    expect(screen.getByText('notification.title')).toBeInTheDocument()
   })
 
   it('should switch to interaction section when nav clicked', async () => {
@@ -252,7 +252,7 @@ describe('SettingsPage', () => {
 
     await user.click(screen.getByTestId('nav-interaction'))
 
-    expect(screen.getByText('操作設定')).toBeInTheDocument()
+    expect(screen.getByText('interaction.title')).toBeInTheDocument()
   })
 
   it('should switch to security section when nav clicked', async () => {
@@ -267,8 +267,8 @@ describe('SettingsPage', () => {
     await user.click(screen.getByTestId('nav-security'))
 
     const content = screen.getByTestId('settings-content')
-    expect(content).toHaveTextContent('セキュリティ')
-    expect(content).toHaveTextContent('危険ゾーン')
+    expect(content).toHaveTextContent('security.title')
+    expect(content).toHaveTextContent('security.dangerZone')
   })
 
   // === APIエラー ===
@@ -411,7 +411,7 @@ describe('SettingsPage', () => {
     await waitFor(
       () => {
         expect(screen.getByTestId('save-status-error')).toBeInTheDocument()
-        expect(screen.getByTestId('save-status-error')).toHaveTextContent('保存失敗')
+        expect(screen.getByTestId('save-status-error')).toHaveTextContent('status.saveFailed')
       },
       { timeout: 3000 },
     )
@@ -443,7 +443,7 @@ describe('SettingsPage', () => {
       expect(screen.getByTestId('settings-avatar')).toBeInTheDocument()
     })
 
-    expect(screen.getByTestId('settings-avatar')).toHaveAttribute('aria-label', 'メニュー')
+    expect(screen.getByTestId('settings-avatar')).toHaveAttribute('aria-label', 'status.menu')
   })
 
   // === アバターの頭文字表示 ===

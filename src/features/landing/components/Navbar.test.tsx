@@ -39,44 +39,44 @@ describe('Navbar', () => {
     expect(screen.getByText(BRAND.logoInitial)).toBeInTheDocument()
   })
 
-  it('should render nav links "機能" and "使い方"', () => {
+  it('should render nav links (i18n keys)', () => {
     renderNavbar()
-    expect(screen.getByText('機能')).toBeInTheDocument()
-    expect(screen.getByText('使い方')).toBeInTheDocument()
+    expect(screen.getByText('nav.features')).toBeInTheDocument()
+    expect(screen.getByText('nav.howToUse')).toBeInTheDocument()
   })
 
-  it('should render "ログイン" button', () => {
+  it('should render login button (i18n key)', () => {
     renderNavbar()
-    expect(screen.getByText('ログイン')).toBeInTheDocument()
+    expect(screen.getByText('nav.login')).toBeInTheDocument()
   })
 
-  it('should render "無料で始める" button', () => {
+  it('should render signup button (i18n key)', () => {
     renderNavbar()
-    expect(screen.getByText(BRAND.ctaButtonNav)).toBeInTheDocument()
+    expect(screen.getByText('brand.ctaButtonNav')).toBeInTheDocument()
   })
 
-  it('should call onLoginClick when "ログイン" is clicked', async () => {
+  it('should call onLoginClick when login button is clicked', async () => {
     const user = userEvent.setup()
     const onLoginClick = vi.fn()
     renderNavbar({ ...defaultProps, onLoginClick })
 
-    await user.click(screen.getByText('ログイン'))
+    await user.click(screen.getByText('nav.login'))
     expect(onLoginClick).toHaveBeenCalledTimes(1)
   })
 
-  it('should call onSignupClick when "無料で始める" is clicked', async () => {
+  it('should call onSignupClick when signup button is clicked', async () => {
     const user = userEvent.setup()
     const onSignupClick = vi.fn()
     renderNavbar({ ...defaultProps, onSignupClick })
 
-    await user.click(screen.getByText(BRAND.ctaButtonNav))
+    await user.click(screen.getByText('brand.ctaButtonNav'))
     expect(onSignupClick).toHaveBeenCalledTimes(1)
   })
 
   it('should have nav link buttons for scrolling', () => {
     renderNavbar()
-    const featuresBtn = screen.getByText('機能')
-    const howItWorksBtn = screen.getByText('使い方')
+    const featuresBtn = screen.getByText('nav.features')
+    const howItWorksBtn = screen.getByText('nav.howToUse')
     expect(featuresBtn.tagName).toBe('BUTTON')
     expect(howItWorksBtn.tagName).toBe('BUTTON')
   })

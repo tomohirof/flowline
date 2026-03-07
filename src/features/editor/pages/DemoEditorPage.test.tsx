@@ -70,7 +70,7 @@ describe('DemoEditorPage', () => {
   it('should show save CTA button with login text', () => {
     render(<DemoEditorPage />)
     const ctaButton = screen.getByTestId('save-cta-button')
-    expect(ctaButton.textContent).toBe('ログインして保存')
+    expect(ctaButton.textContent).toBe('demoSaveCta')
   })
 
   it('should not show share button', () => {
@@ -84,6 +84,6 @@ describe('DemoEditorPage', () => {
     const ctaButton = screen.getByTestId('save-cta-button')
     await user.click(ctaButton)
     // AuthModal should be visible with email input
-    expect(screen.getByPlaceholderText('メールアドレス')).toBeTruthy()
+    expect(screen.getByPlaceholderText('form.email')).toBeTruthy()
   })
 })
