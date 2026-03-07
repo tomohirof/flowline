@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { BRAND } from '../../constants/brand'
 import { apiFetch, ApiError } from '../../lib/api'
 import type { Flow, FlowDetailResponse } from '../editor/types'
@@ -8,6 +9,7 @@ import { LoadingSpinner } from '../../components/LoadingSpinner'
 import styles from './SharedFlowPage.module.css'
 
 export function SharedFlowPage() {
+  const { t } = useTranslation('shared')
   const { token } = useParams<{ token: string }>()
   const [flow, setFlow] = useState<Flow | null>(null)
   const [loading, setLoading] = useState(true)
@@ -33,7 +35,7 @@ export function SharedFlowPage() {
           if (err instanceof ApiError) {
             setError(err.message)
           } else {
-            setError('共有フローの読み込みに失敗しました')
+            setError(t('errorLoad'))
           }
           setLoading(false)
         }
@@ -51,9 +53,9 @@ export function SharedFlowPage() {
         data-testid="shared-flow-error"
         className={`${styles.centerScreenColumn} ${styles.error}`}
       >
-        <p className={styles.errorMessage}>共有トークンが指定されていません</p>
+        <p className={styles.errorMessage}>{t('errorNoToken')}</p>
         <a href="/" className={styles.topLink}>
-          {BRAND.sharedTopLink}
+          {t('topLink')}
         </a>
       </div>
     )
@@ -75,7 +77,7 @@ export function SharedFlowPage() {
       >
         <p className={styles.errorMessage}>{error}</p>
         <a href="/" className={styles.topLink}>
-          {BRAND.sharedTopLink}
+          {t('topLink')}
         </a>
       </div>
     )

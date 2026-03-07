@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { BRAND } from '../../constants/brand'
 import styles from './BottomCTABar.module.css'
 
@@ -7,6 +8,8 @@ interface BottomCTABarProps {
 }
 
 export function BottomCTABar({ visible, onClose }: BottomCTABarProps) {
+  const { t } = useTranslation('shared')
+  const { t: tc } = useTranslation('common')
   if (!visible) return null
 
   return (
@@ -14,17 +17,17 @@ export function BottomCTABar({ visible, onClose }: BottomCTABarProps) {
       <div className={styles.bar}>
         <div className={styles.logo}>{BRAND.logoInitial}</div>
         <div className={styles.textBlock}>
-          <div className={styles.heading}>{BRAND.sharedCreateCta}</div>
-          <div className={styles.subText}>{BRAND.sharedCtaFeatures}</div>
+          <div className={styles.heading}>{t('createCta')}</div>
+          <div className={styles.subText}>{t('ctaFeatures')}</div>
         </div>
         <a href={BRAND.siteUrl} className={styles.ctaLink}>
-          {BRAND.ctaButtonShared}
+          {t('landing:brand.ctaButtonShared')}
         </a>
         <button
           className={styles.closeBtn}
           onClick={onClose}
           data-testid="bottom-cta-close"
-          aria-label="閉じる"
+          aria-label={tc('close')}
         >
           ✕
         </button>

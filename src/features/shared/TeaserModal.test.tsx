@@ -59,8 +59,8 @@ describe('TeaserModal', () => {
         onClose={vi.fn()}
       />,
     )
-    expect(screen.getByText(/4 レーン/)).toBeInTheDocument()
-    expect(screen.getByText(/8 ノード/)).toBeInTheDocument()
+    expect(screen.getByText(/4 lanes/)).toBeInTheDocument()
+    expect(screen.getByText(/8 nodes/)).toBeInTheDocument()
   })
 
   it('should render lane color dots matching laneColors count', () => {
@@ -77,7 +77,7 @@ describe('TeaserModal', () => {
     expect(dots).toHaveLength(3)
   })
 
-  it('should render CTA button "フロー図を表示する"', () => {
+  it('should render CTA view button', () => {
     render(
       <TeaserModal
         flowTitle="Test"
@@ -87,7 +87,7 @@ describe('TeaserModal', () => {
         onClose={vi.fn()}
       />,
     )
-    expect(screen.getByRole('button', { name: BRAND.sharedViewButton })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'viewButton' })).toBeInTheDocument()
   })
 
   it('should call onClose when CTA button is clicked', async () => {
@@ -101,7 +101,7 @@ describe('TeaserModal', () => {
         onClose={onClose}
       />,
     )
-    await userEvent.click(screen.getByRole('button', { name: BRAND.sharedViewButton }))
+    await userEvent.click(screen.getByRole('button', { name: 'viewButton' }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
@@ -115,7 +115,7 @@ describe('TeaserModal', () => {
         onClose={vi.fn()}
       />,
     )
-    expect(screen.getByText(BRAND.sharedFreeText)).toBeInTheDocument()
+    expect(screen.getByText('freeText')).toBeInTheDocument()
   })
 
   it('should render with zero lanes and nodes', () => {
@@ -129,7 +129,7 @@ describe('TeaserModal', () => {
       />,
     )
     expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
-    expect(screen.getByText(/0 レーン/)).toBeInTheDocument()
+    expect(screen.getByText(/0 lanes/)).toBeInTheDocument()
   })
 
   it('should render logo as a link to Flowline', () => {
@@ -159,7 +159,7 @@ describe('TeaserModal', () => {
     )
     const modal = screen.getByTestId('teaser-modal')
     const links = Array.from(modal.querySelectorAll('a'))
-    const freeLink = links.find((a) => a.textContent?.includes('無料'))
+    const freeLink = links.find((a) => a.textContent?.includes('freeText'))
     expect(freeLink).not.toBeUndefined()
     expect(freeLink!.getAttribute('href')).toBe('https://flowline.six1.jp/flows')
   })

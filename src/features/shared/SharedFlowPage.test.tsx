@@ -106,14 +106,14 @@ describe('SharedFlowPage', () => {
     })
   })
 
-  it('should show "Flowlineで作成" footer', async () => {
+  it('should show footer text', async () => {
     mockApiFetch.mockResolvedValueOnce({ flow: mockSharedFlow })
 
     renderSharedPage()
 
     await waitFor(() => {
       expect(screen.getByTestId('shared-flow-footer')).toBeInTheDocument()
-      expect(screen.getByText(BRAND.sharedFooter)).toBeInTheDocument()
+      expect(screen.getByText('footer')).toBeInTheDocument()
     })
   })
 
@@ -141,7 +141,7 @@ describe('SharedFlowPage', () => {
       expect(screen.getByTestId('shared-flow-error')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('共有フローの読み込みに失敗しました')).toBeInTheDocument()
+    expect(screen.getByText('errorLoad')).toBeInTheDocument()
   })
 
   // ========================================
@@ -240,7 +240,7 @@ describe('SharedFlowPage', () => {
         expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByRole('button', { name: BRAND.sharedViewButton }))
+      await userEvent.click(screen.getByRole('button', { name: 'viewButton' }))
 
       expect(screen.queryByTestId('teaser-modal')).not.toBeInTheDocument()
       expect(screen.getByTestId('shared-flow-canvas')).not.toHaveClass(/Blurred/)
@@ -256,7 +256,7 @@ describe('SharedFlowPage', () => {
         expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByRole('button', { name: BRAND.sharedViewButton }))
+      await userEvent.click(screen.getByRole('button', { name: 'viewButton' }))
 
       expect(screen.queryByTestId('bottom-cta-bar')).not.toBeInTheDocument()
 
@@ -279,7 +279,7 @@ describe('SharedFlowPage', () => {
         expect(screen.getByTestId('teaser-modal')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByRole('button', { name: BRAND.sharedViewButton }))
+      await userEvent.click(screen.getByRole('button', { name: 'viewButton' }))
 
       vi.advanceTimersByTime(3000)
 
