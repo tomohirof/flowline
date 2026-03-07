@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Settings } from '../types'
 import { Section } from '../components/Section'
 import { SettingRow } from '../components/SettingRow'
@@ -9,15 +10,16 @@ interface DisplaySectionProps {
 }
 
 export function DisplaySection({ settings, onToggle }: DisplaySectionProps) {
+  const { t } = useTranslation('settings')
   return (
-    <Section title="表示設定" desc="エディタの見た目をカスタマイズします">
-      <SettingRow label="ドットグリッド表示" desc="キャンバス背景のドットグリッドパターン">
+    <Section title={t('display.title')} desc={t('display.desc')}>
+      <SettingRow label={t('display.dotGrid')} desc={t('display.dotGridDesc')}>
         <Toggle checked={settings.showDotGrid} onChange={() => onToggle('showDotGrid')} />
       </SettingRow>
-      <SettingRow label="ノード順番バッジ" desc="ノード右下の作成順番号を表示">
+      <SettingRow label={t('display.orderBadge')} desc={t('display.orderBadgeDesc')}>
         <Toggle checked={settings.showOrderBadge} onChange={() => onToggle('showOrderBadge')} />
       </SettingRow>
-      <SettingRow label="レーンカラーバー" desc="レーンヘッダー下のカラーライン">
+      <SettingRow label={t('display.laneColorBar')} desc={t('display.laneColorBarDesc')}>
         <Toggle checked={settings.showLaneColorBar} onChange={() => onToggle('showLaneColorBar')} />
       </SettingRow>
     </Section>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
@@ -17,13 +18,13 @@ import styles from './SettingsPage.module.css'
 
 type NavId = 'profile' | 'editor' | 'interaction' | 'display' | 'notifications' | 'security'
 
-const NAV_ITEMS: { id: NavId; label: string; icon: string }[] = [
-  { id: 'profile', label: 'プロフィール', icon: 'user' },
-  { id: 'editor', label: 'エディタ', icon: 'sliders' },
-  { id: 'interaction', label: '操作', icon: 'mouse' },
-  { id: 'display', label: '表示', icon: 'palette' },
-  { id: 'notifications', label: '通知', icon: 'bell' },
-  { id: 'security', label: 'セキュリティ', icon: 'shield' },
+const NAV_ITEMS: { id: NavId; labelKey: string; icon: string }[] = [
+  { id: 'profile', labelKey: 'nav.profile', icon: 'user' },
+  { id: 'editor', labelKey: 'nav.editor', icon: 'sliders' },
+  { id: 'interaction', labelKey: 'nav.interaction', icon: 'mouse' },
+  { id: 'display', labelKey: 'nav.display', icon: 'palette' },
+  { id: 'notifications', labelKey: 'nav.notification', icon: 'bell' },
+  { id: 'security', labelKey: 'nav.security', icon: 'shield' },
 ]
 
 const ICON_PATHS: Record<string, string> = {
@@ -78,6 +79,7 @@ const DEFAULT_SETTINGS: Settings = {
 }
 
 export function SettingsPage() {
+  const { t } = useTranslation('settings')
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
@@ -111,7 +113,7 @@ export function SettingsPage() {
         isInitialLoadRef.current = false
       }, 0)
     } catch {
-      setError('設定の取得に失敗しました')
+      setError(t('status.loadError'))
       setLoadFailed(true)
       // Use user info as fallback
       if (user) {
@@ -169,7 +171,7 @@ export function SettingsPage() {
         setTimeout(() => setSaveStatus('idle'), 2000)
       } catch {
         setSaveStatus('error')
-        setError('設定の保存に失敗しました')
+        setError(t('status.saveError'))
         setTimeout(() => setSaveStatus('idle'), 3000)
       }
     }, 800)
@@ -190,7 +192,7 @@ export function SettingsPage() {
       })
       return null
     } catch (e) {
-      return e instanceof Error ? e.message : 'パスワードの変更に失敗しました'
+      return e instanceof Error ? e.message : t('security.passwordChangeFailed')
     }
   }
 
@@ -259,24 +261,24 @@ export function SettingsPage() {
         <div className={styles.spacer} />
         {saveStatus === 'saving' && (
           <span className={styles.saveStatus} data-testid="save-status">
-            保存中...
+            {t('status.saving')}
           </span>
         )}
         {saveStatus === 'saved' && (
           <span className={styles.saveStatusDone} data-testid="save-status">
-            &#10003; 保存済み
+            &#10003; {t('status.saved')}
           </span>
         )}
         {saveStatus === 'error' && (
           <span className={styles.saveStatusError} data-testid="save-status-error">
-            保存失敗
+            {t('status.saveFailed')}
           </span>
         )}
         <button
           className={styles.avatar}
           onClick={() => setMenuOpen((p) => !p)}
           data-testid="settings-avatar"
-          aria-label="メニュー"
+          aria-label={t('status.menu')}
         >
           {user?.name?.charAt(0).toUpperCase() || 'U'}
         </button>
@@ -310,7 +312,7 @@ export function SettingsPage() {
                 data-testid={`nav-${n.id}`}
               >
                 <Icon d={ICON_PATHS[n.icon]} strokeWidth={active ? 2.2 : 1.8} />
-                {n.label}
+                {t(n.labelKey)}
               </button>
             )
           })}

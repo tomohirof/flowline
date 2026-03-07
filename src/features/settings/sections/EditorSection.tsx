@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { Settings } from '../types'
 import { Section } from '../components/Section'
 import { SettingRow } from '../components/SettingRow'
@@ -11,30 +12,31 @@ interface EditorSectionProps {
 }
 
 export function EditorSection({ settings, onToggle, onSet }: EditorSectionProps) {
+  const { t } = useTranslation('settings')
   return (
     <>
-      <Section title="ノード作成" desc="新しいノードを作成する際の挙動を設定します">
+      <Section title={t('editor.nodeCreation.title')} desc={t('editor.nodeCreation.desc')}>
         <SettingRow
-          label="同じ行にノード作成時、テキストをコピー"
-          desc="隣のレーンの同じ行にノードを作成すると、元のノードのラベルが引き継がれます"
+          label={t('editor.nodeCreation.copyLabel')}
+          desc={t('editor.nodeCreation.copyLabelDesc')}
         >
           <Toggle
             checked={settings.copyLabelOnSameRow}
             onChange={() => onToggle('copyLabelOnSameRow')}
           />
         </SettingRow>
-        <SettingRow label="自動接続" desc="新規ノードを前のノードに自動で矢印接続します">
+        <SettingRow label={t('editor.nodeCreation.autoConnect')} desc={t('editor.nodeCreation.autoConnectDesc')}>
           <Toggle checked={settings.autoConnect} onChange={() => onToggle('autoConnect')} />
         </SettingRow>
         <SettingRow
-          label="最終行で自動行追加"
-          desc="最後の行にノードを配置すると、新しい空行が自動追加されます"
+          label={t('editor.nodeCreation.autoAddRow')}
+          desc={t('editor.nodeCreation.autoAddRowDesc')}
         >
           <Toggle checked={settings.autoAddRow} onChange={() => onToggle('autoAddRow')} />
         </SettingRow>
         <SettingRow
-          label="作成後すぐに編集"
-          desc="ノード作成後、自動的にラベル編集モードに入ります"
+          label={t('editor.nodeCreation.editOnCreate')}
+          desc={t('editor.nodeCreation.editOnCreateDesc')}
         >
           <Toggle
             checked={settings.enterEditOnCreate}
@@ -43,17 +45,17 @@ export function EditorSection({ settings, onToggle, onSet }: EditorSectionProps)
         </SettingRow>
       </Section>
 
-      <Section title="接続線のデフォルト" desc="新しい接続線の初期スタイルを設定します">
-        <SettingRow label="線のスタイル">
+      <Section title={t('editor.arrowDefault.title')} desc={t('editor.arrowDefault.desc')}>
+        <SettingRow label={t('editor.arrowDefault.lineStyle')}>
           <div style={{ display: 'flex', gap: 4 }}>
             {[
-              { id: 'solid', label: '実線' },
-              { id: 'dashed', label: '破線' },
-              { id: 'dotted', label: '点線' },
+              { id: 'solid', labelKey: 'editor.arrowDefault.solid' },
+              { id: 'dashed', labelKey: 'editor.arrowDefault.dashed' },
+              { id: 'dotted', labelKey: 'editor.arrowDefault.dotted' },
             ].map((s) => (
               <Tag
                 key={s.id}
-                label={s.label}
+                label={t(s.labelKey)}
                 active={settings.defaultArrowStyle === s.id}
                 onClick={() => onSet('defaultArrowStyle', s.id)}
               />
@@ -62,19 +64,19 @@ export function EditorSection({ settings, onToggle, onSet }: EditorSectionProps)
         </SettingRow>
       </Section>
 
-      <Section title="デフォルトテーマ">
-        <SettingRow label="新規ファイルのテーマ">
+      <Section title={t('editor.theme.title')}>
+        <SettingRow label={t('editor.theme.desc')}>
           <div style={{ display: 'flex', gap: 4 }}>
             {[
               { id: 'cloud', label: 'Cloud' },
               { id: 'midnight', label: 'Midnight' },
               { id: 'blueprint', label: 'Blueprint' },
-            ].map((t) => (
+            ].map((th) => (
               <Tag
-                key={t.id}
-                label={t.label}
-                active={settings.defaultTheme === t.id}
-                onClick={() => onSet('defaultTheme', t.id)}
+                key={th.id}
+                label={th.label}
+                active={settings.defaultTheme === th.id}
+                onClick={() => onSet('defaultTheme', th.id)}
               />
             ))}
           </div>

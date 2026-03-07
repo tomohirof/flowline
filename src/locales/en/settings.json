@@ -78,9 +78,19 @@
     "newPasswordPlaceholder": "8+ characters",
     "passwordChanged": "Password changed",
     "changePassword": "Change password",
+    "passwordChangeFailed": "Failed to change password",
     "dangerZone": "Danger zone",
     "deleteAccountWarning": "Deleting your account will permanently erase all data. This action cannot be undone.",
     "deleteAccountConfirm": "Confirm delete",
-    "deleteAccount": "Delete account"
+    "deleteAccount": "Delete account",
+    "deleteAccountFailed": "Failed to delete account"
+  },
+  "status": {
+    "saving": "Saving...",
+    "saved": "Saved",
+    "saveFailed": "Save failed",
+    "loadError": "Failed to load settings",
+    "saveError": "Failed to save settings",
+    "menu": "Menu"
   }
 }
