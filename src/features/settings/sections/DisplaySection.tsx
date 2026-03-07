@@ -25,10 +25,10 @@ export function DisplaySection({ settings, onToggle, onSet }: DisplaySectionProp
           style={{
             padding: '6px 12px',
             borderRadius: 8,
-            border: '1px solid #ddd',
+            border: '1px solid var(--border-color, #ddd)',
             fontSize: 13,
-            background: '#fff',
-            color: '#1a1a2e',
+            background: 'var(--bg-primary, #fff)',
+            color: 'var(--text-primary, #1a1a2e)',
             cursor: 'pointer',
             outline: 'none',
           }}

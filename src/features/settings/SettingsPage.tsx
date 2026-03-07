@@ -139,7 +139,7 @@ export function SettingsPage() {
     if (settings.language && settings.language !== i18n.language) {
       i18n.changeLanguage(settings.language)
     }
-  }, [settings.language])
+  }, [settings.language, i18n])
 
   // Keep userNameRef in sync with user.name
   useEffect(() => {

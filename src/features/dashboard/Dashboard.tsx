@@ -96,7 +96,7 @@ export function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   const loadTrashFlows = useCallback(async () => {
     try {
@@ -108,7 +108,7 @@ export function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   // Debounced search
   useEffect(() => {
