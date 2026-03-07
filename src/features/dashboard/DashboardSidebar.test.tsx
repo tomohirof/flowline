@@ -128,13 +128,15 @@ describe('DashboardSidebar', () => {
   it('should call onRenameProject when rename is clicked in context menu', async () => {
     const user = userEvent.setup()
     const onRenameProject = vi.fn()
+    vi.spyOn(window, 'prompt').mockReturnValue('New Name')
     render(<DashboardSidebar {...defaultProps} onRenameProject={onRenameProject} />)
 
     const projectItem = screen.getByTestId('project-item-p1')
     fireEvent.contextMenu(projectItem)
 
     await user.click(screen.getByText('sidebar.rename'))
-    expect(onRenameProject).toHaveBeenCalledWith('p1')
+    expect(onRenameProject).toHaveBeenCalledWith('p1', 'New Name')
+    vi.restoreAllMocks()
   })
 
   it('should call onDeleteProject when delete is clicked in context menu', async () => {

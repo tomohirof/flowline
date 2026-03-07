@@ -9,7 +9,7 @@ interface DashboardSidebarProps {
   userName: string
   projects: Project[]
   onCreateProject: () => void
-  onRenameProject: (projectId: string) => void
+  onRenameProject: (projectId: string, newName: string) => void
   onDeleteProject: (projectId: string) => void
 }
 
@@ -58,9 +58,13 @@ export function DashboardSidebar({
   const handleRename = useCallback(
     (projectId: string) => {
       setContextMenu(null)
-      onRenameProject(projectId)
+      const project = projects.find((p) => p.id === projectId)
+      const newName = window.prompt(t('sidebar.rename'), project?.name ?? '')
+      if (newName && newName.trim()) {
+        onRenameProject(projectId, newName.trim())
+      }
     },
-    [onRenameProject],
+    [onRenameProject, projects, t],
   )
 
   const handleDelete = useCallback(
