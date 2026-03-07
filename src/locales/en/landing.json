@@ -51,6 +51,10 @@
     "terms": "Terms of Service",
     "contact": "Contact Us"
   },
+  "preview": {
+    "lanes": ["Planning", "Engineering", "Admin"],
+    "nodes": [["Requirements", "Scheduling"], ["Design Review", "Implementation & Testing"], ["Approval Flow", "Release Notice"]]
+  },
   "brand": {
     "taglinePart1": "Draw flows.",
     "taglinePart2": "Teams move.",

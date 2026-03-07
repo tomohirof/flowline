@@ -70,7 +70,7 @@ describe('DemoEditorPage', () => {
   it('should show save CTA button with login text', () => {
     render(<DemoEditorPage />)
     const ctaButton = screen.getByTestId('save-cta-button')
-    expect(ctaButton.textContent).toBe('ログインして保存')
+    expect(ctaButton.textContent).toBe('demoSaveCta')
   })
 
   it('should not show share button', () => {

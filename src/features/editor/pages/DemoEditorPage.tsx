@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND } from '../../../constants/brand'
+import { useTranslation } from 'react-i18next'
 import { useDemoFlow } from '../hooks/useDemoFlow'
 import FlowEditor from '../FlowEditor'
 import { AuthModal } from '../../landing/components/AuthModal'
@@ -9,6 +9,7 @@ import { useAuth } from '../../../hooks/useAuth'
 import type { FlowDetailResponse, FlowSavePayload } from '../types'
 
 export function DemoEditorPage() {
+  const { t } = useTranslation('shared')
   const { flow, saveStatus } = useDemoFlow()
   const [showAuth, setShowAuth] = useState(false)
   const navigate = useNavigate()
@@ -56,7 +57,7 @@ export function DemoEditorPage() {
         flow={flow}
         onSave={capturePayload}
         saveStatus={saveStatus}
-        saveCtaLabel={BRAND.demoSaveCta}
+        saveCtaLabel={t('demoSaveCta')}
         onSaveCtaClick={handleSaveCtaClick}
         hideShare={true}
       />
