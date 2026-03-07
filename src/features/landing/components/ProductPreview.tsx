@@ -41,7 +41,7 @@ export function ProductPreview() {
                 {lane.name}
               </div>
               <div className={styles.laneBody}>
-                {lane.nodes.map((node) => (
+                {lane.nodes.map((node: string) => (
                   <div key={node} className={styles.node}>
                     {node}
                   </div>
