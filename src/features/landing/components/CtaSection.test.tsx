@@ -26,9 +26,7 @@ describe('CtaSection', () => {
 
   it('should render CTA button with primary CTA text (i18n key)', () => {
     renderWithRouter(<CtaSection onCtaClick={vi.fn()} />)
-    expect(
-      screen.getByRole('button', { name: 'brand.ctaButtonPrimary' }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'brand.ctaButtonPrimary' })).toBeInTheDocument()
   })
 
   it('should call onCtaClick when CTA button is clicked', async () => {
@@ -36,9 +34,7 @@ describe('CtaSection', () => {
     const onCtaClick = vi.fn()
     renderWithRouter(<CtaSection onCtaClick={onCtaClick} />)
 
-    await user.click(
-      screen.getByRole('button', { name: 'brand.ctaButtonPrimary' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'brand.ctaButtonPrimary' }))
     expect(onCtaClick).toHaveBeenCalledTimes(1)
   })
 

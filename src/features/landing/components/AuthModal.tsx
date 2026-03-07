@@ -174,9 +174,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
             </div>
             <h2 className={styles.verifyTitle}>{t('auth:verifyEmail.title')}</h2>
             <div className={styles.verifyEmailCard}>{verifyEmail}</div>
-            <p className={styles.verifyText}>
-              {t('auth:verifyEmail.description')}
-            </p>
+            <p className={styles.verifyText}>{t('auth:verifyEmail.description')}</p>
             <p className={styles.verifyNote}>{t('auth:verifyEmail.checkSpam')}</p>
             <button
               type="button"
@@ -191,7 +189,9 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
               className={styles.backLink}
               onClick={() => switchMode(verifySource)}
             >
-              {verifySource === 'login' ? t('auth:verifyEmail.backToLogin') : t('auth:verifyEmail.changeEmail')}
+              {verifySource === 'login'
+                ? t('auth:verifyEmail.backToLogin')
+                : t('auth:verifyEmail.changeEmail')}
             </button>
           </div>
         ) : (
@@ -245,7 +245,11 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 disabled={submitting}
                 data-testid="auth-submit"
               >
-                {submitting ? t('auth:form.processing') : mode === 'login' ? t('auth:form.loginButton') : t('auth:form.createAccount')}
+                {submitting
+                  ? t('auth:form.processing')
+                  : mode === 'login'
+                    ? t('auth:form.loginButton')
+                    : t('auth:form.createAccount')}
               </button>
             </form>
 

@@ -53,7 +53,11 @@
   },
   "preview": {
     "lanes": ["Planning", "Engineering", "Admin"],
-    "nodes": [["Requirements", "Scheduling"], ["Design Review", "Implementation & Testing"], ["Approval Flow", "Release Notice"]]
+    "nodes": [
+      ["Requirements", "Scheduling"],
+      ["Design Review", "Implementation & Testing"],
+      ["Approval Flow", "Release Notice"]
+    ]
   },
   "brand": {
     "taglinePart1": "Draw flows.",

@@ -50,7 +50,11 @@ export function FlowContextMenu({
     ? [
         { label: t('dashboard:action.restore'), action: () => onRestore?.() },
         'sep',
-        { label: t('dashboard:action.permanentDelete'), action: () => onPermanentDelete?.(), danger: true },
+        {
+          label: t('dashboard:action.permanentDelete'),
+          action: () => onPermanentDelete?.(),
+          danger: true,
+        },
       ]
     : [
         { label: t('common:open'), action: onOpen },

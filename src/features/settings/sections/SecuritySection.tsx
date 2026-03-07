@@ -95,9 +95,7 @@ export function SecuritySection({ onPasswordChange, onDeleteAccount }: SecurityS
 
       <div className={styles.dangerZone}>
         <h4 className={styles.dangerTitle}>{t('security.dangerZone')}</h4>
-        <p className={styles.dangerDesc}>
-          {t('security.deleteAccountWarning')}
-        </p>
+        <p className={styles.dangerDesc}>{t('security.deleteAccountWarning')}</p>
         {deleteError && (
           <div className={styles.errorMsg} data-testid="delete-error">
             {deleteError}

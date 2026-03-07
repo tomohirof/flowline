@@ -22,10 +22,7 @@ export function InteractionSection({ settings, onToggle }: InteractionSectionPro
           onChange={() => onToggle('doubleClickToEdit')}
         />
       </SettingRow>
-      <SettingRow
-        label={t('interaction.undoShortcut')}
-        desc={t('interaction.undoShortcutDesc')}
-      >
+      <SettingRow label={t('interaction.undoShortcut')} desc={t('interaction.undoShortcutDesc')}>
         <Toggle checked={true} onChange={() => {}} disabled />
       </SettingRow>
       <SettingRow

@@ -777,9 +777,7 @@ describe('Multi-select (#76)', () => {
   it('should show Shift+click hint in default status bar', () => {
     render(<FlowEditor flow={createFlowWith2Nodes()} onSave={vi.fn()} saveStatus="saved" />)
     const hints = document.querySelectorAll('[class*="statusTextHint"]')
-    const shiftHint = Array.from(hints).find((el) =>
-      el.textContent?.includes('hint.normal'),
-    )
+    const shiftHint = Array.from(hints).find((el) => el.textContent?.includes('hint.normal'))
     expect(shiftHint).toBeTruthy()
   })
 

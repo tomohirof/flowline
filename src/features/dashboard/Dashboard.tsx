@@ -450,9 +450,7 @@ export function Dashboard() {
                         : t('dashboard:empty.noFlows')}
                     </p>
                     {!searchQuery.trim() && (
-                      <p className={styles.emptySubtitle}>
-                        {t('dashboard:empty.noFlowsDesc')}
-                      </p>
+                      <p className={styles.emptySubtitle}>{t('dashboard:empty.noFlowsDesc')}</p>
                     )}
                     {!searchQuery.trim() && (
                       <button
@@ -504,7 +502,9 @@ export function Dashboard() {
                   {/* List header */}
                   <div className={styles.listHeader}>
                     <span className={styles.listHeaderName}>{t('dashboard:table.name')}</span>
-                    <span className={styles.listHeaderUpdated}>{t('dashboard:table.updatedAt')}</span>
+                    <span className={styles.listHeaderUpdated}>
+                      {t('dashboard:table.updatedAt')}
+                    </span>
                     <span className={styles.listHeaderLanes}>{t('dashboard:table.lanes')}</span>
                     <span className={styles.listHeaderActions} />
                   </div>

@@ -103,11 +103,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
               className={styles.textarea}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={
-                flowId != null
-                  ? t('ai.placeholderEdit')
-                  : t('ai.placeholderGenerate')
-              }
+              placeholder={flowId != null ? t('ai.placeholderEdit') : t('ai.placeholderGenerate')}
               rows={3}
               disabled={loading}
               data-testid="ai-prompt-input"

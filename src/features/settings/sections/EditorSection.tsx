@@ -25,7 +25,10 @@ export function EditorSection({ settings, onToggle, onSet }: EditorSectionProps)
             onChange={() => onToggle('copyLabelOnSameRow')}
           />
         </SettingRow>
-        <SettingRow label={t('editor.nodeCreation.autoConnect')} desc={t('editor.nodeCreation.autoConnectDesc')}>
+        <SettingRow
+          label={t('editor.nodeCreation.autoConnect')}
+          desc={t('editor.nodeCreation.autoConnectDesc')}
+        >
           <Toggle checked={settings.autoConnect} onChange={() => onToggle('autoConnect')} />
         </SettingRow>
         <SettingRow

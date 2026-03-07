@@ -825,7 +825,11 @@ export default function FlowEditor({
   const insertLaneAt = (i: number): void => {
     setLanes((prev) => {
       const n = [...prev]
-      n.splice(i, 0, { id: uid(), name: t('newLaneName', { number: prev.length + 1 }), ci: i % PALETTES.length })
+      n.splice(i, 0, {
+        id: uid(),
+        name: t('newLaneName', { number: prev.length + 1 }),
+        ci: i % PALETTES.length,
+      })
       return n
     })
     setHoveredLaneGap(null)
@@ -2552,7 +2556,10 @@ export default function FlowEditor({
                           placeholder={t('defaultNodeLabel')}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const v = e.target.value
-                            setTasks((p2) => ({ ...p2, [k]: { ...p2[k], label: v || t('defaultNodeLabel') } }))
+                            setTasks((p2) => ({
+                              ...p2,
+                              [k]: { ...p2[k], label: v || t('defaultNodeLabel') },
+                            }))
                           }}
                           onBlur={() => setEditing(null)}
                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -3556,12 +3563,7 @@ export default function FlowEditor({
         aiEnabled={user?.aiEnabled ?? false}
         onFlowGenerated={(aiFlow) => {
           const hasExistingContent = order.length > 0
-          if (
-            hasExistingContent &&
-            !window.confirm(
-              t('confirm.aiOverwrite'),
-            )
-          ) {
+          if (hasExistingContent && !window.confirm(t('confirm.aiOverwrite'))) {
             return
           }
           const tempFlow: Flow = {

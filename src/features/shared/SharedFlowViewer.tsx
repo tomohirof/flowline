@@ -169,7 +169,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
               </div>
               <div className={styles.authorText}>
                 <span className={styles.authorName}>{flow.authorName}</span>
-                <span className={styles.authorSub}>{t('createdWith', { appName: BRAND.name })}</span>
+                <span className={styles.authorSub}>
+                  {t('createdWith', { appName: BRAND.name })}
+                </span>
               </div>
             </div>
           )}

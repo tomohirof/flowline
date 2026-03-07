@@ -125,7 +125,9 @@ export const RightPanel = ({
         <PanelSection label="">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span className={styles.multiSelBadge}>{multiSel.size}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: T.panelText }}>{t('rightPanel.multiSelect', { count: multiSel.size })}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: T.panelText }}>
+              {t('rightPanel.multiSelect', { count: multiSel.size })}
+            </span>
           </div>
           <span style={{ fontSize: 10, color: T.panelLabel }}>
             {t('rightPanel.multiSelectHint')}
@@ -277,7 +279,10 @@ export const RightPanel = ({
             value={selTaskData.label === t('defaultNodeLabel') ? '' : selTaskData.label}
             placeholder={t('rightPanel.defaultLabel')}
             onChange={(v: string) =>
-              setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], label: v || t('defaultNodeLabel') } }))
+              setTasks((p2) => ({
+                ...p2,
+                [selTask]: { ...p2[selTask], label: v || t('defaultNodeLabel') },
+              }))
             }
           />
         </PanelSection>
@@ -505,8 +510,16 @@ export const RightPanel = ({
         </PanelSection>
         <PanelSection label={t('rightPanel.operations')}>
           <div className={styles.panelActions}>
-            <PanelBtn label={t('rightPanel.nodeConnect')} color={T.accent} onClick={() => startConnect(selTask)} />
-            <PanelBtn label={t('rightPanel.nodeDelete')} color="#E06060" onClick={() => delTask(selTask)} />
+            <PanelBtn
+              label={t('rightPanel.nodeConnect')}
+              color={T.accent}
+              onClick={() => startConnect(selTask)}
+            />
+            <PanelBtn
+              label={t('rightPanel.nodeDelete')}
+              color="#E06060"
+              onClick={() => delTask(selTask)}
+            />
           </div>
         </PanelSection>
       </>
@@ -690,8 +703,16 @@ export const RightPanel = ({
         </PanelSection>
         <PanelSection label={t('rightPanel.laneOrder')}>
           <div style={{ display: 'flex', gap: 6 }}>
-            <PanelBtn label={t('rightPanel.laneMovePrev')} color={T.accent} onClick={() => moveLane(selLane, -1)} />
-            <PanelBtn label={t('rightPanel.laneMoveNext')} color={T.accent} onClick={() => moveLane(selLane, 1)} />
+            <PanelBtn
+              label={t('rightPanel.laneMovePrev')}
+              color={T.accent}
+              onClick={() => moveLane(selLane, -1)}
+            />
+            <PanelBtn
+              label={t('rightPanel.laneMoveNext')}
+              color={T.accent}
+              onClick={() => moveLane(selLane, 1)}
+            />
           </div>
         </PanelSection>
         {selLaneData.groupId && (
@@ -705,7 +726,12 @@ export const RightPanel = ({
           </PanelSection>
         )}
         <PanelSection label={t('rightPanel.operations')}>
-          <PanelBtn label={t('rightPanel.laneDelete')} color="#E06060" onClick={() => rmLane(selLane)} full />
+          <PanelBtn
+            label={t('rightPanel.laneDelete')}
+            color="#E06060"
+            onClick={() => rmLane(selLane)}
+            full
+          />
         </PanelSection>
       </>
     )
