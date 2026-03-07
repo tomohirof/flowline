@@ -74,6 +74,7 @@
     "newProject": "New Project",
     "rename": "Rename",
     "delete": "Delete",
+    "moveToProject": "Move to project",
     "proPlanMessage": "Get team sharing and version history with the Pro plan",
     "showPlan": "View plans"
   },
