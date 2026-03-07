@@ -37,8 +37,8 @@ describe('UserMenuPanel', () => {
     expect(screen.getByTestId('user-menu-panel')).toBeInTheDocument()
     expect(screen.getByText('テストユーザー')).toBeInTheDocument()
     expect(screen.getByText('test@example.com')).toBeInTheDocument()
-    expect(screen.getByText('アカウント')).toBeInTheDocument()
-    expect(screen.getByText('Free プラン')).toBeInTheDocument()
+    expect(screen.getByText('account')).toBeInTheDocument()
+    expect(screen.getByText('freePlan')).toBeInTheDocument()
   })
 
   it('should not render when closed', () => {
@@ -92,14 +92,14 @@ describe('UserMenuPanel', () => {
         <UserMenuPanel {...defaultProps} />
       </MemoryRouter>,
     )
-    expect(screen.getByText('プロフィール設定')).toBeInTheDocument()
-    expect(screen.getByText('アカウント設定')).toBeInTheDocument()
-    expect(screen.getByText('プランと請求')).toBeInTheDocument()
-    expect(screen.getByText('チーム管理')).toBeInTheDocument()
-    expect(screen.getByText('ダークモード')).toBeInTheDocument()
-    expect(screen.getByText('キーボードショートカット')).toBeInTheDocument()
-    expect(screen.getByText('ヘルプ・ドキュメント')).toBeInTheDocument()
-    expect(screen.getByText('フィードバック')).toBeInTheDocument()
+    expect(screen.getByText('profileSettings')).toBeInTheDocument()
+    expect(screen.getByText('accountSettings')).toBeInTheDocument()
+    expect(screen.getByText('planAndBilling')).toBeInTheDocument()
+    expect(screen.getByText('teamManagement')).toBeInTheDocument()
+    expect(screen.getByText('darkMode')).toBeInTheDocument()
+    expect(screen.getByText('keyboardShortcuts')).toBeInTheDocument()
+    expect(screen.getByText('helpDocs')).toBeInTheDocument()
+    expect(screen.getByText('feedback')).toBeInTheDocument()
   })
 
   it('should display user initial in large avatar', () => {
@@ -141,7 +141,7 @@ describe('UserMenuPanel', () => {
     const panel = screen.getByTestId('user-menu-panel')
     expect(panel).toHaveAttribute('role', 'dialog')
     expect(panel).toHaveAttribute('aria-modal', 'true')
-    expect(panel).toHaveAttribute('aria-label', 'アカウントメニュー')
+    expect(panel).toHaveAttribute('aria-label', 'accountMenu')
   })
 
   it('should render logout button inside menu list (not in separate footer)', () => {
@@ -157,7 +157,7 @@ describe('UserMenuPanel', () => {
   })
 
   describe('navigation to settings page', () => {
-    it('should navigate to /settings when プロフィール設定 is clicked', async () => {
+    it('should navigate to /settings when profileSettings is clicked', async () => {
       const user = userEvent.setup()
       const onClose = vi.fn()
       render(
@@ -165,11 +165,11 @@ describe('UserMenuPanel', () => {
           <UserMenuPanel {...defaultProps} onClose={onClose} />
         </MemoryRouter>,
       )
-      await user.click(screen.getByText('プロフィール設定'))
+      await user.click(screen.getByText('profileSettings'))
       expect(mockNavigate).toHaveBeenCalledWith('/settings')
     })
 
-    it('should navigate to /settings when アカウント設定 is clicked', async () => {
+    it('should navigate to /settings when accountSettings is clicked', async () => {
       const user = userEvent.setup()
       const onClose = vi.fn()
       render(
@@ -177,7 +177,7 @@ describe('UserMenuPanel', () => {
           <UserMenuPanel {...defaultProps} onClose={onClose} />
         </MemoryRouter>,
       )
-      await user.click(screen.getByText('アカウント設定'))
+      await user.click(screen.getByText('accountSettings'))
       expect(mockNavigate).toHaveBeenCalledWith('/settings')
     })
 
@@ -189,7 +189,7 @@ describe('UserMenuPanel', () => {
           <UserMenuPanel {...defaultProps} onClose={onClose} />
         </MemoryRouter>,
       )
-      await user.click(screen.getByText('プロフィール設定'))
+      await user.click(screen.getByText('profileSettings'))
       expect(onClose).toHaveBeenCalledTimes(1)
     })
 
@@ -201,7 +201,7 @@ describe('UserMenuPanel', () => {
           <UserMenuPanel {...defaultProps} onClose={onClose} />
         </MemoryRouter>,
       )
-      await user.click(screen.getByText('ダークモード'))
+      await user.click(screen.getByText('darkMode'))
       expect(mockNavigate).not.toHaveBeenCalled()
       expect(onClose).not.toHaveBeenCalled()
     })

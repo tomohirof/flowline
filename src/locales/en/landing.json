@@ -50,5 +50,19 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "contact": "Contact Us"
+  },
+  "brand": {
+    "taglinePart1": "Draw flows.",
+    "taglinePart2": "Teams move.",
+    "heroBadge": "Free business flow editor",
+    "heroSubtext": "Design, visualize, and share business flows in one tool.",
+    "heroSubtext2": "An intuitive editor anyone can start using right away.",
+    "featuresTitle": "Everything you need, in one place",
+    "featuresSubtitle": "All the features you need for business flow design",
+    "ctaHeading": "Visualize your business flows, starting today.",
+    "ctaSubtext": "Sign up for a free account to get started",
+    "ctaButtonPrimary": "Get started free →",
+    "ctaButtonNav": "Get started free",
+    "ctaButtonShared": "Try it free →"
   }
 }

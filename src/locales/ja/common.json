@@ -23,5 +23,8 @@
   "helpDocs": "ヘルプ・ドキュメント",
   "feedback": "フィードバック",
   "freePlan": "Free プラン",
-  "account": "アカウント"
+  "account": "アカウント",
+  "teamManagement": "チーム管理",
+  "closeMenu": "メニューを閉じる",
+  "accountMenu": "アカウントメニュー"
 }

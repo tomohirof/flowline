@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import styles from './ConfirmDialog.module.css'
 
 interface ConfirmDialogProps {
@@ -18,6 +19,8 @@ export function ConfirmDialog({
   danger,
   confirmLabel = 'OK',
 }: ConfirmDialogProps) {
+  const { t } = useTranslation()
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCancel()
@@ -83,7 +86,7 @@ export function ConfirmDialog({
             className={styles.cancelBtn}
             onClick={onCancel}
           >
-            キャンセル
+            {t('cancel')}
           </button>
           <button
             ref={confirmBtnRef}

@@ -1,4 +1,5 @@
 import { useEffect, type ReactElement } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import styles from './UserMenuPanel.module.css'
 
@@ -12,21 +13,21 @@ interface UserMenuPanelProps {
 
 interface MenuItem {
   icon: string
-  label: string
+  labelKey: string
   path?: string
 }
 
 const menuItems: (MenuItem | { type: 'sep'; id: string })[] = [
-  { icon: 'user', label: 'プロフィール設定', path: '/settings' },
-  { icon: 'settings', label: 'アカウント設定', path: '/settings' },
-  { icon: 'credit-card', label: 'プランと請求' },
-  { icon: 'users', label: 'チーム管理' },
+  { icon: 'user', labelKey: 'profileSettings', path: '/settings' },
+  { icon: 'settings', labelKey: 'accountSettings', path: '/settings' },
+  { icon: 'credit-card', labelKey: 'planAndBilling' },
+  { icon: 'users', labelKey: 'teamManagement' },
   { type: 'sep', id: 'sep-1' },
-  { icon: 'moon', label: 'ダークモード' },
-  { icon: 'keyboard', label: 'キーボードショートカット' },
+  { icon: 'moon', labelKey: 'darkMode' },
+  { icon: 'keyboard', labelKey: 'keyboardShortcuts' },
   { type: 'sep', id: 'sep-2' },
-  { icon: 'help-circle', label: 'ヘルプ・ドキュメント' },
-  { icon: 'message-square', label: 'フィードバック' },
+  { icon: 'help-circle', labelKey: 'helpDocs' },
+  { icon: 'message-square', labelKey: 'feedback' },
 ]
 
 const ICON_MAP: Record<string, ReactElement> = {
@@ -180,6 +181,7 @@ export function UserMenuPanel({
   userEmail,
   onLogout,
 }: UserMenuPanelProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -203,15 +205,15 @@ export function UserMenuPanel({
         className={styles.panel}
         role="dialog"
         aria-modal="true"
-        aria-label="アカウントメニュー"
+        aria-label={t('accountMenu')}
       >
         <div className={styles.header}>
-          <span className={styles.headerTitle}>アカウント</span>
+          <span className={styles.headerTitle}>{t('account')}</span>
           <button
             data-testid="user-menu-close"
             onClick={onClose}
             className={styles.closeBtn}
-            aria-label="メニューを閉じる"
+            aria-label={t('closeMenu')}
           >
             ✕
           </button>
@@ -224,7 +226,7 @@ export function UserMenuPanel({
           <div className={styles.userDetails}>
             <div className={styles.userName}>{userName}</div>
             <div className={styles.userEmail}>{userEmail}</div>
-            <span className={styles.planBadge}>Free プラン</span>
+            <span className={styles.planBadge}>{t('freePlan')}</span>
           </div>
         </div>
 
@@ -248,7 +250,7 @@ export function UserMenuPanel({
                 <span className={styles.menuIcon}>
                   <MenuIcon name={item.icon} />
                 </span>
-                {item.label}
+                {t(item.labelKey)}
               </button>
             )
           })}
@@ -257,7 +259,7 @@ export function UserMenuPanel({
             <span className={styles.menuIcon}>
               <MenuIcon name="log-out" />
             </span>
-            ログアウト
+            {t('logout')}
           </button>
         </div>
       </div>

@@ -23,5 +23,8 @@
   "helpDocs": "Help & docs",
   "feedback": "Feedback",
   "freePlan": "Free plan",
-  "account": "Account"
+  "account": "Account",
+  "teamManagement": "Team management",
+  "closeMenu": "Close menu",
+  "accountMenu": "Account menu"
 }

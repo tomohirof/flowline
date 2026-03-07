@@ -4,5 +4,15 @@
   "nodes": "nodes",
   "updated": "updated",
   "errorLoad": "Failed to load shared flow",
-  "errorNoToken": "No share token specified"
+  "errorNoToken": "No share token specified",
+  "footer": "Created with Flowline",
+  "createdBy": "Flow created with Flowline",
+  "createCta": "Create flow diagrams with Flowline",
+  "ctaFeatures": "Free to start · Share with team · Mermaid support",
+  "topLink": "Go to Flowline",
+  "viewButton": "View flow diagram",
+  "viewBadge": "View mode",
+  "freeText": "Free to view · No login required",
+  "demoTryLink": "Try now (no login required) →",
+  "demoSaveCta": "Log in to save"
 }
