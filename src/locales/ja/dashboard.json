@@ -89,6 +89,8 @@
     "deleteMessage": "プロジェクトを削除しますか？配下のフローは未分類に移動します。",
     "deleteConfirm": "削除する",
     "deleted": "プロジェクトを削除しました",
-    "errorDelete": "プロジェクトの削除に失敗しました"
+    "errorDelete": "プロジェクトの削除に失敗しました",
+    "movedTo": "{{name}}に移動しました",
+    "errorMove": "フローの移動に失敗しました"
   }
 }

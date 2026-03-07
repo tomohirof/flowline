@@ -1220,8 +1220,8 @@ describe('Dashboard', () => {
         expect(screen.getByTestId('context-menu')).toBeInTheDocument()
       })
 
-      // Click 'プロジェクトに移動' to open submenu
-      await user.click(screen.getByText('プロジェクトに移動'))
+      // Click 'sidebar.moveToProject' to open submenu
+      await user.click(screen.getByText('sidebar.moveToProject'))
 
       // Click project name in submenu (inside context-menu)
       const contextMenuEl = screen.getByTestId('context-menu')
@@ -1238,7 +1238,7 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByTestId('toast')).toBeInTheDocument()
       })
-      expect(screen.getByText('プロジェクトAに移動しました')).toBeInTheDocument()
+      expect(screen.getByText('project.movedTo')).toBeInTheDocument()
     })
 
     it('should show error when move to project fails', async () => {
@@ -1270,7 +1270,7 @@ describe('Dashboard', () => {
         expect(screen.getByTestId('context-menu')).toBeInTheDocument()
       })
 
-      await user.click(screen.getByText('プロジェクトに移動'))
+      await user.click(screen.getByText('sidebar.moveToProject'))
       const contextMenuEl = screen.getByTestId('context-menu')
       const projectBtn = Array.from(contextMenuEl.querySelectorAll('button')).find(
         (btn) => btn.textContent === 'プロジェクトA',
@@ -1280,7 +1280,7 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
       })
-      expect(screen.getByText('フローの移動に失敗しました')).toBeInTheDocument()
+      expect(screen.getByText('project.errorMove')).toBeInTheDocument()
     })
 
     it('should move flow to uncategorized via context menu', async () => {
@@ -1317,10 +1317,10 @@ describe('Dashboard', () => {
         expect(screen.getByTestId('context-menu')).toBeInTheDocument()
       })
 
-      await user.click(screen.getByText('プロジェクトに移動'))
+      await user.click(screen.getByText('sidebar.moveToProject'))
       const contextMenuEl = screen.getByTestId('context-menu')
       const uncategorizedBtn = Array.from(contextMenuEl.querySelectorAll('button')).find(
-        (btn) => btn.textContent === '未分類',
+        (btn) => btn.textContent === 'sidebar.uncategorized',
       )!
       await user.click(uncategorizedBtn)
 
@@ -1329,7 +1329,7 @@ describe('Dashboard', () => {
       })
 
       await waitFor(() => {
-        expect(screen.getByText('未分類に移動しました')).toBeInTheDocument()
+        expect(screen.getByText('project.movedTo')).toBeInTheDocument()
       })
     })
   })

@@ -403,11 +403,11 @@ export function Dashboard() {
       const trimmed = searchQuery.trim()
       loadFlows(trimmed || undefined, projectFilter)
       const targetName = projectId
-        ? projects.find((p) => p.id === projectId)?.name ?? 'プロジェクト'
-        : '未分類'
-      setToast({ message: `${targetName}に移動しました`, icon: '📁' })
+        ? projects.find((p) => p.id === projectId)?.name ?? t('dashboard:sidebar.projects')
+        : t('dashboard:sidebar.uncategorized')
+      setToast({ message: t('dashboard:project.movedTo', { name: targetName }), icon: '📁' })
     } catch {
-      setError('フローの移動に失敗しました')
+      setError(t('dashboard:project.errorMove'))
     }
   }
 

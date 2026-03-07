@@ -89,6 +89,8 @@
     "deleteMessage": "Delete this project? Flows will be moved to Uncategorized.",
     "deleteConfirm": "Delete",
     "deleted": "Project deleted",
-    "errorDelete": "Failed to delete project"
+    "errorDelete": "Failed to delete project",
+    "movedTo": "Moved to {{name}}",
+    "errorMove": "Failed to move flow"
   }
 }
