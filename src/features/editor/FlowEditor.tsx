@@ -3571,6 +3571,7 @@ export default function FlowEditor({
             title: aiFlow.title,
             themeId: themeId,
             shareToken: shareToken,
+            projectId: flow.projectId ?? null,
             createdAt: flow.createdAt,
             updatedAt: flow.updatedAt,
             lanes: aiFlow.lanes,

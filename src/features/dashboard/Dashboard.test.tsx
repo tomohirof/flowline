@@ -8,6 +8,11 @@ import { Dashboard } from './Dashboard'
 // Mock apiFetch
 vi.mock('../../lib/api', () => ({
   apiFetch: vi.fn(),
+  fetchProjects: vi.fn().mockResolvedValue({ projects: [] }),
+  createProject: vi.fn(),
+  renameProject: vi.fn(),
+  deleteProject: vi.fn(),
+  moveFlowToProject: vi.fn().mockResolvedValue({ ok: true }),
   ApiError: class ApiError extends Error {
     status: number
     constructor(status: number, message: string) {
@@ -38,9 +43,11 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-import { apiFetch } from '../../lib/api'
+import { apiFetch, fetchProjects, moveFlowToProject } from '../../lib/api'
 
 const mockApiFetch = vi.mocked(apiFetch)
+const mockFetchProjects = vi.mocked(fetchProjects)
+const mockMoveFlowToProject = vi.mocked(moveFlowToProject)
 
 const mockFlows = [
   {
@@ -48,6 +55,7 @@ const mockFlows = [
     title: '業務フロー',
     themeId: 'cloud',
     shareToken: 'abc123',
+    projectId: null,
     createdAt: '2026-01-15T10:00:00Z',
     updatedAt: '2026-01-15T10:00:00Z',
   },
@@ -56,6 +64,7 @@ const mockFlows = [
     title: '申請処理フロー',
     themeId: 'midnight',
     shareToken: null,
+    projectId: null,
     createdAt: '2026-01-14T08:00:00Z',
     updatedAt: '2026-01-14T08:00:00Z',
   },
@@ -72,6 +81,7 @@ function renderDashboard() {
 describe('Dashboard', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    mockFetchProjects.mockResolvedValue({ projects: [] })
   })
 
   afterEach(() => {
@@ -1099,6 +1109,224 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         expect(screen.getByText('title.trash')).toBeInTheDocument()
+      })
+    })
+  })
+
+  // =============================================
+  // プロジェクト機能テスト (#287)
+  // =============================================
+  describe('project hierarchy (#287)', () => {
+    it('should load projects on mount', async () => {
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(mockFetchProjects).toHaveBeenCalled()
+      })
+    })
+
+    it('should filter flows by project when project nav is selected', async () => {
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows }) // initial
+      mockApiFetch.mockResolvedValueOnce({ flows: [mockFlows[0]] }) // filtered
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // Click on project in sidebar
+      await userEvent.click(screen.getByText('プロジェクトA'))
+
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith('/flows?projectId=p1')
+      })
+    })
+
+    it('should show project name in title when project is selected', async () => {
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      mockApiFetch.mockResolvedValueOnce({ flows: [] })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByText('プロジェクトA'))
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'プロジェクトA' })).toBeInTheDocument()
+      })
+    })
+
+    it('should move flow to project via context menu', async () => {
+      const user = userEvent.setup()
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows }) // initial
+      mockMoveFlowToProject.mockResolvedValueOnce({ ok: true })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows }) // reload after move
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // Open context menu via card menu button
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+
+      // Click 'sidebar.moveToProject' to open submenu
+      await user.click(screen.getByText('sidebar.moveToProject'))
+
+      // Click project name in submenu (inside context-menu)
+      const contextMenuEl = screen.getByTestId('context-menu')
+      const projectBtn = Array.from(contextMenuEl.querySelectorAll('button')).find(
+        (btn) => btn.textContent === 'プロジェクトA',
+      )!
+      await user.click(projectBtn)
+
+      await waitFor(() => {
+        expect(mockMoveFlowToProject).toHaveBeenCalledWith('flow-1', 'p1')
+      })
+
+      // Toast should show
+      await waitFor(() => {
+        expect(screen.getByTestId('toast')).toBeInTheDocument()
+      })
+      expect(screen.getByText('project.movedTo')).toBeInTheDocument()
+    })
+
+    it('should show error when move to project fails', async () => {
+      const user = userEvent.setup()
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      mockMoveFlowToProject.mockRejectedValueOnce(new Error('Move failed'))
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByText('sidebar.moveToProject'))
+      const contextMenuEl = screen.getByTestId('context-menu')
+      const projectBtn = Array.from(contextMenuEl.querySelectorAll('button')).find(
+        (btn) => btn.textContent === 'プロジェクトA',
+      )!
+      await user.click(projectBtn)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
+      })
+      expect(screen.getByText('project.errorMove')).toBeInTheDocument()
+    })
+
+    it('should move flow to uncategorized via context menu', async () => {
+      const user = userEvent.setup()
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      const flowsWithProject = [{ ...mockFlows[0], projectId: 'p1' }, mockFlows[1]]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: flowsWithProject })
+      mockMoveFlowToProject.mockResolvedValueOnce({ ok: true })
+      mockApiFetch.mockResolvedValueOnce({ flows: flowsWithProject }) // reload
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      fireEvent.mouseEnter(screen.getByTestId('flow-card-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('card-menu-flow-1')).toBeInTheDocument()
+      })
+      await user.click(screen.getByTestId('card-menu-flow-1'))
+      await waitFor(() => {
+        expect(screen.getByTestId('context-menu')).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByText('sidebar.moveToProject'))
+      const contextMenuEl = screen.getByTestId('context-menu')
+      const uncategorizedBtn = Array.from(contextMenuEl.querySelectorAll('button')).find(
+        (btn) => btn.textContent === 'sidebar.uncategorized',
+      )!
+      await user.click(uncategorizedBtn)
+
+      await waitFor(() => {
+        expect(mockMoveFlowToProject).toHaveBeenCalledWith('flow-1', null)
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText('project.movedTo')).toBeInTheDocument()
       })
     })
   })

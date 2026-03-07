@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styles from './FlowContextMenu.module.css'
+import type { Project } from '../editor/types'
 
 interface FlowContextMenuProps {
   x: number
@@ -13,6 +14,9 @@ interface FlowContextMenuProps {
   isTrash?: boolean
   onRestore?: () => void
   onPermanentDelete?: () => void
+  projects?: Project[]
+  onMoveToProject?: (projectId: string | null) => void
+  currentProjectId?: string | null
 }
 
 interface MenuItem {
@@ -32,9 +36,13 @@ export function FlowContextMenu({
   isTrash = false,
   onRestore,
   onPermanentDelete,
+  projects,
+  onMoveToProject,
+  currentProjectId,
 }: FlowContextMenuProps) {
   const { t } = useTranslation(['dashboard', 'common'])
   const menuRef = useRef<HTMLDivElement>(null)
+  const [showMoveSubmenu, setShowMoveSubmenu] = useState(false)
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -45,6 +53,8 @@ export function FlowContextMenu({
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose])
+
+  const showMoveOption = !isTrash && projects && onMoveToProject
 
   const items: (MenuItem | 'sep')[] = isTrash
     ? [
@@ -64,6 +74,13 @@ export function FlowContextMenu({
         { label: t('common:delete'), action: onDelete, danger: true },
       ]
 
+  const filteredProjects = projects?.filter((p) => p.id !== currentProjectId) ?? []
+
+  const handleMoveToProject = (projectId: string | null) => {
+    onMoveToProject?.(projectId)
+    onClose()
+  }
+
   return (
     <div
       ref={menuRef}
@@ -74,6 +91,41 @@ export function FlowContextMenu({
     >
       {items.map((item, i) => {
         if (item === 'sep') {
+          // Insert move-to-project before the first separator in normal mode
+          if (showMoveOption && !isTrash && i === 3) {
+            return (
+              <div key={i}>
+                <button
+                  onClick={() => setShowMoveSubmenu(!showMoveSubmenu)}
+                  className={styles.item}
+                >
+                  {t('dashboard:sidebar.moveToProject')}
+                </button>
+                {showMoveSubmenu && (
+                  <div className={styles.submenuContainer}>
+                    {currentProjectId != null && (
+                      <button
+                        className={styles.submenuItem}
+                        onClick={() => handleMoveToProject(null)}
+                      >
+                        {t('dashboard:sidebar.uncategorized')}
+                      </button>
+                    )}
+                    {filteredProjects.map((p) => (
+                      <button
+                        key={p.id}
+                        className={styles.submenuItem}
+                        onClick={() => handleMoveToProject(p.id)}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className={styles.separator} />
+              </div>
+            )
+          }
           return <div key={i} className={styles.separator} />
         }
         return (

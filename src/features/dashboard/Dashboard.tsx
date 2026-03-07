@@ -1,8 +1,15 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
-import { apiFetch } from '../../lib/api'
-import type { FlowListResponse, FlowSummary, FlowDetailResponse } from '../editor/types'
+import {
+  apiFetch,
+  fetchProjects,
+  createProject as createProjectApi,
+  renameProject as renameProjectApi,
+  deleteProject as deleteProjectApi,
+  moveFlowToProject,
+} from '../../lib/api'
+import type { FlowListResponse, FlowSummary, FlowDetailResponse, Project } from '../editor/types'
 import { FlowCard } from './FlowCard'
 import { FlowContextMenu } from './FlowContextMenu'
 import { DashboardTopBar } from './DashboardTopBar'
@@ -42,6 +49,7 @@ const CreateCardIcon = () => (
 export function Dashboard() {
   const { t, i18n } = useTranslation(['dashboard', 'common'])
   const [flows, setFlows] = useState<FlowSummary[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState<boolean>(false)
@@ -82,13 +90,17 @@ export function Dashboard() {
   const initialLoadDone = useRef(false)
 
   const loadFlows = useCallback(
-    async (query?: string) => {
+    async (query?: string, projectFilter?: string) => {
       try {
         if (!initialLoadDone.current) {
           setLoading(true)
         }
         setError(null)
-        const url = query ? `/flows?q=${encodeURIComponent(query)}` : '/flows'
+        let url = '/flows'
+        const params: string[] = []
+        if (query) params.push(`q=${encodeURIComponent(query)}`)
+        if (projectFilter) params.push(`projectId=${encodeURIComponent(projectFilter)}`)
+        if (params.length > 0) url += '?' + params.join('&')
         const data = await apiFetch<FlowListResponse>(url)
         setFlows(data.flows)
         initialLoadDone.current = true
@@ -113,14 +125,25 @@ export function Dashboard() {
     }
   }, [t])
 
+  // Load projects on mount
+  useEffect(() => {
+    fetchProjects()
+      .then((data) => setProjects(data.projects))
+      .catch(() => {})
+  }, [])
+
   // Debounced search
   useEffect(() => {
+    if (selectedNav === 'trash') return
     const trimmed = searchQuery.trim()
+    const projectFilter = selectedNav.startsWith('project:')
+      ? selectedNav.slice('project:'.length)
+      : undefined
     const timer = setTimeout(() => {
-      loadFlows(trimmed || undefined)
+      loadFlows(trimmed || undefined, projectFilter)
     }, 300)
     return () => clearTimeout(timer)
-  }, [searchQuery, loadFlows])
+  }, [searchQuery, selectedNav, loadFlows])
 
   useEffect(() => {
     if (selectedNav === 'trash') {
@@ -142,6 +165,47 @@ export function Dashboard() {
     }
     return sortedFlows
   }, [selectedNav, sortedFlows])
+
+  const handleCreateProject = async () => {
+    const name = prompt(t('dashboard:project.promptName'))
+    if (!name?.trim()) return
+    try {
+      const data = await createProjectApi(name.trim())
+      setProjects((prev) => [...prev, data.project])
+      setToast({ message: t('dashboard:project.created'), icon: '📁' })
+    } catch {
+      setError(t('dashboard:project.errorCreate'))
+    }
+  }
+
+  const handleRenameProject = async (id: string, newName: string) => {
+    try {
+      const data = await renameProjectApi(id, newName)
+      setProjects((prev) => prev.map((p) => (p.id === id ? data.project : p)))
+    } catch {
+      setError(t('dashboard:project.errorRename'))
+    }
+  }
+
+  const handleDeleteProject = async (id: string) => {
+    setModal({
+      title: t('dashboard:project.deleteTitle'),
+      message: t('dashboard:project.deleteMessage'),
+      confirmLabel: t('dashboard:project.deleteConfirm'),
+      danger: true,
+      onConfirm: async () => {
+        setModal(null)
+        try {
+          await deleteProjectApi(id)
+          setProjects((prev) => prev.filter((p) => p.id !== id))
+          if (selectedNav === `project:${id}`) setSelectedNav('all')
+          setToast({ message: t('dashboard:project.deleted'), icon: '🗑' })
+        } catch {
+          setError(t('dashboard:project.errorDelete'))
+        }
+      },
+    })
+  }
 
   const handleCreate = async () => {
     if (creating) return
@@ -327,6 +391,26 @@ export function Dashboard() {
     }
   }
 
+  const handleMoveToProject = async (projectId: string | null) => {
+    if (!contextMenu) return
+    const flowId = contextMenu.flowId
+    setContextMenu(null)
+    try {
+      await moveFlowToProject(flowId, projectId)
+      const projectFilter = selectedNav.startsWith('project:')
+        ? selectedNav.slice('project:'.length)
+        : undefined
+      const trimmed = searchQuery.trim()
+      loadFlows(trimmed || undefined, projectFilter)
+      const targetName = projectId
+        ? (projects.find((p) => p.id === projectId)?.name ?? t('dashboard:sidebar.projects'))
+        : t('dashboard:sidebar.uncategorized')
+      setToast({ message: t('dashboard:project.movedTo', { name: targetName }), icon: '📁' })
+    } catch {
+      setError(t('dashboard:project.errorMove'))
+    }
+  }
+
   // Lane colors for list view
   const laneColors = PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
 
@@ -350,6 +434,10 @@ export function Dashboard() {
               selectedNav={selectedNav}
               onNavChange={setSelectedNav}
               userName={userName}
+              projects={projects}
+              onCreateProject={handleCreateProject}
+              onRenameProject={handleRenameProject}
+              onDeleteProject={handleDeleteProject}
             />
 
             {/* Main content area */}
@@ -361,7 +449,12 @@ export function Dashboard() {
                     ? t('dashboard:title.trash')
                     : selectedNav === 'shared'
                       ? t('dashboard:title.shared')
-                      : t('dashboard:title.myFlows')}
+                      : selectedNav === 'project:none'
+                        ? t('dashboard:sidebar.uncategorized')
+                        : selectedNav.startsWith('project:')
+                          ? (projects.find((p) => p.id === selectedNav.slice('project:'.length))
+                              ?.name ?? t('dashboard:title.myFlows'))
+                          : t('dashboard:title.myFlows')}
                 </h1>
                 {selectedNav !== 'trash' && (
                   <div className={styles.controls}>
@@ -577,6 +670,9 @@ export function Dashboard() {
               onDelete={handleContextDelete}
               onClose={handleCloseContextMenu}
               isTrash={selectedNav === 'trash'}
+              projects={projects}
+              onMoveToProject={handleMoveToProject}
+              currentProjectId={contextFlow?.projectId ?? null}
               onRestore={() => {
                 if (contextMenu) {
                   handleRestore(contextMenu.flowId)

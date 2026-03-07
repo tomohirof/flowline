@@ -10,6 +10,7 @@ export interface FlowRow {
   theme_id: string
   share_token: string | null
   deleted_at: string | null
+  project_id: string | null
   created_at: string
   updated_at: string
 }
@@ -59,6 +60,7 @@ export function toFlowSummary(row: FlowRow) {
     themeId: row.theme_id,
     shareToken: row.share_token,
     deletedAt: row.deleted_at,
+    projectId: row.project_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -100,6 +102,23 @@ export function toArrow(row: ArrowRow) {
     comment: row.comment,
     color: row.color,
     dash: row.dash,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+export interface ProjectRow {
+  id: string
+  user_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+export function toProject(row: ProjectRow) {
+  return {
+    id: row.id,
+    name: row.name,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

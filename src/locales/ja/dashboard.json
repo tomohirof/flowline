@@ -69,9 +69,28 @@
     "teams": "チーム",
     "teamProduct": "プロダクトチーム",
     "teamBackoffice": "バックオフィス",
+    "projects": "プロジェクト",
+    "uncategorized": "未分類",
+    "newProject": "新規プロジェクト",
+    "rename": "名前を変更",
+    "delete": "削除",
+    "moveToProject": "プロジェクトに移動",
     "proPlanMessage": "Proプランでチーム共有やバージョン履歴が使えます",
     "showPlan": "プランを表示"
   },
   "deleteTime": "削除: {{time}}",
-  "updateTime": "更新: {{time}}"
+  "updateTime": "更新: {{time}}",
+  "project": {
+    "promptName": "プロジェクト名を入力してください",
+    "created": "プロジェクトを作成しました",
+    "errorCreate": "プロジェクトの作成に失敗しました",
+    "errorRename": "プロジェクト名の変更に失敗しました",
+    "deleteTitle": "プロジェクトを削除",
+    "deleteMessage": "プロジェクトを削除しますか？配下のフローは未分類に移動します。",
+    "deleteConfirm": "削除する",
+    "deleted": "プロジェクトを削除しました",
+    "errorDelete": "プロジェクトの削除に失敗しました",
+    "movedTo": "{{name}}に移動しました",
+    "errorMove": "フローの移動に失敗しました"
+  }
 }

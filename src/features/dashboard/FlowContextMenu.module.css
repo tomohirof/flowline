@@ -55,3 +55,27 @@
 .itemDanger:hover {
   background: #fff5f5;
 }
+
+.submenuContainer {
+  padding: 2px 0 2px 8px;
+}
+
+.submenuItem {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.submenuItem:hover {
+  background: #f5f5fa;
+  color: #444;
+}

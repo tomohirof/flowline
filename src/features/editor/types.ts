@@ -105,6 +105,7 @@ export interface Flow {
   title: string
   themeId: string
   shareToken: string | null
+  projectId: string | null
   createdAt: string
   updatedAt: string
   lanes: Lane[]
@@ -123,6 +124,7 @@ export interface FlowSummary {
   themeId: string
   shareToken: string | null
   deletedAt: string | null
+  projectId: string | null
   createdAt: string
   updatedAt: string
 }
@@ -133,6 +135,17 @@ export interface FlowListResponse {
 
 export interface FlowDetailResponse {
   flow: Flow
+}
+
+export interface Project {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ProjectListResponse {
+  projects: Project[]
 }
 
 // =============================================

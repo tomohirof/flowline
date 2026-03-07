@@ -49,3 +49,19 @@ export const updateFlowSchema = z.object({
 
 export type CreateFlowInput = z.infer<typeof createFlowSchema>
 export type UpdateFlowInput = z.infer<typeof updateFlowSchema>
+
+export const createProjectSchema = z.object({
+  name: z.string().min(1).max(100),
+})
+
+export const updateProjectSchema = z.object({
+  name: z.string().min(1).max(100),
+})
+
+export const moveFlowSchema = z.object({
+  projectId: z.string().nullable(),
+})
+
+export type CreateProjectInput = z.infer<typeof createProjectSchema>
+export type UpdateProjectInput = z.infer<typeof updateProjectSchema>
+export type MoveFlowInput = z.infer<typeof moveFlowSchema>
