@@ -45,6 +45,8 @@
     "nodeOrder": "Order",
     "nodeConnect": "→ Connect",
     "nodeDelete": "Delete",
+    "nodeInfo": "Info",
+    "nodeLane": "Lane",
     "arrow": "Arrow",
     "arrowComment": "Comment",
     "arrowCommentPlaceholder": "Add label…",
@@ -101,7 +103,9 @@
     "copyDone": "Copied",
     "copy": "Copy",
     "description": "Anyone with this URL can view (read-only)",
-    "errorUpdate": "Failed to update share settings"
+    "errorUpdate": "Failed to update share settings",
+    "sharing": "Sharing",
+    "shareBtn": "Share"
   },
   "ai": {
     "title": "AI Assistant",
@@ -119,5 +123,18 @@
   "propertyNode": "Node",
   "propertyArrow": "Arrow",
   "propertyLane": "Lane",
-  "propertyTitle": "Properties"
+  "propertyTitle": "Properties",
+  "newLaneName": "Lane {{number}}",
+  "connectBanner": "→ Drop on target",
+  "fileButton": "File",
+  "fileButtonTip": "Back to dashboard",
+  "ghostClickConfirm": "Click to confirm",
+  "swapBadge": "↕ Swap",
+  "arrowCommentPlaceholder": "Comment…",
+  "addNewLane": "+ Add new lane",
+  "mergeToExisting": "Merge to existing lane",
+  "mergeTo": "Merge to {{name}}",
+  "memoClickToEdit": "Click to edit",
+  "memoPlaceholder": "Enter memo…",
+  "mermaidComment": "Approximate output of Flowline swim lanes"
 }

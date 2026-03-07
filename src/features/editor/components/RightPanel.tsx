@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import styles from '../FlowEditor.module.css'
 import { PanelSection, PanelRow, PanelInput, PanelBtn } from './PanelParts'
 import type {
@@ -97,6 +98,7 @@ export const RightPanel = ({
   exportMermaid,
   downloadJSON,
 }: RightPanelProps): ReactNode => {
+  const { t } = useTranslation('editor')
   const T: Theme = THEMES[themeId]
   const isDark = themeId === 'midnight'
 
@@ -123,13 +125,13 @@ export const RightPanel = ({
         <PanelSection label="">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span className={styles.multiSelBadge}>{multiSel.size}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: T.panelText }}>ノード選択中</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: T.panelText }}>{t('rightPanel.multiSelect', { count: multiSel.size })}</span>
           </div>
           <span style={{ fontSize: 10, color: T.panelLabel }}>
-            Shift+クリックで追加/解除 · Delete で一括削除
+            {t('rightPanel.multiSelectHint')}
           </span>
         </PanelSection>
-        <PanelSection label="背景色">
+        <PanelSection label={t('rightPanel.bgColor')}>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {(isDark ? NODE_COLORS_DARK : NODE_COLORS).map((nc) => (
               <div
@@ -164,7 +166,7 @@ export const RightPanel = ({
             ))}
           </div>
         </PanelSection>
-        <PanelSection label="枠の色">
+        <PanelSection label={t('rightPanel.borderColor')}>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {LINE_COLORS.map((lc) => (
               <div
@@ -199,7 +201,7 @@ export const RightPanel = ({
             ))}
           </div>
         </PanelSection>
-        <PanelSection label="枠の種類">
+        <PanelSection label={t('rightPanel.borderStyle')}>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {STROKE_STYLES.map((ss) => (
               <div
@@ -243,13 +245,13 @@ export const RightPanel = ({
             ))}
           </div>
         </PanelSection>
-        <PanelSection label="操作">
+        <PanelSection label={t('rightPanel.operations')}>
           <button
             className={styles.dangerBtn}
             onClick={() => delMultiSel()}
             data-testid="multi-delete-btn"
           >
-            {multiSel.size}件を削除
+            {t('rightPanel.deleteMulti', { count: multiSel.size })}
           </button>
           <button
             className={styles.panelBtn}
@@ -257,7 +259,7 @@ export const RightPanel = ({
             style={{ marginTop: 6 }}
             data-testid="multi-deselect-btn"
           >
-            選択解除
+            {t('rightPanel.deselect')}
           </button>
         </PanelSection>
       </>
@@ -269,23 +271,23 @@ export const RightPanel = ({
     const oi = order.indexOf(selTask)
     return (
       <>
-        <PanelSection label="ノード">
-          <PanelRow label="ラベル" />
+        <PanelSection label={t('rightPanel.node')}>
+          <PanelRow label={t('rightPanel.label')} />
           <PanelInput
-            value={selTaskData.label === '作業' ? '' : selTaskData.label}
-            placeholder="作業"
+            value={selTaskData.label === t('defaultNodeLabel') ? '' : selTaskData.label}
+            placeholder={t('rightPanel.defaultLabel')}
             onChange={(v: string) =>
-              setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], label: v || '作業' } }))
+              setTasks((p2) => ({ ...p2, [selTask]: { ...p2[selTask], label: v || t('defaultNodeLabel') } }))
             }
           />
         </PanelSection>
-        <PanelSection label="形状">
+        <PanelSection label={t('rightPanel.shape')}>
           <div style={{ display: 'flex', gap: 4 }}>
             {(
               [
                 {
                   shape: undefined as 'diamond' | undefined,
-                  label: '矩形',
+                  label: t('rightPanel.shapeRect'),
                   icon: (active: boolean) => (
                     <svg width="20" height="14" viewBox="0 0 20 14">
                       <rect
@@ -303,7 +305,7 @@ export const RightPanel = ({
                 },
                 {
                   shape: 'diamond' as const,
-                  label: '分岐',
+                  label: t('rightPanel.shapeDiamond'),
                   icon: (active: boolean) => (
                     <svg width="20" height="20" viewBox="0 0 20 20">
                       <polygon
@@ -354,10 +356,10 @@ export const RightPanel = ({
             })}
           </div>
         </PanelSection>
-        <PanelSection label="メモ">
+        <PanelSection label={t('rightPanel.memo')}>
           <PanelInput
             value={memos[selTask]?.text || ''}
-            placeholder="メモを追加…"
+            placeholder={t('rightPanel.memoPlaceholder')}
             onChange={(v: string) =>
               setMemos((p2) => {
                 if (!v) {
@@ -373,7 +375,7 @@ export const RightPanel = ({
             }
           />
         </PanelSection>
-        <PanelSection label="背景色">
+        <PanelSection label={t('rightPanel.bgColor')}>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {(isDark ? NODE_COLORS_DARK : NODE_COLORS).map((nc) => {
               const isActive = nc.fill === null ? !selTaskData.bg : selTaskData.bg === nc.fill
@@ -406,7 +408,7 @@ export const RightPanel = ({
             })}
           </div>
         </PanelSection>
-        <PanelSection label="枠の色">
+        <PanelSection label={t('rightPanel.borderColor')}>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {LINE_COLORS.map((lc) => {
               const isActive =
@@ -444,7 +446,7 @@ export const RightPanel = ({
             })}
           </div>
         </PanelSection>
-        <PanelSection label="枠の種類">
+        <PanelSection label={t('rightPanel.borderStyle')}>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {STROKE_STYLES.map((ss) => {
               const isActive = ss.dash === 'none' ? !selTaskData.dash : selTaskData.dash === ss.dash
@@ -491,20 +493,20 @@ export const RightPanel = ({
             })}
           </div>
         </PanelSection>
-        <PanelSection label="情報">
-          <PanelRow label="レーン">
+        <PanelSection label={t('rightPanel.nodeInfo')}>
+          <PanelRow label={t('rightPanel.nodeLane')}>
             <span className={styles.panelValueText}>{lane?.name}</span>
           </PanelRow>
           {oi !== -1 && (
-            <PanelRow label="順番">
+            <PanelRow label={t('rightPanel.nodeOrder')}>
               <span className={styles.panelValueText}>{oi + 1}</span>
             </PanelRow>
           )}
         </PanelSection>
-        <PanelSection label="操作">
+        <PanelSection label={t('rightPanel.operations')}>
           <div className={styles.panelActions}>
-            <PanelBtn label="→ 接続" color={T.accent} onClick={() => startConnect(selTask)} />
-            <PanelBtn label="削除" color="#E06060" onClick={() => delTask(selTask)} />
+            <PanelBtn label={t('rightPanel.nodeConnect')} color={T.accent} onClick={() => startConnect(selTask)} />
+            <PanelBtn label={t('rightPanel.nodeDelete')} color="#E06060" onClick={() => delTask(selTask)} />
           </div>
         </PanelSection>
       </>
@@ -517,7 +519,7 @@ export const RightPanel = ({
       toT = tasks[selArrowData.to]
     return (
       <>
-        <PanelSection label="接続線">
+        <PanelSection label={t('rightPanel.arrow')}>
           <PanelRow label="From">
             <span className={styles.panelValueText}>{fromT?.label || '?'}</span>
           </PanelRow>
@@ -525,16 +527,16 @@ export const RightPanel = ({
             <span className={styles.panelValueText}>{toT?.label || '?'}</span>
           </PanelRow>
         </PanelSection>
-        <PanelSection label="コメント">
+        <PanelSection label={t('rightPanel.arrowComment')}>
           <PanelInput
             value={selArrowData.comment || ''}
-            placeholder="ラベルを追加…"
+            placeholder={t('rightPanel.arrowCommentPlaceholder')}
             onChange={(v: string) =>
               setArrows((p) => p.map((a) => (a.id === selArrow ? { ...a, comment: v } : a)))
             }
           />
         </PanelSection>
-        <PanelSection label="線の色">
+        <PanelSection label={t('rightPanel.arrowColor')}>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {LINE_COLORS.map((lc) => {
               const isActive =
@@ -583,7 +585,7 @@ export const RightPanel = ({
             })}
           </div>
         </PanelSection>
-        <PanelSection label="線の種類">
+        <PanelSection label={t('rightPanel.arrowStyle')}>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {STROKE_STYLES.map((ss) => {
               const isActive =
@@ -631,10 +633,10 @@ export const RightPanel = ({
             })}
           </div>
         </PanelSection>
-        <PanelSection label="操作">
+        <PanelSection label={t('rightPanel.operations')}>
           <div className={styles.panelActions}>
             <PanelBtn
-              label="⇄ 方向を逆転"
+              label={t('rightPanel.arrowReverse')}
               color={T.accent}
               onClick={() =>
                 setArrows((p) =>
@@ -643,7 +645,7 @@ export const RightPanel = ({
               }
             />
             <PanelBtn
-              label="削除"
+              label={t('rightPanel.arrowDelete')}
               color="#E06060"
               onClick={() => {
                 setArrows((p) => p.filter((a) => a.id !== selArrow))
@@ -660,8 +662,8 @@ export const RightPanel = ({
   if (selLane && selLaneData) {
     return (
       <>
-        <PanelSection label="レーン">
-          <PanelRow label="名前" />
+        <PanelSection label={t('rightPanel.lane')}>
+          <PanelRow label={t('rightPanel.laneName')} />
           <PanelInput
             value={selLaneData.name}
             onChange={(v: string) =>
@@ -669,7 +671,7 @@ export const RightPanel = ({
             }
           />
         </PanelSection>
-        <PanelSection label="カラー">
+        <PanelSection label={t('rightPanel.laneColor')}>
           <div className={styles.panelActions}>
             {PALETTES.map((p, ci) => (
               <div
@@ -686,24 +688,24 @@ export const RightPanel = ({
             ))}
           </div>
         </PanelSection>
-        <PanelSection label="順番">
+        <PanelSection label={t('rightPanel.laneOrder')}>
           <div style={{ display: 'flex', gap: 6 }}>
-            <PanelBtn label="← 左へ" color={T.accent} onClick={() => moveLane(selLane, -1)} />
-            <PanelBtn label="右へ →" color={T.accent} onClick={() => moveLane(selLane, 1)} />
+            <PanelBtn label={t('rightPanel.laneMovePrev')} color={T.accent} onClick={() => moveLane(selLane, -1)} />
+            <PanelBtn label={t('rightPanel.laneMoveNext')} color={T.accent} onClick={() => moveLane(selLane, 1)} />
           </div>
         </PanelSection>
         {selLaneData.groupId && (
-          <PanelSection label="グループ">
+          <PanelSection label={t('rightPanel.laneGroup')}>
             <PanelBtn
-              label="グループ解除"
+              label={t('rightPanel.laneUngroup')}
               color={T.accent}
               onClick={() => ungroupLane(selLane)}
               full
             />
           </PanelSection>
         )}
-        <PanelSection label="操作">
-          <PanelBtn label="レーンを削除" color="#E06060" onClick={() => rmLane(selLane)} full />
+        <PanelSection label={t('rightPanel.operations')}>
+          <PanelBtn label={t('rightPanel.laneDelete')} color="#E06060" onClick={() => rmLane(selLane)} full />
         </PanelSection>
       </>
     )
@@ -712,7 +714,7 @@ export const RightPanel = ({
   // Nothing selected -> Theme & Canvas
   return (
     <>
-      <PanelSection label="テーマ">
+      <PanelSection label={t('rightPanel.theme')}>
         <div className={styles.themePickerWrapper}>
           <div onClick={() => setShowThemePicker((v) => !v)} className={styles.themePickerTrigger}>
             <span className={styles.themePickerLabel}>
@@ -744,23 +746,23 @@ export const RightPanel = ({
           )}
         </div>
       </PanelSection>
-      <PanelSection label="キャンバス">
-        <PanelRow label="レーン数">
+      <PanelSection label={t('rightPanel.canvas')}>
+        <PanelRow label={t('rightPanel.canvasLanes')}>
           <span className={styles.panelValueTextLarge}>{lanes.length}</span>
         </PanelRow>
-        <PanelRow label="行数">
+        <PanelRow label={t('rightPanel.canvasRows')}>
           <span className={styles.panelValueTextLarge}>{rows.length}</span>
         </PanelRow>
-        <PanelRow label="ノード数">
+        <PanelRow label={t('rightPanel.canvasNodes')}>
           <span className={styles.panelValueTextLarge}>{Object.keys(tasks).length}</span>
         </PanelRow>
-        <PanelRow label="接続数">
+        <PanelRow label={t('rightPanel.canvasArrows')}>
           <span className={styles.panelValueTextLarge}>{arrows.length}</span>
         </PanelRow>
       </PanelSection>
-      <PanelSection label="エクスポート">
+      <PanelSection label={t('rightPanel.exportSection')}>
         <PanelBtn
-          label={mermaidCopied ? '✓ コピーしました' : 'Mermaid コードをコピー'}
+          label={mermaidCopied ? t('rightPanel.mermaidCopied') : t('rightPanel.mermaidCopy')}
           color={T.accent}
           onClick={async () => {
             try {
@@ -776,7 +778,7 @@ export const RightPanel = ({
           full
         />
         <PanelBtn
-          label={jsonDownloaded ? '✓ ダウンロードしました' : 'JSON をダウンロード'}
+          label={jsonDownloaded ? t('rightPanel.jsonDownloaded') : t('rightPanel.jsonDownload')}
           color={T.accent}
           onClick={() => {
             downloadJSON()
@@ -787,14 +789,14 @@ export const RightPanel = ({
           full
         />
       </PanelSection>
-      <PanelSection label="挙動">
+      <PanelSection label={t('rightPanel.behavior')}>
         {(
           [
-            { key: 'copyLabelOnSameRow', label: '同行テキストコピー' },
-            { key: 'autoConnect', label: '自動接続' },
-            { key: 'autoAddRow', label: '自動行追加' },
-            { key: 'enterEditOnCreate', label: '作成後すぐ編集' },
-            { key: 'autoRepair', label: '自動修復' },
+            { key: 'copyLabelOnSameRow', label: t('rightPanel.behaviorCopyLabel') },
+            { key: 'autoConnect', label: t('rightPanel.behaviorAutoConnect') },
+            { key: 'autoAddRow', label: t('rightPanel.behaviorAutoAddRow') },
+            { key: 'enterEditOnCreate', label: t('rightPanel.behaviorEditOnCreate') },
+            { key: 'autoRepair', label: t('rightPanel.behaviorAutoRepair') },
           ] as const
         ).map((s) => (
           <div
@@ -834,11 +836,11 @@ export const RightPanel = ({
           </div>
         ))}
       </PanelSection>
-      <PanelSection label="表示">
+      <PanelSection label={t('rightPanel.display')}>
         {(
           [
-            { key: 'showDotGrid', label: 'ドットグリッド' },
-            { key: 'showOrderBadge', label: '順番バッジ' },
+            { key: 'showDotGrid', label: t('rightPanel.displayDotGrid') },
+            { key: 'showOrderBadge', label: t('rightPanel.displayOrderBadge') },
           ] as const
         ).map((s) => (
           <div

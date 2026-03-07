@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiFetch } from '../../../lib/api'
 import type { Lane, Node, Arrow } from '../types'
 import styles from './AiAssistant.module.css'
@@ -17,6 +18,7 @@ interface AiAssistantProps {
 }
 
 export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantProps) {
+  const { t } = useTranslation('editor')
   const [expanded, setExpanded] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
@@ -37,7 +39,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
   const handleSubmit = async () => {
     const trimmed = prompt.trim()
     if (!trimmed) {
-      setError('プロンプトを入力してください')
+      setError(t('ai.emptyPrompt'))
       return
     }
 
@@ -56,7 +58,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
       setPrompt('')
       setExpanded(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'AIリクエストに失敗しました')
+      setError(e instanceof Error ? e.message : t('ai.errorRequest'))
     } finally {
       setLoading(false)
     }
@@ -71,7 +73,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
         className={styles.toggleBtn}
         onClick={() => setExpanded((p) => !p)}
         data-testid="ai-assistant-toggle"
-        aria-label={expanded ? 'AIアシスタントを閉じる' : 'AIアシスタントを開く'}
+        aria-label={expanded ? t('ai.closeAria') : t('ai.openAria')}
       >
         <span className={styles.toggleIcon}>
           <svg
@@ -89,7 +91,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
             <circle cx="14.5" cy="15.5" r="1" fill="currentColor" />
           </svg>
         </span>
-        <span className={styles.toggleLabel}>AIアシスタント</span>
+        <span className={styles.toggleLabel}>{t('ai.title')}</span>
         <span className={styles.toggleChevron}>{expanded ? '\u25BC' : '\u25B2'}</span>
       </button>
 
@@ -103,8 +105,8 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={
                 flowId != null
-                  ? '例: ノードを追加して、承認プロセスのフローにして...'
-                  : '例: 営業プロセスのフロー図を作って...'
+                  ? t('ai.placeholderEdit')
+                  : t('ai.placeholderGenerate')
               }
               rows={3}
               disabled={loading}
@@ -125,7 +127,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
               {loading ? (
                 <span className={styles.spinner} data-testid="ai-loading-spinner" />
               ) : (
-                '生成'
+                t('ai.generate')
               )}
             </button>
           </div>
@@ -136,7 +138,7 @@ export function AiAssistant({ flowId, aiEnabled, onFlowGenerated }: AiAssistantP
             </div>
           )}
 
-          <div className={styles.hint}>Ctrl+Enter で送信</div>
+          <div className={styles.hint}>{t('ai.submitHint')}</div>
         </div>
       )}
     </div>

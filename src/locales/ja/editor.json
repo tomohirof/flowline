@@ -45,6 +45,8 @@
     "nodeOrder": "順番",
     "nodeConnect": "→ 接続",
     "nodeDelete": "削除",
+    "nodeInfo": "情報",
+    "nodeLane": "レーン",
     "arrow": "接続線",
     "arrowComment": "コメント",
     "arrowCommentPlaceholder": "ラベルを追加…",
@@ -101,7 +103,9 @@
     "copyDone": "コピーしました",
     "copy": "コピー",
     "description": "このURLを知っている人は誰でも閲覧できます（編集不可）",
-    "errorUpdate": "共有設定の変更に失敗しました"
+    "errorUpdate": "共有設定の変更に失敗しました",
+    "sharing": "共有中",
+    "shareBtn": "共有"
   },
   "ai": {
     "title": "AIアシスタント",
@@ -119,5 +123,18 @@
   "propertyNode": "ノード",
   "propertyArrow": "接続線",
   "propertyLane": "レーン",
-  "propertyTitle": "プロパティ"
+  "propertyTitle": "プロパティ",
+  "newLaneName": "レーン{{number}}",
+  "connectBanner": "→ 接続先にドロップ",
+  "fileButton": "ファイル",
+  "fileButtonTip": "ダッシュボードに戻る",
+  "ghostClickConfirm": "クリックで確定",
+  "swapBadge": "↕ 入替",
+  "arrowCommentPlaceholder": "コメント…",
+  "addNewLane": "+ 新しいレーンを追加",
+  "mergeToExisting": "既存レーンに結合",
+  "mergeTo": "{{name}} に結合",
+  "memoClickToEdit": "クリックして入力",
+  "memoPlaceholder": "メモを入力…",
+  "mermaidComment": "Flowlineスイムレーンの近似出力です"
 }

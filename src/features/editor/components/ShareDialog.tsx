@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiFetch } from '../../../lib/api'
 import styles from './ShareDialog.module.css'
 
@@ -15,6 +16,7 @@ interface ShareResponse {
 }
 
 export function ShareDialog({ flowId, shareToken, onShareChange, onClose }: ShareDialogProps) {
+  const { t } = useTranslation('editor')
   const [currentToken, setCurrentToken] = useState<string | null>(shareToken)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +46,7 @@ export function ShareDialog({ flowId, shareToken, onShareChange, onClose }: Shar
         onShareChange(data.shareToken)
       }
     } catch {
-      setError('共有設定の変更に失敗しました')
+      setError(t('share.errorUpdate'))
     } finally {
       setLoading(false)
     }
@@ -70,14 +72,14 @@ export function ShareDialog({ flowId, shareToken, onShareChange, onClose }: Shar
     >
       <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h3 className={styles.title}>共有設定</h3>
+          <h3 className={styles.title}>{t('share.title')}</h3>
           <button data-testid="share-dialog-close" onClick={onClose} className={styles.closeButton}>
             x
           </button>
         </div>
 
         <div className={styles.toggleRow}>
-          <span className={styles.toggleLabel}>URLで共有</span>
+          <span className={styles.toggleLabel}>{t('share.toggle')}</span>
           <button
             data-testid="share-toggle"
             onClick={handleToggle}
@@ -103,10 +105,10 @@ export function ShareDialog({ flowId, shareToken, onShareChange, onClose }: Shar
                 onClick={handleCopy}
                 className={`${styles.copyBtn} ${copied ? styles.copyBtnCopied : ''}`}
               >
-                {copied ? 'コピーしました' : 'コピー'}
+                {copied ? t('share.copyDone') : t('share.copy')}
               </button>
             </div>
-            <p className={styles.hint}>このURLを知っている人は誰でも閲覧できます（編集不可）</p>
+            <p className={styles.hint}>{t('share.description')}</p>
           </div>
         )}
       </div>

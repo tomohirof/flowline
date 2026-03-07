@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BRAND } from '../../constants/brand'
 import { useNavigate, Link } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
@@ -307,6 +308,7 @@ export default function FlowEditor({
   onSaveCtaClick,
   hideShare,
 }: FlowEditorProps) {
+  const { t } = useTranslation('editor')
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const isDemo = !!saveCtaLabel
@@ -382,8 +384,8 @@ export default function FlowEditor({
   useEffect(() => {
     if (saveStatus === 'error') {
       addErrorToast({
-        message: '保存に失敗しました',
-        detail: '変更内容が保存されていません。ネットワーク接続を確認してください。',
+        message: t('save.failedTitle'),
+        detail: t('save.failedDetail'),
         onRetry: onRetrySave,
       })
     } else {
@@ -693,10 +695,10 @@ export default function FlowEditor({
       setEditing(null)
       setSelTask(null)
       if (bridges.length > 0) {
-        addSuccessToast({ message: `オートリペア: ${bridges.length}本の矢印を修復しました` })
+        addSuccessToast({ message: t('toast.autoRepair', { count: bridges.length }) })
       }
     },
-    [arrows, setArrows, addSuccessToast],
+    [arrows, setArrows, addSuccessToast, t],
   )
 
   const delMultiSel = useCallback((): void => {
@@ -717,10 +719,10 @@ export default function FlowEditor({
       ...bridges.map((b) => ({ ...b, id: uid() })),
     ])
     if (bridges.length > 0) {
-      addSuccessToast({ message: `オートリペア: ${bridges.length}本の矢印を修復しました` })
+      addSuccessToast({ message: t('toast.autoRepair', { count: bridges.length }) })
     }
     setMultiSel(new Set())
-  }, [multiSel, arrows, setArrows, addSuccessToast])
+  }, [multiSel, arrows, setArrows, addSuccessToast, t])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
@@ -823,7 +825,7 @@ export default function FlowEditor({
   const insertLaneAt = (i: number): void => {
     setLanes((prev) => {
       const n = [...prev]
-      n.splice(i, 0, { id: uid(), name: `レーン${prev.length + 1}`, ci: i % PALETTES.length })
+      n.splice(i, 0, { id: uid(), name: t('newLaneName', { number: prev.length + 1 }), ci: i % PALETTES.length })
       return n
     })
     setHoveredLaneGap(null)
@@ -1198,7 +1200,7 @@ export default function FlowEditor({
       setSelArrow(null)
       return
     }
-    let label = '作業'
+    let label = t('defaultNodeLabel')
     if (editorSettings.copyLabelOnSameRow) {
       const sameRowNode = Object.entries(tasks).find(([key, t]) => t.rid === rid && key !== k)
       if (sameRowNode) label = sameRowNode[1].label
@@ -1303,7 +1305,7 @@ export default function FlowEditor({
     setLanes((prev) =>
       prev.map((l) => (l.groupId === gid ? { ...l, groupId: undefined, groupRole: undefined } : l)),
     )
-    addSuccessToast({ message: 'グループを解除しました' })
+    addSuccessToast({ message: t('toast.ungrouped') })
   }
 
   const suggestLaneSplit = (laneId: string): void => {
@@ -1314,10 +1316,10 @@ export default function FlowEditor({
     const laneName = lane.name
     setTimeout(() => {
       addConfirmToast({
-        message: '◇ 並行パス用にレーンを分割しますか？',
-        detail: `「${laneName}」を2列に分割して分岐先を配置できます`,
-        confirmLabel: '分割する',
-        successMessage: 'レーンを分割しました',
+        message: t('confirm.splitLaneTitle'),
+        detail: t('confirm.splitLaneMessage', { laneName }),
+        confirmLabel: t('confirm.splitLaneConfirm'),
+        successMessage: t('confirm.splitLaneSuccess'),
         onConfirm: () => {
           const groupId = uid()
           const newSubId = uid()
@@ -1409,7 +1411,7 @@ export default function FlowEditor({
         .replace(/>/g, '&gt;')
         .replace(/\n/g, ' ')
 
-    let m = '%% Flowlineスイムレーンの近似出力です\nflowchart LR\n'
+    let m = `%% ${t('mermaidComment')}\nflowchart LR\n`
 
     // Group tasks by row and output subgraphs
     const rowGroups = new Map<number, typeof taskEntries>()
@@ -1512,22 +1514,22 @@ export default function FlowEditor({
   // --- Determine right panel content ---
 
   const sideTools: (SideTool | 'sep')[] = [
-    { id: 'select', icon: I.cursor, tip: '選択' },
-    { id: 'connect', icon: I.connect, tip: '接続' },
+    { id: 'select', icon: I.cursor, tip: t('toolbar.select') },
+    { id: 'connect', icon: I.connect, tip: t('toolbar.connect') },
     'sep',
-    { id: 'addRow', icon: I.addRow, tip: '行追加', action: addRow },
-    { id: 'rmRow', icon: I.rmRow, tip: '行削除', action: rmRow },
+    { id: 'addRow', icon: I.addRow, tip: t('toolbar.addRow'), action: addRow },
+    { id: 'rmRow', icon: I.rmRow, tip: t('toolbar.removeRow'), action: rmRow },
     'sep',
     {
       id: 'zoomIn',
       icon: I.zoomIn,
-      tip: '拡大',
+      tip: t('toolbar.zoomIn'),
       action: () => setZoom((z) => Math.min(2, z + 0.1)),
     },
     {
       id: 'zoomOut',
       icon: I.zoomOut,
-      tip: '縮小',
+      tip: t('toolbar.zoomOut'),
       action: () => setZoom((z) => Math.max(0.4, z - 0.1)),
     },
     'sep',
@@ -1536,10 +1538,10 @@ export default function FlowEditor({
 
   // --- Status bar text ---
   const saveStatusText: Record<SaveStatus, string> = {
-    saved: '保存済み',
-    saving: '保存中...',
-    unsaved: '未保存',
-    error: '保存エラー',
+    saved: t('save.saved'),
+    saving: t('save.saving'),
+    unsaved: t('save.unsaved'),
+    error: t('save.error'),
   }
 
   return (
@@ -1623,13 +1625,13 @@ export default function FlowEditor({
             }}
             className={`${styles.shareButton} ${shareToken ? styles.shareButtonActive : styles.shareButtonInactive}`}
           >
-            {shareToken ? '共有中' : '共有'}
+            {shareToken ? t('share.sharing') : t('share.shareBtn')}
           </button>
         )}
         <div className={styles.spacer} />
         {connectFrom && (
           <div className={styles.connectBanner}>
-            <span className={styles.connectBannerText}>{'→ 接続先にドロップ'}</span>
+            <span className={styles.connectBannerText}>{t('connectBanner')}</span>
             <button
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation()
@@ -1729,8 +1731,8 @@ export default function FlowEditor({
                 strokeWidth="2"
               />
             </svg>
-            <span className={styles.fileButtonText}>ファイル</span>
-            <span className={styles.toolTip}>ダッシュボードに戻る</span>
+            <span className={styles.fileButtonText}>{t('fileButton')}</span>
+            <span className={styles.toolTip}>{t('fileButtonTip')}</span>
           </div>
           <div className={styles.sidebarSep} />
           {sideTools.map((t, i) => {
@@ -2263,7 +2265,7 @@ export default function FlowEditor({
                           fill={T.accent}
                           opacity={0.6}
                         >
-                          作業
+                          {t('defaultNodeLabel')}
                         </text>
                         <text
                           x={c.x}
@@ -2274,7 +2276,7 @@ export default function FlowEditor({
                           fill={T.accent}
                           opacity={0.4}
                         >
-                          クリックで確定
+                          {t('ghostClickConfirm')}
                         </text>
                       </g>
                     )}
@@ -2447,7 +2449,7 @@ export default function FlowEditor({
                           fontWeight={700}
                           fill="#fff"
                         >
-                          ↕ 入替
+                          {t('swapBadge')}
                         </text>
                       </g>
                     )}
@@ -2546,11 +2548,11 @@ export default function FlowEditor({
                       >
                         <input
                           ref={inputRef}
-                          value={task.label === '作業' ? '' : task.label}
-                          placeholder="作業"
+                          value={task.label === t('defaultNodeLabel') ? '' : task.label}
+                          placeholder={t('defaultNodeLabel')}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const v = e.target.value
-                            setTasks((p2) => ({ ...p2, [k]: { ...p2[k], label: v || '作業' } }))
+                            setTasks((p2) => ({ ...p2, [k]: { ...p2[k], label: v || t('defaultNodeLabel') } }))
                           }}
                           onBlur={() => setEditing(null)}
                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -2568,7 +2570,7 @@ export default function FlowEditor({
                         dominantBaseline="central"
                         fontSize={isDiamond ? 12 : 13.5}
                         fontWeight={isDiamond ? 600 : 500}
-                        fill={task.label === '作業' ? T.statusText : T.titleColor}
+                        fill={task.label === t('defaultNodeLabel') ? T.statusText : T.titleColor}
                         style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
                       >
                         {task.label.length > (isDiamond ? 8 : 10)
@@ -2756,7 +2758,7 @@ export default function FlowEditor({
                         fill="#fff"
                         style={{ fontFamily: 'inherit' }}
                       >
-                        クリックで確定
+                        {t('ghostClickConfirm')}
                       </text>
                     </g>
                   )}
@@ -2887,7 +2889,7 @@ export default function FlowEditor({
                           setEditArrowComment(null)
                       }}
                       onBlur={() => setEditArrowComment(null)}
-                      placeholder="コメント…"
+                      placeholder={t('arrowCommentPlaceholder')}
                       style={{
                         width: '100%',
                         height: 28,
@@ -3149,7 +3151,7 @@ export default function FlowEditor({
                             setLaneDropdown(null)
                           }}
                         >
-                          + 新しいレーンを追加
+                          {t('addNewLane')}
                         </button>
                       )}
                       {(() => {
@@ -3176,7 +3178,7 @@ export default function FlowEditor({
                         return (
                           <>
                             <div className={styles.laneDropdownSeparator} />
-                            <div className={styles.laneDropdownLabel}>既存レーンに結合</div>
+                            <div className={styles.laneDropdownLabel}>{t('mergeToExisting')}</div>
                             {uniqueCandidates.map((l) => {
                               const displayName =
                                 l.groupRole === 'sub'
@@ -3200,7 +3202,7 @@ export default function FlowEditor({
                                     )
                                   }
                                 >
-                                  {displayName} に結合
+                                  {t('mergeTo', { name: displayName })}
                                 </button>
                               )
                             })}
@@ -3329,7 +3331,7 @@ export default function FlowEditor({
                           fill={T.memoConnector}
                           style={{ fontFamily: 'inherit', pointerEvents: 'none' }}
                         >
-                          クリックして入力
+                          {t('memoClickToEdit')}
                         </text>
                       )}
                     </g>
@@ -3363,7 +3365,7 @@ export default function FlowEditor({
                           onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                             if (e.key === 'Escape') (e.target as HTMLTextAreaElement).blur()
                           }}
-                          placeholder="メモを入力…"
+                          placeholder={t('memoPlaceholder')}
                           style={{
                             width: MEMO_W - 16,
                             minHeight: 24,
@@ -3459,14 +3461,14 @@ export default function FlowEditor({
           <div className={styles.rightPanelHeader}>
             <span className={styles.rightPanelTitle}>
               {multiSel.size > 0
-                ? `${multiSel.size}件選択`
+                ? t('selectedCount', { count: multiSel.size })
                 : selTask
-                  ? 'ノード'
+                  ? t('propertyNode')
                   : selArrow
-                    ? '接続線'
+                    ? t('propertyArrow')
                     : selLane
-                      ? 'レーン'
-                      : 'プロパティ'}
+                      ? t('propertyLane')
+                      : t('propertyTitle')}
             </span>
           </div>
           <RightPanel
@@ -3515,16 +3517,16 @@ export default function FlowEditor({
         <span className={styles.statusText}>
           {Object.keys(tasks).length} tasks {'·'} {arrows.length} connections
         </span>
-        <span className={styles.statusTextFaded}>{'⌘Z:戻す · ⌘⇧Z:やり直す'}</span>
+        <span className={styles.statusTextFaded}>{t('hint.default')}</span>
         <div style={{ flex: 1 }} />
         <span className={styles.statusTextHint}>
           {multiSel.size > 0
-            ? `${multiSel.size}件選択中 · Shift+クリックで追加 · Delete削除`
+            ? t('hint.multiSelect', { count: multiSel.size })
             : connectFrom
-              ? '接続先クリック · Esc解除'
+              ? t('hint.connecting')
               : dragging
-                ? '空きセルにドロップ · ノードに重ねて入替'
-                : 'クリック:追加 · ドラッグ:移動 · ○:接続 · Shift+クリック:複数選択'}
+                ? t('hint.dragging')
+                : t('hint.normal')}
         </span>
       </div>
 
@@ -3557,7 +3559,7 @@ export default function FlowEditor({
           if (
             hasExistingContent &&
             !window.confirm(
-              'AIが生成したフローを適用すると、現在のフローが上書きされます。よろしいですか？',
+              t('confirm.aiOverwrite'),
             )
           ) {
             return
