@@ -35,7 +35,7 @@ export function FlowCard({
   isTrash = false,
   onRestore,
 }: FlowCardProps) {
-  const { t } = useTranslation(['dashboard', 'common'])
+  const { t, i18n } = useTranslation(['dashboard', 'common'])
   const isRenaming = renamingId === flow.id
   const renameInputRef = useRef<HTMLInputElement>(null)
 
@@ -191,8 +191,12 @@ export function FlowCard({
           </div>
           <span className={styles.updatedAt}>
             {isTrash && flow.deletedAt
-              ? t('dashboard:deleteTime', { time: formatRelativeTime(flow.deletedAt) })
-              : t('dashboard:updateTime', { time: formatRelativeTime(flow.updatedAt) })}
+              ? t('dashboard:deleteTime', {
+                  time: formatRelativeTime(flow.deletedAt, i18n.language),
+                })
+              : t('dashboard:updateTime', {
+                  time: formatRelativeTime(flow.updatedAt, i18n.language),
+                })}
           </span>
           {flow.shareToken && (
             <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>

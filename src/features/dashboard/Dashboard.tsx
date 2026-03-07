@@ -40,7 +40,7 @@ const CreateCardIcon = () => (
 )
 
 export function Dashboard() {
-  const { t } = useTranslation(['dashboard', 'common'])
+  const { t, i18n } = useTranslation(['dashboard', 'common'])
   const [flows, setFlows] = useState<FlowSummary[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -534,7 +534,9 @@ export function Dashboard() {
                           </span>
                         )}
                       </div>
-                      <div className={styles.listUpdated}>{formatRelativeTime(flow.updatedAt)}</div>
+                      <div className={styles.listUpdated}>
+                        {formatRelativeTime(flow.updatedAt, i18n.language)}
+                      </div>
                       <div className={styles.listLanes}>
                         {laneColors.map((color, i) => (
                           <span

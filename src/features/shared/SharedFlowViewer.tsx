@@ -17,7 +17,7 @@ interface SharedFlowViewerProps {
 }
 
 export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
-  const { t } = useTranslation('shared')
+  const { t, i18n } = useTranslation('shared')
   const themeId = (Object.keys(THEMES).includes(flow.themeId) ? flow.themeId : 'cloud') as ThemeId
   const T = THEMES[themeId]
   const isDark = themeId === 'midnight'
@@ -191,7 +191,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             </div>
             <span>
               {sortedLanes.length} {t('lanes')} · {flow.nodes.length} {t('nodes')} · {t('updated')}{' '}
-              {formatRelativeTime(flow.updatedAt)}
+              {formatRelativeTime(flow.updatedAt, i18n.language)}
             </span>
           </div>
         </div>
