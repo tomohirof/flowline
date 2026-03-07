@@ -79,7 +79,7 @@ const DEFAULT_SETTINGS: Settings = {
 }
 
 export function SettingsPage() {
-  const { t } = useTranslation('settings')
+  const { t, i18n } = useTranslation('settings')
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
@@ -133,6 +133,13 @@ export function SettingsPage() {
   useEffect(() => {
     loadSettings()
   }, [loadSettings])
+
+  // Sync language from settings to i18n on load
+  useEffect(() => {
+    if (settings.language && settings.language !== i18n.language) {
+      i18n.changeLanguage(settings.language)
+    }
+  }, [settings.language])
 
   // Keep userNameRef in sync with user.name
   useEffect(() => {
@@ -215,7 +222,7 @@ export function SettingsPage() {
       case 'interaction':
         return <InteractionSection settings={settings} onToggle={toggle} />
       case 'display':
-        return <DisplaySection settings={settings} onToggle={toggle} />
+        return <DisplaySection settings={settings} onToggle={toggle} onSet={set} />
       case 'notifications':
         return <NotificationSection settings={settings} onToggle={toggle} />
       case 'security':
