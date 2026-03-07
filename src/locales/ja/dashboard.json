@@ -1,0 +1,76 @@
+{
+  "title": {
+    "myFlows": "マイフロー",
+    "shared": "共有ファイル",
+    "trash": "ゴミ箱"
+  },
+  "sort": {
+    "updatedAt": "更新日",
+    "name": "名前"
+  },
+  "view": {
+    "grid": "グリッド表示",
+    "list": "リスト表示"
+  },
+  "action": {
+    "create": "新規作成",
+    "creating": "作成中...",
+    "restore": "復元",
+    "permanentDelete": "完全に削除",
+    "rename": "名前を変更",
+    "duplicate": "複製",
+    "shared": "共有中",
+    "deleting": "削除中...",
+    "copyPrefix": "コピー"
+  },
+  "empty": {
+    "noFlows": "フローがまだありません。新規作成してみましょう！",
+    "noFlowsSearch": "検索条件に一致するフローがありません",
+    "noFlowsDesc": "下のボタンから最初のフローを作成できます",
+    "trash": "ゴミ箱は空です",
+    "trashDesc": "削除したフローはここに表示されます",
+    "sharedSearch": "検索条件に一致する共有フローがありません",
+    "sharedEmpty": "フローを共有するとここに表示されます"
+  },
+  "confirm": {
+    "moveToTrashTitle": "ゴミ箱に移動",
+    "moveToTrashMessage": "「{{title}}」をゴミ箱に移動しますか？",
+    "moveToTrashConfirm": "移動する",
+    "permanentDeleteTitle": "完全に削除",
+    "permanentDeleteMessage": "完全に削除すると復元できません。「{{title}}」を本当に削除しますか？",
+    "permanentDeleteConfirm": "完全に削除"
+  },
+  "toast": {
+    "movedToTrash": "ゴミ箱に移動しました",
+    "restored": "フローを復元しました",
+    "errorFetchFlows": "フロー一覧の取得に失敗しました",
+    "errorFetchTrash": "ゴミ箱の取得に失敗しました",
+    "errorCreate": "フローの作成に失敗しました",
+    "errorDelete": "フローの削除に失敗しました",
+    "errorRestore": "フローの復元に失敗しました",
+    "errorPermanentDelete": "フローの完全削除に失敗しました",
+    "errorRename": "フロー名の変更に失敗しました",
+    "errorDuplicate": "フローの複製に失敗しました"
+  },
+  "table": {
+    "name": "名前",
+    "updatedAt": "更新日",
+    "lanes": "レーン"
+  },
+  "search": "ファイルを検索…",
+  "menuFor": "{{userName}} - メニュー",
+  "sidebar": {
+    "recent": "最近",
+    "allFiles": "すべてのファイル",
+    "shared": "共有ファイル",
+    "drafts": "ドラフト",
+    "trash": "ごみ箱",
+    "teams": "チーム",
+    "teamProduct": "プロダクトチーム",
+    "teamBackoffice": "バックオフィス",
+    "proPlanMessage": "Proプランでチーム共有やバージョン履歴が使えます",
+    "showPlan": "プランを表示"
+  },
+  "deleteTime": "削除: {{time}}",
+  "updateTime": "更新: {{time}}"
+}

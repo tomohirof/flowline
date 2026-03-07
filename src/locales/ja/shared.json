@@ -1,0 +1,8 @@
+{
+  "createdWith": "が {{appName}} で作成",
+  "lanes": "レーン",
+  "nodes": "ノード",
+  "updated": "更新",
+  "errorLoad": "共有フローの読み込みに失敗しました",
+  "errorNoToken": "共有トークンが指定されていません"
+}
