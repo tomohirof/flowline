@@ -582,13 +582,13 @@ flows.put('/:id/move', async (c) => {
   const flowId = c.req.param('id')
 
   const ownership = await checkFlowOwnership(db, flowId, userId)
-  if (ownership.error === 'not_found') return c.json({ error: 'Flow not found' }, 404)
-  if (ownership.error === 'forbidden') return c.json({ error: 'Forbidden' }, 403)
-  if (ownership.deletedAt) return c.json({ error: 'Flow is deleted' }, 400)
+  if (ownership.error === 'not_found') return c.json({ error: 'フローが見つかりません' }, 404)
+  if (ownership.error === 'forbidden') return c.json({ error: '権限がありません' }, 403)
+  if (ownership.deletedAt) return c.json({ error: 'フローは削除済みです' }, 400)
 
   const body = await c.req.json()
   const parsed = moveFlowSchema.safeParse(body)
-  if (!parsed.success) return c.json({ error: 'Invalid input' }, 400)
+  if (!parsed.success) return c.json({ error: '入力が不正です' }, 400)
 
   const { projectId } = parsed.data
 
@@ -598,7 +598,7 @@ flows.put('/:id/move', async (c) => {
       .prepare('SELECT id FROM projects WHERE id = ? AND user_id = ?')
       .bind(projectId, userId)
       .first()
-    if (!project) return c.json({ error: 'Project not found' }, 404)
+    if (!project) return c.json({ error: 'プロジェクトが見つかりません' }, 404)
   }
 
   await db
