@@ -49,7 +49,7 @@ describe('VerifyPage', () => {
     // APIが解決されない状態をシミュレート
     mockApiFetch.mockReturnValue(new Promise(() => {}))
     renderWithRouter(['/verify?token=valid-token'])
-    expect(screen.getByText('メールアドレスを確認中...')).toBeInTheDocument()
+    expect(screen.getByText('verify.verifying')).toBeInTheDocument()
   })
 
   // --- 成功状態 ---
@@ -58,9 +58,9 @@ describe('VerifyPage', () => {
     renderWithRouter(['/verify?token=valid-token'])
 
     await waitFor(() => {
-      expect(screen.getByText('メール認証が完了しました！')).toBeInTheDocument()
+      expect(screen.getByText('verify.success')).toBeInTheDocument()
     })
-    expect(screen.getByText('ダッシュボードにリダイレクトします...')).toBeInTheDocument()
+    expect(screen.getByText('verify.redirecting')).toBeInTheDocument()
   })
 
   it('should call apiFetch with correct token', async () => {
@@ -78,7 +78,7 @@ describe('VerifyPage', () => {
     renderWithRouter(['/verify?token=valid-token'])
 
     await waitFor(() => {
-      expect(screen.getByText('メール認証が完了しました！')).toBeInTheDocument()
+      expect(screen.getByText('verify.success')).toBeInTheDocument()
     })
 
     // 2秒後にリダイレクト
@@ -95,7 +95,7 @@ describe('VerifyPage', () => {
     renderWithRouter(['/verify?token=valid-token'])
 
     await waitFor(() => {
-      expect(screen.getByText('メール認証が完了しました！')).toBeInTheDocument()
+      expect(screen.getByText('verify.success')).toBeInTheDocument()
     })
 
     // setTimeout(2000)があるので、即座にはnavigateされない
@@ -108,15 +108,15 @@ describe('VerifyPage', () => {
   // --- エラー状態: トークンなし ---
   it('should show error when token is missing (null)', () => {
     renderWithRouter(['/verify'])
-    expect(screen.getByText('認証に失敗しました')).toBeInTheDocument()
-    expect(screen.getByText('認証トークンが見つかりません')).toBeInTheDocument()
+    expect(screen.getByText('verify.failed')).toBeInTheDocument()
+    expect(screen.getByText('verify.tokenNotFound')).toBeInTheDocument()
   })
 
   it('should show error when token is empty string', () => {
     renderWithRouter(['/verify?token='])
     // URLSearchParams.get('token') returns '' for ?token=, but the component checks !token
-    expect(screen.getByText('認証に失敗しました')).toBeInTheDocument()
-    expect(screen.getByText('認証トークンが見つかりません')).toBeInTheDocument()
+    expect(screen.getByText('verify.failed')).toBeInTheDocument()
+    expect(screen.getByText('verify.tokenNotFound')).toBeInTheDocument()
   })
 
   it('should not call apiFetch when token is missing', () => {
@@ -130,7 +130,7 @@ describe('VerifyPage', () => {
     renderWithRouter(['/verify?token=invalid-token'])
 
     await waitFor(() => {
-      expect(screen.getByText('認証に失敗しました')).toBeInTheDocument()
+      expect(screen.getByText('verify.failed')).toBeInTheDocument()
     })
     expect(screen.getByText('トークンが無効です')).toBeInTheDocument()
   })
@@ -141,13 +141,13 @@ describe('VerifyPage', () => {
 
     await waitFor(() => {
       // h2 title and p.errorText both show '認証に失敗しました'
-      const errorTexts = screen.getAllByText('認証に失敗しました')
+      const errorTexts = screen.getAllByText('verify.failed')
       expect(errorTexts).toHaveLength(2) // title + error message
     })
     // Verify the title heading exists
-    expect(screen.getByRole('heading', { name: '認証に失敗しました' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'verify.failed' })).toBeInTheDocument()
     // Verify the "トップに戻る" button is shown (error state)
-    expect(screen.getByText('トップに戻る')).toBeInTheDocument()
+    expect(screen.getByText('verify.backToTop')).toBeInTheDocument()
   })
 
   // --- ナビゲーション ---
@@ -156,11 +156,11 @@ describe('VerifyPage', () => {
     renderWithRouter(['/verify?token=invalid-token'])
 
     await waitFor(() => {
-      expect(screen.getByText('トップに戻る')).toBeInTheDocument()
+      expect(screen.getByText('verify.backToTop')).toBeInTheDocument()
     })
 
     const user = userEvent.setup()
-    await user.click(screen.getByText('トップに戻る'))
+    await user.click(screen.getByText('verify.backToTop'))
 
     expect(mockNavigate).toHaveBeenCalledWith('/')
   })
@@ -168,7 +168,7 @@ describe('VerifyPage', () => {
   it('should not show "トップに戻る" button during verifying state', () => {
     mockApiFetch.mockReturnValue(new Promise(() => {}))
     renderWithRouter(['/verify?token=valid-token'])
-    expect(screen.queryByText('トップに戻る')).not.toBeInTheDocument()
+    expect(screen.queryByText('verify.backToTop')).not.toBeInTheDocument()
   })
 
   it('should not show "トップに戻る" button on success state', async () => {
@@ -176,9 +176,9 @@ describe('VerifyPage', () => {
     renderWithRouter(['/verify?token=valid-token'])
 
     await waitFor(() => {
-      expect(screen.getByText('メール認証が完了しました！')).toBeInTheDocument()
+      expect(screen.getByText('verify.success')).toBeInTheDocument()
     })
-    expect(screen.queryByText('トップに戻る')).not.toBeInTheDocument()
+    expect(screen.queryByText('verify.backToTop')).not.toBeInTheDocument()
   })
 
   // --- refreshAuth ---
@@ -188,7 +188,7 @@ describe('VerifyPage', () => {
     renderWithRouter(['/verify?token=valid-token'])
 
     await waitFor(() => {
-      expect(screen.getByText('メール認証が完了しました！')).toBeInTheDocument()
+      expect(screen.getByText('verify.success')).toBeInTheDocument()
     })
 
     expect(mockRefreshAuth).toHaveBeenCalledTimes(1)

@@ -84,6 +84,6 @@ describe('DemoEditorPage', () => {
     const ctaButton = screen.getByTestId('save-cta-button')
     await user.click(ctaButton)
     // AuthModal should be visible with email input
-    expect(screen.getByPlaceholderText('メールアドレス')).toBeTruthy()
+    expect(screen.getByPlaceholderText('form.email')).toBeTruthy()
   })
 })
