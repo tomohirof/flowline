@@ -129,7 +129,7 @@ describe('Dashboard', () => {
       expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('フローがまだありません。新規作成してみましょう！')).toBeInTheDocument()
+    expect(screen.getByText('empty.noFlows')).toBeInTheDocument()
   })
 
   // === 新規作成カード ===
@@ -140,7 +140,7 @@ describe('Dashboard', () => {
       expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
     })
     expect(screen.getByTestId('create-flow-card')).toBeInTheDocument()
-    expect(screen.getByText('新規作成')).toBeInTheDocument()
+    expect(screen.getByText('action.create')).toBeInTheDocument()
   })
 
   it('should render create card with SVG icon', async () => {
@@ -197,7 +197,7 @@ describe('Dashboard', () => {
     await waitFor(() => {
       expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
     })
-    expect(screen.getByText('フローの作成に失敗しました')).toBeInTheDocument()
+    expect(screen.getByText('toast.errorCreate')).toBeInTheDocument()
   })
 
   it('should disable create card while creating', async () => {
@@ -210,7 +210,7 @@ describe('Dashboard', () => {
     })
     await user.click(screen.getByTestId('create-flow-card'))
     expect(screen.getByTestId('create-flow-card')).toBeDisabled()
-    expect(screen.getByText('作成中...')).toBeInTheDocument()
+    expect(screen.getByText('action.creating')).toBeInTheDocument()
   })
 
   // === 削除機能 ===
@@ -228,7 +228,7 @@ describe('Dashboard', () => {
 
     // モーダルが表示される
     expect(screen.getByTestId('confirm-dialog-overlay')).toBeInTheDocument()
-    expect(screen.getByText('ゴミ箱に移動')).toBeInTheDocument()
+    expect(screen.getByText('confirm.moveToTrashTitle')).toBeInTheDocument()
 
     // 確認ボタンをクリック
     await user.click(screen.getByTestId('confirm-dialog-confirm'))
@@ -280,7 +280,7 @@ describe('Dashboard', () => {
     await waitFor(() => {
       expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
     })
-    expect(screen.getByText('フローの削除に失敗しました')).toBeInTheDocument()
+    expect(screen.getByText('toast.errorDelete')).toBeInTheDocument()
     expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
   })
 
@@ -300,7 +300,7 @@ describe('Dashboard', () => {
     await waitFor(() => {
       expect(screen.getByTestId('toast')).toBeInTheDocument()
     })
-    expect(screen.getByText('ゴミ箱に移動しました')).toBeInTheDocument()
+    expect(screen.getByText('toast.movedToTrash')).toBeInTheDocument()
   })
 
   // === APIエラー ===
@@ -313,7 +313,7 @@ describe('Dashboard', () => {
       expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('フロー一覧の取得に失敗しました')).toBeInTheDocument()
+    expect(screen.getByText('toast.errorFetchFlows')).toBeInTheDocument()
   })
 
   // === ヘッダー表示 ===
@@ -323,7 +323,7 @@ describe('Dashboard', () => {
     renderDashboard()
 
     await waitFor(() => {
-      expect(screen.getByText('マイフロー')).toBeInTheDocument()
+      expect(screen.getByText('title.myFlows')).toBeInTheDocument()
     })
   })
 
@@ -566,7 +566,7 @@ describe('Dashboard', () => {
     expect(link2).toHaveAttribute('href', '/flows/flow-2')
 
     // Menu buttons should exist for each flow in list view
-    const menuBtns = screen.getAllByLabelText('メニュー')
+    const menuBtns = screen.getAllByLabelText('menu')
     expect(menuBtns.length).toBeGreaterThanOrEqual(2)
   })
 
@@ -643,7 +643,7 @@ describe('Dashboard', () => {
       })
 
       // Click '複製' in the context menu
-      await user.click(screen.getByText('複製'))
+      await user.click(screen.getByText('action.duplicate'))
 
       // Verify GET /flows/flow-1 was called
       await waitFor(() => {
@@ -667,7 +667,7 @@ describe('Dashboard', () => {
       const postBody = JSON.parse((postCall![1] as { body: string }).body)
 
       // Title should be prefixed with "コピー "
-      expect(postBody.title).toBe('コピー 業務フロー')
+      expect(postBody.title).toBe('action.copyPrefix 業務フロー')
       // ThemeId should be same
       expect(postBody.themeId).toBe('cloud')
 
@@ -723,13 +723,13 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByTestId('context-menu')).toBeInTheDocument()
       })
-      await user.click(screen.getByText('複製'))
+      await user.click(screen.getByText('action.duplicate'))
 
       // Error should be shown
       await waitFor(() => {
         expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
       })
-      expect(screen.getByText('フローの複製に失敗しました')).toBeInTheDocument()
+      expect(screen.getByText('toast.errorDuplicate')).toBeInTheDocument()
     })
 
     it('should show error when duplicate fails on POST', async () => {
@@ -756,13 +756,13 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByTestId('context-menu')).toBeInTheDocument()
       })
-      await user.click(screen.getByText('複製'))
+      await user.click(screen.getByText('action.duplicate'))
 
       // Error should be shown
       await waitFor(() => {
         expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
       })
-      expect(screen.getByText('フローの複製に失敗しました')).toBeInTheDocument()
+      expect(screen.getByText('toast.errorDuplicate')).toBeInTheDocument()
     })
 
     it('should duplicate flow with no nodes or arrows', async () => {
@@ -797,7 +797,7 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByTestId('context-menu')).toBeInTheDocument()
       })
-      await user.click(screen.getByText('複製'))
+      await user.click(screen.getByText('action.duplicate'))
 
       // Verify POST was called
       await waitFor(() => {
@@ -852,7 +852,7 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByTestId('context-menu')).toBeInTheDocument()
       })
-      await user.click(screen.getByText('複製'))
+      await user.click(screen.getByText('action.duplicate'))
 
       // Wait for the GET call to be made
       await waitFor(() => {
@@ -870,7 +870,7 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByTestId('context-menu')).toBeInTheDocument()
       })
-      await user.click(screen.getByText('複製'))
+      await user.click(screen.getByText('action.duplicate'))
 
       // Should not have triggered additional API calls
       expect(mockApiFetch.mock.calls.length).toBe(callCountAfterFirst)
@@ -1005,7 +1005,7 @@ describe('Dashboard', () => {
       await userEvent.click(sharedNav)
 
       await waitFor(() => {
-        expect(screen.getByRole('heading', { name: '共有ファイル' })).toBeInTheDocument()
+        expect(screen.getByRole('heading', { name: 'title.shared' })).toBeInTheDocument()
       })
     })
 
@@ -1098,7 +1098,7 @@ describe('Dashboard', () => {
       await userEvent.click(trashNav)
 
       await waitFor(() => {
-        expect(screen.getByText('ゴミ箱')).toBeInTheDocument()
+        expect(screen.getByText('title.trash')).toBeInTheDocument()
       })
     })
   })

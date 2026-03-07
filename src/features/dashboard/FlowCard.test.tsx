@@ -80,7 +80,8 @@ describe('FlowCard', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-01-15T12:00:00Z'))
     renderCard()
-    expect(screen.getByText('更新: 2時間前')).toBeInTheDocument()
+    // i18n key fallback: t('dashboard:updateTime', { time }) returns 'updateTime'
+    expect(screen.getByText('updateTime')).toBeInTheDocument()
   })
 
   it('should have data-testid on the card container', () => {
@@ -94,7 +95,7 @@ describe('FlowCard', () => {
     const flowWithShare: FlowSummary = { ...baseFlow, shareToken: 'token-abc' }
     renderCard({ flow: flowWithShare })
     expect(screen.getByTestId('share-badge-flow-1')).toBeInTheDocument()
-    expect(screen.getByText('共有中')).toBeInTheDocument()
+    expect(screen.getByText('action.shared')).toBeInTheDocument()
   })
 
   it('should not show share badge when flow has no shareToken', () => {
@@ -112,18 +113,18 @@ describe('FlowCard', () => {
     expect(onDelete).toHaveBeenCalledWith('flow-1', '業務フロー')
   })
 
-  it('should show "削除中..." and disable button when deleting', () => {
+  it('should show "action.deleting" and disable button when deleting', () => {
     renderCard({ deleting: true })
     const deleteButton = screen.getByTestId('delete-flow-flow-1')
     expect(deleteButton).toBeDisabled()
-    expect(deleteButton).toHaveTextContent('削除中...')
+    expect(deleteButton).toHaveTextContent('action.deleting')
   })
 
-  it('should show "削除" and enable button when not deleting', () => {
+  it('should show "delete" and enable button when not deleting', () => {
     renderCard({ deleting: false })
     const deleteButton = screen.getByTestId('delete-flow-flow-1')
     expect(deleteButton).not.toBeDisabled()
-    expect(deleteButton).toHaveTextContent('削除')
+    expect(deleteButton).toHaveTextContent('delete')
   })
 
   // --- エッジケース ---
@@ -145,14 +146,14 @@ describe('FlowCard', () => {
 
   // --- ホバー状態: 「開く」ボタン ---
 
-  it('should show "開く" button when isHovered is true', () => {
+  it('should show "open" button when isHovered is true', () => {
     renderCard({ isHovered: true })
-    expect(screen.getByText('開く')).toBeInTheDocument()
+    expect(screen.getByText('open')).toBeInTheDocument()
   })
 
-  it('should not show "開く" button when isHovered is false', () => {
+  it('should not show "open" button when isHovered is false', () => {
     renderCard({ isHovered: false })
-    expect(screen.queryByText('開く')).not.toBeInTheDocument()
+    expect(screen.queryByText('open')).not.toBeInTheDocument()
   })
 
   // --- ホバー状態: メニューボタン ---
@@ -259,7 +260,6 @@ describe('FlowCard', () => {
   it('should render lane color dots in info area', () => {
     renderCard()
     const dots = screen.getByTestId('flow-card-flow-1').querySelectorAll('[data-testid="lane-dot"]')
-    // デフォルトのlaneCount=3に対して3つのドットを表示
     expect(dots.length).toBeGreaterThan(0)
   })
 })

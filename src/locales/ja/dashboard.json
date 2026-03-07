@@ -30,6 +30,7 @@
     "trash": "ゴミ箱は空です",
     "trashDesc": "削除したフローはここに表示されます",
     "sharedSearch": "検索条件に一致する共有フローがありません",
+    "sharedNoFlows": "共有中のフローはありません",
     "sharedEmpty": "フローを共有するとここに表示されます"
   },
   "confirm": {

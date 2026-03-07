@@ -14,11 +14,11 @@ describe('DashboardSidebar', () => {
       <DashboardSidebar selectedNav="recent" onNavChange={vi.fn()} userName="テストユーザー" />,
     )
 
-    expect(screen.getByText('最近')).toBeInTheDocument()
-    expect(screen.getByText('すべてのファイル')).toBeInTheDocument()
-    expect(screen.getByText('共有ファイル')).toBeInTheDocument()
-    expect(screen.getByText('ドラフト')).toBeInTheDocument()
-    expect(screen.getByText('ごみ箱')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.recent')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.allFiles')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.shared')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.drafts')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.trash')).toBeInTheDocument()
   })
 
   it('should call onNavChange when nav item is clicked', async () => {
@@ -50,17 +50,17 @@ describe('DashboardSidebar', () => {
     render(
       <DashboardSidebar selectedNav="recent" onNavChange={vi.fn()} userName="テストユーザー" />,
     )
-    expect(screen.getByText('チーム')).toBeInTheDocument()
-    expect(screen.getByText('プロダクトチーム')).toBeInTheDocument()
-    expect(screen.getByText('バックオフィス')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.teams')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.teamProduct')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.teamBackoffice')).toBeInTheDocument()
   })
 
   it('should display Pro upgrade card', () => {
     render(
       <DashboardSidebar selectedNav="recent" onNavChange={vi.fn()} userName="テストユーザー" />,
     )
-    expect(screen.getByText('プランを表示')).toBeInTheDocument()
-    expect(screen.getByText(/Proプラン/)).toBeInTheDocument()
+    expect(screen.getByText('sidebar.showPlan')).toBeInTheDocument()
+    expect(screen.getByText('sidebar.proPlanMessage')).toBeInTheDocument()
   })
 
   it('should have sidebar testid', () => {

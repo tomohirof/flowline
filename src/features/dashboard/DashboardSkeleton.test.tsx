@@ -38,6 +38,6 @@ describe('DashboardSkeleton', () => {
 
   it('should have aria-label for accessibility', () => {
     render(<DashboardSkeleton />)
-    expect(screen.getByLabelText('読み込み中')).toBeInTheDocument()
+    expect(screen.getByLabelText('loadingAria')).toBeInTheDocument()
   })
 })

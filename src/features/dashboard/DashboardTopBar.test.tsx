@@ -24,7 +24,7 @@ describe('DashboardTopBar', () => {
 
   it('should render search input', () => {
     render(<DashboardTopBar {...defaultProps} />)
-    expect(screen.getByPlaceholderText('ファイルを検索…')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('search')).toBeInTheDocument()
   })
 
   it('should call onSearchChange when typing in search', async () => {
@@ -32,7 +32,7 @@ describe('DashboardTopBar', () => {
     const onSearchChange = vi.fn()
     render(<DashboardTopBar {...defaultProps} onSearchChange={onSearchChange} />)
 
-    const input = screen.getByPlaceholderText('ファイルを検索…')
+    const input = screen.getByPlaceholderText('search')
     await user.type(input, 'a')
     expect(onSearchChange).toHaveBeenCalledWith('a')
   })
@@ -60,7 +60,7 @@ describe('DashboardTopBar', () => {
 
   it('should display search query value', () => {
     render(<DashboardTopBar {...defaultProps} searchQuery="検索テスト" />)
-    const input = screen.getByPlaceholderText('ファイルを検索…') as HTMLInputElement
+    const input = screen.getByPlaceholderText('search') as HTMLInputElement
     expect(input.value).toBe('検索テスト')
   })
 
@@ -73,10 +73,10 @@ describe('DashboardTopBar', () => {
     expect(onToggleMenu).toHaveBeenCalledTimes(1)
   })
 
-  it('should have メニュー as avatar aria-label', () => {
+  it('should have menu as avatar aria-label', () => {
     render(<DashboardTopBar {...defaultProps} />)
     const avatar = screen.getByTestId('user-avatar')
-    expect(avatar).toHaveAttribute('aria-label', 'メニュー')
+    expect(avatar).toHaveAttribute('aria-label', 'menu')
   })
 
   it('should display U as initial when userName is empty', () => {

@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import type { FlowSummary } from '../editor/types'
 import { PALETTES } from '../editor/theme-constants'
@@ -34,6 +35,7 @@ export function FlowCard({
   isTrash = false,
   onRestore,
 }: FlowCardProps) {
+  const { t } = useTranslation(['dashboard', 'common'])
   const isRenaming = renamingId === flow.id
   const renameInputRef = useRef<HTMLInputElement>(null)
 
@@ -94,7 +96,6 @@ export function FlowCard({
     }
   }
 
-  // レーンカラードット（最大5色）
   const laneColors = PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
 
   return (
@@ -104,7 +105,6 @@ export function FlowCard({
       onMouseEnter={() => onHover(flow.id)}
       onMouseLeave={() => onHover(null)}
     >
-      {/* サムネイル領域 */}
       <div className={styles.thumbnail}>
         <FlowThumbnail
           themeId={flow.themeId}
@@ -112,7 +112,6 @@ export function FlowCard({
           nodeCount={DEFAULT_NODE_COUNT}
         />
 
-        {/* ホバーオーバーレイ */}
         {isHovered && (
           <div className={styles.hoverOverlay}>
             {isTrash ? (
@@ -126,7 +125,7 @@ export function FlowCard({
                     onRestore?.(flow.id)
                   }}
                 >
-                  復元
+                  {t('dashboard:action.restore')}
                 </button>
                 <button
                   data-testid={`permanent-delete-${flow.id}`}
@@ -137,7 +136,7 @@ export function FlowCard({
                     onDelete(flow.id, flow.title)
                   }}
                 >
-                  完全に削除
+                  {t('dashboard:action.permanentDelete')}
                 </button>
               </>
             ) : (
@@ -146,28 +145,25 @@ export function FlowCard({
                 data-testid={`flow-link-${flow.id}`}
                 className={styles.openButton}
               >
-                開く
+                {t('common:open')}
               </Link>
             )}
           </div>
         )}
 
-        {/* メニューボタン（ホバー時のみ） */}
         {isHovered && (
           <button
             data-testid={`card-menu-${flow.id}`}
             className={styles.menuButton}
             onClick={handleMenuClick}
-            aria-label="メニュー"
+            aria-label={t('common:menu')}
           >
             &#x22EF;
           </button>
         )}
       </div>
 
-      {/* 情報領域 */}
       <div className={styles.info}>
-        {/* タイトル or リネーム入力 */}
         {isRenaming ? (
           <input
             data-testid={`rename-input-${flow.id}`}
@@ -182,7 +178,6 @@ export function FlowCard({
           <div className={styles.title}>{flow.title}</div>
         )}
 
-        {/* メタ情報行 */}
         <div className={styles.meta}>
           <div className={styles.laneDots}>
             {laneColors.map((color, i) => (
@@ -196,18 +191,17 @@ export function FlowCard({
           </div>
           <span className={styles.updatedAt}>
             {isTrash && flow.deletedAt
-              ? `削除: ${formatRelativeTime(flow.deletedAt)}`
-              : `更新: ${formatRelativeTime(flow.updatedAt)}`}
+              ? t('dashboard:deleteTime', { time: formatRelativeTime(flow.deletedAt) })
+              : t('dashboard:updateTime', { time: formatRelativeTime(flow.updatedAt) })}
           </span>
           {flow.shareToken && (
             <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>
-              共有中
+              {t('dashboard:action.shared')}
             </span>
           )}
         </div>
       </div>
 
-      {/* 非表示リンク (非ホバー時のdata-testid互換) */}
       {!isHovered && (
         <Link
           to={`/flows/${flow.id}`}
@@ -218,7 +212,6 @@ export function FlowCard({
         />
       )}
 
-      {/* 非表示削除ボタン（後方互換性） */}
       <button
         data-testid={`delete-flow-${flow.id}`}
         onClick={handleDelete}
@@ -227,7 +220,7 @@ export function FlowCard({
         tabIndex={-1}
         aria-hidden="true"
       >
-        {deleting ? '削除中...' : '削除'}
+        {deleting ? t('dashboard:action.deleting') : t('common:delete')}
       </button>
     </div>
   )

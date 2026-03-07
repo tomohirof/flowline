@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import styles from './DashboardSidebar.module.css'
 
 interface DashboardSidebarProps {
@@ -6,20 +7,27 @@ interface DashboardSidebarProps {
   userName: string
 }
 
-const NAV_ITEMS = [
-  { id: 'recent', icon: '◷', label: '最近' },
-  { id: 'all', icon: '▦', label: 'すべてのファイル' },
-  { id: 'shared', icon: '⊡', label: '共有ファイル' },
-  { id: 'drafts', icon: '◫', label: 'ドラフト' },
-  { id: 'trash', icon: '▢', label: 'ごみ箱' },
+interface NavItem {
+  id: string
+  icon: string
+  labelKey: string
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { id: 'recent', icon: '◷', labelKey: 'sidebar.recent' },
+  { id: 'all', icon: '▦', labelKey: 'sidebar.allFiles' },
+  { id: 'shared', icon: '⊡', labelKey: 'sidebar.shared' },
+  { id: 'drafts', icon: '◫', labelKey: 'sidebar.drafts' },
+  { id: 'trash', icon: '▢', labelKey: 'sidebar.trash' },
 ]
 
 const TEAMS = [
-  { id: 't1', name: 'プロダクトチーム', count: 8 },
-  { id: 't2', name: 'バックオフィス', count: 5 },
+  { id: 't1', nameKey: 'sidebar.teamProduct', count: 8 },
+  { id: 't2', nameKey: 'sidebar.teamBackoffice', count: 5 },
 ]
 
 export function DashboardSidebar({ selectedNav, onNavChange, userName }: DashboardSidebarProps) {
+  const { t } = useTranslation('dashboard')
   const initial = userName ? userName.charAt(0).toUpperCase() : 'U'
 
   return (
@@ -34,7 +42,7 @@ export function DashboardSidebar({ selectedNav, onNavChange, userName }: Dashboa
             className={`${styles.navItem} ${selectedNav === n.id ? styles.navItemActive : ''}`}
           >
             <span className={styles.navIcon}>{n.icon}</span>
-            {n.label}
+            {t(n.labelKey)}
           </button>
         ))}
       </div>
@@ -54,14 +62,14 @@ export function DashboardSidebar({ selectedNav, onNavChange, userName }: Dashboa
 
       {/* Teams */}
       <div>
-        <div className={styles.sectionTitle}>チーム</div>
-        {TEAMS.map((t) => (
-          <div key={t.id} className={styles.teamItem}>
+        <div className={styles.sectionTitle}>{t('sidebar.teams')}</div>
+        {TEAMS.map((team) => (
+          <div key={team.id} className={styles.teamItem}>
             <span className={styles.teamInfo}>
               <span className={styles.teamIcon}>◫</span>
-              {t.name}
+              {t(team.nameKey)}
             </span>
-            <span className={styles.teamCount}>{t.count}</span>
+            <span className={styles.teamCount}>{team.count}</span>
           </div>
         ))}
       </div>
@@ -71,8 +79,8 @@ export function DashboardSidebar({ selectedNav, onNavChange, userName }: Dashboa
       {/* Upgrade card */}
       <div className={styles.upgradeCard}>
         <div className={styles.upgradeIcon}>⊕</div>
-        <p className={styles.upgradeText}>Proプランでチーム共有やバージョン履歴が使えます</p>
-        <button className={styles.upgradeBtn}>プランを表示</button>
+        <p className={styles.upgradeText}>{t('sidebar.proPlanMessage')}</p>
+        <button className={styles.upgradeBtn}>{t('sidebar.showPlan')}</button>
       </div>
     </div>
   )

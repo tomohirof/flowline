@@ -30,6 +30,7 @@
     "trash": "Trash is empty",
     "trashDesc": "Deleted flows will appear here",
     "sharedSearch": "No shared flows match your search",
+    "sharedNoFlows": "No shared flows",
     "sharedEmpty": "Shared flows will appear here"
   },
   "confirm": {
