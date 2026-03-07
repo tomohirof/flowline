@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { BRAND } from '../../../constants/brand'
 import styles from './Navbar.module.css'
 
@@ -9,6 +10,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ onLoginClick, onSignupClick }: NavbarProps) {
+  const { t } = useTranslation('landing')
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -37,19 +39,19 @@ export function Navbar({ onLoginClick, onSignupClick }: NavbarProps) {
 
         <div className={styles.navLinks}>
           <button className={styles.navLink} onClick={() => scrollTo('features')}>
-            機能
+            {t('nav.features')}
           </button>
           <button className={styles.navLink} onClick={() => scrollTo('how-it-works')}>
-            使い方
+            {t('nav.howToUse')}
           </button>
         </div>
 
         <div className={styles.actions}>
           <button className={styles.loginBtn} onClick={onLoginClick}>
-            ログイン
+            {t('nav.login')}
           </button>
           <button className={styles.signupBtn} onClick={onSignupClick}>
-            {BRAND.ctaButtonNav}
+            {t('brand.ctaButtonNav')}
           </button>
         </div>
       </div>

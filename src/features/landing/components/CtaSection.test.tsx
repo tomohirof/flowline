@@ -3,7 +3,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
-import { BRAND } from '../../../constants/brand'
 import { CtaSection } from './CtaSection'
 
 function renderWithRouter(ui: React.ReactElement) {
@@ -15,20 +14,20 @@ describe('CtaSection', () => {
     cleanup()
   })
 
-  it('should render CTA heading', () => {
+  it('should render CTA heading (i18n key)', () => {
     renderWithRouter(<CtaSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(BRAND.ctaHeading)).toBeInTheDocument()
+    expect(screen.getByText('brand.ctaHeading')).toBeInTheDocument()
   })
 
-  it('should render CTA subtext', () => {
+  it('should render CTA subtext (i18n key)', () => {
     renderWithRouter(<CtaSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(BRAND.ctaSubtext)).toBeInTheDocument()
+    expect(screen.getByText('brand.ctaSubtext')).toBeInTheDocument()
   })
 
-  it('should render CTA button with primary CTA text', () => {
+  it('should render CTA button with primary CTA text (i18n key)', () => {
     renderWithRouter(<CtaSection onCtaClick={vi.fn()} />)
     expect(
-      screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }),
+      screen.getByRole('button', { name: 'brand.ctaButtonPrimary' }),
     ).toBeInTheDocument()
   })
 
@@ -38,7 +37,7 @@ describe('CtaSection', () => {
     renderWithRouter(<CtaSection onCtaClick={onCtaClick} />)
 
     await user.click(
-      screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }),
+      screen.getByRole('button', { name: 'brand.ctaButtonPrimary' }),
     )
     expect(onCtaClick).toHaveBeenCalledTimes(1)
   })
@@ -48,6 +47,6 @@ describe('CtaSection', () => {
     const tryLink = screen.getByTestId('cta-try-link')
     expect(tryLink).toBeInTheDocument()
     expect(tryLink).toHaveAttribute('href', '/try')
-    expect(tryLink).toHaveTextContent(BRAND.demoTryLink)
+    expect(tryLink).toHaveTextContent('demoTryLink')
   })
 })

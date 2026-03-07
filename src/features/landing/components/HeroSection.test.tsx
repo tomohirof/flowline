@@ -3,7 +3,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
-import { BRAND } from '../../../constants/brand'
 import { HeroSection } from './HeroSection'
 
 function renderWithRouter(ui: React.ReactElement) {
@@ -20,30 +19,30 @@ describe('HeroSection', () => {
     expect(screen.getByTestId('hero-section')).toBeInTheDocument()
   })
 
-  it('should render heading tagline part 1', () => {
+  it('should render heading tagline part 1 (i18n key)', () => {
     renderWithRouter(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(new RegExp(BRAND.taglinePart1))).toBeInTheDocument()
+    expect(screen.getByText('brand.taglinePart1')).toBeInTheDocument()
   })
 
-  it('should render gradient text tagline part 2', () => {
+  it('should render gradient text tagline part 2 (i18n key)', () => {
     renderWithRouter(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(new RegExp(BRAND.taglinePart2))).toBeInTheDocument()
+    expect(screen.getByText('brand.taglinePart2')).toBeInTheDocument()
   })
 
-  it('should render subtext about 業務フロー', () => {
+  it('should render subtext (i18n key)', () => {
     renderWithRouter(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(new RegExp(BRAND.heroSubtext))).toBeInTheDocument()
+    expect(screen.getByText(/brand\.heroSubtext/)).toBeInTheDocument()
   })
 
-  it('should render badge with hero badge text', () => {
+  it('should render badge with hero badge text (i18n key)', () => {
     renderWithRouter(<HeroSection onCtaClick={vi.fn()} />)
-    expect(screen.getByText(new RegExp(BRAND.heroBadge))).toBeInTheDocument()
+    expect(screen.getByText('brand.heroBadge')).toBeInTheDocument()
   })
 
-  it('should render CTA button with primary CTA text', () => {
+  it('should render CTA button with primary CTA text (i18n key)', () => {
     renderWithRouter(<HeroSection onCtaClick={vi.fn()} />)
     expect(
-      screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }),
+      screen.getByRole('button', { name: 'brand.ctaButtonPrimary' }),
     ).toBeInTheDocument()
   })
 
@@ -53,7 +52,7 @@ describe('HeroSection', () => {
     renderWithRouter(<HeroSection onCtaClick={onCtaClick} />)
 
     await user.click(
-      screen.getByRole('button', { name: new RegExp(BRAND.ctaButtonPrimary.replace('→', '')) }),
+      screen.getByRole('button', { name: 'brand.ctaButtonPrimary' }),
     )
     expect(onCtaClick).toHaveBeenCalledTimes(1)
   })
@@ -63,6 +62,6 @@ describe('HeroSection', () => {
     const tryLink = screen.getByTestId('try-link')
     expect(tryLink).toBeInTheDocument()
     expect(tryLink).toHaveAttribute('href', '/try')
-    expect(tryLink).toHaveTextContent(BRAND.demoTryLink)
+    expect(tryLink).toHaveTextContent('demoTryLink')
   })
 })

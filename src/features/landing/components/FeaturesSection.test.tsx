@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
-import { BRAND } from '../../../constants/brand'
 import { FeaturesSection } from './FeaturesSection'
 
 describe('FeaturesSection', () => {
@@ -9,14 +8,14 @@ describe('FeaturesSection', () => {
     cleanup()
   })
 
-  it('should render section title', () => {
+  it('should render section title (i18n key)', () => {
     render(<FeaturesSection />)
-    expect(screen.getByText(BRAND.featuresTitle)).toBeInTheDocument()
+    expect(screen.getByText('brand.featuresTitle')).toBeInTheDocument()
   })
 
-  it('should render section subtitle', () => {
+  it('should render section subtitle (i18n key)', () => {
     render(<FeaturesSection />)
-    expect(screen.getByText(BRAND.featuresSubtitle)).toBeInTheDocument()
+    expect(screen.getByText('brand.featuresSubtitle')).toBeInTheDocument()
   })
 
   it('should have id="features" on section element', () => {
@@ -24,33 +23,33 @@ describe('FeaturesSection', () => {
     expect(document.getElementById('features')).toBeInTheDocument()
   })
 
-  it('should render feature card "スイムレーン設計"', () => {
+  it('should render feature card swimlane (i18n key)', () => {
     render(<FeaturesSection />)
-    expect(screen.getByText('スイムレーン設計')).toBeInTheDocument()
+    expect(screen.getByText('features.swimlane.title')).toBeInTheDocument()
   })
 
-  it('should render feature card "スマート接続"', () => {
+  it('should render feature card smartConnect (i18n key)', () => {
     render(<FeaturesSection />)
-    expect(screen.getByText('スマート接続')).toBeInTheDocument()
+    expect(screen.getByText('features.smartConnect.title')).toBeInTheDocument()
   })
 
-  it('should render feature card "リアルタイム編集"', () => {
+  it('should render feature card realtimeEdit (i18n key)', () => {
     render(<FeaturesSection />)
-    expect(screen.getByText('リアルタイム編集')).toBeInTheDocument()
+    expect(screen.getByText('features.realtimeEdit.title')).toBeInTheDocument()
   })
 
-  it('should render feature card "Undo / Redo"', () => {
+  it('should render feature card undoRedo (i18n key)', () => {
     render(<FeaturesSection />)
-    expect(screen.getByText('Undo / Redo')).toBeInTheDocument()
+    expect(screen.getByText('features.undoRedo.title')).toBeInTheDocument()
   })
 
-  it('should render feature card "テーマシステム"', () => {
+  it('should render feature card theme (i18n key)', () => {
     render(<FeaturesSection />)
-    expect(screen.getByText('テーマシステム')).toBeInTheDocument()
+    expect(screen.getByText('features.theme.title')).toBeInTheDocument()
   })
 
-  it('should render feature card "エクスポート"', () => {
+  it('should render feature card export (i18n key)', () => {
     render(<FeaturesSection />)
-    expect(screen.getByText('エクスポート')).toBeInTheDocument()
+    expect(screen.getByText('features.export.title')).toBeInTheDocument()
   })
 })

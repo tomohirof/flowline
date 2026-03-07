@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BRAND } from '../../../constants/brand'
+import { useTranslation } from 'react-i18next'
 import styles from './HeroSection.module.css'
 import landingStyles from '../landing.module.css'
 
@@ -8,6 +8,7 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onCtaClick }: HeroSectionProps) {
+  const { t } = useTranslation('landing')
   return (
     <section data-testid="hero-section" className={styles.hero}>
       <div className={styles.dotGrid} aria-hidden="true" />
@@ -17,27 +18,27 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
       <div className={styles.content}>
         <div className={styles.badge}>
           <span className={styles.badgeDot} />
-          {BRAND.heroBadge}
+          {t('brand.heroBadge')}
         </div>
 
         <h1 className={styles.heading}>
-          {BRAND.taglinePart1}
+          {t('brand.taglinePart1')}
           <br />
-          <span className={styles.gradientText}>{BRAND.taglinePart2}</span>
+          <span className={styles.gradientText}>{t('brand.taglinePart2')}</span>
         </h1>
 
         <p className={styles.subtext}>
-          {BRAND.heroSubtext}
+          {t('brand.heroSubtext')}
           <br />
-          {BRAND.heroSubtext2}
+          {t('brand.heroSubtext2')}
         </p>
 
         <div className={styles.ctaGroup}>
           <button className={landingStyles.btnPrimary} onClick={onCtaClick}>
-            {BRAND.ctaButtonPrimary}
+            {t('brand.ctaButtonPrimary')}
           </button>
           <Link to="/try" className={styles.tryLink} data-testid="try-link">
-            {BRAND.demoTryLink}
+            {t('shared:demoTryLink')}
           </Link>
         </div>
       </div>

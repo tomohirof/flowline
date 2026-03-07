@@ -8,9 +8,9 @@ describe('HowItWorksSection', () => {
     cleanup()
   })
 
-  it('should render title "3ステップで始める"', () => {
+  it('should render title (i18n key)', () => {
     render(<HowItWorksSection />)
-    expect(screen.getByText('3ステップで始める')).toBeInTheDocument()
+    expect(screen.getByText('howItWorks.title')).toBeInTheDocument()
   })
 
   it('should have id="how-it-works" on section element', () => {
@@ -18,19 +18,19 @@ describe('HowItWorksSection', () => {
     expect(document.getElementById('how-it-works')).toBeInTheDocument()
   })
 
-  it('should render step "レーンを定義"', () => {
+  it('should render step 1 title (i18n key)', () => {
     render(<HowItWorksSection />)
-    expect(screen.getByText('レーンを定義')).toBeInTheDocument()
+    expect(screen.getByText('howItWorks.step1.title')).toBeInTheDocument()
   })
 
-  it('should render step "ノードを配置"', () => {
+  it('should render step 2 title (i18n key)', () => {
     render(<HowItWorksSection />)
-    expect(screen.getByText('ノードを配置')).toBeInTheDocument()
+    expect(screen.getByText('howItWorks.step2.title')).toBeInTheDocument()
   })
 
-  it('should render step "共有・エクスポート"', () => {
+  it('should render step 3 title (i18n key)', () => {
     render(<HowItWorksSection />)
-    expect(screen.getByText('共有・エクスポート')).toBeInTheDocument()
+    expect(screen.getByText('howItWorks.step3.title')).toBeInTheDocument()
   })
 
   it('should render step numbers 1, 2, 3', () => {
