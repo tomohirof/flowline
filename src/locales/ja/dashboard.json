@@ -69,6 +69,11 @@
     "teams": "チーム",
     "teamProduct": "プロダクトチーム",
     "teamBackoffice": "バックオフィス",
+    "projects": "プロジェクト",
+    "uncategorized": "未分類",
+    "newProject": "新規プロジェクト",
+    "rename": "名前を変更",
+    "delete": "削除",
     "proPlanMessage": "Proプランでチーム共有やバージョン履歴が使えます",
     "showPlan": "プランを表示"
   },

@@ -350,6 +350,10 @@ export function Dashboard() {
               selectedNav={selectedNav}
               onNavChange={setSelectedNav}
               userName={userName}
+              projects={[]}
+              onCreateProject={() => {}}
+              onRenameProject={() => {}}
+              onDeleteProject={() => {}}
             />
 
             {/* Main content area */}

@@ -69,6 +69,11 @@
     "teams": "Teams",
     "teamProduct": "Product Team",
     "teamBackoffice": "Back Office",
+    "projects": "Projects",
+    "uncategorized": "Uncategorized",
+    "newProject": "New Project",
+    "rename": "Rename",
+    "delete": "Delete",
     "proPlanMessage": "Get team sharing and version history with the Pro plan",
     "showPlan": "View plans"
   },
