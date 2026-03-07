@@ -1,0 +1,8 @@
+{
+  "createdWith": "created with {{appName}}",
+  "lanes": "lanes",
+  "nodes": "nodes",
+  "updated": "updated",
+  "errorLoad": "Failed to load shared flow",
+  "errorNoToken": "No share token specified"
+}

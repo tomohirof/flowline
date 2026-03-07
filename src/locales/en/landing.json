@@ -1,0 +1,54 @@
+{
+  "nav": {
+    "features": "Features",
+    "howToUse": "How to use",
+    "login": "Log in"
+  },
+  "features": {
+    "swimlane": {
+      "title": "Swimlane Design",
+      "desc": "Separate lanes by department or role to clearly visualize areas of responsibility."
+    },
+    "smartConnect": {
+      "title": "Smart Connect",
+      "desc": "Intuitively connect nodes. Create beautiful flow diagrams with automatic arrow routing."
+    },
+    "realtimeEdit": {
+      "title": "Real-time Editing",
+      "desc": "Live preview with instant changes. A stress-free editing experience."
+    },
+    "undoRedo": {
+      "title": "Undo / Redo",
+      "desc": "Full support for undo and redo. Edit with confidence."
+    },
+    "theme": {
+      "title": "Theme System",
+      "desc": "Switch between light and dark themes. Customize your workspace."
+    },
+    "export": {
+      "title": "Export",
+      "desc": "Export in PNG/SVG format. Use in presentations and documents right away."
+    }
+  },
+  "howItWorks": {
+    "title": "Get Started in 3 Steps",
+    "subtitle": "Create flow diagrams instantly with simple operations",
+    "step1": {
+      "title": "Define Lanes",
+      "desc": "Create swimlanes aligned with departments or roles. Easily add with drag operations."
+    },
+    "step2": {
+      "title": "Place Nodes",
+      "desc": "Place tasks and decision points as nodes, connect with arrows to complete the flow."
+    },
+    "step3": {
+      "title": "Share & Export",
+      "desc": "Share via URL or export as image. Everyone on the team can access immediately."
+    }
+  },
+  "footer": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact Us"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "nav": {
+    "profile": "Profile",
+    "editor": "Editor",
+    "interaction": "Interaction",
+    "display": "Display",
+    "notification": "Notifications",
+    "security": "Security"
+  },
+  "profile": {
+    "title": "Profile",
+    "desc": "Manage your account information",
+    "name": "Name",
+    "namePlaceholder": "Name",
+    "email": "Email"
+  },
+  "editor": {
+    "nodeCreation": {
+      "title": "Node creation",
+      "desc": "Configure behavior when creating new nodes",
+      "copyLabel": "Copy text when creating node on same row",
+      "copyLabelDesc": "When creating a node on the same row in an adjacent lane, the original node's label is copied",
+      "autoConnect": "Auto connect",
+      "autoConnectDesc": "Automatically connect new nodes to the previous node with an arrow",
+      "autoAddRow": "Auto add row at last row",
+      "autoAddRowDesc": "A new empty row is automatically added when placing a node on the last row",
+      "editOnCreate": "Edit immediately after creation",
+      "editOnCreateDesc": "Automatically enter label editing mode after creating a node"
+    },
+    "arrowDefault": {
+      "title": "Arrow defaults",
+      "desc": "Set the default style for new arrows",
+      "lineStyle": "Line style",
+      "solid": "Solid",
+      "dashed": "Dashed",
+      "dotted": "Dotted"
+    },
+    "theme": {
+      "title": "Default theme",
+      "desc": "Theme for new files"
+    }
+  },
+  "interaction": {
+    "title": "Interaction",
+    "desc": "Customize mouse and keyboard controls",
+    "doubleClickEdit": "Double-click to edit",
+    "doubleClickEditDesc": "When OFF, single-click enters edit mode",
+    "undoShortcut": "⌘Z / Ctrl+Z to undo",
+    "undoShortcutDesc": "Undo operations with keyboard shortcuts (always ON)",
+    "deleteShortcut": "Delete / Backspace to delete",
+    "deleteShortcutDesc": "Delete selected nodes and arrows with keyboard (always ON)"
+  },
+  "display": {
+    "title": "Display",
+    "desc": "Customize the editor appearance",
+    "dotGrid": "Dot grid",
+    "dotGridDesc": "Show dot grid on the canvas",
+    "orderBadge": "Node order badges",
+    "orderBadgeDesc": "Show order badges on nodes",
+    "laneColorBar": "Lane color bar",
+    "laneColorBarDesc": "Show color bar on lane headers",
+    "language": "Language",
+    "languageDesc": "Change the UI display language"
+  },
+  "notification": {
+    "title": "Notifications",
+    "desc": "Manage email and in-app notifications",
+    "email": "Email notifications",
+    "emailDesc": "Receive email notifications for shared file updates and comments",
+    "browser": "Browser notifications",
+    "browserDesc": "Receive real-time editing notifications in the browser"
+  },
+  "security": {
+    "title": "Security",
+    "desc": "Manage your account security",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "newPasswordPlaceholder": "8+ characters",
+    "passwordChanged": "Password changed",
+    "changePassword": "Change password",
+    "dangerZone": "Danger zone",
+    "deleteAccountWarning": "Deleting your account will permanently erase all data. This action cannot be undone.",
+    "deleteAccountConfirm": "Confirm delete",
+    "deleteAccount": "Delete account"
+  }
+}
