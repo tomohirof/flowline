@@ -7,6 +7,7 @@ import {
   createProject as createProjectApi,
   renameProject as renameProjectApi,
   deleteProject as deleteProjectApi,
+  moveFlowToProject,
 } from '../../lib/api'
 import type { FlowListResponse, FlowSummary, FlowDetailResponse, Project } from '../editor/types'
 import { FlowCard } from './FlowCard'
@@ -390,6 +391,26 @@ export function Dashboard() {
     }
   }
 
+  const handleMoveToProject = async (projectId: string | null) => {
+    if (!contextMenu) return
+    const flowId = contextMenu.flowId
+    setContextMenu(null)
+    try {
+      await moveFlowToProject(flowId, projectId)
+      const projectFilter = selectedNav.startsWith('project:')
+        ? selectedNav.slice('project:'.length)
+        : undefined
+      const trimmed = searchQuery.trim()
+      loadFlows(trimmed || undefined, projectFilter)
+      const targetName = projectId
+        ? projects.find((p) => p.id === projectId)?.name ?? 'プロジェクト'
+        : '未分類'
+      setToast({ message: `${targetName}に移動しました`, icon: '📁' })
+    } catch {
+      setError('フローの移動に失敗しました')
+    }
+  }
+
   // Lane colors for list view
   const laneColors = PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
 
@@ -650,6 +671,9 @@ export function Dashboard() {
               onDelete={handleContextDelete}
               onClose={handleCloseContextMenu}
               isTrash={selectedNav === 'trash'}
+              projects={projects}
+              onMoveToProject={handleMoveToProject}
+              currentProjectId={contextFlow?.projectId ?? null}
               onRestore={() => {
                 if (contextMenu) {
                   handleRestore(contextMenu.flowId)
