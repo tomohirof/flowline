@@ -7,12 +7,12 @@ import type { Point } from './arrow-routing'
 /* calcArrowPath types                                       */
 /* --------------------------------------------------------- */
 
-export interface NodePos {
+interface NodePos {
   x: number
   y: number
 }
 
-export interface ArrowConfig {
+interface ArrowConfig {
   hw: number
   hh: number
   rh: number
@@ -231,7 +231,7 @@ export interface CrossLaneRewire {
 /* swapKeys — 2ノードの位置交換                               */
 /* --------------------------------------------------------- */
 
-export interface SwapResult {
+interface SwapResult {
   tasks: Record<string, TaskData>
   arrows: InternalArrow[]
   order: string[]

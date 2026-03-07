@@ -173,7 +173,7 @@ export const THEMES: Record<ThemeId, Theme> = {
 // Node background color palettes
 // =============================================
 
-export interface NodeColor {
+interface NodeColor {
   id: string
   fill: string | null
   label: string
@@ -209,7 +209,7 @@ export const NODE_COLORS_DARK: NodeColor[] = [
 // Line color & stroke style palettes
 // =============================================
 
-export interface LineColor {
+interface LineColor {
   id: string
   color: string | null
   label: string
@@ -228,7 +228,7 @@ export const LINE_COLORS: LineColor[] = [
   { id: 'pink', color: '#C06088', label: 'ピンク' },
 ]
 
-export interface StrokeStyle {
+interface StrokeStyle {
   id: string
   label: string
   dash: string

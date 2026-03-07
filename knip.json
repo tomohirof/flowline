@@ -1,6 +1,20 @@
 {
   "$schema": "https://unpkg.com/knip/schema.json",
-  "entry": ["src/main.tsx", "vite.config.ts", "functions/**/*.ts", "workers/**/*.ts"],
-  "project": ["src/**/*.{ts,tsx}", "functions/**/*.ts", "workers/**/*.ts"],
-  "ignore": ["tests/helpers/**", "**/*.d.ts"]
+  "entry": [
+    "src/main.tsx",
+    "vite.config.ts",
+    "api/**/*.ts",
+    "functions/**/*.ts",
+    "workers/**/*.ts",
+    "scripts/*.mjs"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "api/**/*.ts",
+    "functions/**/*.ts",
+    "workers/**/*.ts",
+    "scripts/*.mjs"
+  ],
+  "ignore": ["tests/helpers/**", "**/*.d.ts"],
+  "ignoreDependencies": ["@resvg/resvg-js", "@types/bcryptjs"]
 }

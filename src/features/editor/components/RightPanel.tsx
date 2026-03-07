@@ -22,7 +22,7 @@ import {
   STROKE_STYLES,
 } from '../theme-constants'
 
-export interface RightPanelProps {
+interface RightPanelProps {
   // Selection
   multiSel: Set<string>
   setMultiSel: React.Dispatch<React.SetStateAction<Set<string>>>
