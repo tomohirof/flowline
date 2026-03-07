@@ -78,5 +78,16 @@
     "showPlan": "View plans"
   },
   "deleteTime": "Deleted: {{time}}",
-  "updateTime": "Updated: {{time}}"
+  "updateTime": "Updated: {{time}}",
+  "project": {
+    "promptName": "Enter project name",
+    "created": "Project created",
+    "errorCreate": "Failed to create project",
+    "errorRename": "Failed to rename project",
+    "deleteTitle": "Delete project",
+    "deleteMessage": "Delete this project? Flows will be moved to Uncategorized.",
+    "deleteConfirm": "Delete",
+    "deleted": "Project deleted",
+    "errorDelete": "Failed to delete project"
+  }
 }

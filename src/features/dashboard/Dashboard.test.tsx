@@ -8,6 +8,10 @@ import { Dashboard } from './Dashboard'
 // Mock apiFetch
 vi.mock('../../lib/api', () => ({
   apiFetch: vi.fn(),
+  fetchProjects: vi.fn().mockResolvedValue({ projects: [] }),
+  createProject: vi.fn(),
+  renameProject: vi.fn(),
+  deleteProject: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(status: number, message: string) {
@@ -38,9 +42,10 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-import { apiFetch } from '../../lib/api'
+import { apiFetch, fetchProjects } from '../../lib/api'
 
 const mockApiFetch = vi.mocked(apiFetch)
+const mockFetchProjects = vi.mocked(fetchProjects)
 
 const mockFlows = [
   {
@@ -72,6 +77,7 @@ function renderDashboard() {
 describe('Dashboard', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    mockFetchProjects.mockResolvedValue({ projects: [] })
   })
 
   afterEach(() => {
@@ -1099,6 +1105,83 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         expect(screen.getByText('title.trash')).toBeInTheDocument()
+      })
+    })
+  })
+
+  // =============================================
+  // プロジェクト機能テスト (#287)
+  // =============================================
+  describe('project hierarchy (#287)', () => {
+    it('should load projects on mount', async () => {
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(mockFetchProjects).toHaveBeenCalled()
+      })
+    })
+
+    it('should filter flows by project when project nav is selected', async () => {
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows }) // initial
+      mockApiFetch.mockResolvedValueOnce({ flows: [mockFlows[0]] }) // filtered
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // Click on project in sidebar
+      await userEvent.click(screen.getByText('プロジェクトA'))
+
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith('/flows?projectId=p1')
+      })
+    })
+
+    it('should show project name in title when project is selected', async () => {
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'プロジェクトA',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      mockApiFetch.mockResolvedValueOnce({ flows: [] })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByText('プロジェクトA'))
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'プロジェクトA' })).toBeInTheDocument()
       })
     })
   })

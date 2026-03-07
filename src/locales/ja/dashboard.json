@@ -78,5 +78,16 @@
     "showPlan": "プランを表示"
   },
   "deleteTime": "削除: {{time}}",
-  "updateTime": "更新: {{time}}"
+  "updateTime": "更新: {{time}}",
+  "project": {
+    "promptName": "プロジェクト名を入力してください",
+    "created": "プロジェクトを作成しました",
+    "errorCreate": "プロジェクトの作成に失敗しました",
+    "errorRename": "プロジェクト名の変更に失敗しました",
+    "deleteTitle": "プロジェクトを削除",
+    "deleteMessage": "プロジェクトを削除しますか？配下のフローは未分類に移動します。",
+    "deleteConfirm": "削除する",
+    "deleted": "プロジェクトを削除しました",
+    "errorDelete": "プロジェクトの削除に失敗しました"
+  }
 }
