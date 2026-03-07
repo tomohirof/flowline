@@ -5,13 +5,13 @@ export const DEFAULT_FLOW_TITLE = '無題のフロー'
 
 export const DEFAULT_FLOW_THEME_ID = 'cloud'
 
-export interface DefaultLane {
+interface DefaultLane {
   name: string
   colorIndex: number
   position: number
 }
 
-export const DEFAULT_LANES: DefaultLane[] = [
+const DEFAULT_LANES: DefaultLane[] = [
   { name: 'lane1', colorIndex: 0, position: 0 },
   { name: 'lane2', colorIndex: 1, position: 1 },
   { name: 'lane3', colorIndex: 2, position: 2 },

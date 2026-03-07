@@ -13,7 +13,7 @@ interface ToolbarTheme {
   toolbarShadow: string
 }
 
-export interface ToolbarProps {
+interface ToolbarProps {
   x: number
   y: number
   items: ToolbarItem[]

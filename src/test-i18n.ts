@@ -13,4 +13,4 @@ i18n.use(initReactI18next).init({
   },
 })
 
-export default i18n
+// side-effect only — imported as `import './test-i18n'`

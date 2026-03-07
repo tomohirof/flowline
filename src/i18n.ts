@@ -56,4 +56,4 @@ i18n.on('languageChanged', (lng: string) => {
   document.documentElement.lang = lng
 })
 
-export default i18n
+// side-effect only — imported as `import './i18n'`

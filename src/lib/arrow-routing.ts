@@ -3,7 +3,7 @@ export interface Point {
   y: number
 }
 
-export interface ArrowPath {
+interface ArrowPath {
   d: string
   mx: number
   my: number
