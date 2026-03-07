@@ -44,13 +44,10 @@ export function DashboardSidebar({
     y: number
   } | null>(null)
 
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent, projectId: string) => {
-      e.preventDefault()
-      setContextMenu({ projectId, x: e.clientX, y: e.clientY })
-    },
-    [],
-  )
+  const handleContextMenu = useCallback((e: React.MouseEvent, projectId: string) => {
+    e.preventDefault()
+    setContextMenu({ projectId, x: e.clientX, y: e.clientY })
+  }, [])
 
   const handleSidebarClick = useCallback(() => {
     if (contextMenu) {

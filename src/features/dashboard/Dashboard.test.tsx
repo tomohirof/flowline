@@ -1293,10 +1293,7 @@ describe('Dashboard', () => {
           updatedAt: '2026-01-01T00:00:00Z',
         },
       ]
-      const flowsWithProject = [
-        { ...mockFlows[0], projectId: 'p1' },
-        mockFlows[1],
-      ]
+      const flowsWithProject = [{ ...mockFlows[0], projectId: 'p1' }, mockFlows[1]]
       mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
       mockApiFetch.mockResolvedValueOnce({ flows: flowsWithProject })
       mockMoveFlowToProject.mockResolvedValueOnce({ ok: true })
