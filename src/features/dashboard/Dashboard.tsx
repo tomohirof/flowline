@@ -81,22 +81,25 @@ export function Dashboard() {
 
   const initialLoadDone = useRef(false)
 
-  const loadFlows = useCallback(async (query?: string) => {
-    try {
-      if (!initialLoadDone.current) {
-        setLoading(true)
+  const loadFlows = useCallback(
+    async (query?: string) => {
+      try {
+        if (!initialLoadDone.current) {
+          setLoading(true)
+        }
+        setError(null)
+        const url = query ? `/flows?q=${encodeURIComponent(query)}` : '/flows'
+        const data = await apiFetch<FlowListResponse>(url)
+        setFlows(data.flows)
+        initialLoadDone.current = true
+      } catch {
+        setError(t('dashboard:toast.errorFetchFlows'))
+      } finally {
+        setLoading(false)
       }
-      setError(null)
-      const url = query ? `/flows?q=${encodeURIComponent(query)}` : '/flows'
-      const data = await apiFetch<FlowListResponse>(url)
-      setFlows(data.flows)
-      initialLoadDone.current = true
-    } catch {
-      setError(t('dashboard:toast.errorFetchFlows'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t])
+    },
+    [t],
+  )
 
   const loadTrashFlows = useCallback(async () => {
     try {

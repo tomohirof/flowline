@@ -29,7 +29,7 @@ export function VerifyPage() {
         setStatus('error')
         setError(err instanceof Error ? err.message : t('verify.failed'))
       })
-  }, [token, navigate, refreshAuth])
+  }, [token, navigate, refreshAuth, t])
 
   return (
     <div className={styles.container}>

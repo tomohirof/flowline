@@ -45,7 +45,7 @@ export function SharedFlowPage() {
       cancelled = true
       document.title = BRAND.name
     }
-  }, [token])
+  }, [token, t])
 
   if (!token) {
     return (

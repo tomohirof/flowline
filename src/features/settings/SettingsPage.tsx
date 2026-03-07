@@ -128,7 +128,7 @@ export function SettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [user, t])
 
   useEffect(() => {
     loadSettings()
@@ -186,7 +186,7 @@ export function SettingsPage() {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
-  }, [settings, profileName])
+  }, [settings, profileName, t])
 
   const handlePasswordChange = async (
     currentPassword: string,

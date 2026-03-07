@@ -94,7 +94,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
         setSubmitting(false)
       }
     },
-    [mode, email, password, name, login, register, onClose, navigate, onSuccess],
+    [mode, email, password, name, login, register, onClose, navigate, onSuccess, t],
   )
 
   const handleResend = useCallback(async () => {
@@ -112,15 +112,15 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
     } finally {
       setSubmitting(false)
     }
-  }, [verifyEmail, resendVerification])
+  }, [verifyEmail, resendVerification, t])
 
   const handleGoogleClick = useCallback(() => {
     setInfo(t('auth:googleLoginPending'))
-  }, [])
+  }, [t])
 
   const handleForgotClick = useCallback(() => {
     setInfo(t('auth:passwordResetPending'))
-  }, [])
+  }, [t])
 
   if (!isOpen) return null
 

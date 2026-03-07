@@ -391,7 +391,7 @@ export default function FlowEditor({
     } else {
       dismissToastByType('error')
     }
-  }, [saveStatus, addErrorToast, dismissToastByType, onRetrySave])
+  }, [saveStatus, addErrorToast, dismissToastByType, onRetrySave, t])
   const [connectFrom, setConnectFrom] = useState<string | null>(null)
   const [connectDragPt, setConnectDragPt] = useState<Point | null>(null)
   const [connectFromPt, setConnectFromPt] = useState<Point | null>(null)
