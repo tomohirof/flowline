@@ -241,8 +241,8 @@ interface SwapResult {
 }
 
 /**
- * 2つのノードの位置（rid）を交換し、tasks/arrows/order/memos を更新した結果を返す。
- * 同一レーン限定。異なるレーンや存在しないキーの場合は null を返す。
+ * 2つのノードのコンテンツ（label, nodeId, スタイル）のみを入れ替える。
+ * キー・矢印・順序は変更しない。同一レーン限定。異なるレーンや存在しないキーの場合は null を返す。
  */
 export function swapKeys(
   tasks: Record<string, TaskData>,
