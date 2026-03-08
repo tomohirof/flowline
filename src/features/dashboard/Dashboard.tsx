@@ -129,8 +129,8 @@ export function Dashboard() {
   useEffect(() => {
     fetchProjects()
       .then((data) => setProjects(data.projects))
-      .catch(() => {})
-  }, [])
+      .catch(() => setError(t('dashboard:project.errorLoad')))
+  }, [t])
 
   // Debounced search
   useEffect(() => {

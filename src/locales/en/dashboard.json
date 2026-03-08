@@ -91,6 +91,7 @@
     "deleted": "Project deleted",
     "errorDelete": "Failed to delete project",
     "movedTo": "Moved to {{name}}",
-    "errorMove": "Failed to move flow"
+    "errorMove": "Failed to move flow",
+    "errorLoad": "Failed to load projects"
   }
 }

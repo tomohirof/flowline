@@ -125,18 +125,39 @@ describe('DashboardSidebar', () => {
     expect(screen.getByText('sidebar.delete')).toBeInTheDocument()
   })
 
-  it('should call onRenameProject when rename is clicked in context menu', async () => {
+  it('should call onRenameProject when rename is confirmed via inline edit', async () => {
     const user = userEvent.setup()
     const onRenameProject = vi.fn()
-    vi.spyOn(window, 'prompt').mockReturnValue('New Name')
     render(<DashboardSidebar {...defaultProps} onRenameProject={onRenameProject} />)
 
     const projectItem = screen.getByTestId('project-item-p1')
     fireEvent.contextMenu(projectItem)
 
     await user.click(screen.getByText('sidebar.rename'))
+
+    const input = screen.getByTestId('inline-rename-input')
+    expect(input).toBeInTheDocument()
+
+    await user.clear(input)
+    await user.type(input, 'New Name{Enter}')
     expect(onRenameProject).toHaveBeenCalledWith('p1', 'New Name')
-    vi.restoreAllMocks()
+  })
+
+  it('should cancel inline rename on Escape key', async () => {
+    const user = userEvent.setup()
+    const onRenameProject = vi.fn()
+    render(<DashboardSidebar {...defaultProps} onRenameProject={onRenameProject} />)
+
+    const projectItem = screen.getByTestId('project-item-p1')
+    fireEvent.contextMenu(projectItem)
+
+    await user.click(screen.getByText('sidebar.rename'))
+
+    const input = screen.getByTestId('inline-rename-input')
+    await user.type(input, '{Escape}')
+
+    expect(onRenameProject).not.toHaveBeenCalled()
+    expect(screen.queryByTestId('inline-rename-input')).not.toBeInTheDocument()
   })
 
   it('should call onDeleteProject when delete is clicked in context menu', async () => {
