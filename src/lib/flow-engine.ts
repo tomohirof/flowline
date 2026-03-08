@@ -258,36 +258,40 @@ export function swapKeys(
   if (draggedTask.lid !== targetTask.lid) return null
   if (draggedTask.rid === targetTask.rid) return null
 
-  const ky = (lid: string, rid: string): string => `${lid}_${rid}`
-  const newKeyA = ky(draggedTask.lid, targetTask.rid)
-  const newKeyB = ky(targetTask.lid, draggedTask.rid)
-
-  // tasks
+  // キーは維持し、コンテンツ（label, nodeId, スタイル）だけを入れ替える
   const newTasks = { ...tasks }
-  delete newTasks[draggedKey]
-  delete newTasks[targetKey]
-  newTasks[newKeyA] = { ...draggedTask, rid: targetTask.rid }
-  newTasks[newKeyB] = { ...targetTask, rid: draggedTask.rid }
+  newTasks[draggedKey] = {
+    ...draggedTask,
+    label: targetTask.label,
+    nodeId: targetTask.nodeId,
+    bg: targetTask.bg,
+    strokeColor: targetTask.strokeColor,
+    dash: targetTask.dash,
+    shape: targetTask.shape,
+  }
+  newTasks[targetKey] = {
+    ...targetTask,
+    label: draggedTask.label,
+    nodeId: draggedTask.nodeId,
+    bg: draggedTask.bg,
+    strokeColor: draggedTask.strokeColor,
+    dash: draggedTask.dash,
+    shape: draggedTask.shape,
+  }
 
-  // memos
+  // memos: コンテンツに追従して入れ替え
   const newMemos = { ...memos }
-  const memoA = newMemos[draggedKey]
-  const memoB = newMemos[targetKey]
+  const memoA = memos[draggedKey]
+  const memoB = memos[targetKey]
   delete newMemos[draggedKey]
   delete newMemos[targetKey]
-  if (memoA !== undefined) newMemos[newKeyA] = memoA
-  if (memoB !== undefined) newMemos[newKeyB] = memoB
+  if (memoA !== undefined) newMemos[targetKey] = memoA
+  if (memoB !== undefined) newMemos[draggedKey] = memoB
 
-  // order
-  const newOrder = order.map((k) => (k === draggedKey ? newKeyA : k === targetKey ? newKeyB : k))
-
-  // arrows: 2キー同時リマップ（temp キーで中間衝突回避）
-  const temp = `__swap_temp__`
-  let newArrows = remapArrows(arrows, draggedKey, temp)
-  newArrows = remapArrows(newArrows, targetKey, newKeyB)
-  newArrows = remapArrows(newArrows, temp, newKeyA)
-
-  return { tasks: newTasks, arrows: newArrows, order: newOrder, memos: newMemos, newKeyA, newKeyB }
+  // order, arrows はキー変更なしのためそのまま
+  // newKeyA = targetKey（ドラッグ元の内容が入った先）
+  // newKeyB = draggedKey（ターゲットの内容が入った先）
+  return { tasks: newTasks, arrows, order, memos: newMemos, newKeyA: targetKey, newKeyB: draggedKey }
 }
 
 export function detectCrossLaneRewire(

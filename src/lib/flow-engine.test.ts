@@ -774,7 +774,7 @@ describe('detectCrossLaneRewire', () => {
 /* ========================================================= */
 
 describe('swapKeys', () => {
-  it('should swap two keys in tasks, arrows, order, and memos', () => {
+  it('should swap content (label, nodeId) while keeping keys and arrows unchanged', () => {
     const tasks = {
       L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
       L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2' },
@@ -785,22 +785,30 @@ describe('swapKeys', () => {
 
     const result = swapKeys(tasks, arrows, order, memos, 'L1_R1', 'L1_R2')
 
-    // tasks: 位置が交換されている
-    expect(result!.tasks['L1_R2'].label).toBe('A')
-    expect(result!.tasks['L1_R2'].rid).toBe('R2')
+    // tasks: キーは維持、コンテンツが入れ替わる
     expect(result!.tasks['L1_R1'].label).toBe('B')
+    expect(result!.tasks['L1_R1'].nodeId).toBe('n2')
+    expect(result!.tasks['L1_R1'].lid).toBe('L1')
     expect(result!.tasks['L1_R1'].rid).toBe('R1')
+    expect(result!.tasks['L1_R2'].label).toBe('A')
+    expect(result!.tasks['L1_R2'].nodeId).toBe('n1')
+    expect(result!.tasks['L1_R2'].lid).toBe('L1')
+    expect(result!.tasks['L1_R2'].rid).toBe('R2')
 
-    // arrows: キーが更新されている
-    expect(result!.arrows[0].from).toBe('L1_R2')
-    expect(result!.arrows[0].to).toBe('L1_R1')
+    // arrows: キー変更なしのためそのまま（矢印反転しない）
+    expect(result!.arrows[0].from).toBe('L1_R1')
+    expect(result!.arrows[0].to).toBe('L1_R2')
 
-    // order: キーが更新されている
-    expect(result!.order).toEqual(['L1_R2', 'L1_R1'])
+    // order: キー変更なしのためそのまま
+    expect(result!.order).toEqual(['L1_R1', 'L1_R2'])
 
-    // memos: キーが移動している
+    // memos: コンテンツに追従して入れ替わる
     expect(result!.memos['L1_R2']).toEqual({ text: 'note-A', dx: 50, dy: 46 })
     expect(result!.memos['L1_R1']).toBeUndefined()
+
+    // newKeyA = targetKey, newKeyB = draggedKey
+    expect(result!.newKeyA).toBe('L1_R2')
+    expect(result!.newKeyB).toBe('L1_R1')
   })
 
   it('should return null when keys are in different lanes', () => {
@@ -834,22 +842,27 @@ describe('swapKeys', () => {
 
     const result = swapKeys(tasks, arrows, order, {}, 'L1_R1', 'L1_R3')
 
-    expect(result!.tasks['L1_R3'].label).toBe('A')
-    expect(result!.tasks['L1_R2'].label).toBe('B')
+    // コンテンツが入れ替わる（キーは維持）
     expect(result!.tasks['L1_R1'].label).toBe('C')
+    expect(result!.tasks['L1_R1'].nodeId).toBe('n3')
+    expect(result!.tasks['L1_R2'].label).toBe('B')
+    expect(result!.tasks['L1_R3'].label).toBe('A')
+    expect(result!.tasks['L1_R3'].nodeId).toBe('n1')
 
+    // arrows: キー変更なしのためそのまま（矢印反転しない）
     const a1 = result!.arrows.find((a) => a.id === 'a1')!
-    expect(a1.from).toBe('L1_R3')
+    expect(a1.from).toBe('L1_R1')
     expect(a1.to).toBe('L1_R2')
 
     const a2 = result!.arrows.find((a) => a.id === 'a2')!
     expect(a2.from).toBe('L1_R2')
-    expect(a2.to).toBe('L1_R1')
+    expect(a2.to).toBe('L1_R3')
 
-    expect(result!.order).toEqual(['L1_R3', 'L1_R2', 'L1_R1'])
+    // order: キー変更なしのためそのまま
+    expect(result!.order).toEqual(['L1_R1', 'L1_R2', 'L1_R3'])
   })
 
-  it('should swap memos for both nodes', () => {
+  it('should swap memos following content swap', () => {
     const tasks = {
       L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1' },
       L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2' },
@@ -861,8 +874,28 @@ describe('swapKeys', () => {
 
     const result = swapKeys(tasks, [], ['L1_R1', 'L1_R2'], memos, 'L1_R1', 'L1_R2')
 
+    // memos はコンテンツに追従して入れ替わる
     expect(result!.memos['L1_R2']).toEqual({ text: 'note-A', dx: 50, dy: 46 })
     expect(result!.memos['L1_R1']).toEqual({ text: 'note-B', dx: -50, dy: 46 })
+  })
+
+  it('should swap style properties (bg, strokeColor, dash, shape) with content', () => {
+    const tasks = {
+      L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1', bg: '#ff0000', shape: 'diamond' as const },
+      L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2', strokeColor: '#00ff00', dash: '5,5' },
+    }
+
+    const result = swapKeys(tasks, [], ['L1_R1', 'L1_R2'], {}, 'L1_R1', 'L1_R2')
+
+    // スタイルもコンテンツに追従する
+    expect(result!.tasks['L1_R1'].bg).toBeUndefined()
+    expect(result!.tasks['L1_R1'].strokeColor).toBe('#00ff00')
+    expect(result!.tasks['L1_R1'].dash).toBe('5,5')
+    expect(result!.tasks['L1_R1'].shape).toBeUndefined()
+    expect(result!.tasks['L1_R2'].bg).toBe('#ff0000')
+    expect(result!.tasks['L1_R2'].shape).toBe('diamond')
+    expect(result!.tasks['L1_R2'].strokeColor).toBeUndefined()
+    expect(result!.tasks['L1_R2'].dash).toBeUndefined()
   })
 
   it('should return null when dragged key does not exist', () => {
