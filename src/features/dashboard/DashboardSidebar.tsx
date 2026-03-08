@@ -43,6 +43,8 @@ export function DashboardSidebar({
     x: number
     y: number
   } | null>(null)
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
 
   const handleContextMenu = useCallback((e: React.MouseEvent, projectId: string) => {
     e.preventDefault()
@@ -59,13 +61,24 @@ export function DashboardSidebar({
     (projectId: string) => {
       setContextMenu(null)
       const project = projects.find((p) => p.id === projectId)
-      const newName = window.prompt(t('sidebar.rename'), project?.name ?? '')
-      if (newName && newName.trim()) {
-        onRenameProject(projectId, newName.trim())
-      }
+      setEditingProjectId(projectId)
+      setEditingName(project?.name ?? '')
     },
-    [onRenameProject, projects, t],
+    [projects],
   )
+
+  const handleRenameSubmit = useCallback(() => {
+    if (editingProjectId && editingName.trim()) {
+      onRenameProject(editingProjectId, editingName.trim())
+    }
+    setEditingProjectId(null)
+    setEditingName('')
+  }, [editingProjectId, editingName, onRenameProject])
+
+  const handleRenameCancel = useCallback(() => {
+    setEditingProjectId(null)
+    setEditingName('')
+  }, [])
 
   const handleDelete = useCallback(
     (projectId: string) => {
@@ -136,18 +149,34 @@ export function DashboardSidebar({
 
         {/* Project list */}
         {projects.map((p) => (
-          <button
+          <div
             key={p.id}
             data-testid={`project-item-${p.id}`}
             className={`${styles.projectItem} ${selectedNav === `project:${p.id}` ? styles.projectItemActive : ''}`}
-            onClick={() => onNavChange(`project:${p.id}`)}
+            onClick={() => !editingProjectId && onNavChange(`project:${p.id}`)}
             onContextMenu={(e) => handleContextMenu(e, p.id)}
           >
             <span className={styles.projectInfo}>
               <span className={styles.projectIcon}>◫</span>
-              {p.name}
+              {editingProjectId === p.id ? (
+                <input
+                  data-testid="inline-rename-input"
+                  className={styles.inlineRenameInput}
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRenameSubmit()
+                    if (e.key === 'Escape') handleRenameCancel()
+                  }}
+                  onBlur={handleRenameSubmit}
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                p.name
+              )}
             </span>
-          </button>
+          </div>
         ))}
       </div>
 

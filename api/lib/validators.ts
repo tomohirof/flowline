@@ -59,7 +59,7 @@ export const updateProjectSchema = z.object({
 })
 
 export const moveFlowSchema = z.object({
-  projectId: z.string().nullable(),
+  projectId: z.string().min(1).nullable(),
 })
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>

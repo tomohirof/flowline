@@ -54,7 +54,8 @@ export function FlowContextMenu({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose])
 
-  const showMoveOption = !isTrash && projects && onMoveToProject
+  const hasMovableTarget = (projects?.length ?? 0) > 0 || currentProjectId != null
+  const showMoveOption = !isTrash && projects && onMoveToProject && hasMovableTarget
 
   const items: (MenuItem | 'sep')[] = isTrash
     ? [
@@ -89,55 +90,58 @@ export function FlowContextMenu({
       style={{ left: x, top: y }}
       onClick={(e) => e.stopPropagation()}
     >
-      {items.map((item, i) => {
-        if (item === 'sep') {
-          // Insert move-to-project before the first separator in normal mode
-          if (showMoveOption && !isTrash && i === 3) {
-            return (
-              <div key={i}>
-                <button
-                  onClick={() => setShowMoveSubmenu(!showMoveSubmenu)}
-                  className={styles.item}
-                >
-                  {t('dashboard:sidebar.moveToProject')}
-                </button>
-                {showMoveSubmenu && (
-                  <div className={styles.submenuContainer}>
-                    {currentProjectId != null && (
-                      <button
-                        className={styles.submenuItem}
-                        onClick={() => handleMoveToProject(null)}
-                      >
-                        {t('dashboard:sidebar.uncategorized')}
-                      </button>
-                    )}
-                    {filteredProjects.map((p) => (
-                      <button
-                        key={p.id}
-                        className={styles.submenuItem}
-                        onClick={() => handleMoveToProject(p.id)}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className={styles.separator} />
-              </div>
-            )
+      {(() => {
+        let insertedMove = false
+        return items.map((item, i) => {
+          if (item === 'sep') {
+            if (showMoveOption && !insertedMove) {
+              insertedMove = true
+              return (
+                <div key={i}>
+                  <button
+                    onClick={() => setShowMoveSubmenu(!showMoveSubmenu)}
+                    className={styles.item}
+                  >
+                    {t('dashboard:sidebar.moveToProject')}
+                  </button>
+                  {showMoveSubmenu && (
+                    <div className={styles.submenuContainer}>
+                      {currentProjectId != null && (
+                        <button
+                          className={styles.submenuItem}
+                          onClick={() => handleMoveToProject(null)}
+                        >
+                          {t('dashboard:sidebar.uncategorized')}
+                        </button>
+                      )}
+                      {filteredProjects.map((p) => (
+                        <button
+                          key={p.id}
+                          className={styles.submenuItem}
+                          onClick={() => handleMoveToProject(p.id)}
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className={styles.separator} />
+                </div>
+              )
+            }
+            return <div key={i} className={styles.separator} />
           }
-          return <div key={i} className={styles.separator} />
-        }
-        return (
-          <button
-            key={i}
-            onClick={item.action}
-            className={`${styles.item} ${item.danger ? styles.itemDanger : ''}`}
-          >
-            {item.label}
-          </button>
-        )
-      })}
+          return (
+            <button
+              key={i}
+              onClick={item.action}
+              className={`${styles.item} ${item.danger ? styles.itemDanger : ''}`}
+            >
+              {item.label}
+            </button>
+          )
+        })
+      })()}
     </div>
   )
 }

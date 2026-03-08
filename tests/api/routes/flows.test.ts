@@ -1103,4 +1103,18 @@ describe('Flows API', () => {
       expect(res.status).toBe(401)
     })
   })
+
+  // ========================================
+  // PUT /api/flows/:id/move
+  // ========================================
+  describe('PUT /:id/move', () => {
+    beforeEach(() => {
+      insertFlow(db, 'flow-1', USER_ID, 'Movable Flow')
+    })
+
+    it('should return 400 when projectId is empty string', async () => {
+      const res = await putJson('/api/flows/flow-1/move', { projectId: '' }, env, cookie)
+      expect(res.status).toBe(400)
+    })
+  })
 })

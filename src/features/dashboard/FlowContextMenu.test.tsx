@@ -245,6 +245,18 @@ describe('FlowContextMenu', () => {
     expect(onMoveToProject).toHaveBeenCalledWith(null)
   })
 
+  it('should not show move-to-project when flow is uncategorized and no projects exist', () => {
+    render(
+      <FlowContextMenu
+        {...defaultProps}
+        projects={[]}
+        onMoveToProject={vi.fn()}
+        currentProjectId={null}
+      />,
+    )
+    expect(screen.queryByText('sidebar.moveToProject')).not.toBeInTheDocument()
+  })
+
   it('should not show move-to-project in trash mode', () => {
     const projects = [
       {
