@@ -95,6 +95,9 @@ export function SettingsPage() {
   const isInitialLoadRef = useRef(true)
   const userNameRef = useRef(user?.name)
 
+  const tRef = useRef(t)
+  tRef.current = t
+
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true)
@@ -113,7 +116,7 @@ export function SettingsPage() {
         isInitialLoadRef.current = false
       }, 0)
     } catch {
-      setError(t('status.loadError'))
+      setError(tRef.current('status.loadError'))
       setLoadFailed(true)
       // Use user info as fallback
       if (user) {
@@ -128,7 +131,7 @@ export function SettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [user, t])
+  }, [user])
 
   useEffect(() => {
     loadSettings()
@@ -178,7 +181,7 @@ export function SettingsPage() {
         setTimeout(() => setSaveStatus('idle'), 2000)
       } catch {
         setSaveStatus('error')
-        setError(t('status.saveError'))
+        setError(tRef.current('status.saveError'))
         setTimeout(() => setSaveStatus('idle'), 3000)
       }
     }, 800)
@@ -186,7 +189,7 @@ export function SettingsPage() {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
-  }, [settings, profileName, t])
+  }, [settings, profileName])
 
   const handlePasswordChange = async (
     currentPassword: string,
