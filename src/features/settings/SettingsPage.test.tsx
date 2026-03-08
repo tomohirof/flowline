@@ -446,6 +446,41 @@ describe('SettingsPage', () => {
     expect(screen.getByTestId('settings-avatar')).toHaveAttribute('aria-label', 'status.menu')
   })
 
+  // === 言語切替: APIリフェッチしない ===
+  it('should not re-fetch settings from API when language is changed', async () => {
+    const user = userEvent.setup()
+    mockApiFetch.mockResolvedValueOnce(mockSettingsResponse)
+    renderSettingsPage()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('settings-content')).toBeInTheDocument()
+    })
+
+    // Record initial API call count (1 for loadSettings)
+    const initialCallCount = mockApiFetch.mock.calls.filter(
+      (call) => call[0] === '/settings' && (!call[1] || !call[1].method),
+    ).length
+    expect(initialCallCount).toBe(1)
+
+    // Navigate to display section
+    await user.click(screen.getByTestId('nav-display'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('language-select')).toBeInTheDocument()
+    })
+
+    // Change language to English
+    await user.selectOptions(screen.getByTestId('language-select'), 'en')
+
+    // Wait a bit and verify no additional GET /settings call was made
+    await new Promise((r) => setTimeout(r, 500))
+
+    const getSettingsCalls = mockApiFetch.mock.calls.filter(
+      (call) => call[0] === '/settings' && (!call[1] || !call[1].method),
+    )
+    expect(getSettingsCalls.length).toBe(initialCallCount)
+  })
+
   // === アバターの頭文字表示 ===
   it('should display first character of user name in avatar', async () => {
     mockApiFetch.mockResolvedValueOnce(mockSettingsResponse)
