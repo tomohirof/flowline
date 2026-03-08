@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Project } from '../editor/types'
 import styles from './DashboardSidebar.module.css'
@@ -45,6 +45,7 @@ export function DashboardSidebar({
   } | null>(null)
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const cancelledRef = useRef(false)
 
   const handleContextMenu = useCallback((e: React.MouseEvent, projectId: string) => {
     e.preventDefault()
@@ -68,14 +69,16 @@ export function DashboardSidebar({
   )
 
   const handleRenameSubmit = useCallback(() => {
-    if (editingProjectId && editingName.trim()) {
+    if (!cancelledRef.current && editingProjectId && editingName.trim()) {
       onRenameProject(editingProjectId, editingName.trim())
     }
+    cancelledRef.current = false
     setEditingProjectId(null)
     setEditingName('')
   }, [editingProjectId, editingName, onRenameProject])
 
   const handleRenameCancel = useCallback(() => {
+    cancelledRef.current = true
     setEditingProjectId(null)
     setEditingName('')
   }, [])
@@ -149,7 +152,7 @@ export function DashboardSidebar({
 
         {/* Project list */}
         {projects.map((p) => (
-          <div
+          <button
             key={p.id}
             data-testid={`project-item-${p.id}`}
             className={`${styles.projectItem} ${selectedNav === `project:${p.id}` ? styles.projectItemActive : ''}`}
@@ -176,7 +179,7 @@ export function DashboardSidebar({
                 p.name
               )}
             </span>
-          </div>
+          </button>
         ))}
       </div>
 
