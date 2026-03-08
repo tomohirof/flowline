@@ -881,8 +881,22 @@ describe('swapKeys', () => {
 
   it('should swap style properties (bg, strokeColor, dash, shape) with content', () => {
     const tasks = {
-      L1_R1: { label: 'A', lid: 'L1', rid: 'R1', nodeId: 'n1', bg: '#ff0000', shape: 'diamond' as const },
-      L1_R2: { label: 'B', lid: 'L1', rid: 'R2', nodeId: 'n2', strokeColor: '#00ff00', dash: '5,5' },
+      L1_R1: {
+        label: 'A',
+        lid: 'L1',
+        rid: 'R1',
+        nodeId: 'n1',
+        bg: '#ff0000',
+        shape: 'diamond' as const,
+      },
+      L1_R2: {
+        label: 'B',
+        lid: 'L1',
+        rid: 'R2',
+        nodeId: 'n2',
+        strokeColor: '#00ff00',
+        dash: '5,5',
+      },
     }
 
     const result = swapKeys(tasks, [], ['L1_R1', 'L1_R2'], {}, 'L1_R1', 'L1_R2')

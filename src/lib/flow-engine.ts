@@ -291,7 +291,14 @@ export function swapKeys(
   // order, arrows はキー変更なしのためそのまま
   // newKeyA = targetKey（ドラッグ元の内容が入った先）
   // newKeyB = draggedKey（ターゲットの内容が入った先）
-  return { tasks: newTasks, arrows, order, memos: newMemos, newKeyA: targetKey, newKeyB: draggedKey }
+  return {
+    tasks: newTasks,
+    arrows,
+    order,
+    memos: newMemos,
+    newKeyA: targetKey,
+    newKeyB: draggedKey,
+  }
 }
 
 export function detectCrossLaneRewire(
