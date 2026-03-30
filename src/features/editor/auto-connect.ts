@@ -1,8 +1,11 @@
 /**
  * Find the closest upstream node key for auto-connection.
  *
- * Upstream = node in a higher row, or same row but left lane.
- * "Closest" = highest row index among upstream, then highest lane index.
+ * Priority:
+ * 1. Same-row nodes: closest by lane distance (bidirectional),
+ *    with tail nodes preferred over non-tails at equal distance.
+ * 2. Upstream tails (previous rows): closest by row index,
+ *    with flow-connected tails preferred over isolated at same row.
  *
  * @returns The task key of the closest upstream node, or null if none found.
  */
@@ -14,60 +17,61 @@ export function findClosestUpstream(
   newLi: number,
   arrows: { from: string; to: string }[],
 ): string | null {
-  // Build outgoing/incoming sets from arrows
   const outgoing = new Set(arrows.map((a) => a.from))
   const incoming = new Set(arrows.map((a) => a.to))
-
-  // Tail nodes: no outgoing arrows
   const allKeys = Object.keys(tasks)
   const tails = allKeys.filter((k) => !outgoing.has(k))
 
-  // Prefer flow-connected tails (have incoming), fall back to all tails
-  const flowTails = tails.filter((k) => incoming.has(k))
+  // 1. Same-row: closest by lane distance (bidirectional)
+  //    Tiebreaker: prefer tails over non-tails
+  {
+    let bestKey: string | null = null
+    let bestDist = Infinity
+    let bestIsTail = false
+    for (const key of allKeys) {
+      const task = tasks[key]
+      const tRi = rows.findIndex((r) => r.id === task.rid)
+      if (tRi !== newRi) continue
+      const tLi = lanes.findIndex((l) => l.id === task.lid)
+      if (tLi < 0 || tLi === newLi) continue
+      const dist = Math.abs(tLi - newLi)
+      const isTail = !outgoing.has(key)
+      if (dist < bestDist || (dist === bestDist && isTail && !bestIsTail)) {
+        bestKey = key
+        bestDist = dist
+        bestIsTail = isTail
+      }
+    }
+    if (bestKey) return bestKey
+  }
 
-  const findBest = (candidates: string[]): string | null => {
+  // 2. Upstream tails: closest by row, flow-connected as tiebreaker
+  {
     let bestKey: string | null = null
     let bestRi = -1
     let bestLi = -1
-
-    for (const key of candidates) {
+    let bestIsFlow = false
+    for (const key of tails) {
       const task = tasks[key]
       const tRi = rows.findIndex((r) => r.id === task.rid)
       const tLi = lanes.findIndex((l) => l.id === task.lid)
       if (tRi < 0 || tLi < 0) continue
+      if (tRi >= newRi) continue
 
-      // Must be upstream: higher row, or same row with left lane
-      if (tRi > newRi) continue
-      if (tRi === newRi && tLi >= newLi) continue
-
-      // Pick closest: maximize row index, then lane index
-      if (tRi > bestRi || (tRi === bestRi && tLi > bestLi)) {
+      const isFlow = incoming.has(key)
+      if (
+        tRi > bestRi ||
+        (tRi === bestRi && isFlow && !bestIsFlow) ||
+        (tRi === bestRi && isFlow === bestIsFlow && tLi > bestLi)
+      ) {
         bestKey = key
         bestRi = tRi
         bestLi = tLi
+        bestIsFlow = isFlow
       }
     }
-
     return bestKey
   }
-
-  // 1. Same-row tails: strongest signal (fixes #265)
-  const sameRowTails = tails.filter((k) => {
-    const task = tasks[k]
-    const tRi = rows.findIndex((r) => r.id === task.rid)
-    return tRi === newRi
-  })
-  if (sameRowTails.length > 0) {
-    const sameRowResult = findBest(sameRowTails)
-    if (sameRowResult) return sameRowResult
-  }
-
-  // 2. Flow-connected tails from previous rows
-  const result = flowTails.length > 0 ? findBest(flowTails) : null
-  if (result) return result
-
-  // 3. Fall back to all tails
-  return findBest(tails)
 }
 
 /**
