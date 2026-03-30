@@ -85,10 +85,25 @@ describe('entryPt', () => {
     expect(entryPt(c, o, hw, hh, RH)).toEqual({ x: 300, y: 172 })
   })
 
-  it('下方向からの矢印（dy > RH*0.3）は下部に接続', () => {
+  it('下方向からの矢印（dy > RH*0.3）は横（右端）に接続', () => {
     const c = { x: 100, y: 100 },
       o = { x: 100, y: 200 }
-    expect(entryPt(c, o, hw, hh, RH)).toEqual({ x: 100, y: 128 })
+    // dy = 100 > RH*0.3, dx = 0 >= 0 → 右端
+    expect(entryPt(c, o, hw, hh, RH)).toEqual({ x: 176, y: 100 })
+  })
+
+  it('下方右側からの矢印は右端に接続', () => {
+    const c = { x: 100, y: 100 },
+      o = { x: 300, y: 300 }
+    // dy = 200 > RH*0.3, dx = 200 >= 0 → 右端
+    expect(entryPt(c, o, hw, hh, RH)).toEqual({ x: 176, y: 100 })
+  })
+
+  it('下方左側からの矢印は左端に接続', () => {
+    const c = { x: 300, y: 100 },
+      o = { x: 100, y: 300 }
+    // dy = 200 > RH*0.3, dx = -200 < 0 → 左端
+    expect(entryPt(c, o, hw, hh, RH)).toEqual({ x: 224, y: 100 })
   })
 
   it('水平方向は左側に接続', () => {

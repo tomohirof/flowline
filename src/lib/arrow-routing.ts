@@ -76,8 +76,8 @@ export const entryPt = (
   if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y - hh }
   // 上方向から来る: 上部に接続
   if (dy < -rh * 0.3) return { x: c.x, y: c.y - hh }
-  // 下方向から来る: 下部に接続
-  if (dy > rh * 0.3) return { x: c.x, y: c.y + hh }
+  // 下方向から来る: 横（左右端）に接続（exitPtの上方向と対称）
+  if (dy > rh * 0.3) return { x: c.x + (dx >= 0 ? hw : -hw), y: c.y }
   // 水平方向
   if (Math.abs(dx) > 1) return { x: c.x + (dx > 0 ? hw : -hw), y: c.y }
   // フォールバック
