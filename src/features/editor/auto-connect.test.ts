@@ -203,8 +203,8 @@ describe('findClosestUpstream', () => {
     const rows = [{ id: 'r0' }]
     const lanes = [{ id: 'l0' }, { id: 'l1' }, { id: 'l2' }, { id: 'l3' }, { id: 'l4' }]
     const tasks: Record<string, { lid: string; rid: string }> = {
-      A: { lid: 'l0', rid: 'r0' },  // dist 2, non-tail
-      B: { lid: 'l4', rid: 'r0' },  // dist 2, tail
+      A: { lid: 'l0', rid: 'r0' }, // dist 2, non-tail
+      B: { lid: 'l4', rid: 'r0' }, // dist 2, tail
     }
     const arrows = [{ id: 'a1', from: 'A', to: 'X', comment: '' }]
     const result = findClosestUpstream(tasks, rows, lanes, 0, 2, arrows)
