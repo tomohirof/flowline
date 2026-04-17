@@ -194,22 +194,21 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 : t('auth:verifyEmail.changeEmail')}
             </button>
           </div>
+        ) : mode === 'register' ? (
+          <div className={styles.closedBetaContainer} data-testid="closed-beta-notice">
+            <h2 className={styles.closedBetaTitle}>{t('auth:closedBeta.title')}</h2>
+            <p className={styles.closedBetaDescription}>{t('auth:closedBeta.description')}</p>
+            <button
+              type="button"
+              className={styles.submitBtn}
+              onClick={() => switchMode('login')}
+            >
+              {t('auth:closedBeta.backToLogin')}
+            </button>
+          </div>
         ) : (
           <>
             <form onSubmit={handleSubmit}>
-              {mode === 'register' && (
-                <div className={styles.field}>
-                  <input
-                    className={styles.input}
-                    type="text"
-                    placeholder={t('auth:form.name')}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
-
               <div className={styles.field}>
                 <input
                   className={styles.input}
@@ -233,11 +232,9 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 />
               </div>
 
-              {mode === 'login' && (
-                <button type="button" className={styles.forgotLink} onClick={handleForgotClick}>
-                  {t('auth:form.forgotPassword')}
-                </button>
-              )}
+              <button type="button" className={styles.forgotLink} onClick={handleForgotClick}>
+                {t('auth:form.forgotPassword')}
+              </button>
 
               <button
                 type="submit"
@@ -245,11 +242,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 disabled={submitting}
                 data-testid="auth-submit"
               >
-                {submitting
-                  ? t('auth:form.processing')
-                  : mode === 'login'
-                    ? t('auth:form.loginButton')
-                    : t('auth:form.createAccount')}
+                {submitting ? t('auth:form.processing') : t('auth:form.loginButton')}
               </button>
             </form>
 
