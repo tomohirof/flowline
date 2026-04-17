@@ -198,11 +198,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
           <div className={styles.closedBetaContainer} data-testid="closed-beta-notice">
             <h2 className={styles.closedBetaTitle}>{t('auth:closedBeta.title')}</h2>
             <p className={styles.closedBetaDescription}>{t('auth:closedBeta.description')}</p>
-            <button
-              type="button"
-              className={styles.submitBtn}
-              onClick={() => switchMode('login')}
-            >
+            <button type="button" className={styles.submitBtn} onClick={() => switchMode('login')}>
               {t('auth:closedBeta.backToLogin')}
             </button>
           </div>

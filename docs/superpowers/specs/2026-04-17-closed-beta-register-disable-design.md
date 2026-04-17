@@ -12,12 +12,14 @@
 ## スコープ
 
 **対象:**
+
 - バックエンド `POST /api/auth/register` の503化
 - フロント `AuthModal.tsx` のregisterモードUIをβ案内に差し替え
 - i18n `src/locales/{ja,en}/auth.json` にβ案内メッセージ追加
 - 既存テストの更新・新規テストの追加
 
 **対象外（後続Issue）:**
+
 - 管理者によるユーザー招待機能
 
 ## アーキテクチャ方針
@@ -63,6 +65,7 @@ auth.post('/register', async (c) => {
 ```
 
 **UI仕様:**
+
 - 「ログイン」「新規登録」タブは残す（現状の `mode !== 'verify'` 条件そのまま）
 - 「新規登録」タブ押下でβ案内が表示される
 - β案内には「ログインへ」ボタンを配置し、クリックで `switchMode('login')` 遷移
@@ -70,6 +73,7 @@ auth.post('/register', async (c) => {
 - verify モード・login モードは完全に無変更
 
 **スタイル:**
+
 - `AuthModal.module.css` に `closedBetaContainer` クラスを追加（`verifyContainer` と同系統のレイアウト）
 
 ### i18n: `src/locales/{ja,en}/auth.json`
@@ -77,6 +81,7 @@ auth.post('/register', async (c) => {
 新規キー `closedBeta` を追加:
 
 **ja:**
+
 ```json
 "closedBeta": {
   "title": "現在はクローズドβテスト中です",
@@ -86,6 +91,7 @@ auth.post('/register', async (c) => {
 ```
 
 **en:**
+
 ```json
 "closedBeta": {
   "title": "Currently in closed beta",
@@ -112,10 +118,12 @@ LP側のボタン自体は残す（クリック後モーダル内でβ案内表�
 **既存テスト（約20件 `/register` 依存）への影響:**
 
 `/register` が503を返すようになると、以下のテストは破綻する：
+
 - `POST /api/auth/register` の success/validation ケース
 - `/login`, `/me`, `/verify`, `/resend-verification` の **setup で `/register` を呼んでいるテスト**（多数）
 
 **対応方針:**
+
 1. `/register` の既存成功テストを **「503と正しいエラーメッセージを返す」テスト1件に置換**
 2. `/register` の既存バリデーションテスト（8文字以上、メール形式等）は**削除**（503で一律返すため無意味化）
 3. `/login`, `/me`, `/verify`, `/resend-verification` テストで `/register` を呼んでいる setup 箇所は **D1 DB 直接 INSERT** に置き換え
@@ -124,16 +132,19 @@ LP側のボタン自体は残す（クリック後モーダル内でβ案内表�
    - `email_verified = 1/0`、`verification_token` も適切に設定
 
 **追加テスト:**
+
 - `POST /api/auth/register` が method/bodyに関わらず503を返す（body なしでも503）
 - レスポンス body が `{ error: '現在はクローズドβテスト中です' }` 完全一致
 
 ### フロント: `src/features/landing/components/AuthModal.test.tsx`
 
 **更新:**
+
 - 「新規登録モードで名前・メール・パスワード入力を表示する」テストを **「registerモードでβ案内が表示される（フォーム非表示）」に置換**
 - registerモードでタブクリック時のテストも更新
 
 **追加:**
+
 - registerモードで `closed-beta-notice` が表示される
 - registerモードで「お名前」入力フィールドが**表示されない**
 - β案内の「ログインへ」ボタンをクリックするとloginモードに切替わる
@@ -146,14 +157,14 @@ LP側のボタン自体は残す（クリック後モーダル内でβ案内表�
 
 ## エッジケース
 
-| ケース | 挙動 |
-|--------|------|
-| API を直叩きで `POST /auth/register` を叩く | 503 + メッセージ（UI経由を迂回しても防御） |
-| すでに登録済みユーザーのログイン | 無影響（`/login` 無変更） |
-| 未認証ユーザーのログイン試行（403） | 無影響（verify モードへの遷移継続） |
-| メール認証リンククリック（`/verify?token=...`） | 無影響 |
-| 確認メール再送 | 無影響 |
-| `/?auth=register` でLP訪問 | モーダルがβ案内で開く |
+| ケース                                          | 挙動                                       |
+| ----------------------------------------------- | ------------------------------------------ |
+| API を直叩きで `POST /auth/register` を叩く     | 503 + メッセージ（UI経由を迂回しても防御） |
+| すでに登録済みユーザーのログイン                | 無影響（`/login` 無変更）                  |
+| 未認証ユーザーのログイン試行（403）             | 無影響（verify モードへの遷移継続）        |
+| メール認証リンククリック（`/verify?token=...`） | 無影響                                     |
+| 確認メール再送                                  | 無影響                                     |
+| `/?auth=register` でLP訪問                      | モーダルがβ案内で開く                      |
 
 ## 実装リスク
 

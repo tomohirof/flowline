@@ -16,9 +16,11 @@
 ## File Structure
 
 **Create:**
+
 - `tests/helpers/create-test-user.ts` — 既存テストの `/register` setup 用ヘルパー（D1 直接 INSERT）
 
 **Modify:**
+
 - `api/routes/auth.ts:28-87` — `POST /register` ハンドラ冒頭に 503 早期return 追加
 - `src/features/landing/components/AuthModal.tsx:197-266` — register モード分岐追加
 - `src/features/landing/components/AuthModal.module.css` — `closedBetaContainer` 等クラス追加
@@ -70,6 +72,7 @@ npm install
 ## Task 1: i18n キーを追加
 
 **Files:**
+
 - Modify: `src/locales/ja/auth.json`
 - Modify: `src/locales/en/auth.json`
 
@@ -212,6 +215,7 @@ git commit -m "feat(#302): add closedBeta i18n keys"
 ## Task 2: AuthModal に closedBetaContainer スタイル追加
 
 **Files:**
+
 - Modify: `src/features/landing/components/AuthModal.module.css`
 
 - [ ] **Step 1: β案内用クラスを追加**
@@ -251,6 +255,7 @@ git commit -m "feat(#302): add closedBetaContainer styles"
 ## Task 3: AuthModal.test.tsx — register モードβ案内の失敗テストを書く (Red)
 
 **Files:**
+
 - Modify: `src/features/landing/components/AuthModal.test.tsx`
 
 - [ ] **Step 1: 既存テスト「新規登録モードで名前・メール・パスワード入力を表示する」を β案内に置換**
@@ -264,18 +269,18 @@ git commit -m "feat(#302): add closedBetaContainer styles"
 このテストブロックを以下に置換:
 
 ```tsx
-  it('registerモードではβ案内を表示しフォームは出さない', () => {
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
-      </MemoryRouter>,
-    )
-    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('form.email')).not.toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('form.password')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('auth-submit')).not.toBeInTheDocument()
-  })
+it('registerモードではβ案内を表示しフォームは出さない', () => {
+  render(
+    <MemoryRouter>
+      <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
+    </MemoryRouter>,
+  )
+  expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+  expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
+  expect(screen.queryByPlaceholderText('form.email')).not.toBeInTheDocument()
+  expect(screen.queryByPlaceholderText('form.password')).not.toBeInTheDocument()
+  expect(screen.queryByTestId('auth-submit')).not.toBeInTheDocument()
+})
 ```
 
 注: 既存テストの正確な表記（全角/半角）は `screen.getByPlaceholderText('form.name')` 等で照合しているため、日本語テスト名だけ見て見落とさず置換すること。検索で `'新規登録モード'` を含むテスト全体を取り除く。
@@ -285,43 +290,43 @@ git commit -m "feat(#302): add closedBetaContainer styles"
 同ファイルの `describe('AuthModal', () => { ... })` 内、Step1 で追加したテストの直後に以下を追加:
 
 ```tsx
-  it('β案内の「ログインへ」ボタン押下でloginモードに戻る', () => {
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
-      </MemoryRouter>,
-    )
-    const backBtn = screen.getByRole('button', { name: 'closedBeta.backToLogin' })
-    fireEvent.click(backBtn)
-    expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
-    expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
-  })
+it('β案内の「ログインへ」ボタン押下でloginモードに戻る', () => {
+  render(
+    <MemoryRouter>
+      <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
+    </MemoryRouter>,
+  )
+  const backBtn = screen.getByRole('button', { name: 'closedBeta.backToLogin' })
+  fireEvent.click(backBtn)
+  expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
+  expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
+  expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
+})
 
-  it('loginタブ→新規登録タブでβ案内が表示される', () => {
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
-      </MemoryRouter>,
-    )
-    const registerTab = screen.getByRole('button', { name: 'auth:register' })
-    fireEvent.click(registerTab)
-    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
-  })
+it('loginタブ→新規登録タブでβ案内が表示される', () => {
+  render(
+    <MemoryRouter>
+      <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
+    </MemoryRouter>,
+  )
+  const registerTab = screen.getByRole('button', { name: 'auth:register' })
+  fireEvent.click(registerTab)
+  expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+  expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
+})
 
-  it('タブを register→login→register と切替えてもβ案内が復帰する', () => {
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
-      </MemoryRouter>,
-    )
-    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'auth:login' }))
-    expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'auth:register' }))
-    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
-  })
+it('タブを register→login→register と切替えてもβ案内が復帰する', () => {
+  render(
+    <MemoryRouter>
+      <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
+    </MemoryRouter>,
+  )
+  expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'auth:login' }))
+  expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'auth:register' }))
+  expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+})
 ```
 
 注: i18next の `t()` モックが未設定だとキー名そのものが返る挙動を想定。`getByRole('button', { name: 'auth:register' })` が見つからない場合、既存テストで使われているタブ検索パターンに合わせる（下記Step 3で動作確認）。
@@ -335,6 +340,7 @@ grep -nE "initialMode=\"register\"|mode=\"register\"|mockRegister|mode.*register
 ```
 
 対象となる可能性のあるテスト（実際のファイルを確認して該当するものだけ処理）:
+
 - register submit 成功テスト
 - register 失敗時のエラー表示テスト
 - register からの verify モード遷移テスト
@@ -361,6 +367,7 @@ git commit -m "test(#302): add failing tests for closed-beta register mode"
 ## Task 4: AuthModal.tsx — registerモードをβ案内に差し替え (Green)
 
 **Files:**
+
 - Modify: `src/features/landing/components/AuthModal.tsx`
 
 - [ ] **Step 1: register モード分岐を追加**
@@ -385,113 +392,106 @@ git commit -m "test(#302): add failing tests for closed-beta register mode"
 変更後の該当ブロック全体:
 
 ```tsx
-        {mode === 'verify' ? (
-          <div className={styles.verifyContainer}>
-            <div className={styles.verifyIcon}>
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#7C5CFC"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-            </div>
-            <h2 className={styles.verifyTitle}>{t('auth:verifyEmail.title')}</h2>
-            <div className={styles.verifyEmailCard}>{verifyEmail}</div>
-            <p className={styles.verifyText}>{t('auth:verifyEmail.description')}</p>
-            <p className={styles.verifyNote}>{t('auth:verifyEmail.checkSpam')}</p>
-            <button
-              type="button"
-              className={styles.submitBtn}
-              onClick={handleResend}
-              disabled={submitting}
-            >
-              {submitting ? t('auth:verifyEmail.resending') : t('auth:verifyEmail.resend')}
-            </button>
-            <button
-              type="button"
-              className={styles.backLink}
-              onClick={() => switchMode(verifySource)}
-            >
-              {verifySource === 'login'
-                ? t('auth:verifyEmail.backToLogin')
-                : t('auth:verifyEmail.changeEmail')}
-            </button>
-          </div>
-        ) : mode === 'register' ? (
-          <div className={styles.closedBetaContainer} data-testid="closed-beta-notice">
-            <h2 className={styles.closedBetaTitle}>{t('auth:closedBeta.title')}</h2>
-            <p className={styles.closedBetaDescription}>{t('auth:closedBeta.description')}</p>
-            <button
-              type="button"
-              className={styles.submitBtn}
-              onClick={() => switchMode('login')}
-            >
-              {t('auth:closedBeta.backToLogin')}
-            </button>
-          </div>
-        ) : (
-          <>
-            <form onSubmit={handleSubmit}>
-              <div className={styles.field}>
-                <input
-                  className={styles.input}
-                  type="email"
-                  placeholder={t('auth:form.email')}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+{
+  mode === 'verify' ? (
+    <div className={styles.verifyContainer}>
+      <div className={styles.verifyIcon}>
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#7C5CFC"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </svg>
+      </div>
+      <h2 className={styles.verifyTitle}>{t('auth:verifyEmail.title')}</h2>
+      <div className={styles.verifyEmailCard}>{verifyEmail}</div>
+      <p className={styles.verifyText}>{t('auth:verifyEmail.description')}</p>
+      <p className={styles.verifyNote}>{t('auth:verifyEmail.checkSpam')}</p>
+      <button
+        type="button"
+        className={styles.submitBtn}
+        onClick={handleResend}
+        disabled={submitting}
+      >
+        {submitting ? t('auth:verifyEmail.resending') : t('auth:verifyEmail.resend')}
+      </button>
+      <button type="button" className={styles.backLink} onClick={() => switchMode(verifySource)}>
+        {verifySource === 'login'
+          ? t('auth:verifyEmail.backToLogin')
+          : t('auth:verifyEmail.changeEmail')}
+      </button>
+    </div>
+  ) : mode === 'register' ? (
+    <div className={styles.closedBetaContainer} data-testid="closed-beta-notice">
+      <h2 className={styles.closedBetaTitle}>{t('auth:closedBeta.title')}</h2>
+      <p className={styles.closedBetaDescription}>{t('auth:closedBeta.description')}</p>
+      <button type="button" className={styles.submitBtn} onClick={() => switchMode('login')}>
+        {t('auth:closedBeta.backToLogin')}
+      </button>
+    </div>
+  ) : (
+    <>
+      <form onSubmit={handleSubmit}>
+        <div className={styles.field}>
+          <input
+            className={styles.input}
+            type="email"
+            placeholder={t('auth:form.email')}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-              <div className={styles.field}>
-                <input
-                  className={styles.input}
-                  type="password"
-                  placeholder={t('auth:form.password')}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                />
-              </div>
+        <div className={styles.field}>
+          <input
+            className={styles.input}
+            type="password"
+            placeholder={t('auth:form.password')}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+          />
+        </div>
 
-              <button type="button" className={styles.forgotLink} onClick={handleForgotClick}>
-                {t('auth:form.forgotPassword')}
-              </button>
+        <button type="button" className={styles.forgotLink} onClick={handleForgotClick}>
+          {t('auth:form.forgotPassword')}
+        </button>
 
-              <button
-                type="submit"
-                className={styles.submitBtn}
-                disabled={submitting}
-                data-testid="auth-submit"
-              >
-                {submitting
-                  ? t('auth:form.processing')
-                  : t('auth:form.loginButton')}
-              </button>
-            </form>
+        <button
+          type="submit"
+          className={styles.submitBtn}
+          disabled={submitting}
+          data-testid="auth-submit"
+        >
+          {submitting ? t('auth:form.processing') : t('auth:form.loginButton')}
+        </button>
+      </form>
 
-            <div className={styles.divider}>
-              <span className={styles.dividerLine} />
-              <span>{t('common:or')}</span>
-              <span className={styles.dividerLine} />
-            </div>
+      <div className={styles.divider}>
+        <span className={styles.dividerLine} />
+        <span>{t('common:or')}</span>
+        <span className={styles.dividerLine} />
+      </div>
 
-            <button className={styles.googleBtn} onClick={handleGoogleClick}>
-              {t('auth:form.continueWithGoogle')}
-            </button>
-          </>
-        )}
+      <button className={styles.googleBtn} onClick={handleGoogleClick}>
+        {t('auth:form.continueWithGoogle')}
+      </button>
+    </>
+  )
+}
 ```
 
 **重要な変更点:**
+
 - register 分岐を verify と login の間に追加
 - else ブロック（login）は `mode === 'register'` 関連のコードを削除:
   - `{mode === 'register' && (<name入力>)}` を削除（login専用になったので常に名前欄なし）
@@ -526,6 +526,7 @@ git commit -m "feat(#302): disable register UI and show closed-beta notice"
 ## Task 5: テストヘルパー `createTestUser` を追加
 
 **Files:**
+
 - Create: `tests/helpers/create-test-user.ts`
 
 - [ ] **Step 1: ヘルパー作成**
@@ -617,6 +618,7 @@ git commit -m "test(#302): add createTestUser helper for direct DB seeding"
 ## Task 6: `/register` テストを 503 テストに書き換え (Red)
 
 **Files:**
+
 - Modify: `tests/api/routes/auth.test.ts`
 
 - [ ] **Step 1: `describe('POST /api/auth/register', () => { ... })` ブロック全体を置換**
@@ -624,60 +626,58 @@ git commit -m "test(#302): add createTestUser helper for direct DB seeding"
 `tests/api/routes/auth.test.ts` 内の `describe('POST /api/auth/register'` から 該当describeブロック終端（`  })` ※line 354 付近）までを以下に置換:
 
 ```ts
-  // === Registration (Closed Beta: disabled, returns 503) ===
-  describe('POST /api/auth/register', () => {
-    it('should return 503 with closed-beta message', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        { email: 'test@example.com', password: 'password123', name: 'Test' },
-        env,
-      )
-      expect(res.status).toBe(503)
-      const body = await res.json()
-      expect(body.error).toBe('現在はクローズドβテスト中です')
-    })
-
-    it('should return 503 even with empty body', async () => {
-      const res = await postJson('/api/auth/register', {}, env)
-      expect(res.status).toBe(503)
-      const body = await res.json()
-      expect(body.error).toBe('現在はクローズドβテスト中です')
-    })
-
-    it('should return 503 for malformed JSON body', async () => {
-      const res = await app.request(
-        '/api/auth/register',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: 'not-json',
-        },
-        env,
-      )
-      expect(res.status).toBe(503)
-    })
-
-    it('should NOT create a user in DB when register is called', async () => {
-      await postJson(
-        '/api/auth/register',
-        { email: 'never@example.com', password: 'password123', name: 'Never' },
-        env,
-      )
-      const user = db
-        .prepare('SELECT id FROM users WHERE email = ?')
-        .get('never@example.com')
-      expect(user).toBeUndefined()
-    })
-
-    it('should NOT set auth_token cookie', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        { email: 'test@example.com', password: 'password123', name: 'Test' },
-        env,
-      )
-      expect(res.headers.get('set-cookie')).toBeNull()
-    })
+// === Registration (Closed Beta: disabled, returns 503) ===
+describe('POST /api/auth/register', () => {
+  it('should return 503 with closed-beta message', async () => {
+    const res = await postJson(
+      '/api/auth/register',
+      { email: 'test@example.com', password: 'password123', name: 'Test' },
+      env,
+    )
+    expect(res.status).toBe(503)
+    const body = await res.json()
+    expect(body.error).toBe('現在はクローズドβテスト中です')
   })
+
+  it('should return 503 even with empty body', async () => {
+    const res = await postJson('/api/auth/register', {}, env)
+    expect(res.status).toBe(503)
+    const body = await res.json()
+    expect(body.error).toBe('現在はクローズドβテスト中です')
+  })
+
+  it('should return 503 for malformed JSON body', async () => {
+    const res = await app.request(
+      '/api/auth/register',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'not-json',
+      },
+      env,
+    )
+    expect(res.status).toBe(503)
+  })
+
+  it('should NOT create a user in DB when register is called', async () => {
+    await postJson(
+      '/api/auth/register',
+      { email: 'never@example.com', password: 'password123', name: 'Never' },
+      env,
+    )
+    const user = db.prepare('SELECT id FROM users WHERE email = ?').get('never@example.com')
+    expect(user).toBeUndefined()
+  })
+
+  it('should NOT set auth_token cookie', async () => {
+    const res = await postJson(
+      '/api/auth/register',
+      { email: 'test@example.com', password: 'password123', name: 'Test' },
+      env,
+    )
+    expect(res.headers.get('set-cookie')).toBeNull()
+  })
+})
 ```
 
 - [ ] **Step 2: 失敗を確認**
@@ -700,6 +700,7 @@ git commit -m "test(#302): replace /register success tests with 503 assertions"
 ## Task 7: `/register` を 503 早期returnに変更 (Green)
 
 **Files:**
+
 - Modify: `api/routes/auth.ts`
 
 - [ ] **Step 1: `/register` ハンドラの冒頭に早期returnを追加**
@@ -738,6 +739,7 @@ git commit -m "feat(#302): return 503 for POST /auth/register during closed beta
 ## Task 8: 他エンドポイントのテスト setup を createTestUser に移行
 
 **Files:**
+
 - Modify: `tests/api/routes/auth.test.ts`
 
 この時点で `/login`, `/me`, `/verify`, `/resend-verification` のテストの多くが `/register` に依存して FAIL しているはず。すべて `createTestUser` 呼び出しに置き換える。
@@ -791,50 +793,50 @@ import { createTestUser } from '../../helpers/create-test-user'
 変更前 (line 486-507 付近):
 
 ```ts
-    it('should return 403 for unverified user', async () => {
-      await postJson(
-        '/api/auth/register',
-        {
-          email: 'unverified@example.com',
-          password: 'password123',
-          name: 'Unverified',
-        },
-        env,
-      )
-      const res = await postJson(
-        '/api/auth/login',
-        {
-          email: 'unverified@example.com',
-          password: 'password123',
-        },
-        env,
-      )
-      expect(res.status).toBe(403)
-      const body = await res.json()
-      expect(body.error).toContain('メール認証')
-    })
+it('should return 403 for unverified user', async () => {
+  await postJson(
+    '/api/auth/register',
+    {
+      email: 'unverified@example.com',
+      password: 'password123',
+      name: 'Unverified',
+    },
+    env,
+  )
+  const res = await postJson(
+    '/api/auth/login',
+    {
+      email: 'unverified@example.com',
+      password: 'password123',
+    },
+    env,
+  )
+  expect(res.status).toBe(403)
+  const body = await res.json()
+  expect(body.error).toContain('メール認証')
+})
 ```
 
 変更後:
 
 ```ts
-    it('should return 403 for unverified user', async () => {
-      await createTestUser(db, {
-        email: 'unverified@example.com',
-        password: 'password123',
-        name: 'Unverified',
-        emailVerified: false,
-        jwtSecret: JWT_SECRET,
-      })
-      const res = await postJson(
-        '/api/auth/login',
-        { email: 'unverified@example.com', password: 'password123' },
-        env,
-      )
-      expect(res.status).toBe(403)
-      const body = await res.json()
-      expect(body.error).toContain('メール認証')
-    })
+it('should return 403 for unverified user', async () => {
+  await createTestUser(db, {
+    email: 'unverified@example.com',
+    password: 'password123',
+    name: 'Unverified',
+    emailVerified: false,
+    jwtSecret: JWT_SECRET,
+  })
+  const res = await postJson(
+    '/api/auth/login',
+    { email: 'unverified@example.com', password: 'password123' },
+    env,
+  )
+  expect(res.status).toBe(403)
+  const body = await res.json()
+  expect(body.error).toContain('メール認証')
+})
 ```
 
 - [ ] **Step 4: `GET /api/auth/me` のテスト内 register 呼び出しをすべて置換**
@@ -842,38 +844,34 @@ import { createTestUser } from '../../helpers/create-test-user'
 このdescribe内の以下3箇所（line 539-548, 569-581, 599-609, 636-647 付近）のパターン:
 
 ```ts
-      await postJson(
-        '/api/auth/register',
-        { email: '...', password: '...', name: '...' },
-        env,
-      )
-      db.prepare('UPDATE users SET email_verified = 1 WHERE email = ?').run('...')
+await postJson('/api/auth/register', { email: '...', password: '...', name: '...' }, env)
+db.prepare('UPDATE users SET email_verified = 1 WHERE email = ?').run('...')
 ```
 
 を以下に置換（各テスト固有の email/name を保持）:
 
 ```ts
-      await createTestUser(db, {
-        email: '<保持>',
-        password: 'password123',
-        name: '<保持>',
-        emailVerified: true,
-        jwtSecret: JWT_SECRET,
-      })
+await createTestUser(db, {
+  email: '<保持>',
+  password: 'password123',
+  name: '<保持>',
+  emailVerified: true,
+  jwtSecret: JWT_SECRET,
+})
 ```
 
 admin ロール + aiEnabled のテスト（line 569-581 付近）については:
 
 ```ts
-      await createTestUser(db, {
-        email: 'admin-me@example.com',
-        password: 'password123',
-        name: 'Admin User',
-        emailVerified: true,
-        role: 'admin',
-        aiEnabled: true,
-        jwtSecret: JWT_SECRET,
-      })
+await createTestUser(db, {
+  email: 'admin-me@example.com',
+  password: 'password123',
+  name: 'Admin User',
+  emailVerified: true,
+  role: 'admin',
+  aiEnabled: true,
+  jwtSecret: JWT_SECRET,
+})
 ```
 
 - [ ] **Step 5: `GET /api/auth/verify` のテスト内 register 呼び出しを置換**
@@ -881,27 +879,27 @@ admin ロール + aiEnabled のテスト（line 569-581 付近）については
 このdescribe内の以下のパターン（line 668-676, 713-722, 745-753 付近）:
 
 ```ts
-      await postJson(
-        '/api/auth/register',
-        { email: 'verify@example.com', password: 'password123', name: 'Verify' },
-        env,
-      )
-      const user = db
-        .prepare('SELECT verification_token FROM users WHERE email = ?')
-        .get('verify@example.com') as { verification_token: string }
+await postJson(
+  '/api/auth/register',
+  { email: 'verify@example.com', password: 'password123', name: 'Verify' },
+  env,
+)
+const user = db
+  .prepare('SELECT verification_token FROM users WHERE email = ?')
+  .get('verify@example.com') as { verification_token: string }
 ```
 
 を以下に置換（`createTestUser` は返り値として `verificationToken` を返すので SELECT を省略可）:
 
 ```ts
-      const created = await createTestUser(db, {
-        email: 'verify@example.com',
-        password: 'password123',
-        name: 'Verify',
-        emailVerified: false,
-        jwtSecret: JWT_SECRET,
-      })
-      const user = { verification_token: created.verificationToken }
+const created = await createTestUser(db, {
+  email: 'verify@example.com',
+  password: 'password123',
+  name: 'Verify',
+  emailVerified: false,
+  jwtSecret: JWT_SECRET,
+})
+const user = { verification_token: created.verificationToken }
 ```
 
 ※変数名 `user` と `.verification_token` を残すことで、後続の `user.verification_token` 参照コードは無修正で動く。
@@ -913,80 +911,78 @@ admin ロール + aiEnabled のテスト（line 569-581 付近）については
 verified=false で作成する場合:
 
 ```ts
-      await createTestUser(db, {
-        email: '<保持>',
-        password: 'password123',
-        name: '<保持>',
-        emailVerified: false,
-        jwtSecret: JWT_SECRET,
-      })
+await createTestUser(db, {
+  email: '<保持>',
+  password: 'password123',
+  name: '<保持>',
+  emailVerified: false,
+  jwtSecret: JWT_SECRET,
+})
 ```
 
 `verified@example.com`（`should return 200 for already verified user`）は `emailVerified: true` に設定。
 
 **重要**: `should resend verification email for unverified user` (line 769 付近) では、作成後に
+
 ```ts
 db.prepare('UPDATE users SET verification_sent_at = ? WHERE email = ?').run(
   new Date(Date.now() - 120000).toISOString(),
   'resend@example.com',
 )
 ```
+
 でレート制限回避をしている。これは **createTestUser の `verificationSentAt` オプションで代替できる**ので以下に簡略化:
 
 ```ts
-      await createTestUser(db, {
-        email: 'resend@example.com',
-        password: 'password123',
-        name: 'Resend',
-        emailVerified: false,
-        verificationSentAt: new Date(Date.now() - 120000).toISOString(),
-        jwtSecret: JWT_SECRET,
-      })
+await createTestUser(db, {
+  email: 'resend@example.com',
+  password: 'password123',
+  name: 'Resend',
+  emailVerified: false,
+  verificationSentAt: new Date(Date.now() - 120000).toISOString(),
+  jwtSecret: JWT_SECRET,
+})
 ```
 
 `should return 429 for rate-limited resend within 60 seconds` (line 818 付近) は **直後に resend を叩く** ため `verificationSentAt` を **現在時刻（デフォルト）** で作成し、置換後のテストは以下:
 
 ```ts
-    it('should return 429 for rate-limited resend within 60 seconds', async () => {
-      await createTestUser(db, {
-        email: 'rate@example.com',
-        password: 'password123',
-        name: 'Rate',
-        emailVerified: false,
-        jwtSecret: JWT_SECRET,
-      })
-      const res = await postJson(
-        '/api/auth/resend-verification',
-        { email: 'rate@example.com' },
-        env,
-      )
-      expect(res.status).toBe(429)
-      const body = await res.json()
-      expect(body.error).toContain('60秒')
-    })
+it('should return 429 for rate-limited resend within 60 seconds', async () => {
+  await createTestUser(db, {
+    email: 'rate@example.com',
+    password: 'password123',
+    name: 'Rate',
+    emailVerified: false,
+    jwtSecret: JWT_SECRET,
+  })
+  const res = await postJson('/api/auth/resend-verification', { email: 'rate@example.com' }, env)
+  expect(res.status).toBe(429)
+  const body = await res.json()
+  expect(body.error).toContain('60秒')
+})
 ```
 
 `should update verification_token and verification_sent_at on resend` (line 834 付近) は:
 
 ```ts
-    it('should update verification_token and verification_sent_at on resend', async () => {
-      const pastTime = new Date(Date.now() - 120000).toISOString()
-      await createTestUser(db, {
-        email: 'newtoken@example.com',
-        password: 'password123',
-        name: 'NewToken',
-        emailVerified: false,
-        verificationSentAt: pastTime,
-        jwtSecret: JWT_SECRET,
-      })
+it('should update verification_token and verification_sent_at on resend', async () => {
+  const pastTime = new Date(Date.now() - 120000).toISOString()
+  await createTestUser(db, {
+    email: 'newtoken@example.com',
+    password: 'password123',
+    name: 'NewToken',
+    emailVerified: false,
+    verificationSentAt: pastTime,
+    jwtSecret: JWT_SECRET,
+  })
 
-      await postJson('/api/auth/resend-verification', { email: 'newtoken@example.com' }, env)
-      const after = db
-        .prepare('SELECT verification_sent_at FROM users WHERE email = ?')
-        .get('newtoken@example.com') as { verification_sent_at: string }
+  await postJson('/api/auth/resend-verification', { email: 'newtoken@example.com' }, env)
+  const after = db
+    .prepare('SELECT verification_sent_at FROM users WHERE email = ?')
+    .get('newtoken@example.com') as { verification_sent_at: string }
 
-      expect(after.verification_sent_at).not.toBe(pastTime)
-    })
+  expect(after.verification_sent_at).not.toBe(pastTime)
+})
 ```
 
 - [ ] **Step 7: auth.test.ts の全 `/register` 呼び出しが除去されたことを確認**
@@ -1019,6 +1015,7 @@ git commit -m "test(#302): migrate register-based setups to createTestUser helpe
 ## Task 9: 他のテストファイルへの波及確認
 
 **Files:**
+
 - Read: 全テストファイル
 
 `/api/auth/register` への依存が他のテストファイルにも存在するか確認する。
@@ -1071,6 +1068,7 @@ npm run dev
 - [ ] **Step 2: ja 言語での登録モーダル表示確認**
 
 ブラウザで `http://localhost:5173/?auth=register` を開き:
+
 - 「現在はクローズドβテスト中です」タイトルが表示される
 - 「新規登録は現在受け付けておりません。既にアカウントをお持ちの方はログインしてください。」が表示される
 - 「ログイン画面へ」ボタンが表示される
@@ -1083,6 +1081,7 @@ npm run dev
 - [ ] **Step 3: en 言語での表示確認**
 
 ブラウザで言語を English に切替（または `?lng=en` 等のクエリ付与）、再度 register モーダル表示:
+
 - "Currently in closed beta"
 - "New registration is not currently available. ..."
 - "Go to login"

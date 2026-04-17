@@ -92,9 +92,7 @@ describe('Auth API', () => {
         { email: 'never@example.com', password: 'password123', name: 'Never' },
         env,
       )
-      const user = db
-        .prepare('SELECT id FROM users WHERE email = ?')
-        .get('never@example.com')
+      const user = db.prepare('SELECT id FROM users WHERE email = ?').get('never@example.com')
       expect(user).toBeUndefined()
     })
 
