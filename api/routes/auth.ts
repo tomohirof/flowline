@@ -26,6 +26,10 @@ function getCookieOptions(c: { req: { url: string } }) {
 }
 
 auth.post('/register', async (c) => {
+  // Closed beta: registration is temporarily disabled.
+  // Revert this PR to restore normal registration.
+  return c.json({ error: '現在はクローズドβテスト中です' }, 503)
+
   let body: { email?: string; password?: string; name?: string }
   try {
     body = await c.req.json()
