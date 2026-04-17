@@ -60,26 +60,54 @@ describe('AuthModal', () => {
     expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
   })
 
-  it('新規登録モードで名前・メール・パスワード入力を表示する', () => {
+  it('registerモードではβ案内を表示しフォームは出さない', () => {
     render(
       <MemoryRouter>
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
       </MemoryRouter>,
     )
-    expect(screen.getByPlaceholderText('form.name')).toBeInTheDocument()
+    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('form.email')).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('form.password')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('auth-submit')).not.toBeInTheDocument()
+  })
+
+  it('β案内の「ログインへ」ボタン押下でloginモードに戻る', () => {
+    render(
+      <MemoryRouter>
+        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByText('closedBeta.backToLogin'))
+    expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
     expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
   })
 
-  it('タブクリックでモード切替できる', () => {
+  it('タブを register→login→register と切替えてもβ案内が復帰する', () => {
+    render(
+      <MemoryRouter>
+        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('login'))
+    expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('register'))
+    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+  })
+
+  it('タブクリックでregisterタブに切替えるとβ案内が表示される', () => {
     render(
       <MemoryRouter>
         <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
       </MemoryRouter>,
     )
-    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
     fireEvent.click(screen.getByText('register'))
-    expect(screen.getByPlaceholderText('form.name')).toBeInTheDocument()
+    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
   })
 
   it('ログイン成功時にonCloseが呼ばれ /flows に遷移する', async () => {
@@ -103,100 +131,6 @@ describe('AuthModal', () => {
       expect(onClose).toHaveBeenCalled()
       expect(mockNavigate).toHaveBeenCalledWith('/flows')
     })
-  })
-
-  it('should show verify screen after successful registration', async () => {
-    mockRegister.mockResolvedValue({ needsVerification: true, email: 'a@b.com' })
-    const onClose = vi.fn()
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={onClose} initialMode="register" />
-      </MemoryRouter>,
-    )
-    fireEvent.change(screen.getByPlaceholderText('form.name'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('form.email'), {
-      target: { value: 'a@b.com' },
-    })
-    fireEvent.change(screen.getByPlaceholderText('form.password'), {
-      target: { value: 'password123' },
-    })
-    fireEvent.click(screen.getByTestId('auth-submit'))
-
-    await waitFor(() => {
-      expect(mockRegister).toHaveBeenCalledWith('a@b.com', 'password123', 'Test')
-      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
-      expect(screen.getByText('a@b.com')).toBeInTheDocument()
-    })
-  })
-
-  it('should go back to register when clicking change email link', async () => {
-    mockRegister.mockResolvedValue({ needsVerification: true, email: 'a@b.com' })
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
-      </MemoryRouter>,
-    )
-    fireEvent.change(screen.getByPlaceholderText('form.name'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('form.email'), {
-      target: { value: 'a@b.com' },
-    })
-    fireEvent.change(screen.getByPlaceholderText('form.password'), {
-      target: { value: 'password123' },
-    })
-    fireEvent.click(screen.getByTestId('auth-submit'))
-
-    await waitFor(() => {
-      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
-    })
-    fireEvent.click(screen.getByText(/verifyEmail\.changeEmail/))
-    expect(screen.getByPlaceholderText('form.name')).toBeInTheDocument()
-  })
-
-  it('should not show tabs in verify mode', async () => {
-    mockRegister.mockResolvedValue({ needsVerification: true, email: 'a@b.com' })
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
-      </MemoryRouter>,
-    )
-    fireEvent.change(screen.getByPlaceholderText('form.name'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('form.email'), {
-      target: { value: 'a@b.com' },
-    })
-    fireEvent.change(screen.getByPlaceholderText('form.password'), {
-      target: { value: 'password123' },
-    })
-    fireEvent.click(screen.getByTestId('auth-submit'))
-
-    await waitFor(() => {
-      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
-    })
-    expect(screen.queryByText('login')).not.toBeInTheDocument()
-    expect(screen.queryByText('register')).not.toBeInTheDocument()
-  })
-
-  it('should not call onClose or navigate after registration', async () => {
-    mockRegister.mockResolvedValue({ needsVerification: true, email: 'a@b.com' })
-    const onClose = vi.fn()
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={onClose} initialMode="register" />
-      </MemoryRouter>,
-    )
-    fireEvent.change(screen.getByPlaceholderText('form.name'), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByPlaceholderText('form.email'), {
-      target: { value: 'a@b.com' },
-    })
-    fireEvent.change(screen.getByPlaceholderText('form.password'), {
-      target: { value: 'password123' },
-    })
-    fireEvent.click(screen.getByTestId('auth-submit'))
-
-    await waitFor(() => {
-      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
-    })
-    expect(onClose).not.toHaveBeenCalled()
-    expect(mockNavigate).not.toHaveBeenCalled()
   })
 
   it('should show verify screen when login returns 403 (email not verified)', async () => {
@@ -245,6 +179,28 @@ describe('AuthModal', () => {
       expect(mockResendVerification).toHaveBeenCalledWith('unverified@example.com')
       expect(screen.getByText('emailResent')).toBeInTheDocument()
     })
+  })
+
+  it('verify モードではタブが表示されない（login 403経由）', async () => {
+    mockLogin.mockRejectedValue(new ApiError(403, 'メールアドレスの確認が必要です'))
+    render(
+      <MemoryRouter>
+        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
+      </MemoryRouter>,
+    )
+    fireEvent.change(screen.getByPlaceholderText('form.email'), {
+      target: { value: 'unverified@example.com' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('form.password'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.click(screen.getByTestId('auth-submit'))
+
+    await waitFor(() => {
+      expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('login')).not.toBeInTheDocument()
+    expect(screen.queryByText('register')).not.toBeInTheDocument()
   })
 
   it('エラー時にエラーメッセージを表示する', async () => {
@@ -344,34 +300,6 @@ describe('AuthModal', () => {
         </MemoryRouter>,
       )
 
-      fireEvent.change(screen.getByPlaceholderText('form.email'), {
-        target: { value: 'a@b.com' },
-      })
-      fireEvent.change(screen.getByPlaceholderText('form.password'), {
-        target: { value: 'pass1234' },
-      })
-      fireEvent.click(screen.getByTestId('auth-submit'))
-
-      await waitFor(() => {
-        expect(onSuccess).toHaveBeenCalledOnce()
-      })
-      expect(mockNavigate).not.toHaveBeenCalledWith('/flows')
-    })
-
-    it('should call onSuccess on register success when verification not needed', async () => {
-      const onSuccess = vi.fn()
-      const onClose = vi.fn()
-      mockRegister.mockResolvedValue({ needsVerification: false, email: 'a@b.com', name: 'Test' })
-
-      render(
-        <MemoryRouter>
-          <AuthModal isOpen={true} onClose={onClose} initialMode="register" onSuccess={onSuccess} />
-        </MemoryRouter>,
-      )
-
-      fireEvent.change(screen.getByPlaceholderText('form.name'), {
-        target: { value: 'Test' },
-      })
       fireEvent.change(screen.getByPlaceholderText('form.email'), {
         target: { value: 'a@b.com' },
       })

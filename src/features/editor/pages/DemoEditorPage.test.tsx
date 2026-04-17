@@ -78,12 +78,12 @@ describe('DemoEditorPage', () => {
     expect(screen.queryByTestId('share-button')).toBeNull()
   })
 
-  it('should open auth modal when CTA button is clicked', async () => {
+  it('should open auth modal (closed-beta notice) when CTA button is clicked', async () => {
     const user = userEvent.setup()
     render(<DemoEditorPage />)
     const ctaButton = screen.getByTestId('save-cta-button')
     await user.click(ctaButton)
-    // AuthModal should be visible with email input
-    expect(screen.getByPlaceholderText('form.email')).toBeTruthy()
+    // CTA opens modal in register mode, which now shows the closed-beta notice
+    expect(screen.getByTestId('closed-beta-notice')).toBeTruthy()
   })
 })

@@ -59,10 +59,11 @@ describe('LandingPage', () => {
     expect(screen.getByTestId('auth-modal')).toBeInTheDocument()
   })
 
-  it('無料で始めるボタンクリックでAuthModalが新規登録モードで表示される', async () => {
+  it('無料で始めるボタンクリックでAuthModalが新規登録モード（β案内）で表示される', async () => {
     renderPage()
     fireEvent.click(screen.getAllByText(/brand\.ctaButton/)[0])
     expect(screen.getByTestId('auth-modal')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('form.name')).toBeInTheDocument()
+    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
   })
 })

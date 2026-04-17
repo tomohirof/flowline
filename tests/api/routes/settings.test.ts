@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { app } from '../../../api/app'
 import { createTestDb, createMockD1 } from '../../helpers/mock-d1'
+import { createTestUser } from '../../helpers/create-test-user'
 
 const JWT_SECRET = 'test-secret-key-for-settings-tests'
 
@@ -68,20 +69,13 @@ async function registerAndGetCookie(
   env: object,
   sqliteDb: ReturnType<typeof Database>,
 ): Promise<string> {
-  await postJson(
-    '/api/auth/register',
-    {
-      email: 'settings-user@example.com',
-      password: 'password123',
-      name: 'Settings User',
-    },
-    env,
-  )
-  // Email verification flow: register no longer sets cookie.
-  // Manually verify email, then login to get cookie.
-  sqliteDb
-    .prepare('UPDATE users SET email_verified = 1 WHERE email = ?')
-    .run('settings-user@example.com')
+  await createTestUser(sqliteDb, {
+    email: 'settings-user@example.com',
+    password: 'password123',
+    name: 'Settings User',
+    emailVerified: true,
+    jwtSecret: JWT_SECRET,
+  })
   const loginRes = await postJson(
     '/api/auth/login',
     { email: 'settings-user@example.com', password: 'password123' },
