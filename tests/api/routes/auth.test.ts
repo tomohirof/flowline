@@ -52,293 +52,27 @@ describe('Auth API', () => {
     db.close()
   })
 
-  // === Registration ===
+  // === Registration (Closed Beta: disabled, returns 503) ===
   describe('POST /api/auth/register', () => {
-    it('should register a new user and return 201 with message', async () => {
+    it('should return 503 with closed-beta message', async () => {
       const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: 'password123',
-          name: 'Test User',
-        },
-        env,
-      )
-      expect(res.status).toBe(201)
-      const body = await res.json()
-      expect(body.message).toContain('確認メール')
-      expect(body.user).toBeUndefined()
-    })
-
-    it('should NOT set auth_token cookie on registration', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: 'password123',
-          name: 'Test',
-        },
-        env,
-      )
-      const cookie = res.headers.get('set-cookie')
-      expect(cookie).toBeNull()
-    })
-
-    it('should store hashed password in DB, not plain text', async () => {
-      await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: 'password123',
-          name: 'Test',
-        },
-        env,
-      )
-      const user = db
-        .prepare('SELECT password_hash FROM users WHERE email = ?')
-        .get('test@example.com') as { password_hash: string }
-      expect(user.password_hash).not.toBe('password123')
-      expect(user.password_hash).toMatch(/^\$2[aby]?\$/)
-    })
-
-    it('should store email_verified=0 in DB after registration', async () => {
-      await postJson(
         '/api/auth/register',
         { email: 'test@example.com', password: 'password123', name: 'Test' },
         env,
       )
-      const user = db
-        .prepare('SELECT email_verified FROM users WHERE email = ?')
-        .get('test@example.com') as { email_verified: number }
-      expect(user.email_verified).toBe(0)
-    })
-
-    it('should store verification_token in DB after registration', async () => {
-      await postJson(
-        '/api/auth/register',
-        { email: 'test@example.com', password: 'password123', name: 'Test' },
-        env,
-      )
-      const user = db
-        .prepare('SELECT verification_token FROM users WHERE email = ?')
-        .get('test@example.com') as { verification_token: string }
-      expect(user.verification_token).toBeTruthy()
-    })
-
-    it('should return 400 for invalid email', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'invalid',
-          password: 'password123',
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it('should return 400 for empty email', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: '',
-          password: 'password123',
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it('should return 400 for missing email field', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          password: 'password123',
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it('should return 400 for short password', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: '1234567',
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
+      expect(res.status).toBe(503)
       const body = await res.json()
-      expect(body.error).toContain('8文字以上')
+      expect(body.error).toBe('現在はクローズドβテスト中です')
     })
 
-    it('should return 400 for password exceeding 72 characters', async () => {
-      const longPassword = 'a'.repeat(73)
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: longPassword,
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
+    it('should return 503 even with empty body', async () => {
+      const res = await postJson('/api/auth/register', {}, env)
+      expect(res.status).toBe(503)
       const body = await res.json()
-      expect(body.error).toContain('72文字以内')
+      expect(body.error).toBe('現在はクローズドβテスト中です')
     })
 
-    it('should accept password with exactly 72 characters', async () => {
-      const maxPassword = 'a'.repeat(72)
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: maxPassword,
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(201)
-    })
-
-    it('should return 400 for empty password', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: '',
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it('should return 400 for missing password field', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it('should return 400 for empty name', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: 'password123',
-          name: '',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it('should return 400 for whitespace-only name', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: 'password123',
-          name: '   ',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it('should return 400 for missing name field', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: 'password123',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it('should return 400 for duplicate email', async () => {
-      await postJson(
-        '/api/auth/register',
-        {
-          email: 'dup@example.com',
-          password: 'password123',
-          name: 'First',
-        },
-        env,
-      )
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'dup@example.com',
-          password: 'password456',
-          name: 'Second',
-        },
-        env,
-      )
-      expect(res.status).toBe(400)
-      const body = await res.json()
-      expect(body.error).toContain('既に登録')
-    })
-
-    it('should trim name whitespace in DB', async () => {
-      await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: 'password123',
-          name: '  Test User  ',
-        },
-        env,
-      )
-      const user = db.prepare('SELECT name FROM users WHERE email = ?').get('test@example.com') as {
-        name: string
-      }
-      expect(user.name).toBe('Test User')
-    })
-
-    it('should not include password_hash in response', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: 'password123',
-          name: 'Test',
-        },
-        env,
-      )
-      const body = await res.json()
-      expect(body.password_hash).toBeUndefined()
-    })
-
-    it('should accept exactly 8 character password', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        {
-          email: 'test@example.com',
-          password: '12345678',
-          name: 'Test',
-        },
-        env,
-      )
-      expect(res.status).toBe(201)
-    })
-
-    it('should return 400 for malformed JSON body', async () => {
+    it('should return 503 for malformed JSON body', async () => {
       const res = await app.request(
         '/api/auth/register',
         {
@@ -348,7 +82,28 @@ describe('Auth API', () => {
         },
         env,
       )
-      expect(res.status).toBe(400)
+      expect(res.status).toBe(503)
+    })
+
+    it('should NOT create a user in DB when register is called', async () => {
+      await postJson(
+        '/api/auth/register',
+        { email: 'never@example.com', password: 'password123', name: 'Never' },
+        env,
+      )
+      const user = db
+        .prepare('SELECT id FROM users WHERE email = ?')
+        .get('never@example.com')
+      expect(user).toBeUndefined()
+    })
+
+    it('should NOT set auth_token cookie', async () => {
+      const res = await postJson(
+        '/api/auth/register',
+        { email: 'test@example.com', password: 'password123', name: 'Test' },
+        env,
+      )
+      expect(res.headers.get('set-cookie')).toBeNull()
     })
   })
 
