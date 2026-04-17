@@ -17,29 +17,24 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModalProps) {
   const navigate = useNavigate()
   const { t } = useTranslation(['auth', 'common'])
-  const { login, register, resendVerification } = useAuth()
+  const { login, resendVerification } = useAuth()
 
   const [mode, setMode] = useState<AuthMode>(initialMode)
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [verifyEmail, setVerifyEmail] = useState('')
-  const [verifySource, setVerifySource] = useState<'login' | 'register'>('register')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  // Reset form when mode changes
   const switchMode = useCallback((newMode: AuthMode) => {
     setMode(newMode)
     setError(null)
     setInfo(null)
-    setName('')
     setEmail('')
     setPassword('')
   }, [])
 
-  // Reset when initialMode changes
   const [prevInitialMode, setPrevInitialMode] = useState(initialMode)
   if (prevInitialMode !== initialMode) {
     setPrevInitialMode(initialMode)
@@ -53,33 +48,16 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
       setSubmitting(true)
 
       try {
-        if (mode === 'login') {
-          await login(email, password)
-          onClose()
-          if (onSuccess) {
-            onSuccess()
-          } else {
-            navigate('/flows')
-          }
+        await login(email, password)
+        onClose()
+        if (onSuccess) {
+          onSuccess()
         } else {
-          const result = await register(email, password, name)
-          if (result.needsVerification) {
-            setVerifyEmail(result.email)
-            setVerifySource('register')
-            setMode('verify')
-            return
-          }
-          onClose()
-          if (onSuccess) {
-            onSuccess()
-          } else {
-            navigate('/flows')
-          }
+          navigate('/flows')
         }
       } catch (err: unknown) {
-        if (err instanceof ApiError && err.status === 403 && mode === 'login') {
+        if (err instanceof ApiError && err.status === 403) {
           setVerifyEmail(email)
-          setVerifySource('login')
           setMode('verify')
           return
         }
@@ -94,7 +72,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
         setSubmitting(false)
       }
     },
-    [mode, email, password, name, login, register, onClose, navigate, onSuccess, t],
+    [email, password, login, onClose, navigate, onSuccess, t],
   )
 
   const handleResend = useCallback(async () => {
@@ -184,14 +162,8 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
             >
               {submitting ? t('auth:verifyEmail.resending') : t('auth:verifyEmail.resend')}
             </button>
-            <button
-              type="button"
-              className={styles.backLink}
-              onClick={() => switchMode(verifySource)}
-            >
-              {verifySource === 'login'
-                ? t('auth:verifyEmail.backToLogin')
-                : t('auth:verifyEmail.changeEmail')}
+            <button type="button" className={styles.backLink} onClick={() => switchMode('login')}>
+              {t('auth:verifyEmail.backToLogin')}
             </button>
           </div>
         ) : mode === 'register' ? (
