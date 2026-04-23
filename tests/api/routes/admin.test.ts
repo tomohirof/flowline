@@ -263,11 +263,7 @@ describe('Admin API', () => {
     function postJson(path: string, body: unknown, env: object, cookie?: string) {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (cookie) headers['Cookie'] = cookie
-      return app.request(
-        path,
-        { method: 'POST', headers, body: JSON.stringify(body) },
-        env,
-      )
+      return app.request(path, { method: 'POST', headers, body: JSON.stringify(body) }, env)
     }
 
     it('returns 401 when no auth cookie', async () => {
@@ -275,12 +271,7 @@ describe('Admin API', () => {
       expect(res.status).toBe(401)
     })
     it('returns 403 when non-admin', async () => {
-      const res = await postJson(
-        '/api/admin/invitations',
-        { expiresInDays: 7 },
-        env,
-        userCookie,
-      )
+      const res = await postJson('/api/admin/invitations', { expiresInDays: 7 }, env, userCookie)
       expect(res.status).toBe(403)
     })
     it('returns 400 when expiresInDays missing', async () => {
@@ -288,30 +279,15 @@ describe('Admin API', () => {
       expect(res.status).toBe(400)
     })
     it('returns 400 when expiresInDays is 0', async () => {
-      const res = await postJson(
-        '/api/admin/invitations',
-        { expiresInDays: 0 },
-        env,
-        adminCookie,
-      )
+      const res = await postJson('/api/admin/invitations', { expiresInDays: 0 }, env, adminCookie)
       expect(res.status).toBe(400)
     })
     it('returns 400 when expiresInDays > 365', async () => {
-      const res = await postJson(
-        '/api/admin/invitations',
-        { expiresInDays: 366 },
-        env,
-        adminCookie,
-      )
+      const res = await postJson('/api/admin/invitations', { expiresInDays: 366 }, env, adminCookie)
       expect(res.status).toBe(400)
     })
     it('creates a code and returns 201 with code data', async () => {
-      const res = await postJson(
-        '/api/admin/invitations',
-        { expiresInDays: 30 },
-        env,
-        adminCookie,
-      )
+      const res = await postJson('/api/admin/invitations', { expiresInDays: 30 }, env, adminCookie)
       expect(res.status).toBe(201)
       const body = (await res.json()) as {
         id: number
@@ -324,9 +300,9 @@ describe('Admin API', () => {
       expect(body.code).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/)
       expect(body.revokedAt).toBeNull()
       expect(body.createdBy).toBe(ADMIN_ID)
-      const row = db
-        .prepare('SELECT code FROM invitation_codes WHERE id = ?')
-        .get(body.id) as { code: string }
+      const row = db.prepare('SELECT code FROM invitation_codes WHERE id = ?').get(body.id) as {
+        code: string
+      }
       expect(row.code).toBe(body.code)
     })
   })
@@ -378,11 +354,7 @@ describe('Admin API', () => {
     function postJson(path: string, body: unknown, env: object, cookie?: string) {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (cookie) headers['Cookie'] = cookie
-      return app.request(
-        path,
-        { method: 'POST', headers, body: JSON.stringify(body) },
-        env,
-      )
+      return app.request(path, { method: 'POST', headers, body: JSON.stringify(body) }, env)
     }
 
     it('returns 403 for non-admin', async () => {
@@ -390,12 +362,7 @@ describe('Admin API', () => {
       expect(res.status).toBe(403)
     })
     it('returns 404 for non-existent id', async () => {
-      const res = await postJson(
-        '/api/admin/invitations/9999/revoke',
-        {},
-        env,
-        adminCookie,
-      )
+      const res = await postJson('/api/admin/invitations/9999/revoke', {}, env, adminCookie)
       expect(res.status).toBe(404)
     })
     it('revokes an active code and returns 200 with revokedAt', async () => {
@@ -403,16 +370,11 @@ describe('Admin API', () => {
         `INSERT INTO invitation_codes (code, expires_at, created_by)
          VALUES (?, ?, ?)`,
       ).run('ACTIVE02', '2099-01-01T00:00:00Z', ADMIN_ID)
-      const row = db.prepare('SELECT id FROM invitation_codes WHERE code = ?').get(
-        'ACTIVE02',
-      ) as { id: number }
+      const row = db.prepare('SELECT id FROM invitation_codes WHERE code = ?').get('ACTIVE02') as {
+        id: number
+      }
 
-      const res = await postJson(
-        `/api/admin/invitations/${row.id}/revoke`,
-        {},
-        env,
-        adminCookie,
-      )
+      const res = await postJson(`/api/admin/invitations/${row.id}/revoke`, {}, env, adminCookie)
       expect(res.status).toBe(200)
       const body = (await res.json()) as { id: number; revokedAt: string }
       expect(body.id).toBe(row.id)
@@ -427,16 +389,11 @@ describe('Admin API', () => {
         `INSERT INTO invitation_codes (code, expires_at, revoked_at, created_by)
          VALUES (?, ?, ?, ?)`,
       ).run('REVOKED2', '2099-01-01T00:00:00Z', '2026-01-01T00:00:00Z', ADMIN_ID)
-      const row = db.prepare('SELECT id FROM invitation_codes WHERE code = ?').get(
-        'REVOKED2',
-      ) as { id: number }
+      const row = db.prepare('SELECT id FROM invitation_codes WHERE code = ?').get('REVOKED2') as {
+        id: number
+      }
 
-      const res = await postJson(
-        `/api/admin/invitations/${row.id}/revoke`,
-        {},
-        env,
-        adminCookie,
-      )
+      const res = await postJson(`/api/admin/invitations/${row.id}/revoke`, {}, env, adminCookie)
       expect(res.status).toBe(409)
     })
   })

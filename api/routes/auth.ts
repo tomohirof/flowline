@@ -32,10 +32,7 @@ auth.post('/register', async (c) => {
 
   // 招待コード必須チェック（フィールド検証より先に実行し、情報漏洩を防ぐ）
   if (!body.invitationCode || !body.invitationCode.trim()) {
-    return c.json(
-      { error: '招待コードを入力してください', code: 'INVITATION_REQUIRED' },
-      400,
-    )
+    return c.json({ error: '招待コードを入力してください', code: 'INVITATION_REQUIRED' }, 400)
   }
 
   if (!body.email || !body.password || !body.name) {
@@ -58,10 +55,7 @@ auth.post('/register', async (c) => {
   }
 
   const email = body.email.toLowerCase().trim()
-  const existing = await db
-    .prepare('SELECT id FROM users WHERE email = ?')
-    .bind(email)
-    .first()
+  const existing = await db.prepare('SELECT id FROM users WHERE email = ?').bind(email).first()
   if (existing) {
     return c.json(
       { error: 'このメールアドレスは既に登録されています', code: 'EMAIL_ALREADY_EXISTS' },

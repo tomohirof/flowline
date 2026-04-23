@@ -61,10 +61,7 @@ describe('validateInvitationCode', () => {
   })
   afterEach(() => db.close())
 
-  function insertCode(
-    code: string,
-    opts: { expiresAt?: string; revokedAt?: string | null } = {},
-  ) {
+  function insertCode(code: string, opts: { expiresAt?: string; revokedAt?: string | null } = {}) {
     const expiresAt = opts.expiresAt ?? '2099-01-01T00:00:00Z'
     const revokedAt = opts.revokedAt ?? null
     db.prepare(

@@ -273,9 +273,7 @@ describe('useAuth', () => {
 
       expect(res).toEqual({ needsVerification: true, email: 'new@example.com' })
 
-      const registerCall = mockApiFetch.mock.calls.find(
-        ([path]) => path === '/auth/register',
-      )
+      const registerCall = mockApiFetch.mock.calls.find(([path]) => path === '/auth/register')
       expect(registerCall).toBeTruthy()
       const body = JSON.parse((registerCall![1] as RequestInit).body as string)
       expect(body).toEqual({

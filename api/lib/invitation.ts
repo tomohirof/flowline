@@ -15,10 +15,7 @@ export function generateInvitationCode(): string {
   return out
 }
 
-export async function validateInvitationCode(
-  db: D1Database,
-  code: string,
-): Promise<boolean> {
+export async function validateInvitationCode(db: D1Database, code: string): Promise<boolean> {
   const normalized = normalizeInvitationCode(code)
   if (!normalized) return false
   const row = await db

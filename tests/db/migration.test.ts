@@ -152,18 +152,12 @@ describe('D1 Migration', () => {
         db.exec(stmt + ';')
       }
     }
-    const cols = db
-      .prepare("PRAGMA table_info(invitation_codes)")
-      .all() as Array<{ name: string; type: string }>
+    const cols = db.prepare('PRAGMA table_info(invitation_codes)').all() as Array<{
+      name: string
+      type: string
+    }>
     const names = cols.map((c) => c.name).sort()
-    expect(names).toEqual([
-      'code',
-      'created_at',
-      'created_by',
-      'expires_at',
-      'id',
-      'revoked_at',
-    ])
+    expect(names).toEqual(['code', 'created_at', 'created_by', 'expires_at', 'id', 'revoked_at'])
     db.close()
   })
 
