@@ -90,6 +90,37 @@ describe('Auth API', () => {
       expect(body.code).toBe('INVITATION_REQUIRED')
     })
 
+    it('returns 400 INVITATION_REQUIRED when invitationCode is non-string (type guard)', async () => {
+      // ランタイム型チェックが無いと、オブジェクトを渡した時 .trim() で 500 になる
+      const res = await registerRequest({
+        email: 'new@example.com',
+        password: 'password123',
+        name: 'New',
+        invitationCode: {},
+      })
+      expect(res.status).toBe(400)
+      const body = (await res.json()) as { code?: string }
+      expect(body.code).toBe('INVITATION_REQUIRED')
+    })
+
+    it('returns 400 when password exceeds 72 bytes (bcrypt limit)', async () => {
+      db.prepare(
+        `INSERT OR IGNORE INTO users (id, email, password_hash, name, role)
+         VALUES ('inviter-bcrypt', 'bcrypt@example.com', 'hash', 'BC', 'admin')`,
+      ).run()
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, created_by)
+         VALUES ('BCRYPT01', '2099-01-01T00:00:00Z', 'inviter-bcrypt')`,
+      ).run()
+      const res = await registerRequest({
+        email: 'new@example.com',
+        password: 'a'.repeat(73),
+        name: 'New',
+        invitationCode: 'BCRYPT01',
+      })
+      expect(res.status).toBe(400)
+    })
+
     it('returns 400 INVITATION_INVALID when code does not exist', async () => {
       const res = await registerRequest({
         email: 'new@example.com',

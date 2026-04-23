@@ -31,15 +31,22 @@ auth.post('/register', async (c) => {
   }
 
   // 招待コード必須チェック（フィールド検証より先に実行し、情報漏洩を防ぐ）
-  if (!body.invitationCode || !body.invitationCode.trim()) {
+  if (typeof body.invitationCode !== 'string' || !body.invitationCode.trim()) {
     return c.json({ error: '招待コードを入力してください', code: 'INVITATION_REQUIRED' }, 400)
   }
 
-  if (!body.email || !body.password || !body.name) {
+  if (
+    typeof body.email !== 'string' ||
+    typeof body.password !== 'string' ||
+    typeof body.name !== 'string' ||
+    !body.email ||
+    !body.password ||
+    !body.name
+  ) {
     return c.json({ error: '入力が不足しています' }, 400)
   }
-  if (body.password.length < 8) {
-    return c.json({ error: 'パスワードは 8 文字以上で入力してください' }, 400)
+  if (body.password.length < 8 || body.password.length > 72) {
+    return c.json({ error: 'パスワードは 8〜72 文字で入力してください' }, 400)
   }
 
   const db = c.env.FLOWLINE_DB
