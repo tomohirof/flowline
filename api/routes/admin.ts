@@ -239,4 +239,31 @@ admin.get('/invitations', async (c) => {
   return c.json({ invitations })
 })
 
+// =============================================
+// POST /invitations/:id/revoke - Revoke invitation code (admin only)
+// =============================================
+
+admin.post('/invitations/:id/revoke', async (c) => {
+  const db = c.env.FLOWLINE_DB
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id <= 0) {
+    return c.json({ error: '無効な id です' }, 400)
+  }
+
+  const row = await db
+    .prepare('SELECT id, revoked_at FROM invitation_codes WHERE id = ?')
+    .bind(id)
+    .first<{ id: number; revoked_at: string | null }>()
+  if (!row) return c.json({ error: '招待コードが見つかりません' }, 404)
+  if (row.revoked_at) return c.json({ error: '既に無効化されています' }, 409)
+
+  const revokedAt = new Date().toISOString()
+  await db
+    .prepare('UPDATE invitation_codes SET revoked_at = ? WHERE id = ?')
+    .bind(revokedAt, id)
+    .run()
+
+  return c.json({ id, revokedAt })
+})
+
 export { admin }

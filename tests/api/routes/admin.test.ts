@@ -370,4 +370,74 @@ describe('Admin API', () => {
       expect(byCode.REVOKED1).toBe('revoked')
     })
   })
+
+  // ========================================
+  // POST /api/admin/invitations/:id/revoke
+  // ========================================
+  describe('POST /api/admin/invitations/:id/revoke', () => {
+    function postJson(path: string, body: unknown, env: object, cookie?: string) {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (cookie) headers['Cookie'] = cookie
+      return app.request(
+        path,
+        { method: 'POST', headers, body: JSON.stringify(body) },
+        env,
+      )
+    }
+
+    it('returns 403 for non-admin', async () => {
+      const res = await postJson('/api/admin/invitations/1/revoke', {}, env, userCookie)
+      expect(res.status).toBe(403)
+    })
+    it('returns 404 for non-existent id', async () => {
+      const res = await postJson(
+        '/api/admin/invitations/9999/revoke',
+        {},
+        env,
+        adminCookie,
+      )
+      expect(res.status).toBe(404)
+    })
+    it('revokes an active code and returns 200 with revokedAt', async () => {
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, created_by)
+         VALUES (?, ?, ?)`,
+      ).run('ACTIVE02', '2099-01-01T00:00:00Z', ADMIN_ID)
+      const row = db.prepare('SELECT id FROM invitation_codes WHERE code = ?').get(
+        'ACTIVE02',
+      ) as { id: number }
+
+      const res = await postJson(
+        `/api/admin/invitations/${row.id}/revoke`,
+        {},
+        env,
+        adminCookie,
+      )
+      expect(res.status).toBe(200)
+      const body = (await res.json()) as { id: number; revokedAt: string }
+      expect(body.id).toBe(row.id)
+      expect(body.revokedAt).toBeTruthy()
+      const after = db
+        .prepare('SELECT revoked_at FROM invitation_codes WHERE id = ?')
+        .get(row.id) as { revoked_at: string }
+      expect(after.revoked_at).toBeTruthy()
+    })
+    it('returns 409 when already revoked', async () => {
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, revoked_at, created_by)
+         VALUES (?, ?, ?, ?)`,
+      ).run('REVOKED2', '2099-01-01T00:00:00Z', '2026-01-01T00:00:00Z', ADMIN_ID)
+      const row = db.prepare('SELECT id FROM invitation_codes WHERE code = ?').get(
+        'REVOKED2',
+      ) as { id: number }
+
+      const res = await postJson(
+        `/api/admin/invitations/${row.id}/revoke`,
+        {},
+        env,
+        adminCookie,
+      )
+      expect(res.status).toBe(409)
+    })
+  })
 })
