@@ -1,0 +1,30 @@
+{
+  "invitations": {
+    "title": "招待コード",
+    "create": "+ 新規発行",
+    "modal": {
+      "title": "招待コードを発行",
+      "expiresInDays": "有効日数",
+      "presets": { "7": "7日", "14": "14日", "30": "30日" },
+      "custom": "カスタム",
+      "issue": "発行",
+      "cancel": "キャンセル"
+    },
+    "columns": {
+      "code": "コード",
+      "expiresAt": "期限",
+      "status": "状態",
+      "actions": "操作"
+    },
+    "status": { "active": "有効", "expired": "期限切れ", "revoked": "無効化" },
+    "revoke": "無効化",
+    "revokeConfirm": "このコードを無効化しますか？",
+    "copy": "コピー",
+    "copySuccess": "コピーしました",
+    "codeDisplayHint": "このコードを配布してください。閉じた後も一覧から確認できます。",
+    "empty": "まだ招待コードが発行されていません",
+    "loadError": "招待コード一覧の取得に失敗しました",
+    "createError": "招待コードの発行に失敗しました",
+    "revokeError": "無効化に失敗しました"
+  }
+}

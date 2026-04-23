@@ -1,9 +1,11 @@
 import { Hono } from 'hono'
 import { setCookie, deleteCookie } from 'hono/cookie'
-import { verifyPassword } from '../lib/password'
+import { hashPassword, verifyPassword } from '../lib/password'
 import { createToken, createVerificationToken, verifyVerificationToken } from '../lib/jwt'
 import type { VerificationPayload } from '../lib/jwt'
 import { sendVerificationEmail } from '../lib/email'
+import { generateId } from '../lib/id'
+import { validateInvitationCode } from '../lib/invitation'
 import { authMiddleware } from '../middleware/auth'
 import type { AuthEnv } from '../app'
 
@@ -21,9 +23,77 @@ function getCookieOptions(c: { req: { url: string } }) {
 }
 
 auth.post('/register', async (c) => {
-  // Closed beta: registration is temporarily disabled.
-  // To restore, revert the PR that introduced this change.
-  return c.json({ error: '現在はクローズドβテスト中です' }, 503)
+  let body: { email?: string; password?: string; name?: string; invitationCode?: string }
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'リクエストの形式が正しくありません' }, 400)
+  }
+
+  // 招待コード必須チェック（フィールド検証より先に実行し、情報漏洩を防ぐ）
+  if (typeof body.invitationCode !== 'string' || !body.invitationCode.trim()) {
+    return c.json({ error: '招待コードを入力してください', code: 'INVITATION_REQUIRED' }, 400)
+  }
+
+  if (
+    typeof body.email !== 'string' ||
+    typeof body.password !== 'string' ||
+    typeof body.name !== 'string' ||
+    !body.email ||
+    !body.password ||
+    !body.name
+  ) {
+    return c.json({ error: '入力が不足しています' }, 400)
+  }
+  if (body.password.length < 8 || body.password.length > 72) {
+    return c.json({ error: 'パスワードは 8〜72 文字で入力してください' }, 400)
+  }
+
+  const db = c.env.FLOWLINE_DB
+  const isValidInvite = await validateInvitationCode(db, body.invitationCode)
+  if (!isValidInvite) {
+    return c.json(
+      {
+        error: '招待コードが無効です。期限切れまたは誤ったコードです。',
+        code: 'INVITATION_INVALID',
+      },
+      400,
+    )
+  }
+
+  const email = body.email.toLowerCase().trim()
+  const existing = await db.prepare('SELECT id FROM users WHERE email = ?').bind(email).first()
+  if (existing) {
+    return c.json(
+      { error: 'このメールアドレスは既に登録されています', code: 'EMAIL_ALREADY_EXISTS' },
+      400,
+    )
+  }
+
+  const userId = generateId()
+  const passwordHash = await hashPassword(body.password)
+  const verificationToken = await createVerificationToken(userId, c.env.JWT_SECRET)
+  const verificationSentAt = new Date().toISOString()
+
+  await db
+    .prepare(
+      `INSERT INTO users (id, email, password_hash, name, email_verified, verification_token, verification_sent_at)
+       VALUES (?, ?, ?, ?, 0, ?, ?)`,
+    )
+    .bind(userId, email, passwordHash, body.name.trim(), verificationToken, verificationSentAt)
+    .run()
+
+  // メール送信失敗は致命的ではない — ユーザー作成は成功扱い、再送可能
+  const baseUrl = new URL(c.req.url).origin
+  try {
+    if (c.env.RESEND_API_KEY) {
+      await sendVerificationEmail(email, verificationToken, c.env.RESEND_API_KEY, baseUrl)
+    }
+  } catch (err) {
+    console.error('[register] failed to send verification email', err)
+  }
+
+  return c.json({ message: '確認メールを送信しました', needsVerification: true })
 })
 
 auth.post('/login', async (c) => {

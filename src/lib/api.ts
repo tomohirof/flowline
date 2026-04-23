@@ -4,10 +4,12 @@ const API_BASE = '/api'
 
 export class ApiError extends Error {
   status: number
+  code?: string
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message)
     this.status = status
+    this.code = code
   }
 }
 
@@ -21,7 +23,8 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   })
   const data = await res.json()
   if (!res.ok) {
-    throw new ApiError(res.status, data.error ?? 'エラーが発生しました')
+    const body = data as { error?: string; code?: string }
+    throw new ApiError(res.status, body.error ?? 'エラーが発生しました', body.code)
   }
   return data as T
 }

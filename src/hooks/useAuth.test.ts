@@ -133,6 +133,7 @@ describe('useAuth', () => {
         'test@example.com',
         'password123',
         'New User',
+        'INVITE42',
       )
       expect(registerResult).toEqual({ needsVerification: true, email: 'test@example.com' })
     })
@@ -145,6 +146,7 @@ describe('useAuth', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'New User',
+        invitationCode: 'INVITE42',
       }),
     })
   })
@@ -247,5 +249,39 @@ describe('useAuth', () => {
     ).rejects.toThrow('Invalid credentials')
 
     expect(result.current.user).toBeNull()
+  })
+
+  describe('register', () => {
+    it('sends invitationCode in request body and returns needsVerification', async () => {
+      // Initial /auth/me call resolves with null user (not logged in)
+      mockApiFetch.mockResolvedValueOnce({ user: null })
+      // register call response
+      mockApiFetch.mockResolvedValueOnce({ message: 'ok' })
+
+      const { result } = renderHook(() => useAuth(), { wrapper })
+      await waitFor(() => expect(result.current.loading).toBe(false))
+
+      let res: { needsVerification: boolean; email: string } | undefined
+      await act(async () => {
+        res = await result.current.register(
+          'new@example.com',
+          'password123',
+          'New User',
+          'VALIDC01',
+        )
+      })
+
+      expect(res).toEqual({ needsVerification: true, email: 'new@example.com' })
+
+      const registerCall = mockApiFetch.mock.calls.find(([path]) => path === '/auth/register')
+      expect(registerCall).toBeTruthy()
+      const body = JSON.parse((registerCall![1] as RequestInit).body as string)
+      expect(body).toEqual({
+        email: 'new@example.com',
+        password: 'password123',
+        name: 'New User',
+        invitationCode: 'VALIDC01',
+      })
+    })
   })
 })

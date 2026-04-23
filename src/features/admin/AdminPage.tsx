@@ -4,6 +4,7 @@ import { apiFetch } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
+import { InvitationsSection } from './InvitationsSection'
 import styles from './AdminPage.module.css'
 
 interface AdminUser {
@@ -167,6 +168,8 @@ export function AdminPage() {
             )}
           </div>
         )}
+
+        <InvitationsSection />
       </div>
     </div>
   )

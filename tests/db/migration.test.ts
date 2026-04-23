@@ -132,6 +132,35 @@ describe('D1 Migration', () => {
     expect(flows).toHaveLength(2)
   })
 
+  it('should create invitation_codes table (0009)', () => {
+    const db = new Database(':memory:')
+    db.pragma('foreign_keys = ON')
+    const files = [
+      '0001_initial.sql',
+      '0002_node_arrow_styles.sql',
+      '0003_user_settings.sql',
+      '0004_email_verification.sql',
+      '0005_soft_delete.sql',
+      '0006_ai_admin.sql',
+      '0007_node_shape.sql',
+      '0008_projects.sql',
+      '0009_invitation_codes.sql',
+    ]
+    for (const f of files) {
+      const sql = readFileSync(resolve(__dirname, '../../migrations/', f), 'utf-8')
+      for (const stmt of sql.split(';').filter((s) => s.trim())) {
+        db.exec(stmt + ';')
+      }
+    }
+    const cols = db.prepare('PRAGMA table_info(invitation_codes)').all() as Array<{
+      name: string
+      type: string
+    }>
+    const names = cols.map((c) => c.name).sort()
+    expect(names).toEqual(['code', 'created_at', 'created_by', 'expires_at', 'id', 'revoked_at'])
+    db.close()
+  })
+
   it('should have created_at and updated_at on all tables', () => {
     db.prepare(
       "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'ts@test.com', 'hash', 'Test')",

@@ -76,6 +76,19 @@ const mockUsers = [
   },
 ]
 
+// Helper: applies a path-routed mockImplementation on top of any queued
+// mockResolvedValueOnce/mockRejectedValueOnce calls. Queued "once" responses
+// still fire first (vitest behavior); this impl handles the un-queued calls
+// so e.g. InvitationsSection's /admin/invitations GET on mount doesn't break
+// user-focused tests.
+function routeApiFetch(extra?: Record<string, unknown>) {
+  mockApiFetch.mockImplementation(async (path: string) => {
+    if (path === '/admin/invitations') return { invitations: [] }
+    if (extra && path in extra) return extra[path]
+    return { users: [] }
+  })
+}
+
 describe('AdminPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -86,6 +99,7 @@ describe('AdminPage', () => {
       role: 'admin',
       aiEnabled: true,
     }
+    routeApiFetch()
   })
 
   afterEach(() => {
@@ -141,7 +155,7 @@ describe('AdminPage', () => {
   // User List Rendering
   // ========================================
   it('should render user list for admin user', async () => {
-    mockApiFetch.mockResolvedValueOnce({ users: mockUsers })
+    routeApiFetch({ '/admin/users': { users: mockUsers } })
 
     render(<AdminPage />)
 
@@ -157,7 +171,7 @@ describe('AdminPage', () => {
   })
 
   it('should display role badges correctly', async () => {
-    mockApiFetch.mockResolvedValueOnce({ users: mockUsers })
+    routeApiFetch({ '/admin/users': { users: mockUsers } })
 
     render(<AdminPage />)
 
@@ -173,7 +187,7 @@ describe('AdminPage', () => {
   })
 
   it('should show empty state when no users', async () => {
-    mockApiFetch.mockResolvedValueOnce({ users: [] })
+    routeApiFetch({ '/admin/users': { users: [] } })
 
     render(<AdminPage />)
 
@@ -189,7 +203,7 @@ describe('AdminPage', () => {
   // ========================================
   it('should toggle AI enabled when clicking toggle button', async () => {
     const user = userEvent.setup()
-    mockApiFetch.mockResolvedValueOnce({ users: mockUsers })
+    routeApiFetch({ '/admin/users': { users: mockUsers } })
 
     render(<AdminPage />)
 
@@ -214,7 +228,7 @@ describe('AdminPage', () => {
 
   it('should disable toggle button while API call is in progress', async () => {
     const user = userEvent.setup()
-    mockApiFetch.mockResolvedValueOnce({ users: mockUsers })
+    routeApiFetch({ '/admin/users': { users: mockUsers } })
 
     render(<AdminPage />)
 
@@ -232,7 +246,7 @@ describe('AdminPage', () => {
 
   it('should show error when toggle API call fails', async () => {
     const user = userEvent.setup()
-    mockApiFetch.mockResolvedValueOnce({ users: mockUsers })
+    routeApiFetch({ '/admin/users': { users: mockUsers } })
 
     render(<AdminPage />)
 
@@ -255,7 +269,10 @@ describe('AdminPage', () => {
   // Error Handling
   // ========================================
   it('should show error when user list fetch fails', async () => {
-    mockApiFetch.mockRejectedValueOnce(new Error('Server error'))
+    mockApiFetch.mockImplementation(async (path: string) => {
+      if (path === '/admin/invitations') return { invitations: [] }
+      throw new Error('Server error')
+    })
 
     render(<AdminPage />)
 
@@ -270,7 +287,7 @@ describe('AdminPage', () => {
   // Top Bar
   // ========================================
   it('should render top bar with logo link and avatar', async () => {
-    mockApiFetch.mockResolvedValueOnce({ users: mockUsers })
+    routeApiFetch({ '/admin/users': { users: mockUsers } })
 
     render(<AdminPage />)
 
@@ -284,12 +301,26 @@ describe('AdminPage', () => {
   })
 
   it('should call GET /admin/users on mount for admin', async () => {
-    mockApiFetch.mockResolvedValueOnce({ users: [] })
+    routeApiFetch({ '/admin/users': { users: [] } })
 
     render(<AdminPage />)
 
     await waitFor(() => {
       expect(mockApiFetch).toHaveBeenCalledWith('/admin/users')
     })
+  })
+
+  // ========================================
+  // Invitations Section integration
+  // ========================================
+  it('should render InvitationsSection for admin user', async () => {
+    routeApiFetch({ '/admin/users': { users: mockUsers } })
+
+    render(<AdminPage />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('invitations-section')).toBeInTheDocument()
+    })
+    expect(mockApiFetch).toHaveBeenCalledWith('/admin/invitations')
   })
 })

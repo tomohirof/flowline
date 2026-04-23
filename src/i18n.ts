@@ -9,6 +9,7 @@ import jaEditor from './locales/ja/editor.json'
 import jaSettings from './locales/ja/settings.json'
 import jaAuth from './locales/ja/auth.json'
 import jaShared from './locales/ja/shared.json'
+import jaAdmin from './locales/ja/admin.json'
 
 import enCommon from './locales/en/common.json'
 import enLanding from './locales/en/landing.json'
@@ -17,6 +18,7 @@ import enEditor from './locales/en/editor.json'
 import enSettings from './locales/en/settings.json'
 import enAuth from './locales/en/auth.json'
 import enShared from './locales/en/shared.json'
+import enAdmin from './locales/en/admin.json'
 
 i18n
   .use(LanguageDetector)
@@ -31,6 +33,7 @@ i18n
         settings: jaSettings,
         auth: jaAuth,
         shared: jaShared,
+        admin: jaAdmin,
       },
       en: {
         common: enCommon,
@@ -40,6 +43,7 @@ i18n
         settings: enSettings,
         auth: enAuth,
         shared: enShared,
+        admin: enAdmin,
       },
     },
     fallbackLng: 'ja',

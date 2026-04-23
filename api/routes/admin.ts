@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import type { AuthEnv } from '../app'
 import { authMiddleware } from '../middleware/auth'
 import { adminMiddleware } from '../middleware/admin'
+import { generateInvitationCode } from '../lib/invitation'
 
 const ALLOWED_ROLES = ['user', 'admin']
 
@@ -119,6 +120,150 @@ admin.put('/users/:id', async (c) => {
       aiEnabled: updated.ai_enabled === 1,
     },
   })
+})
+
+// =============================================
+// POST /invitations - Create invitation code (admin only)
+// =============================================
+
+admin.post('/invitations', async (c) => {
+  const db = c.env.FLOWLINE_DB
+  const adminId = c.get('userId')
+
+  let body: { expiresInDays?: number }
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'リクエストの形式が正しくありません' }, 400)
+  }
+  const days = body.expiresInDays
+  if (days === undefined || !Number.isInteger(days) || days < 1 || days > 365) {
+    return c.json({ error: 'expiresInDays は 1〜365 の整数で指定してください' }, 400)
+  }
+
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
+
+  let code = ''
+  let inserted = false
+  for (let attempt = 0; attempt < 3; attempt++) {
+    code = generateInvitationCode()
+    try {
+      await db
+        .prepare(
+          `INSERT INTO invitation_codes (code, expires_at, created_by)
+           VALUES (?, ?, ?)`,
+        )
+        .bind(code, expiresAt, adminId)
+        .run()
+      inserted = true
+      break
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (!/UNIQUE/i.test(msg)) {
+        console.error('[invitations] insert failed', err)
+        return c.json({ error: '招待コードの生成に失敗しました' }, 500)
+      }
+      // UNIQUE collision — retry
+    }
+  }
+  if (!inserted) {
+    return c.json({ error: '招待コードの生成に失敗しました' }, 500)
+  }
+
+  const row = await db
+    .prepare(
+      `SELECT id, code, expires_at, revoked_at, created_at, created_by
+       FROM invitation_codes WHERE code = ?`,
+    )
+    .bind(code)
+    .first<{
+      id: number
+      code: string
+      expires_at: string
+      revoked_at: string | null
+      created_at: string
+      created_by: string
+    }>()
+  if (!row) return c.json({ error: '招待コードの取得に失敗しました' }, 500)
+
+  return c.json(
+    {
+      id: row.id,
+      code: row.code,
+      expiresAt: row.expires_at,
+      revokedAt: row.revoked_at,
+      createdAt: row.created_at,
+      createdBy: row.created_by,
+    },
+    201,
+  )
+})
+
+// =============================================
+// GET /invitations - List invitation codes (admin only)
+// =============================================
+
+admin.get('/invitations', async (c) => {
+  const db = c.env.FLOWLINE_DB
+  const result = await db
+    .prepare(
+      `SELECT id, code, expires_at, revoked_at, created_at, created_by
+       FROM invitation_codes ORDER BY created_at DESC`,
+    )
+    .all<{
+      id: number
+      code: string
+      expires_at: string
+      revoked_at: string | null
+      created_at: string
+      created_by: string
+    }>()
+
+  const now = Date.now()
+  const invitations = (result.results ?? []).map((r) => {
+    let status: 'active' | 'expired' | 'revoked'
+    if (r.revoked_at) status = 'revoked'
+    else if (new Date(r.expires_at).getTime() <= now) status = 'expired'
+    else status = 'active'
+    return {
+      id: r.id,
+      code: r.code,
+      expiresAt: r.expires_at,
+      revokedAt: r.revoked_at,
+      createdAt: r.created_at,
+      createdBy: r.created_by,
+      status,
+    }
+  })
+
+  return c.json({ invitations })
+})
+
+// =============================================
+// POST /invitations/:id/revoke - Revoke invitation code (admin only)
+// =============================================
+
+admin.post('/invitations/:id/revoke', async (c) => {
+  const db = c.env.FLOWLINE_DB
+  const id = Number(c.req.param('id'))
+  if (!Number.isInteger(id) || id <= 0) {
+    return c.json({ error: '無効な id です' }, 400)
+  }
+
+  const row = await db
+    .prepare('SELECT id, revoked_at FROM invitation_codes WHERE id = ?')
+    .bind(id)
+    .first<{ id: number; revoked_at: string | null }>()
+  if (!row) return c.json({ error: '招待コードが見つかりません' }, 404)
+  if (row.revoked_at) return c.json({ error: '既に無効化されています' }, 409)
+
+  const revokedAt = new Date().toISOString()
+  await db
+    .prepare('UPDATE invitation_codes SET revoked_at = ? WHERE id = ?')
+    .bind(revokedAt, id)
+    .run()
+
+  return c.json({ id, revokedAt })
 })
 
 export { admin }
