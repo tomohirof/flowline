@@ -17,12 +17,15 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModalProps) {
   const navigate = useNavigate()
   const { t } = useTranslation(['auth', 'common'])
-  const { login, resendVerification } = useAuth()
+  const { login, register, resendVerification } = useAuth()
 
   const [mode, setMode] = useState<AuthMode>(initialMode)
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [invitationCode, setInvitationCode] = useState('')
   const [verifyEmail, setVerifyEmail] = useState('')
+  const [verifySource, setVerifySource] = useState<'login' | 'register'>('login')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -31,8 +34,10 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
     setMode(newMode)
     setError(null)
     setInfo(null)
+    setName('')
     setEmail('')
     setPassword('')
+    setInvitationCode('')
   }, [])
 
   const [prevInitialMode, setPrevInitialMode] = useState(initialMode)
@@ -48,21 +53,44 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
       setSubmitting(true)
 
       try {
-        await login(email, password)
-        onClose()
-        if (onSuccess) {
-          onSuccess()
+        if (mode === 'login') {
+          await login(email, password)
+          onClose()
+          if (onSuccess) {
+            onSuccess()
+          } else {
+            navigate('/flows')
+          }
         } else {
-          navigate('/flows')
+          const result = await register(email, password, name, invitationCode)
+          if (result.needsVerification) {
+            setVerifyEmail(result.email)
+            setVerifySource('register')
+            setMode('verify')
+            return
+          }
+          onClose()
+          if (onSuccess) {
+            onSuccess()
+          } else {
+            navigate('/flows')
+          }
         }
       } catch (err: unknown) {
-        if (err instanceof ApiError && err.status === 403) {
+        if (err instanceof ApiError && err.status === 403 && mode === 'login') {
           setVerifyEmail(email)
+          setVerifySource('login')
           setMode('verify')
           return
         }
         if (err instanceof ApiError) {
-          setError(err.message)
+          if (err.code === 'INVITATION_REQUIRED') {
+            setError(t('auth:invitationCode.errors.required'))
+          } else if (err.code === 'INVITATION_INVALID') {
+            setError(t('auth:invitationCode.errors.invalid'))
+          } else {
+            setError(err.message)
+          }
         } else if (err instanceof Error) {
           setError(err.message)
         } else {
@@ -72,7 +100,7 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
         setSubmitting(false)
       }
     },
-    [email, password, login, onClose, navigate, onSuccess, t],
+    [mode, email, password, name, invitationCode, login, register, onClose, navigate, onSuccess, t],
   )
 
   const handleResend = useCallback(async () => {
@@ -162,21 +190,51 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
             >
               {submitting ? t('auth:verifyEmail.resending') : t('auth:verifyEmail.resend')}
             </button>
-            <button type="button" className={styles.backLink} onClick={() => switchMode('login')}>
-              {t('auth:verifyEmail.backToLogin')}
-            </button>
-          </div>
-        ) : mode === 'register' ? (
-          <div className={styles.closedBetaContainer} data-testid="closed-beta-notice">
-            <h2 className={styles.closedBetaTitle}>{t('auth:closedBeta.title')}</h2>
-            <p className={styles.closedBetaDescription}>{t('auth:closedBeta.description')}</p>
-            <button type="button" className={styles.submitBtn} onClick={() => switchMode('login')}>
-              {t('auth:closedBeta.backToLogin')}
+            <button
+              type="button"
+              className={styles.backLink}
+              onClick={() => switchMode(verifySource)}
+            >
+              {verifySource === 'login'
+                ? t('auth:verifyEmail.backToLogin')
+                : t('auth:verifyEmail.changeEmail')}
             </button>
           </div>
         ) : (
           <>
             <form onSubmit={handleSubmit}>
+              {mode === 'register' && (
+                <>
+                  <div className={styles.field}>
+                    <input
+                      className={styles.input}
+                      type="text"
+                      placeholder={t('auth:invitationCode.placeholder')}
+                      value={invitationCode}
+                      onChange={(e) =>
+                        setInvitationCode(e.target.value.toUpperCase().replace(/\s/g, ''))
+                      }
+                      required
+                      data-testid="invitation-code-input"
+                      maxLength={32}
+                      autoComplete="off"
+                    />
+                    <p className={styles.fieldHint}>{t('auth:invitationCode.hint')}</p>
+                  </div>
+                  <div className={styles.field}>
+                    <input
+                      className={styles.input}
+                      type="text"
+                      placeholder={t('auth:form.name')}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      data-testid="register-name-input"
+                    />
+                  </div>
+                </>
+              )}
+
               <div className={styles.field}>
                 <input
                   className={styles.input}
@@ -200,9 +258,11 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 />
               </div>
 
-              <button type="button" className={styles.forgotLink} onClick={handleForgotClick}>
-                {t('auth:form.forgotPassword')}
-              </button>
+              {mode === 'login' && (
+                <button type="button" className={styles.forgotLink} onClick={handleForgotClick}>
+                  {t('auth:form.forgotPassword')}
+                </button>
+              )}
 
               <button
                 type="submit"
@@ -210,19 +270,26 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
                 disabled={submitting}
                 data-testid="auth-submit"
               >
-                {submitting ? t('auth:form.processing') : t('auth:form.loginButton')}
+                {submitting
+                  ? t('auth:form.processing')
+                  : mode === 'login'
+                    ? t('auth:form.loginButton')
+                    : t('auth:form.registerButton')}
               </button>
             </form>
 
-            <div className={styles.divider}>
-              <span className={styles.dividerLine} />
-              <span>{t('common:or')}</span>
-              <span className={styles.dividerLine} />
-            </div>
-
-            <button className={styles.googleBtn} onClick={handleGoogleClick}>
-              {t('auth:form.continueWithGoogle')}
-            </button>
+            {mode === 'login' && (
+              <>
+                <div className={styles.divider}>
+                  <span className={styles.dividerLine} />
+                  <span>{t('common:or')}</span>
+                  <span className={styles.dividerLine} />
+                </div>
+                <button className={styles.googleBtn} onClick={handleGoogleClick}>
+                  {t('auth:form.continueWithGoogle')}
+                </button>
+              </>
+            )}
           </>
         )}
       </div>

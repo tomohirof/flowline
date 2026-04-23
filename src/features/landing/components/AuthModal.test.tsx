@@ -58,56 +58,7 @@ describe('AuthModal', () => {
     expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
-  })
-
-  it('registerモードではβ案内を表示しフォームは出さない', () => {
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
-      </MemoryRouter>,
-    )
-    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('form.email')).not.toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('form.password')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('auth-submit')).not.toBeInTheDocument()
-  })
-
-  it('β案内の「ログインへ」ボタン押下でloginモードに戻る', () => {
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
-      </MemoryRouter>,
-    )
-    fireEvent.click(screen.getByText('closedBeta.backToLogin'))
-    expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
-    expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
-  })
-
-  it('タブを register→login→register と切替えてもβ案内が復帰する', () => {
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="register" />
-      </MemoryRouter>,
-    )
-    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
-    fireEvent.click(screen.getByText('login'))
-    expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByText('register'))
-    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
-  })
-
-  it('タブクリックでregisterタブに切替えるとβ案内が表示される', () => {
-    render(
-      <MemoryRouter>
-        <AuthModal isOpen={true} onClose={vi.fn()} initialMode="login" />
-      </MemoryRouter>,
-    )
-    expect(screen.queryByTestId('closed-beta-notice')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByText('register'))
-    expect(screen.getByTestId('closed-beta-notice')).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('form.name')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('invitation-code-input')).not.toBeInTheDocument()
   })
 
   it('ログイン成功時にonCloseが呼ばれ /flows に遷移する', async () => {
@@ -334,6 +285,134 @@ describe('AuthModal', () => {
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/flows')
+      })
+    })
+  })
+
+  describe('register mode with invitation code', () => {
+    it('shows invitation code and name fields in register tab', () => {
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={() => {}} initialMode="register" />
+        </MemoryRouter>,
+      )
+      expect(screen.getByTestId('invitation-code-input')).toBeInTheDocument()
+      expect(screen.getByTestId('register-name-input')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('form.email')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('form.password')).toBeInTheDocument()
+    })
+
+    it('hides Google button and divider in register mode', () => {
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={() => {}} initialMode="register" />
+        </MemoryRouter>,
+      )
+      expect(screen.queryByText(/Google/)).not.toBeInTheDocument()
+    })
+
+    it('normalizes invitation code on change (uppercase + strip spaces)', () => {
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={() => {}} initialMode="register" />
+        </MemoryRouter>,
+      )
+      const input = screen.getByTestId('invitation-code-input') as HTMLInputElement
+      fireEvent.change(input, { target: { value: ' abc 123 ' } })
+      expect(input.value).toBe('ABC123')
+    })
+
+    it('calls register with invitationCode and transitions to verify on success', async () => {
+      mockRegister.mockResolvedValueOnce({ needsVerification: true, email: 'new@x.com' })
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={() => {}} initialMode="register" />
+        </MemoryRouter>,
+      )
+      fireEvent.change(screen.getByTestId('invitation-code-input'), {
+        target: { value: 'VALID01' },
+      })
+      fireEvent.change(screen.getByTestId('register-name-input'), {
+        target: { value: 'New User' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('form.email'), {
+        target: { value: 'new@x.com' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('form.password'), {
+        target: { value: 'password123' },
+      })
+      fireEvent.click(screen.getByTestId('auth-submit'))
+      await waitFor(() =>
+        expect(mockRegister).toHaveBeenCalledWith(
+          'new@x.com',
+          'password123',
+          'New User',
+          'VALID01',
+        ),
+      )
+      await waitFor(() => {
+        expect(screen.getByText('verifyEmail.title')).toBeInTheDocument()
+        expect(screen.getByText('new@x.com')).toBeInTheDocument()
+      })
+    })
+
+    it('shows invalid code error inline when server returns INVITATION_INVALID', async () => {
+      mockRegister.mockRejectedValueOnce(
+        new ApiError(
+          400,
+          '招待コードが無効です。期限切れまたは誤ったコードです。',
+          'INVITATION_INVALID',
+        ),
+      )
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={() => {}} initialMode="register" />
+        </MemoryRouter>,
+      )
+      fireEvent.change(screen.getByTestId('invitation-code-input'), {
+        target: { value: 'BADCODE0' },
+      })
+      fireEvent.change(screen.getByTestId('register-name-input'), { target: { value: 'U' } })
+      fireEvent.change(screen.getByPlaceholderText('form.email'), {
+        target: { value: 'x@x.com' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('form.password'), {
+        target: { value: 'password123' },
+      })
+      fireEvent.click(screen.getByTestId('auth-submit'))
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          /invitationCode\.errors\.invalid|招待コードが無効/,
+        )
+      })
+    })
+
+    it('shows required error inline when server returns INVITATION_REQUIRED', async () => {
+      mockRegister.mockRejectedValueOnce(
+        new ApiError(400, '招待コードを入力してください', 'INVITATION_REQUIRED'),
+      )
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={() => {}} initialMode="register" />
+        </MemoryRouter>,
+      )
+      // Use spaces to hit server-side required check (client require is satisfied visually but
+      // we trust the mock to simulate the server rejection regardless)
+      fireEvent.change(screen.getByTestId('invitation-code-input'), {
+        target: { value: 'SOMECODE' },
+      })
+      fireEvent.change(screen.getByTestId('register-name-input'), { target: { value: 'U' } })
+      fireEvent.change(screen.getByPlaceholderText('form.email'), {
+        target: { value: 'x@x.com' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('form.password'), {
+        target: { value: 'password123' },
+      })
+      fireEvent.click(screen.getByTestId('auth-submit'))
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          /invitationCode\.errors\.required|招待コードを入力/,
+        )
       })
     })
   })
