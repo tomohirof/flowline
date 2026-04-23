@@ -133,6 +133,7 @@ describe('useAuth', () => {
         'test@example.com',
         'password123',
         'New User',
+        'INVITE42',
       )
       expect(registerResult).toEqual({ needsVerification: true, email: 'test@example.com' })
     })
@@ -145,6 +146,7 @@ describe('useAuth', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'New User',
+        invitationCode: 'INVITE42',
       }),
     })
   })
