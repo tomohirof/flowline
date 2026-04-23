@@ -255,4 +255,79 @@ describe('Admin API', () => {
       expect(res2.status).toBe(200)
     })
   })
+
+  // ========================================
+  // POST /api/admin/invitations
+  // ========================================
+  describe('POST /api/admin/invitations', () => {
+    function postJson(path: string, body: unknown, env: object, cookie?: string) {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (cookie) headers['Cookie'] = cookie
+      return app.request(
+        path,
+        { method: 'POST', headers, body: JSON.stringify(body) },
+        env,
+      )
+    }
+
+    it('returns 401 when no auth cookie', async () => {
+      const res = await postJson('/api/admin/invitations', { expiresInDays: 7 }, env)
+      expect(res.status).toBe(401)
+    })
+    it('returns 403 when non-admin', async () => {
+      const res = await postJson(
+        '/api/admin/invitations',
+        { expiresInDays: 7 },
+        env,
+        userCookie,
+      )
+      expect(res.status).toBe(403)
+    })
+    it('returns 400 when expiresInDays missing', async () => {
+      const res = await postJson('/api/admin/invitations', {}, env, adminCookie)
+      expect(res.status).toBe(400)
+    })
+    it('returns 400 when expiresInDays is 0', async () => {
+      const res = await postJson(
+        '/api/admin/invitations',
+        { expiresInDays: 0 },
+        env,
+        adminCookie,
+      )
+      expect(res.status).toBe(400)
+    })
+    it('returns 400 when expiresInDays > 365', async () => {
+      const res = await postJson(
+        '/api/admin/invitations',
+        { expiresInDays: 366 },
+        env,
+        adminCookie,
+      )
+      expect(res.status).toBe(400)
+    })
+    it('creates a code and returns 201 with code data', async () => {
+      const res = await postJson(
+        '/api/admin/invitations',
+        { expiresInDays: 30 },
+        env,
+        adminCookie,
+      )
+      expect(res.status).toBe(201)
+      const body = (await res.json()) as {
+        id: number
+        code: string
+        expiresAt: string
+        revokedAt: string | null
+        createdAt: string
+        createdBy: string
+      }
+      expect(body.code).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/)
+      expect(body.revokedAt).toBeNull()
+      expect(body.createdBy).toBe(ADMIN_ID)
+      const row = db
+        .prepare('SELECT code FROM invitation_codes WHERE id = ?')
+        .get(body.id) as { code: string }
+      expect(row.code).toBe(body.code)
+    })
+  })
 })
