@@ -53,56 +53,124 @@ describe('Auth API', () => {
     db.close()
   })
 
-  // === Registration (Closed Beta: disabled, returns 503) ===
-  describe('POST /api/auth/register', () => {
-    it('should return 503 with closed-beta message', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        { email: 'test@example.com', password: 'password123', name: 'Test' },
-        env,
-      )
-      expect(res.status).toBe(503)
-      const body = await res.json()
-      expect(body.error).toBe('現在はクローズドβテスト中です')
-    })
+  // === Registration (with invitation code) ===
+  describe('POST /api/auth/register (with invitation code)', () => {
+    function insertValidInvite(code: string = 'VALIDC01', inviterId: string = 'inviter-admin-1') {
+      db.prepare(
+        `INSERT OR IGNORE INTO users (id, email, password_hash, name, role)
+         VALUES (?, ?, 'hash', 'Inviter', 'admin')`,
+      ).run(inviterId, `${inviterId}@example.com`)
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, created_by)
+         VALUES (?, ?, ?)`,
+      ).run(code, '2099-01-01T00:00:00Z', inviterId)
+      return code
+    }
 
-    it('should return 503 even with empty body', async () => {
-      const res = await postJson('/api/auth/register', {}, env)
-      expect(res.status).toBe(503)
-      const body = await res.json()
-      expect(body.error).toBe('現在はクローズドβテスト中です')
-    })
-
-    it('should return 503 for malformed JSON body', async () => {
-      const res = await app.request(
+    async function registerRequest(body: Record<string, unknown>) {
+      return app.request(
         '/api/auth/register',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: 'not-json',
+          body: JSON.stringify(body),
         },
         env,
       )
-      expect(res.status).toBe(503)
+    }
+
+    it('returns 400 INVITATION_REQUIRED when code missing', async () => {
+      const res = await registerRequest({
+        email: 'new@example.com',
+        password: 'password123',
+        name: 'New',
+      })
+      expect(res.status).toBe(400)
+      const body = (await res.json()) as { code?: string }
+      expect(body.code).toBe('INVITATION_REQUIRED')
     })
 
-    it('should NOT create a user in DB when register is called', async () => {
-      await postJson(
-        '/api/auth/register',
-        { email: 'never@example.com', password: 'password123', name: 'Never' },
-        env,
-      )
-      const user = db.prepare('SELECT id FROM users WHERE email = ?').get('never@example.com')
-      expect(user).toBeUndefined()
+    it('returns 400 INVITATION_INVALID when code does not exist', async () => {
+      const res = await registerRequest({
+        email: 'new@example.com',
+        password: 'password123',
+        name: 'New',
+        invitationCode: 'NOSUCH99',
+      })
+      expect(res.status).toBe(400)
+      const body = (await res.json()) as { code?: string }
+      expect(body.code).toBe('INVITATION_INVALID')
     })
 
-    it('should NOT set auth_token cookie', async () => {
-      const res = await postJson(
-        '/api/auth/register',
-        { email: 'test@example.com', password: 'password123', name: 'Test' },
-        env,
-      )
-      expect(res.headers.get('set-cookie')).toBeNull()
+    it('returns 400 INVITATION_INVALID for expired code', async () => {
+      db.prepare(
+        `INSERT OR IGNORE INTO users (id, email, password_hash, name, role)
+         VALUES ('exp-admin', 'exp@example.com', 'hash', 'Exp', 'admin')`,
+      ).run()
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, created_by)
+         VALUES ('EXPIRED2', '2000-01-01T00:00:00Z', 'exp-admin')`,
+      ).run()
+      const res = await registerRequest({
+        email: 'new@example.com',
+        password: 'password123',
+        name: 'New',
+        invitationCode: 'EXPIRED2',
+      })
+      expect(res.status).toBe(400)
+      const body = (await res.json()) as { code?: string }
+      expect(body.code).toBe('INVITATION_INVALID')
+    })
+
+    it('returns 400 INVITATION_INVALID for revoked code', async () => {
+      db.prepare(
+        `INSERT OR IGNORE INTO users (id, email, password_hash, name, role)
+         VALUES ('rev-admin', 'rev@example.com', 'hash', 'Rev', 'admin')`,
+      ).run()
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, revoked_at, created_by)
+         VALUES ('REVOKED3', '2099-01-01T00:00:00Z', '2026-01-01T00:00:00Z', 'rev-admin')`,
+      ).run()
+      const res = await registerRequest({
+        email: 'new@example.com',
+        password: 'password123',
+        name: 'New',
+        invitationCode: 'REVOKED3',
+      })
+      expect(res.status).toBe(400)
+    })
+
+    it('returns 200 and creates user when code valid', async () => {
+      insertValidInvite('VALIDC01')
+      const res = await registerRequest({
+        email: 'new@example.com',
+        password: 'password123',
+        name: 'New User',
+        invitationCode: 'VALIDC01',
+      })
+      expect(res.status).toBe(200)
+      const row = db
+        .prepare('SELECT email, email_verified FROM users WHERE email = ?')
+        .get('new@example.com') as { email: string; email_verified: number }
+      expect(row.email).toBe('new@example.com')
+      expect(row.email_verified).toBe(0)
+    })
+
+    it('allows multiple users to register with the same valid code (unlimited uses)', async () => {
+      insertValidInvite('SHARED01')
+      for (const [i, email] of [
+        [0, 'a@example.com'],
+        [1, 'b@example.com'],
+        [2, 'c@example.com'],
+      ] as const) {
+        const res = await registerRequest({
+          email,
+          password: 'password123',
+          name: `U${i}`,
+          invitationCode: 'SHARED01',
+        })
+        expect(res.status).toBe(200)
+      }
     })
   })
 
