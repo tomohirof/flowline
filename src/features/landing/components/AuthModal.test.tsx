@@ -387,6 +387,31 @@ describe('AuthModal', () => {
       })
     })
 
+    it('shows emailAlreadyExists error inline when server returns EMAIL_ALREADY_EXISTS', async () => {
+      mockRegister.mockRejectedValueOnce(
+        new ApiError(400, 'このメールアドレスは既に登録されています', 'EMAIL_ALREADY_EXISTS'),
+      )
+      render(
+        <MemoryRouter>
+          <AuthModal isOpen={true} onClose={() => {}} initialMode="register" />
+        </MemoryRouter>,
+      )
+      fireEvent.change(screen.getByTestId('invitation-code-input'), {
+        target: { value: 'VALID01' },
+      })
+      fireEvent.change(screen.getByTestId('register-name-input'), { target: { value: 'U' } })
+      fireEvent.change(screen.getByPlaceholderText('form.email'), {
+        target: { value: 'dup@x.com' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('form.password'), {
+        target: { value: 'password123' },
+      })
+      fireEvent.click(screen.getByTestId('auth-submit'))
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/emailAlreadyExists|既に登録/)
+      })
+    })
+
     it('shows required error inline when server returns INVITATION_REQUIRED', async () => {
       mockRegister.mockRejectedValueOnce(
         new ApiError(400, '招待コードを入力してください', 'INVITATION_REQUIRED'),

@@ -88,6 +88,8 @@ export function AuthModal({ isOpen, onClose, initialMode, onSuccess }: AuthModal
             setError(t('auth:invitationCode.errors.required'))
           } else if (err.code === 'INVITATION_INVALID') {
             setError(t('auth:invitationCode.errors.invalid'))
+          } else if (err.code === 'EMAIL_ALREADY_EXISTS') {
+            setError(t('auth:emailAlreadyExists'))
           } else {
             setError(err.message)
           }

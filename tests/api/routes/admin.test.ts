@@ -47,6 +47,12 @@ function putJson(path: string, body: unknown, env: object, cookie?: string) {
   )
 }
 
+function postJson(path: string, body: unknown, env: object, cookie?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cookie) headers['Cookie'] = cookie
+  return app.request(path, { method: 'POST', headers, body: JSON.stringify(body) }, env)
+}
+
 describe('Admin API', () => {
   let db: ReturnType<typeof Database>
   let env: ReturnType<typeof createEnv>
@@ -260,12 +266,6 @@ describe('Admin API', () => {
   // POST /api/admin/invitations
   // ========================================
   describe('POST /api/admin/invitations', () => {
-    function postJson(path: string, body: unknown, env: object, cookie?: string) {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (cookie) headers['Cookie'] = cookie
-      return app.request(path, { method: 'POST', headers, body: JSON.stringify(body) }, env)
-    }
-
     it('returns 401 when no auth cookie', async () => {
       const res = await postJson('/api/admin/invitations', { expiresInDays: 7 }, env)
       expect(res.status).toBe(401)
@@ -351,12 +351,6 @@ describe('Admin API', () => {
   // POST /api/admin/invitations/:id/revoke
   // ========================================
   describe('POST /api/admin/invitations/:id/revoke', () => {
-    function postJson(path: string, body: unknown, env: object, cookie?: string) {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (cookie) headers['Cookie'] = cookie
-      return app.request(path, { method: 'POST', headers, body: JSON.stringify(body) }, env)
-    }
-
     it('returns 403 for non-admin', async () => {
       const res = await postJson('/api/admin/invitations/1/revoke', {}, env, userCookie)
       expect(res.status).toBe(403)
