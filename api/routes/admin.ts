@@ -199,4 +199,44 @@ admin.post('/invitations', async (c) => {
   )
 })
 
+// =============================================
+// GET /invitations - List invitation codes (admin only)
+// =============================================
+
+admin.get('/invitations', async (c) => {
+  const db = c.env.FLOWLINE_DB
+  const result = await db
+    .prepare(
+      `SELECT id, code, expires_at, revoked_at, created_at, created_by
+       FROM invitation_codes ORDER BY created_at DESC`,
+    )
+    .all<{
+      id: number
+      code: string
+      expires_at: string
+      revoked_at: string | null
+      created_at: string
+      created_by: string
+    }>()
+
+  const now = Date.now()
+  const invitations = (result.results ?? []).map((r) => {
+    let status: 'active' | 'expired' | 'revoked'
+    if (r.revoked_at) status = 'revoked'
+    else if (new Date(r.expires_at).getTime() <= now) status = 'expired'
+    else status = 'active'
+    return {
+      id: r.id,
+      code: r.code,
+      expiresAt: r.expires_at,
+      revokedAt: r.revoked_at,
+      createdAt: r.created_at,
+      createdBy: r.created_by,
+      status,
+    }
+  })
+
+  return c.json({ invitations })
+})
+
 export { admin }

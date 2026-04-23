@@ -330,4 +330,44 @@ describe('Admin API', () => {
       expect(row.code).toBe(body.code)
     })
   })
+
+  // ========================================
+  // GET /api/admin/invitations
+  // ========================================
+  describe('GET /api/admin/invitations', () => {
+    it('returns 403 for non-admin', async () => {
+      const res = await getWithCookie('/api/admin/invitations', env, userCookie)
+      expect(res.status).toBe(403)
+    })
+    it('returns empty list when no codes', async () => {
+      const res = await getWithCookie('/api/admin/invitations', env, adminCookie)
+      expect(res.status).toBe(200)
+      const body = (await res.json()) as { invitations: unknown[] }
+      expect(body.invitations).toEqual([])
+    })
+    it('returns codes with computed status (active/expired/revoked)', async () => {
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, revoked_at, created_by)
+         VALUES (?, ?, ?, ?)`,
+      ).run('ACTIVE01', '2099-01-01T00:00:00Z', null, ADMIN_ID)
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, revoked_at, created_by)
+         VALUES (?, ?, ?, ?)`,
+      ).run('EXPIRED1', '2000-01-01T00:00:00Z', null, ADMIN_ID)
+      db.prepare(
+        `INSERT INTO invitation_codes (code, expires_at, revoked_at, created_by)
+         VALUES (?, ?, ?, ?)`,
+      ).run('REVOKED1', '2099-01-01T00:00:00Z', '2026-01-01T00:00:00Z', ADMIN_ID)
+
+      const res = await getWithCookie('/api/admin/invitations', env, adminCookie)
+      expect(res.status).toBe(200)
+      const body = (await res.json()) as {
+        invitations: Array<{ code: string; status: string }>
+      }
+      const byCode = Object.fromEntries(body.invitations.map((i) => [i.code, i.status]))
+      expect(byCode.ACTIVE01).toBe('active')
+      expect(byCode.EXPIRED1).toBe('expired')
+      expect(byCode.REVOKED1).toBe('revoked')
+    })
+  })
 })
