@@ -129,7 +129,6 @@ admin.put('/users/:id', async (c) => {
 admin.post('/invitations', async (c) => {
   const db = c.env.FLOWLINE_DB
   const adminId = c.get('userId')
-  if (!adminId) return c.json({ error: '認証が必要です' }, 401)
 
   let body: { expiresInDays?: number }
   try {
@@ -158,7 +157,12 @@ admin.post('/invitations', async (c) => {
         .run()
       inserted = true
       break
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (!/UNIQUE/i.test(msg)) {
+        console.error('[invitations] insert failed', err)
+        return c.json({ error: '招待コードの生成に失敗しました' }, 500)
+      }
       // UNIQUE collision — retry
     }
   }
