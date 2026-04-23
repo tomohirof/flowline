@@ -18,7 +18,12 @@ interface AuthContextValue {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<User>
-  register: (email: string, password: string, name: string) => Promise<RegisterResult>
+  register: (
+    email: string,
+    password: string,
+    name: string,
+    invitationCode: string,
+  ) => Promise<RegisterResult>
   resendVerification: (email: string) => Promise<void>
   logout: () => Promise<void>
   refreshAuth: () => Promise<void>
@@ -60,10 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     name: string,
+    invitationCode: string,
   ): Promise<RegisterResult> => {
     await apiFetch<{ message: string }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ email, password, name, invitationCode }),
     })
     return { needsVerification: true, email }
   }
