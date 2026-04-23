@@ -1,0 +1,30 @@
+{
+  "invitations": {
+    "title": "Invitation codes",
+    "create": "+ New",
+    "modal": {
+      "title": "Issue invitation code",
+      "expiresInDays": "Valid for (days)",
+      "presets": { "7": "7 days", "14": "14 days", "30": "30 days" },
+      "custom": "Custom",
+      "issue": "Issue",
+      "cancel": "Cancel"
+    },
+    "columns": {
+      "code": "Code",
+      "expiresAt": "Expires",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": { "active": "Active", "expired": "Expired", "revoked": "Revoked" },
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke this code?",
+    "copy": "Copy",
+    "copySuccess": "Copied",
+    "codeDisplayHint": "Distribute this code. It remains viewable in the list after closing.",
+    "empty": "No invitation codes yet",
+    "loadError": "Failed to load invitation codes",
+    "createError": "Failed to issue invitation code",
+    "revokeError": "Failed to revoke invitation code"
+  }
+}
