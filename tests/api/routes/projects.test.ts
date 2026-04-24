@@ -54,9 +54,9 @@ describe('Projects API - invite links', () => {
       const body = (await res.json()) as { inviteToken: string; inviteUrl: string }
       expect(body.inviteToken).toMatch(/^[0-9a-f-]{36}$/)
       expect(body.inviteUrl).toContain('/join/')
-      const row = db
-        .prepare('SELECT invite_token FROM projects WHERE id = ?')
-        .get('p-1') as { invite_token: string }
+      const row = db.prepare('SELECT invite_token FROM projects WHERE id = ?').get('p-1') as {
+        invite_token: string
+      }
       expect(row.invite_token).toBe(body.inviteToken)
     })
 
@@ -76,9 +76,7 @@ describe('Projects API - invite links', () => {
 
     it('returns 403 when non-owner tries to generate', async () => {
       registerUser(db, 'other-user', 'other@example.com')
-      db.prepare(
-        "INSERT INTO projects (id, user_id, name) VALUES ('p-1', 'other-user', 'P')",
-      ).run()
+      db.prepare("INSERT INTO projects (id, user_id, name) VALUES ('p-1', 'other-user', 'P')").run()
       const res = await app.request(
         '/api/projects/p-1/invite-link',
         { method: 'POST', headers: { Cookie: userCookie } },
@@ -97,11 +95,7 @@ describe('Projects API - invite links', () => {
     })
 
     it('returns 401 when not authenticated', async () => {
-      const res = await app.request(
-        '/api/projects/p-1/invite-link',
-        { method: 'POST' },
-        env,
-      )
+      const res = await app.request('/api/projects/p-1/invite-link', { method: 'POST' }, env)
       expect(res.status).toBe(401)
     })
   })
@@ -117,9 +111,9 @@ describe('Projects API - invite links', () => {
         env,
       )
       expect(res.status).toBe(204)
-      const row = db
-        .prepare('SELECT invite_token FROM projects WHERE id = ?')
-        .get('p-1') as { invite_token: string | null }
+      const row = db.prepare('SELECT invite_token FROM projects WHERE id = ?').get('p-1') as {
+        invite_token: string | null
+      }
       expect(row.invite_token).toBeNull()
     })
 
@@ -164,7 +158,9 @@ describe('Projects API - join endpoint', () => {
     userCookie = await authCookie(USER_ID, USER_EMAIL)
     db.prepare(
       `INSERT INTO projects (id, user_id, name, invite_token) VALUES ('p-1', ?, 'P', 'tok-abc')`,
-    ).bind(OTHER_USER_ID).run()
+    )
+      .bind(OTHER_USER_ID)
+      .run()
   })
 
   afterEach(() => db.close())
@@ -202,7 +198,9 @@ describe('Projects API - join endpoint', () => {
   it('returns alreadyMember when an existing editor joins again', async () => {
     db.prepare(
       `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`,
-    ).bind(USER_ID).run()
+    )
+      .bind(USER_ID)
+      .run()
     const res = await app.request(
       '/api/projects/join/tok-abc',
       { method: 'POST', headers: { Cookie: userCookie } },
@@ -226,19 +224,15 @@ describe('Projects API - join endpoint', () => {
   })
 
   it('returns 401 when not authenticated', async () => {
-    const res = await app.request(
-      '/api/projects/join/tok-abc',
-      { method: 'POST' },
-      env,
-    )
+    const res = await app.request('/api/projects/join/tok-abc', { method: 'POST' }, env)
     expect(res.status).toBe(401)
   })
 
   it('does not match NULL invite_token rows (security)', async () => {
     // Create another project with NULL invite_token and ensure you can't join it by passing something weird
-    db.prepare(
-      `INSERT INTO projects (id, user_id, name) VALUES ('p-2', ?, 'P2')`,
-    ).bind(OTHER_USER_ID).run()
+    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-2', ?, 'P2')`)
+      .bind(OTHER_USER_ID)
+      .run()
     // NULL + NULL binding would be a concern without the explicit IS NOT NULL check
     const res = await app.request(
       '/api/projects/join/null',
@@ -270,8 +264,14 @@ describe('Projects API - members endpoints', () => {
 
   describe('GET /api/projects/:id/members', () => {
     it('returns owner + editors for a member', async () => {
-      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(OTHER_USER_ID).run()
-      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(USER_ID).run()
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`)
+        .bind(OTHER_USER_ID)
+        .run()
+      db.prepare(
+        `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`,
+      )
+        .bind(USER_ID)
+        .run()
       const res = await app.request(
         '/api/projects/p-1/members',
         { headers: { Cookie: userCookie } },
@@ -289,8 +289,14 @@ describe('Projects API - members endpoints', () => {
     })
 
     it('returns owner + editors for the owner', async () => {
-      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(USER_ID).run()
-      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(OTHER_USER_ID).run()
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`)
+        .bind(USER_ID)
+        .run()
+      db.prepare(
+        `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`,
+      )
+        .bind(OTHER_USER_ID)
+        .run()
       const res = await app.request(
         '/api/projects/p-1/members',
         { headers: { Cookie: userCookie } },
@@ -306,7 +312,9 @@ describe('Projects API - members endpoints', () => {
     })
 
     it('returns 403 for non-members', async () => {
-      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(OTHER_USER_ID).run()
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`)
+        .bind(OTHER_USER_ID)
+        .run()
       const res = await app.request(
         '/api/projects/p-1/members',
         { headers: { Cookie: userCookie } },
@@ -327,21 +335,35 @@ describe('Projects API - members endpoints', () => {
 
   describe('DELETE /api/projects/:id/members/:userId', () => {
     it('allows owner to kick an editor', async () => {
-      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(USER_ID).run()
-      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(OTHER_USER_ID).run()
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`)
+        .bind(USER_ID)
+        .run()
+      db.prepare(
+        `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`,
+      )
+        .bind(OTHER_USER_ID)
+        .run()
       const res = await app.request(
         `/api/projects/p-1/members/${OTHER_USER_ID}`,
         { method: 'DELETE', headers: { Cookie: userCookie } },
         env,
       )
       expect(res.status).toBe(204)
-      const row = db.prepare(`SELECT * FROM project_members WHERE project_id = 'p-1' AND user_id = ?`).get(OTHER_USER_ID)
+      const row = db
+        .prepare(`SELECT * FROM project_members WHERE project_id = 'p-1' AND user_id = ?`)
+        .get(OTHER_USER_ID)
       expect(row).toBeUndefined()
     })
 
     it('allows editor to leave voluntarily (remove self)', async () => {
-      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(OTHER_USER_ID).run()
-      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(USER_ID).run()
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`)
+        .bind(OTHER_USER_ID)
+        .run()
+      db.prepare(
+        `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`,
+      )
+        .bind(USER_ID)
+        .run()
       const res = await app.request(
         `/api/projects/p-1/members/${USER_ID}`,
         { method: 'DELETE', headers: { Cookie: userCookie } },
@@ -351,10 +373,18 @@ describe('Projects API - members endpoints', () => {
     })
 
     it('returns 403 when non-owner tries to kick someone else', async () => {
-      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(OTHER_USER_ID).run()
-      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(USER_ID).run()
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`)
+        .bind(OTHER_USER_ID)
+        .run()
+      db.prepare(
+        `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`,
+      )
+        .bind(USER_ID)
+        .run()
       registerUser(db, 'third', 'third@x.com')
-      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', 'third', 'editor')`).run()
+      db.prepare(
+        `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', 'third', 'editor')`,
+      ).run()
       const res = await app.request(
         '/api/projects/p-1/members/third',
         { method: 'DELETE', headers: { Cookie: userCookie } },
@@ -364,7 +394,9 @@ describe('Projects API - members endpoints', () => {
     })
 
     it('returns 400 OWNER_CANNOT_LEAVE when owner tries to remove self', async () => {
-      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(USER_ID).run()
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`)
+        .bind(USER_ID)
+        .run()
       const res = await app.request(
         `/api/projects/p-1/members/${USER_ID}`,
         { method: 'DELETE', headers: { Cookie: userCookie } },
@@ -409,17 +441,27 @@ describe('Projects API - shared list', () => {
   afterEach(() => db.close())
 
   it('returns only projects where current user is a member (excludes owned)', async () => {
-    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-own', ?, 'Mine')`).bind(USER_ID).run()
-    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-s1', ?, 'Shared1')`).bind(OTHER_USER_ID).run()
-    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-s2', ?, 'Shared2')`).bind(OTHER_USER_ID).run()
-    db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-s1', ?, 'editor')`).bind(USER_ID).run()
-    db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-s2', ?, 'editor')`).bind(USER_ID).run()
-
-    const res = await app.request(
-      '/api/projects/shared',
-      { headers: { Cookie: userCookie } },
-      env,
+    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-own', ?, 'Mine')`)
+      .bind(USER_ID)
+      .run()
+    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-s1', ?, 'Shared1')`)
+      .bind(OTHER_USER_ID)
+      .run()
+    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-s2', ?, 'Shared2')`)
+      .bind(OTHER_USER_ID)
+      .run()
+    db.prepare(
+      `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-s1', ?, 'editor')`,
     )
+      .bind(USER_ID)
+      .run()
+    db.prepare(
+      `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-s2', ?, 'editor')`,
+    )
+      .bind(USER_ID)
+      .run()
+
+    const res = await app.request('/api/projects/shared', { headers: { Cookie: userCookie } }, env)
     expect(res.status).toBe(200)
     const body = (await res.json()) as {
       projects: Array<{ id: string; name: string; ownerName: string; joinedAt: string }>
@@ -432,11 +474,7 @@ describe('Projects API - shared list', () => {
   })
 
   it('returns empty list when user has not joined any project', async () => {
-    const res = await app.request(
-      '/api/projects/shared',
-      { headers: { Cookie: userCookie } },
-      env,
-    )
+    const res = await app.request('/api/projects/shared', { headers: { Cookie: userCookie } }, env)
     expect(res.status).toBe(200)
     const body = (await res.json()) as { projects: unknown[] }
     expect(body.projects).toEqual([])

@@ -51,7 +51,11 @@ export function ProjectActionBar({
             <button
               type="button"
               onClick={() => {
-                if (window.confirm(t('project:leave.confirm', { defaultValue: 'Leave this project?' })))
+                if (
+                  window.confirm(
+                    t('project:leave.confirm', { defaultValue: 'Leave this project?' }),
+                  )
+                )
                   onLeave()
               }}
               data-testid="project-leave-btn"

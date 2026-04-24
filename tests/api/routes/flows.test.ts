@@ -1130,9 +1130,12 @@ describe('Flows API', () => {
 
     beforeEach(async () => {
       // OWNER_ID is a different user from OTHER_USER_ID registered in outer beforeEach
-      db.prepare(
-        'INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)',
-      ).run(OWNER_ID, OWNER_EMAIL, 'hash', 'Other Owner')
+      db.prepare('INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)').run(
+        OWNER_ID,
+        OWNER_EMAIL,
+        'hash',
+        'Other Owner',
+      )
       db.prepare("INSERT INTO projects (id, user_id, name) VALUES (?, ?, 'Shared P')").run(
         PROJECT_ID,
         OWNER_ID,
@@ -1200,12 +1203,7 @@ describe('Flows API', () => {
         PROJECT_ID,
         USER_ID,
       )
-      const res = await postJson(
-        '/api/flows',
-        { title: 'New', projectId: PROJECT_ID },
-        env,
-        cookie,
-      )
+      const res = await postJson('/api/flows', { title: 'New', projectId: PROJECT_ID }, env, cookie)
       expect(res.status).toBe(403)
     })
 

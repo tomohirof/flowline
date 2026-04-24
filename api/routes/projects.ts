@@ -174,10 +174,7 @@ projects.delete('/:id/invite-link', async (c) => {
     return c.json({ error: 'アクセス権限がありません', code: 'PROJECT_ACCESS_DENIED' }, 403)
   }
 
-  await db
-    .prepare('UPDATE projects SET invite_token = NULL WHERE id = ?')
-    .bind(projectId)
-    .run()
+  await db.prepare('UPDATE projects SET invite_token = NULL WHERE id = ?').bind(projectId).run()
   return c.body(null, 204)
 })
 
@@ -287,7 +284,10 @@ projects.delete('/:id/members/:userId', async (c) => {
   // Owner trying to remove self
   if (project.user_id === currentUserId && targetUserId === currentUserId) {
     return c.json(
-      { error: 'オーナーは退出できません。プロジェクトを削除してください', code: 'OWNER_CANNOT_LEAVE' },
+      {
+        error: 'オーナーは退出できません。プロジェクトを削除してください',
+        code: 'OWNER_CANNOT_LEAVE',
+      },
       400,
     )
   }

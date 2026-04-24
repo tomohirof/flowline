@@ -182,18 +182,16 @@ describe('D1 Migration', () => {
         db.exec(stmt + ';')
       }
     }
-    const memberCols = db
-      .prepare("PRAGMA table_info(project_members)")
-      .all() as Array<{ name: string }>
+    const memberCols = db.prepare('PRAGMA table_info(project_members)').all() as Array<{
+      name: string
+    }>
     expect(memberCols.map((c) => c.name).sort()).toEqual([
       'joined_at',
       'project_id',
       'role',
       'user_id',
     ])
-    const projectCols = db
-      .prepare("PRAGMA table_info(projects)")
-      .all() as Array<{ name: string }>
+    const projectCols = db.prepare('PRAGMA table_info(projects)').all() as Array<{ name: string }>
     expect(projectCols.map((c) => c.name)).toContain('invite_token')
     db.close()
   })

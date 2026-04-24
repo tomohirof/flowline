@@ -99,8 +99,7 @@ describe('MemberManagementModal', () => {
     await waitFor(() => {
       const deleteCall = mockApiFetch.mock.calls.find(
         ([path, init]) =>
-          path === '/projects/p-1/members/u-editor' &&
-          (init as RequestInit)?.method === 'DELETE',
+          path === '/projects/p-1/members/u-editor' && (init as RequestInit)?.method === 'DELETE',
       )
       expect(deleteCall).toBeTruthy()
     })

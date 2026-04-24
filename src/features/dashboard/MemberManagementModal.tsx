@@ -100,11 +100,7 @@ export function MemberManagementModal({ projectId, currentUserId, isOwner, onClo
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div
-        className={styles.modal}
-        onClick={(e) => e.stopPropagation()}
-        data-testid="member-modal"
-      >
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()} data-testid="member-modal">
         <h3 className={styles.title}>
           {t('project:memberManagement.title', { defaultValue: 'Members' })}
         </h3>
@@ -147,9 +143,7 @@ export function MemberManagementModal({ projectId, currentUserId, isOwner, onClo
         )}
 
         <section className={styles.listSection}>
-          <h4>
-            {t('project:memberManagement.memberList', { defaultValue: 'Current members' })}
-          </h4>
+          <h4>{t('project:memberManagement.memberList', { defaultValue: 'Current members' })}</h4>
           {members && (
             <ul>
               <li>
