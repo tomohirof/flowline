@@ -1836,8 +1836,10 @@ describe('auto-connect by flow position (#182)', () => {
 })
 
 describe('arrow reorganization toast (#182)', () => {
-  it('should show confirm toast when node added to inserted row with crossing arrows', async () => {
-    // A(row0) → B(row1) connected, insert row between them
+  it('should auto-split A→B into A→new→B when inserting node between linked same-lane nodes', async () => {
+    // A(row0) → B(row1) same lane. Insert row between.
+    // autoConnectOnCreate picks A as same-lane upstream and auto-splits A→B,
+    // so no toast is needed — the new node is wired up end-to-end.
     const flow: Flow = {
       ...createMinimalFlow(),
       nodes: [
@@ -1848,104 +1850,153 @@ describe('arrow reorganization toast (#182)', () => {
     }
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert row at index 1 (between row0 and row1) — 2 clicks
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
     expect(rowGapHit).toBeTruthy()
-    fireEvent.click(rowGapHit!) // ghost
-    fireEvent.click(rowGapHit!) // confirm
+    fireEvent.click(rowGapHit!)
+    fireEvent.click(rowGapHit!)
 
-    // After insertion, rows: [row0(A), newRow(empty), row1(B)]
-    // The new empty cell at ri=1 will have y = 24 + 46 + 1*84 = 154
     const allRects = container.querySelectorAll('rect[fill="transparent"]')
     const emptyCellRects = Array.from(allRects).filter(
       (r) => (r as SVGRectElement).style.cursor === 'crosshair',
     )
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '154')
     expect(targetRect).toBeTruthy()
-    fireEvent.click(targetRect!) // ghost
-    fireEvent.click(targetRect!) // confirm
+    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!)
 
-    // Confirm toast should appear
+    // No toast — auto-split handled the crossing proactively.
+    await new Promise((r) => setTimeout(r, 20))
+    expect(container.querySelector('[data-testid="toast-confirm"]')).toBeNull()
+  })
+
+  it('should show confirm toast when a crossing arrow is not covered by auto-split', async () => {
+    // Two unrelated flows crossing the inserted row:
+    //   lane-1: A(row0) → B(row1)            ← auto-split by autoConnectOnCreate
+    //   lane-2: X(row0) → Y(row1)            ← not auto-split (user adds node in lane-1)
+    // Toast should still appear for X→Y.
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [
+        { id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'レーン2', colorIndex: 1, position: 1 },
+      ],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+        { id: 'n3', laneId: 'lane-2', rowIndex: 0, label: 'X', note: null, orderIndex: 2 },
+        { id: 'n4', laneId: 'lane-2', rowIndex: 1, label: 'Y', note: null, orderIndex: 3 },
+      ],
+      arrows: [
+        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null },
+        { id: 'a2', fromNodeId: 'n3', toNodeId: 'n4', comment: null },
+      ],
+    }
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
+    fireEvent.click(rowGapHit!)
+    fireEvent.click(rowGapHit!)
+
+    const allRects = container.querySelectorAll('rect[fill="transparent"]')
+    const emptyCellRects = Array.from(allRects).filter(
+      (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+    )
+    // Add node in lane-1 (x = 16 + 180 * 0.5 ~ 16 + lane offset, easier: pick first empty at y=154)
+    const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '154')
+    expect(targetRect).toBeTruthy()
+    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!)
+
     await waitFor(() => {
       expect(container.querySelector('[data-testid="toast-confirm"]')).toBeTruthy()
     })
-    // Should have skip and organize buttons
     expect(container.querySelector('[data-testid="toast-skip-btn"]')).toBeTruthy()
     expect(container.querySelector('[data-testid="toast-organize-btn"]')).toBeTruthy()
   })
 
-  it('should reorganize arrows when "整理する" button is clicked', async () => {
+  it('should reorganize remaining crossings when "整理する" button is clicked', async () => {
     const flow: Flow = {
       ...createMinimalFlow(),
+      lanes: [
+        { id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'レーン2', colorIndex: 1, position: 1 },
+      ],
       nodes: [
         { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
         { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+        { id: 'n3', laneId: 'lane-2', rowIndex: 0, label: 'X', note: null, orderIndex: 2 },
+        { id: 'n4', laneId: 'lane-2', rowIndex: 1, label: 'Y', note: null, orderIndex: 3 },
       ],
-      arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
+      arrows: [
+        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null },
+        { id: 'a2', fromNodeId: 'n3', toNodeId: 'n4', comment: null },
+      ],
     }
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert row and click cell — both need 2 clicks
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
-    fireEvent.click(rowGapHit!) // ghost
-    fireEvent.click(rowGapHit!) // confirm
+    fireEvent.click(rowGapHit!)
+    fireEvent.click(rowGapHit!)
     const allRects = container.querySelectorAll('rect[fill="transparent"]')
     const emptyCellRects = Array.from(allRects).filter(
       (r) => (r as SVGRectElement).style.cursor === 'crosshair',
     )
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '154')
-    fireEvent.click(targetRect!) // ghost
-    fireEvent.click(targetRect!) // confirm
+    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!)
 
     await waitFor(() => {
       expect(container.querySelector('[data-testid="toast-confirm"]')).toBeTruthy()
     })
 
-    // Click "整理する"
     const organizeBtn = container.querySelector('[data-testid="toast-organize-btn"]')
     expect(organizeBtn).toBeTruthy()
     fireEvent.click(organizeBtn!)
 
-    // Success toast should appear
     await waitFor(() => {
       expect(container.querySelector('[data-testid="toast-success"]')).toBeTruthy()
     })
-    // Confirm toast should be dismissed
     expect(container.querySelector('[data-testid="toast-confirm"]')).toBeNull()
   })
 
   it('should dismiss toast when "スキップ" button is clicked', async () => {
     const flow: Flow = {
       ...createMinimalFlow(),
+      lanes: [
+        { id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'レーン2', colorIndex: 1, position: 1 },
+      ],
       nodes: [
         { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
         { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+        { id: 'n3', laneId: 'lane-2', rowIndex: 0, label: 'X', note: null, orderIndex: 2 },
+        { id: 'n4', laneId: 'lane-2', rowIndex: 1, label: 'Y', note: null, orderIndex: 3 },
       ],
-      arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
+      arrows: [
+        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null },
+        { id: 'a2', fromNodeId: 'n3', toNodeId: 'n4', comment: null },
+      ],
     }
     const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
-    // Insert row and click cell — both need 2 clicks
     const rowGapHit = container.querySelector('[data-testid="rowgap-hit-1"]')
-    fireEvent.click(rowGapHit!) // ghost
-    fireEvent.click(rowGapHit!) // confirm
+    fireEvent.click(rowGapHit!)
+    fireEvent.click(rowGapHit!)
     const allRects = container.querySelectorAll('rect[fill="transparent"]')
     const emptyCellRects = Array.from(allRects).filter(
       (r) => (r as SVGRectElement).style.cursor === 'crosshair',
     )
     const targetRect = emptyCellRects.find((r) => r.getAttribute('y') === '154')
-    fireEvent.click(targetRect!) // ghost
-    fireEvent.click(targetRect!) // confirm
+    fireEvent.click(targetRect!)
+    fireEvent.click(targetRect!)
 
     await waitFor(() => {
       expect(container.querySelector('[data-testid="toast-confirm"]')).toBeTruthy()
     })
 
-    // Click "スキップ"
     const skipBtn = container.querySelector('[data-testid="toast-skip-btn"]')
     fireEvent.click(skipBtn!)
 
-    // Toast should be dismissed
     expect(container.querySelector('[data-testid="toast-confirm"]')).toBeNull()
     expect(container.querySelector('[data-testid="toast-success"]')).toBeNull()
   })

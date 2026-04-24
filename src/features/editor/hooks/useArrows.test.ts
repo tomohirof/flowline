@@ -95,6 +95,100 @@ describe('useArrows', () => {
       expect(result.current.arrows[0].id).toBeTruthy()
       expect(result.current.arrows[0].comment).toBe('')
     })
+
+    it('should auto-split existing arrow when inserting between linked nodes in same lane', () => {
+      // A(l0,r0) → C(l0,r2), insert B at (l0,r1)
+      // Expected: A→B, B→C (A→C is removed)
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r2', nodeId: 'n3' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+      const arrows: InternalArrow[] = [{ id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: 'c1' }]
+      const { result } = renderHook(() =>
+        useArrows({
+          ...defaultOptions(),
+          tasks,
+          rows,
+          initialArrows: arrows,
+        }),
+      )
+      act(() => {
+        result.current.autoConnectOnCreate('l0_r1', 1, 0)
+      })
+      expect(result.current.arrows).toHaveLength(2)
+      const pairs = result.current.arrows.map((a) => `${a.from}->${a.to}`).sort()
+      expect(pairs).toEqual(['l0_r0->l0_r1', 'l0_r1->l0_r2'])
+      expect(result.current.arrows.find((a) => a.id === 'a1')).toBeUndefined()
+      const downstream = result.current.arrows.find((a) => a.from === 'l0_r1' && a.to === 'l0_r2')
+      expect(downstream?.comment).toBe('c1')
+    })
+
+    it('should not auto-split when bestKey is in same row as new node', () => {
+      // A(l0,r0) → B(l1,r0), insert C at (r0, l2)
+      // bestKey should be B (same-row). No split.
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l1_r0: { label: 'B', lid: 'l1', rid: 'r0', nodeId: 'n2' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }]
+      const lanes: InternalLane[] = [
+        { id: 'l0', name: 'L0', ci: 0 },
+        { id: 'l1', name: 'L1', ci: 1 },
+        { id: 'l2', name: 'L2', ci: 2 },
+      ]
+      const arrows: InternalArrow[] = [{ id: 'a1', from: 'l0_r0', to: 'l1_r0', comment: '' }]
+      const { result } = renderHook(() =>
+        useArrows({
+          ...defaultOptions(),
+          tasks,
+          rows,
+          lanes,
+          initialArrows: arrows,
+        }),
+      )
+      act(() => {
+        result.current.autoConnectOnCreate('l2_r0', 0, 2)
+      })
+      expect(result.current.arrows).toHaveLength(2)
+      expect(result.current.arrows.find((a) => a.id === 'a1')).toBeDefined()
+    })
+
+    it('should auto-split multiple downstream arrows when upstream has several', () => {
+      // A(l0,r0) → C(l0,r2), A → D(l1,r2), insert B at (l0,r1)
+      // Expected: A→B, B→C, B→D
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r2', nodeId: 'n3' },
+        l1_r2: { label: 'D', lid: 'l1', rid: 'r2', nodeId: 'n4' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+      const lanes: InternalLane[] = [
+        { id: 'l0', name: 'L0', ci: 0 },
+        { id: 'l1', name: 'L1', ci: 1 },
+      ]
+      const arrows: InternalArrow[] = [
+        { id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' },
+        { id: 'a2', from: 'l0_r0', to: 'l1_r2', comment: '' },
+      ]
+      const { result } = renderHook(() =>
+        useArrows({
+          ...defaultOptions(),
+          tasks,
+          rows,
+          lanes,
+          initialArrows: arrows,
+        }),
+      )
+      act(() => {
+        result.current.autoConnectOnCreate('l0_r1', 1, 0)
+      })
+      expect(result.current.arrows).toHaveLength(3)
+      const pairs = result.current.arrows.map((a) => `${a.from}->${a.to}`).sort()
+      expect(pairs).toEqual(['l0_r0->l0_r1', 'l0_r1->l0_r2', 'l0_r1->l1_r2'])
+    })
   })
 
   describe('detectCrossing', () => {
@@ -235,6 +329,85 @@ describe('useArrows', () => {
       expect(toastArg.detail).toContain('タスクA')
       expect(toastArg.detail).toContain('タスクB')
       expect(toastArg.detail).toContain('新ノード')
+    })
+
+    it('should not offer toast for arrows already split by autoConnectOnCreate', () => {
+      // Regression: autoConnectOnCreate auto-splits A→C via new node B.
+      // detectCrossing runs right after in the same event — it must NOT re-offer
+      // to split A→C, otherwise confirming the toast creates duplicate arrows.
+      const addConfirmToast = vi.fn()
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r2', nodeId: 'n3' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+      const arrows: InternalArrow[] = [{ id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' }]
+      const { result } = renderHook(() =>
+        useArrows({
+          ...defaultOptions(),
+          tasks,
+          rows,
+          initialArrows: arrows,
+        }),
+      )
+      act(() => {
+        result.current.setRecentInsertedRow({ rowId: 'r1' })
+      })
+      // Critical: autoConnectOnCreate and detectCrossing must be in the same
+      // act() block to simulate a single event handler (React batches setState).
+      act(() => {
+        result.current.autoConnectOnCreate('l0_r1', 1, 0)
+        result.current.detectCrossing('r1', 'l0_r1', 'B', addConfirmToast)
+      })
+      // auto-split already handled the crossing; toast should not fire
+      expect(addConfirmToast).not.toHaveBeenCalled()
+      // Only 2 arrows expected: A→B and B→C — no duplicates
+      expect(result.current.arrows).toHaveLength(2)
+      const pairs = result.current.arrows.map((a) => `${a.from}->${a.to}`).sort()
+      expect(pairs).toEqual(['l0_r0->l0_r1', 'l0_r1->l0_r2'])
+    })
+
+    it('should still offer toast for remaining crossings not handled by auto-split', () => {
+      // A→C is auto-split by autoConnectOnCreate (same-lane upstream),
+      // but X→Y still crosses the inserted row and was NOT touched.
+      // detectCrossing should still offer a toast for X→Y.
+      const addConfirmToast = vi.fn()
+      const tasks: Record<string, TaskData> = {
+        l0_r0: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        l0_r1: { label: 'B', lid: 'l0', rid: 'r1', nodeId: 'n2' },
+        l0_r2: { label: 'C', lid: 'l0', rid: 'r2', nodeId: 'n3' },
+        l1_r0: { label: 'X', lid: 'l1', rid: 'r0', nodeId: 'n4' },
+        l1_r2: { label: 'Y', lid: 'l1', rid: 'r2', nodeId: 'n5' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+      const lanes: InternalLane[] = [
+        { id: 'l0', name: 'L0', ci: 0 },
+        { id: 'l1', name: 'L1', ci: 1 },
+      ]
+      const arrows: InternalArrow[] = [
+        { id: 'a1', from: 'l0_r0', to: 'l0_r2', comment: '' },
+        { id: 'a2', from: 'l1_r0', to: 'l1_r2', comment: '' },
+      ]
+      const { result } = renderHook(() =>
+        useArrows({
+          ...defaultOptions(),
+          tasks,
+          rows,
+          lanes,
+          initialArrows: arrows,
+        }),
+      )
+      act(() => {
+        result.current.setRecentInsertedRow({ rowId: 'r1' })
+      })
+      act(() => {
+        result.current.autoConnectOnCreate('l0_r1', 1, 0)
+        result.current.detectCrossing('r1', 'l0_r1', 'B', addConfirmToast)
+      })
+      expect(addConfirmToast).toHaveBeenCalledOnce()
+      // Only X→Y should be offered, not A→C (already split)
+      expect(addConfirmToast.mock.calls[0][0].crossingCount).toBe(1)
     })
 
     it('should clear recentInsertedRow even when no crossing found', () => {

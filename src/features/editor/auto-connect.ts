@@ -4,7 +4,9 @@
  * Priority:
  * 1. Same-row nodes: closest by lane distance (bidirectional),
  *    with tail nodes preferred over non-tails at equal distance.
- * 2. Upstream tails (previous rows): closest by row index,
+ * 2. Same-lane upstream: closest row in the same lane (tail or non-tail).
+ *    Handles insertions between already-linked nodes within the same lane.
+ * 3. Upstream tails (previous rows): closest by row index,
  *    with flow-connected tails preferred over isolated at same row.
  *
  * @returns The task key of the closest upstream node, or null if none found.
@@ -45,7 +47,27 @@ export function findClosestUpstream(
     if (bestKey) return bestKey
   }
 
-  // 2. Upstream tails: closest by row, flow-connected as tiebreaker
+  // 2. Same-lane upstream: pick the closest (largest tRi < newRi) node in the same lane.
+  //    A same-lane predecessor is the natural upstream even when it already has outgoing
+  //    arrows, because the user is inserting a new step into an existing chain.
+  {
+    let bestKey: string | null = null
+    let bestRi = -1
+    for (const key of allKeys) {
+      const task = tasks[key]
+      const tLi = lanes.findIndex((l) => l.id === task.lid)
+      if (tLi !== newLi) continue
+      const tRi = rows.findIndex((r) => r.id === task.rid)
+      if (tRi < 0 || tRi >= newRi) continue
+      if (tRi > bestRi) {
+        bestKey = key
+        bestRi = tRi
+      }
+    }
+    if (bestKey) return bestKey
+  }
+
+  // 3. Upstream tails: closest by row, flow-connected as tiebreaker
   {
     let bestKey: string | null = null
     let bestRi = -1
