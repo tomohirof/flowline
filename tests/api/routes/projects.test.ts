@@ -385,3 +385,65 @@ describe('Projects API - members endpoints', () => {
     })
   })
 })
+
+describe('Projects API - shared list', () => {
+  let db: ReturnType<typeof Database>
+  let env: ReturnType<typeof createEnv>
+  let userCookie: string
+  const USER_ID = 'user-1'
+  const USER_EMAIL = 'user@example.com'
+  const OTHER_USER_ID = 'other-user-1'
+  const OTHER_EMAIL = 'other@example.com'
+
+  beforeEach(async () => {
+    db = createTestDb()
+    env = createEnv(db)
+    registerUser(db, USER_ID, USER_EMAIL)
+    // Note: we'll set other user name explicitly below since registerUser hardcodes 'Test'
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, name, role, ai_enabled) VALUES (?, ?, 'hash', 'Other', 'user', 0)",
+    ).run(OTHER_USER_ID, OTHER_EMAIL)
+    userCookie = await authCookie(USER_ID, USER_EMAIL)
+  })
+
+  afterEach(() => db.close())
+
+  it('returns only projects where current user is a member (excludes owned)', async () => {
+    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-own', ?, 'Mine')`).bind(USER_ID).run()
+    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-s1', ?, 'Shared1')`).bind(OTHER_USER_ID).run()
+    db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-s2', ?, 'Shared2')`).bind(OTHER_USER_ID).run()
+    db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-s1', ?, 'editor')`).bind(USER_ID).run()
+    db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-s2', ?, 'editor')`).bind(USER_ID).run()
+
+    const res = await app.request(
+      '/api/projects/shared',
+      { headers: { Cookie: userCookie } },
+      env,
+    )
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as {
+      projects: Array<{ id: string; name: string; ownerName: string; joinedAt: string }>
+    }
+    expect(body.projects).toHaveLength(2)
+    expect(body.projects.map((p) => p.id).sort()).toEqual(['p-s1', 'p-s2'])
+    expect(body.projects[0].ownerName).toBe('Other')
+    expect(body.projects.every((p) => p.joinedAt)).toBe(true)
+    expect(body.projects.some((p) => p.id === 'p-own')).toBe(false)
+  })
+
+  it('returns empty list when user has not joined any project', async () => {
+    const res = await app.request(
+      '/api/projects/shared',
+      { headers: { Cookie: userCookie } },
+      env,
+    )
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { projects: unknown[] }
+    expect(body.projects).toEqual([])
+  })
+
+  it('returns 401 when not authenticated', async () => {
+    const res = await app.request('/api/projects/shared', { method: 'GET' }, env)
+    expect(res.status).toBe(401)
+  })
+})

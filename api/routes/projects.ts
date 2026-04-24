@@ -20,6 +20,47 @@ projects.get('/', async (c) => {
   return c.json({ projects: (result.results ?? []).map(toProject) })
 })
 
+// =============================================
+// GET /shared - List projects where current user is an editor member
+// Note: declared before /:id routes to avoid parameter shadowing.
+// =============================================
+
+projects.get('/shared', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const result = await db
+    .prepare(
+      `SELECT p.id, p.name, p.user_id, p.created_at, p.updated_at,
+              pm.joined_at, u.name AS owner_name
+       FROM project_members pm
+       JOIN projects p ON p.id = pm.project_id
+       JOIN users u ON u.id = p.user_id
+       WHERE pm.user_id = ?
+       ORDER BY pm.joined_at DESC`,
+    )
+    .bind(userId)
+    .all<{
+      id: string
+      name: string
+      user_id: string
+      created_at: string
+      updated_at: string
+      joined_at: string
+      owner_name: string
+    }>()
+
+  const list = (result.results ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    ownerName: r.owner_name,
+    joinedAt: r.joined_at,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }))
+
+  return c.json({ projects: list })
+})
+
 // POST / - Create project
 projects.post('/', async (c) => {
   const userId = c.get('userId')
