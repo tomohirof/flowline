@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { InternalArrow, TaskData, RowData, InternalLane } from '../types'
 import { findClosestUpstream, findCrossingArrows } from '../auto-connect'
 import { uid } from '../../../lib/uid'
@@ -14,6 +14,10 @@ interface UseArrowsOptions {
 export function useArrows({ initialArrows, tasks, rows, lanes, autoConnect }: UseArrowsOptions) {
   const [arrows, setArrows] = useState<InternalArrow[]>(initialArrows)
   const [recentInsertedRow, setRecentInsertedRow] = useState<{ rowId: string } | null>(null)
+  // Arrow IDs auto-split by autoConnectOnCreate within the current event.
+  // detectCrossing (called right after in the same handler) excludes them so
+  // the user isn't offered a toast to re-split an arrow that was already rewired.
+  const autoSplitHandledRef = useRef<Set<string>>(new Set())
 
   const autoConnectOnCreate = (taskKey: string, ri: number, li: number): void => {
     if (!autoConnect || Object.keys(tasks).length < 1) return
@@ -36,8 +40,9 @@ export function useArrows({ initialArrows, tasks, rows, lanes, autoConnect }: Us
           })
         : []
 
+    const splitIds = new Set(splitArrows.map((a) => a.id))
+    autoSplitHandledRef.current = splitIds
     setArrows((prev) => {
-      const splitIds = new Set(splitArrows.map((a) => a.id))
       const filtered = prev.filter((a) => !splitIds.has(a.id))
       const additions: InternalArrow[] = [{ id: uid(), from: bestKey, to: taskKey, comment: '' }]
       for (const s of splitArrows) {
@@ -58,10 +63,16 @@ export function useArrows({ initialArrows, tasks, rows, lanes, autoConnect }: Us
       crossingCount?: number
     }) => void,
   ): void => {
-    if (!recentInsertedRow || rid !== recentInsertedRow.rowId) return
+    if (!recentInsertedRow || rid !== recentInsertedRow.rowId) {
+      autoSplitHandledRef.current = new Set()
+      return
+    }
     const insertedIndex = rows.findIndex((r) => r.id === recentInsertedRow.rowId)
     if (insertedIndex >= 0) {
-      const crossing = findCrossingArrows(arrows, tasks, rows, insertedIndex)
+      const handled = autoSplitHandledRef.current
+      const crossing = findCrossingArrows(arrows, tasks, rows, insertedIndex).filter(
+        (a) => !handled.has(a.id),
+      )
       if (crossing.length > 0) {
         const newNodeKey = taskKey
         const crossingCount = crossing.length
@@ -91,6 +102,7 @@ export function useArrows({ initialArrows, tasks, rows, lanes, autoConnect }: Us
       }
     }
     setRecentInsertedRow(null)
+    autoSplitHandledRef.current = new Set()
   }
 
   return {
