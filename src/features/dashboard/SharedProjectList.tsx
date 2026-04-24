@@ -5,6 +5,9 @@ export interface SharedProject {
   id: string
   name: string
   ownerName: string
+  joinedAt?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 interface Props {

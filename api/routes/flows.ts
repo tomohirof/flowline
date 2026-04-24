@@ -109,8 +109,10 @@ flows.get('/', async (c) => {
   }
 
   // Access clause: flows owned by the user OR flows inside a project the user is a member of
-  const accessClause =
-    '(f.user_id = ? OR f.project_id IN (SELECT project_id FROM project_members WHERE user_id = ?))'
+  // OR flows inside a project the user owns (covers editor-created flows in owner's projects)
+  const accessClause = `(f.user_id = ?
+      OR f.project_id IN (SELECT project_id FROM project_members WHERE user_id = ?)
+      OR f.project_id IN (SELECT id FROM projects WHERE user_id = ?))`
 
   if (q) {
     const escaped = q.replace(/[%_\\]/g, '\\$&')
@@ -133,6 +135,7 @@ flows.get('/', async (c) => {
       .bind(
         userId,
         userId,
+        userId,
         ...projectBinds,
         likePattern,
         likePattern,
@@ -147,7 +150,7 @@ flows.get('/', async (c) => {
       .prepare(
         `SELECT * FROM flows f WHERE ${accessClause} AND f.deleted_at IS NULL${projectClause} ORDER BY f.updated_at DESC`,
       )
-      .bind(userId, userId, ...projectBinds)
+      .bind(userId, userId, userId, ...projectBinds)
       .all<FlowRow>()
     flowList = (result.results ?? []).map(toFlowSummary)
   }

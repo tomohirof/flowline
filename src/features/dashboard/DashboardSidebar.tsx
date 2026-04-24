@@ -1,7 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Project } from '../editor/types'
-import { apiFetch } from '../../lib/api'
 import { SharedProjectList, type SharedProject } from './SharedProjectList'
 import styles from './DashboardSidebar.module.css'
 
@@ -10,6 +9,7 @@ interface DashboardSidebarProps {
   onNavChange: (navId: string) => void
   userName: string
   projects: Project[]
+  sharedProjects: SharedProject[]
   onCreateProject: () => void
   onRenameProject: (projectId: string, newName: string) => void
   onDeleteProject: (projectId: string) => void
@@ -34,6 +34,7 @@ export function DashboardSidebar({
   onNavChange,
   userName,
   projects,
+  sharedProjects,
   onCreateProject,
   onRenameProject,
   onDeleteProject,
@@ -47,16 +48,7 @@ export function DashboardSidebar({
   } | null>(null)
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
-  const [sharedProjects, setSharedProjects] = useState<SharedProject[]>([])
   const cancelledRef = useRef(false)
-
-  useEffect(() => {
-    void apiFetch<{ projects: SharedProject[] }>('/projects/shared')
-      .then((d) => setSharedProjects(d.projects ?? []))
-      .catch(() => {
-        /* swallow — shared section hides itself when empty */
-      })
-  }, [])
 
   const handleContextMenu = useCallback((e: React.MouseEvent, projectId: string) => {
     e.preventDefault()

@@ -1402,15 +1402,22 @@ describe('Dashboard', () => {
     })
 
     it('renders ProjectActionBar with leave button when editor selects shared project', async () => {
-      const mockProjects = [
-        {
-          id: 'shared-p1',
-          name: 'Shared Project',
-          createdAt: '2026-01-01T00:00:00Z',
-          updatedAt: '2026-01-01T00:00:00Z',
-        },
-      ]
-      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      // Current user (user-1) owns NO projects — the shared project comes from /projects/shared
+      mockFetchProjects.mockResolvedValueOnce({ projects: [] })
+      sharedProjectsFetch.mockImplementation(() =>
+        Promise.resolve({
+          projects: [
+            {
+              id: 'shared-p1',
+              name: 'Shared Project',
+              ownerName: 'Alice',
+              joinedAt: '2026-04-24T00:00:00Z',
+              createdAt: '2026-01-01T00:00:00Z',
+              updatedAt: '2026-01-01T00:00:00Z',
+            },
+          ],
+        }),
+      )
       mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
       mockApiFetch.mockResolvedValueOnce({ flows: [] })
       projectMembersFetch.mockImplementation(() =>
@@ -1426,7 +1433,12 @@ describe('Dashboard', () => {
         expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByText('Shared Project'))
+      // Wait for sidebar to pick up the shared project from the lifted state
+      await waitFor(() => {
+        expect(screen.getByTestId('shared-project-shared-p1')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByTestId('shared-project-shared-p1'))
 
       await waitFor(() => {
         expect(screen.getByTestId('project-action-bar')).toBeInTheDocument()

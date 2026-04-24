@@ -1,17 +1,10 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DashboardSidebar } from './DashboardSidebar'
 import type { Project } from '../editor/types'
-
-vi.mock('../../lib/api', () => ({
-  apiFetch: vi.fn(),
-}))
-
-import { apiFetch } from '../../lib/api'
-
-const mockApiFetch = vi.mocked(apiFetch)
+import type { SharedProject } from './SharedProjectList'
 
 const mockProjects: Project[] = [
   { id: 'p1', name: 'プロジェクトA', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
@@ -23,20 +16,13 @@ const defaultProps = {
   onNavChange: vi.fn(),
   userName: 'テストユーザー',
   projects: mockProjects,
+  sharedProjects: [] as SharedProject[],
   onCreateProject: vi.fn(),
   onRenameProject: vi.fn(),
   onDeleteProject: vi.fn(),
 }
 
 describe('DashboardSidebar', () => {
-  beforeEach(() => {
-    mockApiFetch.mockReset()
-    mockApiFetch.mockImplementation((path: string) => {
-      if (path === '/projects/shared') return Promise.resolve({ projects: [] })
-      return Promise.resolve({})
-    })
-  })
-
   afterEach(() => {
     cleanup()
   })
@@ -238,78 +224,52 @@ describe('DashboardSidebar', () => {
     expect(screen.getByText('U')).toBeInTheDocument()
   })
 
-  it('renders shared projects section when user has shared projects', async () => {
-    mockApiFetch.mockImplementation((path: string) => {
-      if (path === '/projects/shared') {
-        return Promise.resolve({
-          projects: [
-            {
-              id: 's1',
-              name: 'SharedA',
-              ownerName: 'Alice',
-              joinedAt: '2026-04-24T00:00:00Z',
-              createdAt: '',
-              updatedAt: '',
-            },
-          ],
-        })
-      }
-      return Promise.resolve({})
-    })
-    render(<DashboardSidebar {...defaultProps} />)
-    await waitFor(() => expect(screen.getByTestId('shared-projects-section')).toBeInTheDocument())
+  it('renders shared projects section when sharedProjects prop has entries', () => {
+    render(
+      <DashboardSidebar
+        {...defaultProps}
+        sharedProjects={[
+          {
+            id: 's1',
+            name: 'SharedA',
+            ownerName: 'Alice',
+            joinedAt: '2026-04-24T00:00:00Z',
+            createdAt: '',
+            updatedAt: '',
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByTestId('shared-projects-section')).toBeInTheDocument()
     expect(screen.getByText('SharedA')).toBeInTheDocument()
     expect(screen.getByText(/Alice/)).toBeInTheDocument()
   })
 
-  it('hides shared projects section when list is empty', async () => {
-    mockApiFetch.mockImplementation((path: string) => {
-      if (path === '/projects/shared') return Promise.resolve({ projects: [] })
-      return Promise.resolve({})
-    })
-    render(<DashboardSidebar {...defaultProps} />)
-    await waitFor(() => {
-      expect(mockApiFetch).toHaveBeenCalledWith('/projects/shared')
-    })
-    expect(screen.queryByTestId('shared-projects-section')).toBeNull()
-  })
-
-  it('does not break sidebar when /projects/shared fetch fails', async () => {
-    mockApiFetch.mockImplementation((path: string) => {
-      if (path === '/projects/shared') return Promise.reject(new Error('network error'))
-      return Promise.resolve({})
-    })
-    render(<DashboardSidebar {...defaultProps} />)
-    await waitFor(() => {
-      expect(mockApiFetch).toHaveBeenCalledWith('/projects/shared')
-    })
-    // Sidebar still renders core content; shared section absent on failure
-    expect(screen.getByTestId('dashboard-sidebar')).toBeInTheDocument()
+  it('hides shared projects section when sharedProjects prop is empty', () => {
+    render(<DashboardSidebar {...defaultProps} sharedProjects={[]} />)
     expect(screen.queryByTestId('shared-projects-section')).toBeNull()
   })
 
   it('calls onNavChange with project:<id> when a shared project is clicked', async () => {
-    mockApiFetch.mockImplementation((path: string) => {
-      if (path === '/projects/shared') {
-        return Promise.resolve({
-          projects: [
-            {
-              id: 's1',
-              name: 'SharedA',
-              ownerName: 'Alice',
-              joinedAt: '2026-04-24T00:00:00Z',
-              createdAt: '',
-              updatedAt: '',
-            },
-          ],
-        })
-      }
-      return Promise.resolve({})
-    })
     const onNavChange = vi.fn()
     const user = userEvent.setup()
-    render(<DashboardSidebar {...defaultProps} onNavChange={onNavChange} />)
-    await waitFor(() => expect(screen.getByTestId('shared-project-s1')).toBeInTheDocument())
+    render(
+      <DashboardSidebar
+        {...defaultProps}
+        onNavChange={onNavChange}
+        sharedProjects={[
+          {
+            id: 's1',
+            name: 'SharedA',
+            ownerName: 'Alice',
+            joinedAt: '2026-04-24T00:00:00Z',
+            createdAt: '',
+            updatedAt: '',
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByTestId('shared-project-s1')).toBeInTheDocument()
     await user.click(screen.getByTestId('shared-project-s1'))
     expect(onNavChange).toHaveBeenCalledWith('project:s1')
   })

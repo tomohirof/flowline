@@ -297,6 +297,18 @@ projects.delete('/:id/members/:userId', async (c) => {
     return c.json({ error: 'アクセス権限がありません', code: 'PROJECT_ACCESS_DENIED' }, 403)
   }
 
+  // When caller isn't the owner, ensure targetUserId is actually a member.
+  // Prevents non-members from 204-leaking project existence via self-removal.
+  if (project.user_id !== currentUserId) {
+    const membership = await db
+      .prepare('SELECT role FROM project_members WHERE project_id = ? AND user_id = ?')
+      .bind(projectId, targetUserId)
+      .first()
+    if (!membership) {
+      return c.json({ error: 'メンバーが見つかりません' }, 404)
+    }
+  }
+
   await db
     .prepare('DELETE FROM project_members WHERE project_id = ? AND user_id = ?')
     .bind(projectId, targetUserId)

@@ -415,6 +415,19 @@ describe('Projects API - members endpoints', () => {
       )
       expect(res.status).toBe(404)
     })
+
+    it('returns 404 when non-member tries to remove self', async () => {
+      // Project exists but is owned by OTHER_USER_ID; current user (USER_ID) is NOT a member
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`)
+        .bind(OTHER_USER_ID)
+        .run()
+      const res = await app.request(
+        `/api/projects/p-1/members/${USER_ID}`,
+        { method: 'DELETE', headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(404)
+    })
   })
 })
 

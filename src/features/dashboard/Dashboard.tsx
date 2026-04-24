@@ -15,6 +15,7 @@ import { FlowCard } from './FlowCard'
 import { FlowContextMenu } from './FlowContextMenu'
 import { DashboardTopBar } from './DashboardTopBar'
 import { DashboardSidebar } from './DashboardSidebar'
+import type { SharedProject } from './SharedProjectList'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Toast } from '../../components/Toast'
@@ -64,6 +65,7 @@ export function Dashboard() {
   const { t, i18n } = useTranslation(['dashboard', 'common', 'project'])
   const [flows, setFlows] = useState<FlowSummary[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [sharedProjects, setSharedProjects] = useState<SharedProject[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState<boolean>(false)
@@ -101,7 +103,6 @@ export function Dashboard() {
   const [projectMembers, setProjectMembers] = useState<ProjectMembersResponse | null>(null)
   const [projectError, setProjectError] = useState<string | null>(null)
   const [showMemberModal, setShowMemberModal] = useState(false)
-  const [sidebarKey, setSidebarKey] = useState(0)
 
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -151,6 +152,15 @@ export function Dashboard() {
       .then((data) => setProjects(data.projects))
       .catch(() => setError(t('dashboard:project.errorLoad')))
   }, [t])
+
+  // Load shared projects on mount
+  useEffect(() => {
+    void apiFetch<{ projects: SharedProject[] }>('/projects/shared')
+      .then((d) => setSharedProjects(d.projects ?? []))
+      .catch(() => {
+        /* swallow — shared section hides itself when empty */
+      })
+  }, [])
 
   // Debounced search
   useEffect(() => {
@@ -470,13 +480,17 @@ export function Dashboard() {
   // Lane colors for list view
   const laneColors = PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
 
-  // Current selected project (if any)
+  // Current selected project (if any). May be an owned Project or a SharedProject.
   const selectedProjectId =
     selectedNav.startsWith('project:') && selectedNav !== 'project:none'
       ? selectedNav.slice('project:'.length)
       : null
-  const selectedProject = selectedProjectId
-    ? (projects.find((p) => p.id === selectedProjectId) ?? null)
+  const selectedProject: { id: string; name: string } | null = selectedProjectId
+    ? ((projects.find((p) => p.id === selectedProjectId) as
+        | { id: string; name: string }
+        | undefined) ??
+      sharedProjects.find((p) => p.id === selectedProjectId) ??
+      null)
     : null
   const currentUserId = user?.id ?? ''
   const currentRole: 'owner' | 'editor' | null =
@@ -503,7 +517,13 @@ export function Dashboard() {
       })
       setSelectedNav('recent')
       setProjectMembers(null)
-      setSidebarKey((k) => k + 1)
+      // Refresh shared projects list so the left project disappears from the sidebar
+      try {
+        const refreshed = await apiFetch<{ projects: SharedProject[] }>('/projects/shared')
+        setSharedProjects(refreshed.projects ?? [])
+      } catch {
+        /* swallow — sidebar simply retains current list */
+      }
       setToast({
         message: t('dashboard:project.left', { defaultValue: 'Left project' }),
         icon: '🚪',
@@ -530,11 +550,11 @@ export function Dashboard() {
           <div className={styles.body}>
             {/* Sidebar */}
             <DashboardSidebar
-              key={sidebarKey}
               selectedNav={selectedNav}
               onNavChange={setSelectedNav}
               userName={userName}
               projects={projects}
+              sharedProjects={sharedProjects}
               onCreateProject={handleCreateProject}
               onRenameProject={handleRenameProject}
               onDeleteProject={handleDeleteProject}
@@ -568,7 +588,11 @@ export function Dashboard() {
                         ? t('dashboard:sidebar.uncategorized')
                         : selectedNav.startsWith('project:')
                           ? (projects.find((p) => p.id === selectedNav.slice('project:'.length))
-                              ?.name ?? t('dashboard:title.myFlows'))
+                              ?.name ??
+                            sharedProjects.find(
+                              (p) => p.id === selectedNav.slice('project:'.length),
+                            )?.name ??
+                            t('dashboard:title.myFlows'))
                           : t('dashboard:title.myFlows')}
                 </h1>
                 {selectedNav !== 'trash' && (

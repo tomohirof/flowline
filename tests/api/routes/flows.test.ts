@@ -1211,5 +1211,31 @@ describe('Flows API', () => {
       const res = await postJson(`/api/flows/${FLOW_ID}/share`, {}, env, cookie)
       expect(res.status).toBe(403)
     })
+
+    it('GET /flows — owner sees editor-created flows in their project', async () => {
+      // Editor (USER_ID) creates a flow inside OWNER_ID's project
+      db.prepare(
+        "INSERT INTO flows (id, user_id, title, project_id, theme_id) VALUES (?, ?, 'Editor-Created', ?, 'cloud')",
+      ).run('editor-created', USER_ID, PROJECT_ID)
+
+      const res = await getWithCookie('/api/flows', env, ownerCookie)
+      expect(res.status).toBe(200)
+      const body = (await res.json()) as { flows: Array<{ id: string }> }
+      const ids = body.flows.map((f) => f.id)
+      expect(ids).toContain('editor-created')
+      expect(ids).toContain(FLOW_ID)
+    })
+
+    it('GET /flows?q= — owner sees editor-created flows in their project via search', async () => {
+      db.prepare(
+        "INSERT INTO flows (id, user_id, title, project_id, theme_id) VALUES (?, ?, 'Editor-Searchable', ?, 'cloud')",
+      ).run('editor-created-2', USER_ID, PROJECT_ID)
+
+      const res = await getWithCookie('/api/flows?q=Searchable', env, ownerCookie)
+      expect(res.status).toBe(200)
+      const body = (await res.json()) as { flows: Array<{ id: string }> }
+      const ids = body.flows.map((f) => f.id)
+      expect(ids).toContain('editor-created-2')
+    })
   })
 })
