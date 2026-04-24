@@ -6,8 +6,20 @@ import { MemoryRouter } from 'react-router-dom'
 import { Dashboard } from './Dashboard'
 
 // Mock apiFetch
+// The outer apiFetch dispatches /projects/shared to a separate stub so DashboardSidebar's
+// fetch does not consume entries from the inner queue used by /flows-centric tests.
+// We preserve the original call arity (path only, or path + init) so toHaveBeenCalledWith
+// assertions in existing tests continue to match.
+const innerApiFetch = vi.fn()
+const sharedProjectsFetch = vi.fn(() => Promise.resolve({ projects: [] }))
 vi.mock('../../lib/api', () => ({
-  apiFetch: vi.fn(),
+  apiFetch: vi.fn((...args: unknown[]) => {
+    const [path] = args as [string, RequestInit?]
+    if (path === '/projects/shared') {
+      return sharedProjectsFetch(...(args as [string, RequestInit?]))
+    }
+    return innerApiFetch(...(args as [string, RequestInit?]))
+  }),
   fetchProjects: vi.fn().mockResolvedValue({ projects: [] }),
   createProject: vi.fn(),
   renameProject: vi.fn(),
@@ -45,7 +57,11 @@ vi.mock('react-router-dom', async () => {
 
 import { apiFetch, fetchProjects, moveFlowToProject } from '../../lib/api'
 
-const mockApiFetch = vi.mocked(apiFetch)
+// Existing tests interact with the non-/projects/shared path via `mockApiFetch`.
+// DashboardSidebar's /projects/shared fetch is handled by `sharedProjectsFetch` separately.
+const mockApiFetch = innerApiFetch
+// Also re-export the outer wrapper for any assertions that inspect total call count.
+const outerApiFetch = vi.mocked(apiFetch)
 const mockFetchProjects = vi.mocked(fetchProjects)
 const mockMoveFlowToProject = vi.mocked(moveFlowToProject)
 
@@ -80,8 +96,17 @@ function renderDashboard() {
 
 describe('Dashboard', () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    // Reset only the mocks that individual tests customize; preserve the outer apiFetch
+    // path router set up at module load, and the sharedProjectsFetch default.
+    mockApiFetch.mockReset()
+    outerApiFetch.mockClear()
+    sharedProjectsFetch.mockClear()
+    sharedProjectsFetch.mockImplementation(() => Promise.resolve({ projects: [] }))
+    mockFetchProjects.mockReset()
     mockFetchProjects.mockResolvedValue({ projects: [] })
+    mockMoveFlowToProject.mockReset()
+    mockMoveFlowToProject.mockResolvedValue({ ok: true })
+    mockNavigate.mockReset()
   })
 
   afterEach(() => {
