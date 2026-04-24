@@ -121,9 +121,7 @@ describe('useArrows', () => {
       const pairs = result.current.arrows.map((a) => `${a.from}->${a.to}`).sort()
       expect(pairs).toEqual(['l0_r0->l0_r1', 'l0_r1->l0_r2'])
       expect(result.current.arrows.find((a) => a.id === 'a1')).toBeUndefined()
-      const downstream = result.current.arrows.find(
-        (a) => a.from === 'l0_r1' && a.to === 'l0_r2',
-      )
+      const downstream = result.current.arrows.find((a) => a.from === 'l0_r1' && a.to === 'l0_r2')
       expect(downstream?.comment).toBe('c1')
     })
 
