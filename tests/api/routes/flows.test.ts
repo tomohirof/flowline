@@ -1117,4 +1117,101 @@ describe('Flows API', () => {
       expect(res.status).toBe(400)
     })
   })
+
+  // ========================================
+  // Flow access via project membership (#306)
+  // ========================================
+  describe('Flow access via project membership', () => {
+    const OWNER_ID = 'other-owner'
+    const OWNER_EMAIL = 'other-owner@example.com'
+    const FLOW_ID = 'shared-flow-1'
+    const PROJECT_ID = 'shared-proj-1'
+    let ownerCookie: string
+
+    beforeEach(async () => {
+      // OWNER_ID is a different user from OTHER_USER_ID registered in outer beforeEach
+      db.prepare(
+        'INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)',
+      ).run(OWNER_ID, OWNER_EMAIL, 'hash', 'Other Owner')
+      db.prepare("INSERT INTO projects (id, user_id, name) VALUES (?, ?, 'Shared P')").run(
+        PROJECT_ID,
+        OWNER_ID,
+      )
+      db.prepare(
+        "INSERT INTO flows (id, user_id, title, project_id, theme_id) VALUES (?, ?, 'Shared Flow', ?, 'cloud')",
+      ).run(FLOW_ID, OWNER_ID, PROJECT_ID)
+      db.prepare(
+        "INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, 'editor')",
+      ).run(PROJECT_ID, USER_ID)
+      ownerCookie = await authCookie(OWNER_ID, OWNER_EMAIL)
+    })
+
+    it('GET /flows/:id — editor can view shared flow', async () => {
+      const res = await getWithCookie(`/api/flows/${FLOW_ID}`, env, cookie)
+      expect(res.status).toBe(200)
+    })
+
+    it('PUT /flows/:id — editor can update shared flow', async () => {
+      const res = await putJson(
+        `/api/flows/${FLOW_ID}`,
+        { title: 'Updated by Editor' },
+        env,
+        cookie,
+      )
+      expect(res.status).toBe(200)
+      const row = db.prepare('SELECT title FROM flows WHERE id = ?').get(FLOW_ID) as {
+        title: string
+      }
+      expect(row.title).toBe('Updated by Editor')
+    })
+
+    it('DELETE /flows/:id — editor CANNOT delete shared flow', async () => {
+      const res = await deleteWithCookie(`/api/flows/${FLOW_ID}`, env, cookie)
+      expect(res.status).toBe(403)
+    })
+
+    it('DELETE /flows/:id — owner CAN delete', async () => {
+      const res = await deleteWithCookie(`/api/flows/${FLOW_ID}`, env, ownerCookie)
+      expect(res.status).toBe(200)
+    })
+
+    it('GET /flows — editor sees shared flows alongside own flows', async () => {
+      insertFlow(db, 'own-flow', USER_ID, 'Mine')
+      const res = await getWithCookie('/api/flows', env, cookie)
+      expect(res.status).toBe(200)
+      const body = (await res.json()) as { flows: Array<{ id: string }> }
+      const ids = body.flows.map((f) => f.id)
+      expect(ids).toContain('own-flow')
+      expect(ids).toContain(FLOW_ID)
+    })
+
+    it('POST /flows with projectId — editor can create flow in shared project', async () => {
+      const res = await postJson(
+        '/api/flows',
+        { title: 'New by Editor', projectId: PROJECT_ID },
+        env,
+        cookie,
+      )
+      expect(res.status).toBe(201)
+    })
+
+    it('POST /flows with projectId — non-member is rejected 403', async () => {
+      db.prepare('DELETE FROM project_members WHERE project_id = ? AND user_id = ?').run(
+        PROJECT_ID,
+        USER_ID,
+      )
+      const res = await postJson(
+        '/api/flows',
+        { title: 'New', projectId: PROJECT_ID },
+        env,
+        cookie,
+      )
+      expect(res.status).toBe(403)
+    })
+
+    it('POST /flows/:id/share — editor CANNOT create share token (owner only)', async () => {
+      const res = await postJson(`/api/flows/${FLOW_ID}/share`, {}, env, cookie)
+      expect(res.status).toBe(403)
+    })
+  })
 })
