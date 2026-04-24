@@ -248,3 +248,140 @@ describe('Projects API - join endpoint', () => {
     expect(res.status).toBe(404)
   })
 })
+
+describe('Projects API - members endpoints', () => {
+  let db: ReturnType<typeof Database>
+  let env: ReturnType<typeof createEnv>
+  let userCookie: string
+  const USER_ID = 'user-1'
+  const USER_EMAIL = 'user@example.com'
+  const OTHER_USER_ID = 'other-user-1'
+  const OTHER_EMAIL = 'other@example.com'
+
+  beforeEach(async () => {
+    db = createTestDb()
+    env = createEnv(db)
+    registerUser(db, USER_ID, USER_EMAIL)
+    registerUser(db, OTHER_USER_ID, OTHER_EMAIL)
+    userCookie = await authCookie(USER_ID, USER_EMAIL)
+  })
+
+  afterEach(() => db.close())
+
+  describe('GET /api/projects/:id/members', () => {
+    it('returns owner + editors for a member', async () => {
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(OTHER_USER_ID).run()
+      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(USER_ID).run()
+      const res = await app.request(
+        '/api/projects/p-1/members',
+        { headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(200)
+      const body = (await res.json()) as {
+        owner: { id: string; email: string; name: string }
+        editors: Array<{ id: string; email: string; name: string; joinedAt: string }>
+      }
+      expect(body.owner.id).toBe(OTHER_USER_ID)
+      expect(body.editors).toHaveLength(1)
+      expect(body.editors[0].id).toBe(USER_ID)
+      expect(body.editors[0].joinedAt).toBeTruthy()
+    })
+
+    it('returns owner + editors for the owner', async () => {
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(USER_ID).run()
+      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(OTHER_USER_ID).run()
+      const res = await app.request(
+        '/api/projects/p-1/members',
+        { headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(200)
+      const body = (await res.json()) as {
+        owner: { id: string }
+        editors: Array<{ id: string }>
+      }
+      expect(body.owner.id).toBe(USER_ID)
+      expect(body.editors[0].id).toBe(OTHER_USER_ID)
+    })
+
+    it('returns 403 for non-members', async () => {
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(OTHER_USER_ID).run()
+      const res = await app.request(
+        '/api/projects/p-1/members',
+        { headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(403)
+    })
+
+    it('returns 404 for non-existent project', async () => {
+      const res = await app.request(
+        '/api/projects/nope/members',
+        { headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(404)
+    })
+  })
+
+  describe('DELETE /api/projects/:id/members/:userId', () => {
+    it('allows owner to kick an editor', async () => {
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(USER_ID).run()
+      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(OTHER_USER_ID).run()
+      const res = await app.request(
+        `/api/projects/p-1/members/${OTHER_USER_ID}`,
+        { method: 'DELETE', headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(204)
+      const row = db.prepare(`SELECT * FROM project_members WHERE project_id = 'p-1' AND user_id = ?`).get(OTHER_USER_ID)
+      expect(row).toBeUndefined()
+    })
+
+    it('allows editor to leave voluntarily (remove self)', async () => {
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(OTHER_USER_ID).run()
+      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(USER_ID).run()
+      const res = await app.request(
+        `/api/projects/p-1/members/${USER_ID}`,
+        { method: 'DELETE', headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(204)
+    })
+
+    it('returns 403 when non-owner tries to kick someone else', async () => {
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(OTHER_USER_ID).run()
+      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`).bind(USER_ID).run()
+      registerUser(db, 'third', 'third@x.com')
+      db.prepare(`INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', 'third', 'editor')`).run()
+      const res = await app.request(
+        '/api/projects/p-1/members/third',
+        { method: 'DELETE', headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(403)
+    })
+
+    it('returns 400 OWNER_CANNOT_LEAVE when owner tries to remove self', async () => {
+      db.prepare(`INSERT INTO projects (id, user_id, name) VALUES ('p-1', ?, 'P')`).bind(USER_ID).run()
+      const res = await app.request(
+        `/api/projects/p-1/members/${USER_ID}`,
+        { method: 'DELETE', headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(400)
+      const body = (await res.json()) as { code?: string }
+      expect(body.code).toBe('OWNER_CANNOT_LEAVE')
+    })
+
+    it('returns 404 for non-existent project', async () => {
+      const res = await app.request(
+        `/api/projects/nope/members/${USER_ID}`,
+        { method: 'DELETE', headers: { Cookie: userCookie } },
+        env,
+      )
+      expect(res.status).toBe(404)
+    })
+  })
+})

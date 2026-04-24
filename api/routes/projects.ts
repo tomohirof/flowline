@@ -4,6 +4,7 @@ import { authMiddleware } from '../middleware/auth'
 import { createProjectSchema, updateProjectSchema } from '../lib/validators'
 import { generateId } from '../lib/id'
 import { type ProjectRow, toProject } from '../lib/flow-transform'
+import { getProjectRole } from '../lib/project-access'
 
 const projects = new Hono<AuthEnv>()
 projects.use('*', authMiddleware)
@@ -178,6 +179,89 @@ projects.post('/join/:token', async (c) => {
     .run()
 
   return c.json({ projectId: project.id, role: 'editor' })
+})
+
+// =============================================
+// GET /:id/members - List project members (owner + editors)
+// =============================================
+
+projects.get('/:id/members', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const projectId = c.req.param('id')
+
+  const project = await db
+    .prepare('SELECT user_id FROM projects WHERE id = ?')
+    .bind(projectId)
+    .first<{ user_id: string }>()
+  if (!project) return c.json({ error: 'プロジェクトが見つかりません' }, 404)
+
+  const role = await getProjectRole(db, projectId, userId)
+  if (role === null) {
+    return c.json({ error: 'アクセス権限がありません', code: 'PROJECT_ACCESS_DENIED' }, 403)
+  }
+
+  const owner = await db
+    .prepare('SELECT id, email, name FROM users WHERE id = ?')
+    .bind(project.user_id)
+    .first<{ id: string; email: string; name: string }>()
+
+  const editorsResult = await db
+    .prepare(
+      `SELECT u.id, u.email, u.name, pm.joined_at
+       FROM project_members pm
+       JOIN users u ON u.id = pm.user_id
+       WHERE pm.project_id = ?
+       ORDER BY pm.joined_at ASC`,
+    )
+    .bind(projectId)
+    .all<{ id: string; email: string; name: string; joined_at: string }>()
+
+  const editors = (editorsResult.results ?? []).map((e) => ({
+    id: e.id,
+    email: e.email,
+    name: e.name,
+    joinedAt: e.joined_at,
+  }))
+
+  return c.json({ owner, editors })
+})
+
+// =============================================
+// DELETE /:id/members/:userId - Remove member (owner kicks or member leaves)
+// =============================================
+
+projects.delete('/:id/members/:userId', async (c) => {
+  const currentUserId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const projectId = c.req.param('id')
+  const targetUserId = c.req.param('userId')
+
+  const project = await db
+    .prepare('SELECT user_id FROM projects WHERE id = ?')
+    .bind(projectId)
+    .first<{ user_id: string }>()
+  if (!project) return c.json({ error: 'プロジェクトが見つかりません' }, 404)
+
+  // Owner trying to remove self
+  if (project.user_id === currentUserId && targetUserId === currentUserId) {
+    return c.json(
+      { error: 'オーナーは退出できません。プロジェクトを削除してください', code: 'OWNER_CANNOT_LEAVE' },
+      400,
+    )
+  }
+
+  // Non-owner can only remove self
+  if (project.user_id !== currentUserId && targetUserId !== currentUserId) {
+    return c.json({ error: 'アクセス権限がありません', code: 'PROJECT_ACCESS_DENIED' }, 403)
+  }
+
+  await db
+    .prepare('DELETE FROM project_members WHERE project_id = ? AND user_id = ?')
+    .bind(projectId, targetUserId)
+    .run()
+
+  return c.body(null, 204)
 })
 
 export { projects }
