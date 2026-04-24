@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   apiFetch,
+  ApiError,
   fetchProjects,
   createProject as createProjectApi,
   renameProject as renameProjectApi,
@@ -60,7 +61,7 @@ const CreateCardIcon = () => (
 )
 
 export function Dashboard() {
-  const { t, i18n } = useTranslation(['dashboard', 'common'])
+  const { t, i18n } = useTranslation(['dashboard', 'common', 'project'])
   const [flows, setFlows] = useState<FlowSummary[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -98,6 +99,7 @@ export function Dashboard() {
 
   // Member management state
   const [projectMembers, setProjectMembers] = useState<ProjectMembersResponse | null>(null)
+  const [projectError, setProjectError] = useState<string | null>(null)
   const [showMemberModal, setShowMemberModal] = useState(false)
   const [sidebarKey, setSidebarKey] = useState(0)
 
@@ -173,9 +175,11 @@ export function Dashboard() {
   useEffect(() => {
     if (!selectedNav.startsWith('project:') || selectedNav === 'project:none') {
       setProjectMembers(null)
+      setProjectError(null)
       return
     }
     const projectId = selectedNav.slice('project:'.length)
+    setProjectError(null)
     apiFetch<ProjectMembersResponse>(`/projects/${projectId}/members`)
       .then((data) => {
         if (data && typeof data === 'object' && 'owner' in data && 'editors' in data) {
@@ -184,8 +188,24 @@ export function Dashboard() {
           setProjectMembers(null)
         }
       })
-      .catch(() => setProjectMembers(null))
-  }, [selectedNav])
+      .catch((err: unknown) => {
+        setProjectMembers(null)
+        console.error('Failed to load project members', err)
+        if (err instanceof ApiError && (err.status === 403 || err.status === 404)) {
+          setProjectError(
+            t('project:errors.projectAccessDenied', {
+              defaultValue: 'このプロジェクトへのアクセス権がありません',
+            }),
+          )
+        } else {
+          setProjectError(
+            t('dashboard:project.errorLoad', {
+              defaultValue: 'プロジェクト情報の取得に失敗しました',
+            }),
+          )
+        }
+      })
+  }, [selectedNav, t])
 
   const sortedFlows = useMemo(() => {
     if (sortMode === 'name') {
@@ -484,7 +504,10 @@ export function Dashboard() {
       setSelectedNav('recent')
       setProjectMembers(null)
       setSidebarKey((k) => k + 1)
-      setToast({ message: t('dashboard:project.left', { defaultValue: 'Left project' }), icon: '🚪' })
+      setToast({
+        message: t('dashboard:project.left', { defaultValue: 'Left project' }),
+        icon: '🚪',
+      })
     } catch {
       setError(t('dashboard:project.errorLeave', { defaultValue: 'Failed to leave project' }))
     }
@@ -519,12 +542,15 @@ export function Dashboard() {
 
             {/* Main content area */}
             <div className={styles.main}>
+              {projectError && (
+                <div data-testid="project-error" className={styles.error}>
+                  {projectError}
+                </div>
+              )}
               {selectedProject && currentRole && (
                 <ProjectActionBar
                   projectName={selectedProject.name}
-                  ownerName={
-                    currentRole === 'editor' ? (projectMembers?.owner.name ?? null) : null
-                  }
+                  ownerName={currentRole === 'editor' ? (projectMembers?.owner.name ?? null) : null}
                   role={currentRole}
                   onOpenSettings={handleOpenSettings}
                   onOpenMembers={() => setShowMemberModal(true)}

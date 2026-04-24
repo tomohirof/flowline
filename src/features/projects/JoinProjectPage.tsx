@@ -1,57 +1,54 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { apiFetch, ApiError } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 import styles from './JoinProjectPage.module.css'
 
-type Status = 'initial' | 'joining' | 'success' | 'already' | 'invalid' | 'require-beta'
+type SyncStatus = 'initial' | 'joining' | 'require-beta' | 'invalid'
+type ApiStatus = 'success' | 'already' | 'invalid' | 'error' | null
 
 export function JoinProjectPage() {
   const { token } = useParams<{ token: string }>()
   const { t } = useTranslation(['project'])
   const navigate = useNavigate()
   const { user, loading } = useAuth()
-  const [status, setStatus] = useState<Status>('initial')
+  const [apiStatus, setApiStatus] = useState<ApiStatus>(null)
+
+  const syncStatus: SyncStatus = useMemo(() => {
+    if (loading) return 'initial'
+    if (!user) return 'require-beta'
+    if (!token) return 'invalid'
+    return 'joining'
+  }, [loading, user, token])
+
+  const status = apiStatus ?? syncStatus
 
   useEffect(() => {
-    if (loading) return
-    if (!user) {
-      setStatus('require-beta')
-      return
-    }
-    if (!token) {
-      setStatus('invalid')
-      return
-    }
-    setStatus('joining')
+    if (syncStatus !== 'joining' || !token) return
+
+    let cancelled = false
     apiFetch<{ projectId: string; role: string; alreadyMember?: boolean }>(
       `/projects/join/${token}`,
       { method: 'POST' },
     )
       .then((res) => {
-        if (res.alreadyMember) {
-          setStatus('already')
-          setTimeout(
-            () => navigate(`/flows?project=${res.projectId}`, { replace: true }),
-            1200,
-          )
-        } else {
-          setStatus('success')
-          setTimeout(
-            () => navigate(`/flows?project=${res.projectId}`, { replace: true }),
-            1200,
-          )
-        }
+        if (cancelled) return
+        setApiStatus(res.alreadyMember ? 'already' : 'success')
+        setTimeout(() => navigate(`/flows?project=${res.projectId}`, { replace: true }), 1200)
       })
       .catch((err: unknown) => {
+        if (cancelled) return
         if (err instanceof ApiError && err.status === 404) {
-          setStatus('invalid')
+          setApiStatus('invalid')
         } else {
-          setStatus('invalid')
+          setApiStatus('error')
         }
       })
-  }, [loading, user, token, navigate])
+    return () => {
+      cancelled = true
+    }
+  }, [syncStatus, token, navigate])
 
   return (
     <div className={styles.container}>
@@ -65,9 +62,7 @@ export function JoinProjectPage() {
         <p>{t('project:joinPage.success', { projectName: '', defaultValue: 'Joined' })}</p>
       )}
       {status === 'already' && (
-        <p>
-          {t('project:joinPage.alreadyMember', { defaultValue: "You're already a member" })}
-        </p>
+        <p>{t('project:joinPage.alreadyMember', { defaultValue: "You're already a member" })}</p>
       )}
       {status === 'invalid' && (
         <>
@@ -79,12 +74,23 @@ export function JoinProjectPage() {
           </Link>
         </>
       )}
+      {status === 'error' && (
+        <>
+          <p>
+            {t('project:joinPage.error', {
+              defaultValue: '通信エラーが発生しました。時間をおいて再度お試しください。',
+            })}
+          </p>
+          <Link to="/" className={styles.link}>
+            {t('project:joinPage.goToLanding', { defaultValue: 'Back to landing' })}
+          </Link>
+        </>
+      )}
       {status === 'require-beta' && (
         <>
           <p>
             {t('project:joinPage.requireBetaInvite', {
-              defaultValue:
-                'You need to register with a beta invitation code first.',
+              defaultValue: 'You need to register with a beta invitation code first.',
             })}
           </p>
           <Link to="/" className={styles.link}>

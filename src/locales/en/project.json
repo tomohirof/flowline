@@ -35,6 +35,7 @@
     "alreadyMember": "You're already a member",
     "tokenInvalid": "This invite link is invalid. Ask the owner to generate a new one.",
     "requireBetaInvite": "You need to register with a beta invitation code first before joining this project.",
+    "error": "A network error occurred. Please try again later.",
     "goToLanding": "Back to landing"
   },
   "roles": {

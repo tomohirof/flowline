@@ -82,4 +82,12 @@ describe('JoinProjectPage', () => {
     renderAt('/join/tok-1')
     await waitFor(() => screen.getByText(/招待リンクが無効|invite link is invalid/i))
   })
+
+  it('shows generic error message for non-404 errors', async () => {
+    mockUseAuth.user = { id: 'u-1' }
+    const err = Object.assign(new ApiError(500, 'boom'), { code: 'SERVER_ERROR' })
+    mockApiFetch.mockRejectedValueOnce(err)
+    renderAt('/join/tok-1')
+    await waitFor(() => screen.getByText(/通信エラー|network error/i))
+  })
 })
