@@ -139,4 +139,45 @@ projects.delete('/:id/invite-link', async (c) => {
   return c.body(null, 204)
 })
 
+// =============================================
+// POST /join/:token - Join a project via invite link
+// =============================================
+
+projects.post('/join/:token', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const token = c.req.param('token')
+
+  if (!token) {
+    return c.json({ error: '招待リンクが無効です', code: 'INVITE_TOKEN_INVALID' }, 404)
+  }
+
+  const project = await db
+    .prepare('SELECT id, user_id FROM projects WHERE invite_token IS NOT NULL AND invite_token = ?')
+    .bind(token)
+    .first<{ id: string; user_id: string }>()
+  if (!project) {
+    return c.json({ error: '招待リンクが無効です', code: 'INVITE_TOKEN_INVALID' }, 404)
+  }
+
+  if (project.user_id === userId) {
+    return c.json({ projectId: project.id, role: 'owner', alreadyMember: true })
+  }
+
+  const existing = await db
+    .prepare('SELECT role FROM project_members WHERE project_id = ? AND user_id = ?')
+    .bind(project.id, userId)
+    .first<{ role: string }>()
+  if (existing) {
+    return c.json({ projectId: project.id, role: existing.role, alreadyMember: true })
+  }
+
+  await db
+    .prepare('INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)')
+    .bind(project.id, userId, 'editor')
+    .run()
+
+  return c.json({ projectId: project.id, role: 'editor' })
+})
+
 export { projects }

@@ -146,3 +146,105 @@ describe('Projects API - invite links', () => {
     })
   })
 })
+
+describe('Projects API - join endpoint', () => {
+  let db: ReturnType<typeof Database>
+  let env: ReturnType<typeof createEnv>
+  let userCookie: string
+  const USER_ID = 'user-1'
+  const USER_EMAIL = 'user@example.com'
+  const OTHER_USER_ID = 'other-user-1'
+  const OTHER_EMAIL = 'other@example.com'
+
+  beforeEach(async () => {
+    db = createTestDb()
+    env = createEnv(db)
+    registerUser(db, USER_ID, USER_EMAIL)
+    registerUser(db, OTHER_USER_ID, OTHER_EMAIL)
+    userCookie = await authCookie(USER_ID, USER_EMAIL)
+    db.prepare(
+      `INSERT INTO projects (id, user_id, name, invite_token) VALUES ('p-1', ?, 'P', 'tok-abc')`,
+    ).bind(OTHER_USER_ID).run()
+  })
+
+  afterEach(() => db.close())
+
+  it('adds the current user as an editor and returns 200', async () => {
+    const res = await app.request(
+      '/api/projects/join/tok-abc',
+      { method: 'POST', headers: { Cookie: userCookie } },
+      env,
+    )
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { projectId: string; role: string; alreadyMember?: boolean }
+    expect(body.projectId).toBe('p-1')
+    expect(body.role).toBe('editor')
+    expect(body.alreadyMember).toBeFalsy()
+    const member = db
+      .prepare('SELECT role FROM project_members WHERE project_id = ? AND user_id = ?')
+      .get('p-1', USER_ID) as { role: string } | undefined
+    expect(member?.role).toBe('editor')
+  })
+
+  it('returns alreadyMember for owner visiting own invite', async () => {
+    const ownerCookie = await authCookie(OTHER_USER_ID, OTHER_EMAIL)
+    const res = await app.request(
+      '/api/projects/join/tok-abc',
+      { method: 'POST', headers: { Cookie: ownerCookie } },
+      env,
+    )
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { role: string; alreadyMember?: boolean }
+    expect(body.role).toBe('owner')
+    expect(body.alreadyMember).toBe(true)
+  })
+
+  it('returns alreadyMember when an existing editor joins again', async () => {
+    db.prepare(
+      `INSERT INTO project_members (project_id, user_id, role) VALUES ('p-1', ?, 'editor')`,
+    ).bind(USER_ID).run()
+    const res = await app.request(
+      '/api/projects/join/tok-abc',
+      { method: 'POST', headers: { Cookie: userCookie } },
+      env,
+    )
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { role: string; alreadyMember?: boolean }
+    expect(body.role).toBe('editor')
+    expect(body.alreadyMember).toBe(true)
+  })
+
+  it('returns 404 INVITE_TOKEN_INVALID for unknown token', async () => {
+    const res = await app.request(
+      '/api/projects/join/nonexistent',
+      { method: 'POST', headers: { Cookie: userCookie } },
+      env,
+    )
+    expect(res.status).toBe(404)
+    const body = (await res.json()) as { code?: string }
+    expect(body.code).toBe('INVITE_TOKEN_INVALID')
+  })
+
+  it('returns 401 when not authenticated', async () => {
+    const res = await app.request(
+      '/api/projects/join/tok-abc',
+      { method: 'POST' },
+      env,
+    )
+    expect(res.status).toBe(401)
+  })
+
+  it('does not match NULL invite_token rows (security)', async () => {
+    // Create another project with NULL invite_token and ensure you can't join it by passing something weird
+    db.prepare(
+      `INSERT INTO projects (id, user_id, name) VALUES ('p-2', ?, 'P2')`,
+    ).bind(OTHER_USER_ID).run()
+    // NULL + NULL binding would be a concern without the explicit IS NOT NULL check
+    const res = await app.request(
+      '/api/projects/join/null',
+      { method: 'POST', headers: { Cookie: userCookie } },
+      env,
+    )
+    expect(res.status).toBe(404)
+  })
+})
