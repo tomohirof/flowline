@@ -225,6 +225,67 @@ describe('findClosestUpstream', () => {
     // C is closer (l2 vs l1), both are same-row tails
     expect(result).toBe('C')
   })
+
+  it('should prefer same-lane upstream non-tail over other-lane tail when inserted between linked nodes', () => {
+    // User reported scenario:
+    // Row 2: worker_r2 (outgoing → worker_r3), teams_r2 (no outgoing = tail)
+    // Row 3: worker_r3 (outgoing → worker_r5, non-tail)
+    // Row 4: (empty) ← new node inserted here in worker lane
+    // Row 5: worker_r5
+    // Expected: worker_r3 (same-lane direct upstream), NOT teams_r2 (closer tail)
+    const rows = [
+      { id: 'r0' },
+      { id: 'r1' },
+      { id: 'r2' },
+      { id: 'r3' },
+      { id: 'r4' },
+      { id: 'r5' },
+    ]
+    const lanes = [
+      { id: 'L_customer' },
+      { id: 'L_sales' },
+      { id: 'L_worker' },
+      { id: 'L_worker2' },
+      { id: 'L_teams' },
+    ]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      worker_r2: { lid: 'L_worker', rid: 'r2' },
+      teams_r2: { lid: 'L_teams', rid: 'r2' },
+      worker_r3: { lid: 'L_worker', rid: 'r3' },
+      worker_r5: { lid: 'L_worker', rid: 'r5' },
+    }
+    const arrows = [
+      { id: 'a1', from: 'worker_r2', to: 'teams_r2', comment: '' },
+      { id: 'a2', from: 'worker_r2', to: 'worker_r3', comment: '' },
+      { id: 'a3', from: 'worker_r3', to: 'worker_r5', comment: '' },
+    ]
+    const result = findClosestUpstream(tasks, rows, lanes, 4, 2, arrows)
+    expect(result).toBe('worker_r3')
+  })
+
+  it('should still return same-row node when same-lane upstream and same-row both exist', () => {
+    // Verify same-row priority is preserved (Step 1 takes precedence over Step 2)
+    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+    const lanes = [{ id: 'l0' }, { id: 'l1' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      sameLaneUpstream: { lid: 'l0', rid: 'r1' },
+      sameRow: { lid: 'l1', rid: 'r2' },
+    }
+    const arrows = [{ id: 'a1', from: 'sameLaneUpstream', to: 'other', comment: '' }]
+    const result = findClosestUpstream(tasks, rows, lanes, 2, 0, arrows)
+    expect(result).toBe('sameRow')
+  })
+
+  it('should fall through to tail-based search when no same-lane upstream exists', () => {
+    // Only upstream is in a different lane as a tail — should still be found
+    const rows = [{ id: 'r0' }, { id: 'r1' }]
+    const lanes = [{ id: 'l0' }, { id: 'l1' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      otherLaneTail: { lid: 'l0', rid: 'r0' },
+    }
+    const result = findClosestUpstream(tasks, rows, lanes, 1, 1, [])
+    expect(result).toBe('otherLaneTail')
+  })
 })
 
 describe('findCrossingArrows', () => {

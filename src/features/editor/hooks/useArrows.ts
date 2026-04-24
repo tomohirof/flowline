@@ -18,9 +18,33 @@ export function useArrows({ initialArrows, tasks, rows, lanes, autoConnect }: Us
   const autoConnectOnCreate = (taskKey: string, ri: number, li: number): void => {
     if (!autoConnect || Object.keys(tasks).length < 1) return
     const bestKey = findClosestUpstream(tasks, rows, lanes, ri, li, arrows)
-    if (bestKey) {
-      setArrows((p) => [...p, { id: uid(), from: bestKey, to: taskKey, comment: '' }])
-    }
+    if (!bestKey) return
+
+    // If the chosen upstream lives in a row above the new node, re-route any arrow
+    // from it to a downstream node (row > ri) through the new node, splitting
+    // `bestKey → downstream` into `bestKey → new → downstream`.
+    const bestTask = tasks[bestKey]
+    const bestRi = bestTask ? rows.findIndex((r) => r.id === bestTask.rid) : -1
+    const splitArrows =
+      bestRi >= 0 && bestRi < ri
+        ? arrows.filter((a) => {
+            if (a.from !== bestKey) return false
+            const toTask = tasks[a.to]
+            if (!toTask) return false
+            const toRi = rows.findIndex((r) => r.id === toTask.rid)
+            return toRi > ri
+          })
+        : []
+
+    setArrows((prev) => {
+      const splitIds = new Set(splitArrows.map((a) => a.id))
+      const filtered = prev.filter((a) => !splitIds.has(a.id))
+      const additions: InternalArrow[] = [{ id: uid(), from: bestKey, to: taskKey, comment: '' }]
+      for (const s of splitArrows) {
+        additions.push({ id: uid(), from: taskKey, to: s.to, comment: s.comment })
+      }
+      return [...filtered, ...additions]
+    })
   }
 
   const detectCrossing = (
