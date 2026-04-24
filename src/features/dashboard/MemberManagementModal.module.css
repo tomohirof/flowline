@@ -1,0 +1,76 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal {
+  background: white;
+  padding: 24px 32px;
+  border-radius: 12px;
+  min-width: 400px;
+  max-width: 560px;
+}
+.title {
+  font-size: 18px;
+  margin: 0 0 16px;
+}
+.error {
+  color: #dc2626;
+  margin-bottom: 12px;
+}
+.inviteSection {
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.inviteUrl {
+  font-family: monospace;
+  font-size: 12px;
+  word-break: break-all;
+  padding: 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+.listSection ul {
+  list-style: none;
+  padding: 0;
+}
+.listSection li {
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge {
+  background: #ede9fe;
+  color: #5b21b6;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+.you {
+  color: #6b7280;
+  font-size: 12px;
+}
+.removeBtn {
+  margin-left: auto;
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.removeBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
