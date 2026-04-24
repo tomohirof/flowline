@@ -223,6 +223,16 @@
   outline: none;
 }
 
+.sharedProjectsSection {
+  margin-top: 12px;
+}
+
+.ownerLabel {
+  color: #6b7280;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
 .spacer {
   flex: 1;
 }

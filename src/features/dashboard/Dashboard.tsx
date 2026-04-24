@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   apiFetch,
+  ApiError,
   fetchProjects,
   createProject as createProjectApi,
   renameProject as renameProjectApi,
@@ -14,6 +15,7 @@ import { FlowCard } from './FlowCard'
 import { FlowContextMenu } from './FlowContextMenu'
 import { DashboardTopBar } from './DashboardTopBar'
 import { DashboardSidebar } from './DashboardSidebar'
+import type { SharedProject } from './SharedProjectList'
 import { UserMenuPanel } from '../../components/UserMenuPanel'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Toast } from '../../components/Toast'
@@ -22,7 +24,20 @@ import { formatRelativeTime } from '../../utils/formatRelativeTime'
 import { DEFAULT_FLOW_TITLE, DEFAULT_FLOW_THEME_ID, createDefaultLanes } from './constants'
 import { useAuth } from '../../hooks/useAuth'
 import { DashboardSkeleton } from './DashboardSkeleton'
+import { ProjectActionBar } from './ProjectActionBar'
+import { MemberManagementModal } from './MemberManagementModal'
 import styles from './Dashboard.module.css'
+
+interface ProjectMember {
+  id: string
+  email: string
+  name: string
+  joinedAt?: string
+}
+interface ProjectMembersResponse {
+  owner: ProjectMember
+  editors: ProjectMember[]
+}
 
 type SortMode = 'updated' | 'name'
 type ViewMode = 'grid' | 'list'
@@ -47,9 +62,10 @@ const CreateCardIcon = () => (
 )
 
 export function Dashboard() {
-  const { t, i18n } = useTranslation(['dashboard', 'common'])
+  const { t, i18n } = useTranslation(['dashboard', 'common', 'project'])
   const [flows, setFlows] = useState<FlowSummary[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [sharedProjects, setSharedProjects] = useState<SharedProject[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState<boolean>(false)
@@ -82,6 +98,11 @@ export function Dashboard() {
     x: number
     y: number
   } | null>(null)
+
+  // Member management state
+  const [projectMembers, setProjectMembers] = useState<ProjectMembersResponse | null>(null)
+  const [projectError, setProjectError] = useState<string | null>(null)
+  const [showMemberModal, setShowMemberModal] = useState(false)
 
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -132,6 +153,15 @@ export function Dashboard() {
       .catch(() => setError(t('dashboard:project.errorLoad')))
   }, [t])
 
+  // Load shared projects on mount
+  useEffect(() => {
+    void apiFetch<{ projects: SharedProject[] }>('/projects/shared')
+      .then((d) => setSharedProjects(d.projects ?? []))
+      .catch(() => {
+        /* swallow — shared section hides itself when empty */
+      })
+  }, [])
+
   // Debounced search
   useEffect(() => {
     if (selectedNav === 'trash') return
@@ -150,6 +180,42 @@ export function Dashboard() {
       loadTrashFlows()
     }
   }, [selectedNav, loadTrashFlows])
+
+  // Load project members when a project (other than 'none') is selected
+  useEffect(() => {
+    if (!selectedNav.startsWith('project:') || selectedNav === 'project:none') {
+      setProjectMembers(null)
+      setProjectError(null)
+      return
+    }
+    const projectId = selectedNav.slice('project:'.length)
+    setProjectError(null)
+    apiFetch<ProjectMembersResponse>(`/projects/${projectId}/members`)
+      .then((data) => {
+        if (data && typeof data === 'object' && 'owner' in data && 'editors' in data) {
+          setProjectMembers(data)
+        } else {
+          setProjectMembers(null)
+        }
+      })
+      .catch((err: unknown) => {
+        setProjectMembers(null)
+        console.error('Failed to load project members', err)
+        if (err instanceof ApiError && (err.status === 403 || err.status === 404)) {
+          setProjectError(
+            t('project:errors.projectAccessDenied', {
+              defaultValue: 'このプロジェクトへのアクセス権がありません',
+            }),
+          )
+        } else {
+          setProjectError(
+            t('dashboard:project.errorLoad', {
+              defaultValue: 'プロジェクト情報の取得に失敗しました',
+            }),
+          )
+        }
+      })
+  }, [selectedNav, t])
 
   const sortedFlows = useMemo(() => {
     if (sortMode === 'name') {
@@ -414,6 +480,59 @@ export function Dashboard() {
   // Lane colors for list view
   const laneColors = PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
 
+  // Current selected project (if any). May be an owned Project or a SharedProject.
+  const selectedProjectId =
+    selectedNav.startsWith('project:') && selectedNav !== 'project:none'
+      ? selectedNav.slice('project:'.length)
+      : null
+  const selectedProject: { id: string; name: string } | null = selectedProjectId
+    ? ((projects.find((p) => p.id === selectedProjectId) as
+        | { id: string; name: string }
+        | undefined) ??
+      sharedProjects.find((p) => p.id === selectedProjectId) ??
+      null)
+    : null
+  const currentUserId = user?.id ?? ''
+  const currentRole: 'owner' | 'editor' | null =
+    projectMembers && currentUserId
+      ? projectMembers.owner.id === currentUserId
+        ? 'owner'
+        : projectMembers.editors.some((m) => m.id === currentUserId)
+          ? 'editor'
+          : null
+      : null
+
+  const handleOpenSettings = () => {
+    if (!selectedProject) return
+    const name = prompt(t('dashboard:project.promptName'), selectedProject.name)
+    if (!name?.trim()) return
+    void handleRenameProject(selectedProject.id, name.trim())
+  }
+
+  const handleLeaveProject = async () => {
+    if (!selectedProjectId || !currentUserId) return
+    try {
+      await apiFetch(`/projects/${selectedProjectId}/members/${currentUserId}`, {
+        method: 'DELETE',
+      })
+      setSelectedNav('recent')
+      setProjectMembers(null)
+      // Refresh shared projects list so the left project disappears from the sidebar
+      try {
+        const refreshed = await apiFetch<{ projects: SharedProject[] }>('/projects/shared')
+        setSharedProjects(refreshed.projects ?? [])
+      } catch {
+        /* swallow — sidebar simply retains current list */
+      }
+      setToast({
+        message: t('dashboard:project.left', { defaultValue: 'Left project' }),
+        icon: '🚪',
+      })
+    } catch {
+      setError(t('dashboard:project.errorLeave', { defaultValue: 'Failed to leave project' }))
+    }
+  }
+
   return (
     <div data-testid="dashboard" className={styles.layout}>
       {loading ? (
@@ -435,6 +554,7 @@ export function Dashboard() {
               onNavChange={setSelectedNav}
               userName={userName}
               projects={projects}
+              sharedProjects={sharedProjects}
               onCreateProject={handleCreateProject}
               onRenameProject={handleRenameProject}
               onDeleteProject={handleDeleteProject}
@@ -442,6 +562,21 @@ export function Dashboard() {
 
             {/* Main content area */}
             <div className={styles.main}>
+              {projectError && (
+                <div data-testid="project-error" className={styles.error}>
+                  {projectError}
+                </div>
+              )}
+              {selectedProject && currentRole && (
+                <ProjectActionBar
+                  projectName={selectedProject.name}
+                  ownerName={currentRole === 'editor' ? (projectMembers?.owner.name ?? null) : null}
+                  role={currentRole}
+                  onOpenSettings={handleOpenSettings}
+                  onOpenMembers={() => setShowMemberModal(true)}
+                  onLeave={() => void handleLeaveProject()}
+                />
+              )}
               {/* Sub-header: nav label + sort + view toggle */}
               <div className={styles.subheader}>
                 <h1 className={styles.title}>
@@ -453,7 +588,11 @@ export function Dashboard() {
                         ? t('dashboard:sidebar.uncategorized')
                         : selectedNav.startsWith('project:')
                           ? (projects.find((p) => p.id === selectedNav.slice('project:'.length))
-                              ?.name ?? t('dashboard:title.myFlows'))
+                              ?.name ??
+                            sharedProjects.find(
+                              (p) => p.id === selectedNav.slice('project:'.length),
+                            )?.name ??
+                            t('dashboard:title.myFlows'))
                           : t('dashboard:title.myFlows')}
                 </h1>
                 {selectedNav !== 'trash' && (
@@ -695,6 +834,15 @@ export function Dashboard() {
             userEmail={user?.email ?? ''}
             onLogout={logout}
           />
+
+          {showMemberModal && selectedProjectId && currentRole && (
+            <MemberManagementModal
+              projectId={selectedProjectId}
+              currentUserId={currentUserId}
+              isOwner={currentRole === 'owner'}
+              onClose={() => setShowMemberModal(false)}
+            />
+          )}
         </div>
       )}
 

@@ -34,6 +34,7 @@ const arrowSchema = z.object({
 export const createFlowSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   themeId: z.string().min(1).optional(),
+  projectId: z.string().min(1).nullable().optional(),
   lanes: z.array(laneSchema).optional().default([]),
   nodes: z.array(nodeSchema).optional().default([]),
   arrows: z.array(arrowSchema).optional().default([]),

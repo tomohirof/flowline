@@ -10,6 +10,7 @@ import { SettingsPage } from './features/settings/SettingsPage'
 import { AdminPage } from './features/admin/AdminPage'
 import { VerifyPage } from './features/auth/VerifyPage'
 import { DemoEditorPage } from './features/editor/pages/DemoEditorPage'
+import { JoinProjectPage } from './features/projects/JoinProjectPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
 
 function Header() {
@@ -26,7 +27,8 @@ function Header() {
     location.pathname === '/verify' ||
     location.pathname === '/try' ||
     location.pathname.match(/^\/flows\/[^/]+$/) ||
-    location.pathname.match(/^\/shared\/[^/]+$/)
+    location.pathname.match(/^\/shared\/[^/]+$/) ||
+    location.pathname.match(/^\/join\/[^/]+$/)
   ) {
     return null
   }
@@ -118,6 +120,7 @@ function App() {
             />
             <Route path="/verify" element={<VerifyPage />} />
             <Route path="/shared/:token" element={<SharedFlowPage />} />
+            <Route path="/join/:token" element={<JoinProjectPage />} />
             <Route path="/try" element={<DemoEditorPage />} />
           </Routes>
         </main>

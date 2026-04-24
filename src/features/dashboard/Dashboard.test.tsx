@@ -6,8 +6,24 @@ import { MemoryRouter } from 'react-router-dom'
 import { Dashboard } from './Dashboard'
 
 // Mock apiFetch
+// The outer apiFetch dispatches /projects/shared to a separate stub so DashboardSidebar's
+// fetch does not consume entries from the inner queue used by /flows-centric tests.
+// We preserve the original call arity (path only, or path + init) so toHaveBeenCalledWith
+// assertions in existing tests continue to match.
+const innerApiFetch = vi.fn()
+const sharedProjectsFetch = vi.fn(() => Promise.resolve({ projects: [] }))
+const projectMembersFetch = vi.fn(() => Promise.reject(new Error('no members stub')))
 vi.mock('../../lib/api', () => ({
-  apiFetch: vi.fn(),
+  apiFetch: vi.fn((...args: unknown[]) => {
+    const [path] = args as [string, RequestInit?]
+    if (path === '/projects/shared') {
+      return sharedProjectsFetch(...(args as [string, RequestInit?]))
+    }
+    if (typeof path === 'string' && /^\/projects\/[^/]+\/members(\/|$)/.test(path)) {
+      return projectMembersFetch(...(args as [string, RequestInit?]))
+    }
+    return innerApiFetch(...(args as [string, RequestInit?]))
+  }),
   fetchProjects: vi.fn().mockResolvedValue({ projects: [] }),
   createProject: vi.fn(),
   renameProject: vi.fn(),
@@ -45,7 +61,11 @@ vi.mock('react-router-dom', async () => {
 
 import { apiFetch, fetchProjects, moveFlowToProject } from '../../lib/api'
 
-const mockApiFetch = vi.mocked(apiFetch)
+// Existing tests interact with the non-/projects/shared path via `mockApiFetch`.
+// DashboardSidebar's /projects/shared fetch is handled by `sharedProjectsFetch` separately.
+const mockApiFetch = innerApiFetch
+// Also re-export the outer wrapper for any assertions that inspect total call count.
+const outerApiFetch = vi.mocked(apiFetch)
 const mockFetchProjects = vi.mocked(fetchProjects)
 const mockMoveFlowToProject = vi.mocked(moveFlowToProject)
 
@@ -80,8 +100,19 @@ function renderDashboard() {
 
 describe('Dashboard', () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    // Reset only the mocks that individual tests customize; preserve the outer apiFetch
+    // path router set up at module load, and the sharedProjectsFetch default.
+    mockApiFetch.mockReset()
+    outerApiFetch.mockClear()
+    sharedProjectsFetch.mockClear()
+    sharedProjectsFetch.mockImplementation(() => Promise.resolve({ projects: [] }))
+    projectMembersFetch.mockClear()
+    projectMembersFetch.mockImplementation(() => Promise.reject(new Error('no members stub')))
+    mockFetchProjects.mockReset()
     mockFetchProjects.mockResolvedValue({ projects: [] })
+    mockMoveFlowToProject.mockReset()
+    mockMoveFlowToProject.mockResolvedValue({ ok: true })
+    mockNavigate.mockReset()
   })
 
   afterEach(() => {
@@ -1328,6 +1359,93 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByText('project.movedTo')).toBeInTheDocument()
       })
+    })
+  })
+
+  // =============================================
+  // ProjectActionBar integration (#306)
+  // =============================================
+  describe('ProjectActionBar integration (#306)', () => {
+    it('renders ProjectActionBar with settings+members when owner selects own project', async () => {
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'Owned Project',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows }) // initial load
+      mockApiFetch.mockResolvedValueOnce({ flows: [] }) // after project selection
+      projectMembersFetch.mockImplementation(() =>
+        Promise.resolve({
+          owner: { id: 'user-1', email: 'test@example.com', name: 'テストユーザー' },
+          editors: [],
+        }),
+      )
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByText('Owned Project'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-action-bar')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('project-settings-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('project-members-btn')).toBeInTheDocument()
+      expect(screen.queryByTestId('project-leave-btn')).toBeNull()
+    })
+
+    it('renders ProjectActionBar with leave button when editor selects shared project', async () => {
+      // Current user (user-1) owns NO projects — the shared project comes from /projects/shared
+      mockFetchProjects.mockResolvedValueOnce({ projects: [] })
+      sharedProjectsFetch.mockImplementation(() =>
+        Promise.resolve({
+          projects: [
+            {
+              id: 'shared-p1',
+              name: 'Shared Project',
+              ownerName: 'Alice',
+              joinedAt: '2026-04-24T00:00:00Z',
+              createdAt: '2026-01-01T00:00:00Z',
+              updatedAt: '2026-01-01T00:00:00Z',
+            },
+          ],
+        }),
+      )
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      mockApiFetch.mockResolvedValueOnce({ flows: [] })
+      projectMembersFetch.mockImplementation(() =>
+        Promise.resolve({
+          owner: { id: 'u-owner', email: 'o@x.com', name: 'Alice' },
+          editors: [{ id: 'user-1', email: 'test@example.com', name: 'テストユーザー' }],
+        }),
+      )
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      // Wait for sidebar to pick up the shared project from the lifted state
+      await waitFor(() => {
+        expect(screen.getByTestId('shared-project-shared-p1')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByTestId('shared-project-shared-p1'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-action-bar')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('project-leave-btn')).toBeInTheDocument()
+      expect(screen.queryByTestId('project-settings-btn')).toBeNull()
+      expect(screen.getByTestId('project-members-btn')).toBeInTheDocument()
     })
   })
 })

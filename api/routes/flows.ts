@@ -3,6 +3,7 @@ import type { AuthEnv } from '../app'
 import { authMiddleware } from '../middleware/auth'
 import { createFlowSchema, updateFlowSchema, moveFlowSchema } from '../lib/validators'
 import { generateId } from '../lib/id'
+import { canAccessFlow, getProjectRole } from '../lib/project-access'
 import {
   type FlowRow,
   type LaneRow,
@@ -63,6 +64,29 @@ async function checkFlowOwnership(db: D1Database, flowId: string, userId: string
 }
 
 // =============================================
+// Helper: check flow access (owner or project member)
+// =============================================
+
+async function checkFlowAccess(
+  db: D1Database,
+  flowId: string,
+  userId: string,
+  op: 'edit' | 'delete',
+) {
+  const flow = await db
+    .prepare('SELECT id, user_id, deleted_at FROM flows WHERE id = ?')
+    .bind(flowId)
+    .first<{ id: string; user_id: string; deleted_at: string | null }>()
+  if (!flow) return { error: 'not_found' as const, deletedAt: null }
+  if (flow.deleted_at) return { error: 'not_found' as const, deletedAt: flow.deleted_at }
+
+  const access = await canAccessFlow(db, flowId, userId)
+  const allowed = op === 'edit' ? access.canEdit : access.canDelete
+  if (!allowed) return { error: 'forbidden' as const, deletedAt: null }
+  return { error: null, deletedAt: null }
+}
+
+// =============================================
 // GET / - List user's flows
 // =============================================
 
@@ -84,6 +108,12 @@ flows.get('/', async (c) => {
     projectBinds.push(projectId)
   }
 
+  // Access clause: flows owned by the user OR flows inside a project the user is a member of
+  // OR flows inside a project the user owns (covers editor-created flows in owner's projects)
+  const accessClause = `(f.user_id = ?
+      OR f.project_id IN (SELECT project_id FROM project_members WHERE user_id = ?)
+      OR f.project_id IN (SELECT id FROM projects WHERE user_id = ?))`
+
   if (q) {
     const escaped = q.replace(/[%_\\]/g, '\\$&')
     const likePattern = `%${escaped}%`
@@ -93,7 +123,7 @@ flows.get('/', async (c) => {
          LEFT JOIN nodes n ON n.flow_id = f.id
          LEFT JOIN lanes l ON l.flow_id = f.id
          LEFT JOIN arrows a ON a.flow_id = f.id
-         WHERE f.user_id = ?
+         WHERE ${accessClause}
            AND f.deleted_at IS NULL${projectClause}
            AND (f.title LIKE ? ESCAPE '\\' COLLATE NOCASE
              OR n.label LIKE ? ESCAPE '\\' COLLATE NOCASE
@@ -103,6 +133,8 @@ flows.get('/', async (c) => {
          ORDER BY f.updated_at DESC`,
       )
       .bind(
+        userId,
+        userId,
         userId,
         ...projectBinds,
         likePattern,
@@ -116,9 +148,9 @@ flows.get('/', async (c) => {
   } else {
     const result = await db
       .prepare(
-        `SELECT * FROM flows f WHERE f.user_id = ? AND f.deleted_at IS NULL${projectClause} ORDER BY f.updated_at DESC`,
+        `SELECT * FROM flows f WHERE ${accessClause} AND f.deleted_at IS NULL${projectClause} ORDER BY f.updated_at DESC`,
       )
-      .bind(userId, ...projectBinds)
+      .bind(userId, userId, userId, ...projectBinds)
       .all<FlowRow>()
     flowList = (result.results ?? []).map(toFlowSummary)
   }
@@ -166,10 +198,21 @@ flows.post('/', async (c) => {
     return c.json({ error: 'バリデーションエラー', details: parsed.error.flatten() }, 400)
   }
 
-  const { title, themeId, lanes, nodes, arrows } = parsed.data
+  const { title, themeId, projectId, lanes, nodes, arrows } = parsed.data
   const flowId = generateId()
   const flowTitle = title ?? '無題のフロー'
   const flowThemeId = themeId ?? 'cloud'
+
+  // If a projectId is specified, verify the user has access to that project
+  if (projectId) {
+    const role = await getProjectRole(db, projectId, userId)
+    if (role === null) {
+      return c.json(
+        { error: 'プロジェクトへのアクセス権限がありません', code: 'PROJECT_ACCESS_DENIED' },
+        403,
+      )
+    }
+  }
 
   // Build batch statements
   const statements: Array<ReturnType<D1Database['prepare']>> = []
@@ -177,8 +220,10 @@ flows.post('/', async (c) => {
   // INSERT flow
   statements.push(
     db
-      .prepare('INSERT INTO flows (id, user_id, title, theme_id) VALUES (?, ?, ?, ?)')
-      .bind(flowId, userId, flowTitle, flowThemeId),
+      .prepare(
+        'INSERT INTO flows (id, user_id, title, theme_id, project_id) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(flowId, userId, flowTitle, flowThemeId, projectId ?? null),
   )
 
   // INSERT lanes
@@ -249,17 +294,12 @@ flows.get('/:id', async (c) => {
   const db = c.env.FLOWLINE_DB
   const flowId = c.req.param('id')
 
-  const ownership = await checkFlowOwnership(db, flowId, userId)
-  if (ownership.error === 'not_found') {
+  const access = await checkFlowAccess(db, flowId, userId, 'edit')
+  if (access.error === 'not_found') {
     return c.json({ error: 'フローが見つかりません' }, 404)
   }
-  if (ownership.error === 'forbidden') {
+  if (access.error === 'forbidden') {
     return c.json({ error: 'アクセス権限がありません' }, 403)
-  }
-
-  // Check if soft-deleted
-  if (ownership.deletedAt) {
-    return c.json({ error: 'フローが見つかりません' }, 404)
   }
 
   const detail = await getFlowDetail(db, flowId)
@@ -275,17 +315,12 @@ flows.put('/:id', async (c) => {
   const db = c.env.FLOWLINE_DB
   const flowId = c.req.param('id')
 
-  const ownership = await checkFlowOwnership(db, flowId, userId)
-  if (ownership.error === 'not_found') {
+  const access = await checkFlowAccess(db, flowId, userId, 'edit')
+  if (access.error === 'not_found') {
     return c.json({ error: 'フローが見つかりません' }, 404)
   }
-  if (ownership.error === 'forbidden') {
+  if (access.error === 'forbidden') {
     return c.json({ error: 'アクセス権限がありません' }, 403)
-  }
-
-  // Check if soft-deleted
-  if (ownership.deletedAt) {
-    return c.json({ error: 'フローが見つかりません' }, 404)
   }
 
   let rawBody: unknown
@@ -549,11 +584,11 @@ flows.delete('/:id', async (c) => {
   const db = c.env.FLOWLINE_DB
   const flowId = c.req.param('id')
 
-  const ownership = await checkFlowOwnership(db, flowId, userId)
-  if (ownership.error === 'not_found') {
+  const access = await checkFlowAccess(db, flowId, userId, 'delete')
+  if (access.error === 'not_found') {
     return c.json({ error: 'フローが見つかりません' }, 404)
   }
-  if (ownership.error === 'forbidden') {
+  if (access.error === 'forbidden') {
     return c.json({ error: 'アクセス権限がありません' }, 403)
   }
 

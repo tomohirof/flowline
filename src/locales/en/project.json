@@ -1,0 +1,50 @@
+{
+  "sharedProjects": {
+    "title": "Shared projects",
+    "empty": "No shared projects yet",
+    "ownerLabel": "({{name}})"
+  },
+  "actionBar": {
+    "settings": "Settings",
+    "members": "Members",
+    "leave": "Leave"
+  },
+  "memberManagement": {
+    "title": "Members",
+    "inviteLink": {
+      "heading": "Invite link",
+      "generate": "Generate invite link",
+      "copy": "Copy",
+      "copySuccess": "Copied",
+      "revoke": "Revoke",
+      "revokeConfirm": "Revoke the invite link? Existing members are not affected."
+    },
+    "memberList": "Current members",
+    "ownerBadge": "Owner",
+    "you": "you",
+    "remove": "Remove",
+    "removeConfirm": "Remove {{name}}?"
+  },
+  "leave": {
+    "confirm": "Leave this project?"
+  },
+  "joinPage": {
+    "title": "Join project",
+    "joining": "Joining...",
+    "success": "Joined {{projectName}}",
+    "alreadyMember": "You're already a member",
+    "tokenInvalid": "This invite link is invalid. Ask the owner to generate a new one.",
+    "requireBetaInvite": "You need to register with a beta invitation code first before joining this project.",
+    "error": "A network error occurred. Please try again later.",
+    "goToLanding": "Back to landing"
+  },
+  "roles": {
+    "owner": "Owner",
+    "editor": "Editor"
+  },
+  "errors": {
+    "projectAccessDenied": "You don't have access to this project",
+    "ownerCannotLeave": "Owners cannot leave. Delete the project instead.",
+    "inviteTokenInvalid": "Invite link is invalid"
+  }
+}

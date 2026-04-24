@@ -4,6 +4,7 @@ import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DashboardSidebar } from './DashboardSidebar'
 import type { Project } from '../editor/types'
+import type { SharedProject } from './SharedProjectList'
 
 const mockProjects: Project[] = [
   { id: 'p1', name: 'プロジェクトA', createdAt: '2026-01-01', updatedAt: '2026-01-01' },
@@ -15,6 +16,7 @@ const defaultProps = {
   onNavChange: vi.fn(),
   userName: 'テストユーザー',
   projects: mockProjects,
+  sharedProjects: [] as SharedProject[],
   onCreateProject: vi.fn(),
   onRenameProject: vi.fn(),
   onDeleteProject: vi.fn(),
@@ -220,5 +222,55 @@ describe('DashboardSidebar', () => {
   it('should display U when userName is empty', () => {
     render(<DashboardSidebar {...defaultProps} userName="" />)
     expect(screen.getByText('U')).toBeInTheDocument()
+  })
+
+  it('renders shared projects section when sharedProjects prop has entries', () => {
+    render(
+      <DashboardSidebar
+        {...defaultProps}
+        sharedProjects={[
+          {
+            id: 's1',
+            name: 'SharedA',
+            ownerName: 'Alice',
+            joinedAt: '2026-04-24T00:00:00Z',
+            createdAt: '',
+            updatedAt: '',
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByTestId('shared-projects-section')).toBeInTheDocument()
+    expect(screen.getByText('SharedA')).toBeInTheDocument()
+    expect(screen.getByText(/Alice/)).toBeInTheDocument()
+  })
+
+  it('hides shared projects section when sharedProjects prop is empty', () => {
+    render(<DashboardSidebar {...defaultProps} sharedProjects={[]} />)
+    expect(screen.queryByTestId('shared-projects-section')).toBeNull()
+  })
+
+  it('calls onNavChange with project:<id> when a shared project is clicked', async () => {
+    const onNavChange = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <DashboardSidebar
+        {...defaultProps}
+        onNavChange={onNavChange}
+        sharedProjects={[
+          {
+            id: 's1',
+            name: 'SharedA',
+            ownerName: 'Alice',
+            joinedAt: '2026-04-24T00:00:00Z',
+            createdAt: '',
+            updatedAt: '',
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByTestId('shared-project-s1')).toBeInTheDocument()
+    await user.click(screen.getByTestId('shared-project-s1'))
+    expect(onNavChange).toHaveBeenCalledWith('project:s1')
   })
 })

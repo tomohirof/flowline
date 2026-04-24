@@ -1,0 +1,50 @@
+{
+  "sharedProjects": {
+    "title": "共有されたプロジェクト",
+    "empty": "共有されたプロジェクトはありません",
+    "ownerLabel": "({{name}})"
+  },
+  "actionBar": {
+    "settings": "設定",
+    "members": "メンバー",
+    "leave": "退出"
+  },
+  "memberManagement": {
+    "title": "メンバー",
+    "inviteLink": {
+      "heading": "招待リンク",
+      "generate": "招待リンクを生成",
+      "copy": "コピー",
+      "copySuccess": "コピーしました",
+      "revoke": "取り消し",
+      "revokeConfirm": "招待リンクを取り消しますか？既存メンバーは影響を受けません。"
+    },
+    "memberList": "現在のメンバー",
+    "ownerBadge": "オーナー",
+    "you": "あなた",
+    "remove": "削除",
+    "removeConfirm": "{{name}} さんを削除しますか？"
+  },
+  "leave": {
+    "confirm": "このプロジェクトから退出しますか？"
+  },
+  "joinPage": {
+    "title": "プロジェクトに参加",
+    "joining": "参加処理中...",
+    "success": "{{projectName}} に参加しました",
+    "alreadyMember": "既に参加済みです",
+    "tokenInvalid": "招待リンクが無効です。オーナーに再発行を依頼してください。",
+    "requireBetaInvite": "このプロジェクトに参加するには、先に β 招待コードでアカウント登録が必要です。",
+    "error": "通信エラーが発生しました。時間をおいて再度お試しください。",
+    "goToLanding": "トップに戻る"
+  },
+  "roles": {
+    "owner": "オーナー",
+    "editor": "編集者"
+  },
+  "errors": {
+    "projectAccessDenied": "プロジェクトへのアクセス権限がありません",
+    "ownerCannotLeave": "オーナーは退出できません。プロジェクトを削除してください",
+    "inviteTokenInvalid": "招待リンクが無効です"
+  }
+}

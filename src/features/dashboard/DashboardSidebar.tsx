@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Project } from '../editor/types'
+import { SharedProjectList, type SharedProject } from './SharedProjectList'
 import styles from './DashboardSidebar.module.css'
 
 interface DashboardSidebarProps {
@@ -8,6 +9,7 @@ interface DashboardSidebarProps {
   onNavChange: (navId: string) => void
   userName: string
   projects: Project[]
+  sharedProjects: SharedProject[]
   onCreateProject: () => void
   onRenameProject: (projectId: string, newName: string) => void
   onDeleteProject: (projectId: string) => void
@@ -32,6 +34,7 @@ export function DashboardSidebar({
   onNavChange,
   userName,
   projects,
+  sharedProjects,
   onCreateProject,
   onRenameProject,
   onDeleteProject,
@@ -182,6 +185,13 @@ export function DashboardSidebar({
           </button>
         ))}
       </div>
+
+      {/* Shared projects */}
+      <SharedProjectList
+        projects={sharedProjects}
+        selectedNav={selectedNav}
+        onSelect={(id) => onNavChange(`project:${id}`)}
+      />
 
       {/* Context menu */}
       {contextMenu && (
