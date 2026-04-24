@@ -83,4 +83,60 @@ projects.delete('/:id', async (c) => {
   return c.json({ ok: true })
 })
 
+// =============================================
+// POST /:id/invite-link - Generate or retrieve the project's invite token (owner only)
+// =============================================
+
+projects.post('/:id/invite-link', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const projectId = c.req.param('id')
+
+  const project = await db
+    .prepare('SELECT user_id, invite_token FROM projects WHERE id = ?')
+    .bind(projectId)
+    .first<{ user_id: string; invite_token: string | null }>()
+  if (!project) return c.json({ error: 'プロジェクトが見つかりません' }, 404)
+  if (project.user_id !== userId) {
+    return c.json({ error: 'アクセス権限がありません', code: 'PROJECT_ACCESS_DENIED' }, 403)
+  }
+
+  let token = project.invite_token
+  if (!token) {
+    token = generateId()
+    await db
+      .prepare('UPDATE projects SET invite_token = ? WHERE id = ?')
+      .bind(token, projectId)
+      .run()
+  }
+
+  const origin = new URL(c.req.url).origin
+  return c.json({ inviteToken: token, inviteUrl: `${origin}/join/${token}` })
+})
+
+// =============================================
+// DELETE /:id/invite-link - Clear the project's invite token (owner only)
+// =============================================
+
+projects.delete('/:id/invite-link', async (c) => {
+  const userId = c.get('userId')
+  const db = c.env.FLOWLINE_DB
+  const projectId = c.req.param('id')
+
+  const project = await db
+    .prepare('SELECT user_id FROM projects WHERE id = ?')
+    .bind(projectId)
+    .first<{ user_id: string }>()
+  if (!project) return c.json({ error: 'プロジェクトが見つかりません' }, 404)
+  if (project.user_id !== userId) {
+    return c.json({ error: 'アクセス権限がありません', code: 'PROJECT_ACCESS_DENIED' }, 403)
+  }
+
+  await db
+    .prepare('UPDATE projects SET invite_token = NULL WHERE id = ?')
+    .bind(projectId)
+    .run()
+  return c.body(null, 204)
+})
+
 export { projects }
