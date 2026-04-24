@@ -12,11 +12,15 @@ import { Dashboard } from './Dashboard'
 // assertions in existing tests continue to match.
 const innerApiFetch = vi.fn()
 const sharedProjectsFetch = vi.fn(() => Promise.resolve({ projects: [] }))
+const projectMembersFetch = vi.fn(() => Promise.reject(new Error('no members stub')))
 vi.mock('../../lib/api', () => ({
   apiFetch: vi.fn((...args: unknown[]) => {
     const [path] = args as [string, RequestInit?]
     if (path === '/projects/shared') {
       return sharedProjectsFetch(...(args as [string, RequestInit?]))
+    }
+    if (typeof path === 'string' && /^\/projects\/[^/]+\/members(\/|$)/.test(path)) {
+      return projectMembersFetch(...(args as [string, RequestInit?]))
     }
     return innerApiFetch(...(args as [string, RequestInit?]))
   }),
@@ -102,6 +106,8 @@ describe('Dashboard', () => {
     outerApiFetch.mockClear()
     sharedProjectsFetch.mockClear()
     sharedProjectsFetch.mockImplementation(() => Promise.resolve({ projects: [] }))
+    projectMembersFetch.mockClear()
+    projectMembersFetch.mockImplementation(() => Promise.reject(new Error('no members stub')))
     mockFetchProjects.mockReset()
     mockFetchProjects.mockResolvedValue({ projects: [] })
     mockMoveFlowToProject.mockReset()
@@ -1353,6 +1359,81 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByText('project.movedTo')).toBeInTheDocument()
       })
+    })
+  })
+
+  // =============================================
+  // ProjectActionBar integration (#306)
+  // =============================================
+  describe('ProjectActionBar integration (#306)', () => {
+    it('renders ProjectActionBar with settings+members when owner selects own project', async () => {
+      const mockProjects = [
+        {
+          id: 'p1',
+          name: 'Owned Project',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows }) // initial load
+      mockApiFetch.mockResolvedValueOnce({ flows: [] }) // after project selection
+      projectMembersFetch.mockImplementation(() =>
+        Promise.resolve({
+          owner: { id: 'user-1', email: 'test@example.com', name: 'テストユーザー' },
+          editors: [],
+        }),
+      )
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByText('Owned Project'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-action-bar')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('project-settings-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('project-members-btn')).toBeInTheDocument()
+      expect(screen.queryByTestId('project-leave-btn')).toBeNull()
+    })
+
+    it('renders ProjectActionBar with leave button when editor selects shared project', async () => {
+      const mockProjects = [
+        {
+          id: 'shared-p1',
+          name: 'Shared Project',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockFetchProjects.mockResolvedValueOnce({ projects: mockProjects })
+      mockApiFetch.mockResolvedValueOnce({ flows: mockFlows })
+      mockApiFetch.mockResolvedValueOnce({ flows: [] })
+      projectMembersFetch.mockImplementation(() =>
+        Promise.resolve({
+          owner: { id: 'u-owner', email: 'o@x.com', name: 'Alice' },
+          editors: [{ id: 'user-1', email: 'test@example.com', name: 'テストユーザー' }],
+        }),
+      )
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-1')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByText('Shared Project'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-action-bar')).toBeInTheDocument()
+      })
+      expect(screen.getByTestId('project-leave-btn')).toBeInTheDocument()
+      expect(screen.queryByTestId('project-settings-btn')).toBeNull()
+      expect(screen.getByTestId('project-members-btn')).toBeInTheDocument()
     })
   })
 })

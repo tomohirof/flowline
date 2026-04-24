@@ -22,7 +22,20 @@ import { formatRelativeTime } from '../../utils/formatRelativeTime'
 import { DEFAULT_FLOW_TITLE, DEFAULT_FLOW_THEME_ID, createDefaultLanes } from './constants'
 import { useAuth } from '../../hooks/useAuth'
 import { DashboardSkeleton } from './DashboardSkeleton'
+import { ProjectActionBar } from './ProjectActionBar'
+import { MemberManagementModal } from './MemberManagementModal'
 import styles from './Dashboard.module.css'
+
+interface ProjectMember {
+  id: string
+  email: string
+  name: string
+  joinedAt?: string
+}
+interface ProjectMembersResponse {
+  owner: ProjectMember
+  editors: ProjectMember[]
+}
 
 type SortMode = 'updated' | 'name'
 type ViewMode = 'grid' | 'list'
@@ -82,6 +95,11 @@ export function Dashboard() {
     x: number
     y: number
   } | null>(null)
+
+  // Member management state
+  const [projectMembers, setProjectMembers] = useState<ProjectMembersResponse | null>(null)
+  const [showMemberModal, setShowMemberModal] = useState(false)
+  const [sidebarKey, setSidebarKey] = useState(0)
 
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -150,6 +168,24 @@ export function Dashboard() {
       loadTrashFlows()
     }
   }, [selectedNav, loadTrashFlows])
+
+  // Load project members when a project (other than 'none') is selected
+  useEffect(() => {
+    if (!selectedNav.startsWith('project:') || selectedNav === 'project:none') {
+      setProjectMembers(null)
+      return
+    }
+    const projectId = selectedNav.slice('project:'.length)
+    apiFetch<ProjectMembersResponse>(`/projects/${projectId}/members`)
+      .then((data) => {
+        if (data && typeof data === 'object' && 'owner' in data && 'editors' in data) {
+          setProjectMembers(data)
+        } else {
+          setProjectMembers(null)
+        }
+      })
+      .catch(() => setProjectMembers(null))
+  }, [selectedNav])
 
   const sortedFlows = useMemo(() => {
     if (sortMode === 'name') {
@@ -414,6 +450,46 @@ export function Dashboard() {
   // Lane colors for list view
   const laneColors = PALETTES.slice(0, DEFAULT_LANE_COUNT).map((p) => p.dot)
 
+  // Current selected project (if any)
+  const selectedProjectId =
+    selectedNav.startsWith('project:') && selectedNav !== 'project:none'
+      ? selectedNav.slice('project:'.length)
+      : null
+  const selectedProject = selectedProjectId
+    ? (projects.find((p) => p.id === selectedProjectId) ?? null)
+    : null
+  const currentUserId = user?.id ?? ''
+  const currentRole: 'owner' | 'editor' | null =
+    projectMembers && currentUserId
+      ? projectMembers.owner.id === currentUserId
+        ? 'owner'
+        : projectMembers.editors.some((m) => m.id === currentUserId)
+          ? 'editor'
+          : null
+      : null
+
+  const handleOpenSettings = () => {
+    if (!selectedProject) return
+    const name = prompt(t('dashboard:project.promptName'), selectedProject.name)
+    if (!name?.trim()) return
+    void handleRenameProject(selectedProject.id, name.trim())
+  }
+
+  const handleLeaveProject = async () => {
+    if (!selectedProjectId || !currentUserId) return
+    try {
+      await apiFetch(`/projects/${selectedProjectId}/members/${currentUserId}`, {
+        method: 'DELETE',
+      })
+      setSelectedNav('recent')
+      setProjectMembers(null)
+      setSidebarKey((k) => k + 1)
+      setToast({ message: t('dashboard:project.left', { defaultValue: 'Left project' }), icon: '🚪' })
+    } catch {
+      setError(t('dashboard:project.errorLeave', { defaultValue: 'Failed to leave project' }))
+    }
+  }
+
   return (
     <div data-testid="dashboard" className={styles.layout}>
       {loading ? (
@@ -431,6 +507,7 @@ export function Dashboard() {
           <div className={styles.body}>
             {/* Sidebar */}
             <DashboardSidebar
+              key={sidebarKey}
               selectedNav={selectedNav}
               onNavChange={setSelectedNav}
               userName={userName}
@@ -442,6 +519,18 @@ export function Dashboard() {
 
             {/* Main content area */}
             <div className={styles.main}>
+              {selectedProject && currentRole && (
+                <ProjectActionBar
+                  projectName={selectedProject.name}
+                  ownerName={
+                    currentRole === 'editor' ? (projectMembers?.owner.name ?? null) : null
+                  }
+                  role={currentRole}
+                  onOpenSettings={handleOpenSettings}
+                  onOpenMembers={() => setShowMemberModal(true)}
+                  onLeave={() => void handleLeaveProject()}
+                />
+              )}
               {/* Sub-header: nav label + sort + view toggle */}
               <div className={styles.subheader}>
                 <h1 className={styles.title}>
@@ -695,6 +784,15 @@ export function Dashboard() {
             userEmail={user?.email ?? ''}
             onLogout={logout}
           />
+
+          {showMemberModal && selectedProjectId && currentRole && (
+            <MemberManagementModal
+              projectId={selectedProjectId}
+              currentUserId={currentUserId}
+              isOwner={currentRole === 'owner'}
+              onClose={() => setShowMemberModal(false)}
+            />
+          )}
         </div>
       )}
 
