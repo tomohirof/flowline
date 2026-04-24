@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
-import { createTestDb, createMockD1 } from '../../tests/helpers/mock-d1'
-import { getProjectRole, canAccessFlow } from './project-access'
+import { createTestDb, createMockD1 } from '../../helpers/mock-d1'
+import { getProjectRole, canAccessFlow } from '../../../api/lib/project-access'
 
 describe('getProjectRole', () => {
   let db: ReturnType<typeof Database>
