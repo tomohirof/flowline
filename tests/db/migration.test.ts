@@ -161,6 +161,43 @@ describe('D1 Migration', () => {
     db.close()
   })
 
+  it('should create project_members table and projects.invite_token column (0010)', () => {
+    const db = new Database(':memory:')
+    db.pragma('foreign_keys = ON')
+    const files = [
+      '0001_initial.sql',
+      '0002_node_arrow_styles.sql',
+      '0003_user_settings.sql',
+      '0004_email_verification.sql',
+      '0005_soft_delete.sql',
+      '0006_ai_admin.sql',
+      '0007_node_shape.sql',
+      '0008_projects.sql',
+      '0009_invitation_codes.sql',
+      '0010_project_members.sql',
+    ]
+    for (const f of files) {
+      const sql = readFileSync(resolve(__dirname, '../../migrations/', f), 'utf-8')
+      for (const stmt of sql.split(';').filter((s) => s.trim())) {
+        db.exec(stmt + ';')
+      }
+    }
+    const memberCols = db
+      .prepare("PRAGMA table_info(project_members)")
+      .all() as Array<{ name: string }>
+    expect(memberCols.map((c) => c.name).sort()).toEqual([
+      'joined_at',
+      'project_id',
+      'role',
+      'user_id',
+    ])
+    const projectCols = db
+      .prepare("PRAGMA table_info(projects)")
+      .all() as Array<{ name: string }>
+    expect(projectCols.map((c) => c.name)).toContain('invite_token')
+    db.close()
+  })
+
   it('should have created_at and updated_at on all tables', () => {
     db.prepare(
       "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'ts@test.com', 'hash', 'Test')",
