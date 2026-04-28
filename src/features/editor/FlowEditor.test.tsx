@@ -55,6 +55,12 @@ vi.mock('../../hooks/useAuth', () => ({
   }),
 }))
 
+vi.mock('html-to-image', () => ({
+  toPng: vi.fn().mockResolvedValue(
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  ),
+}))
+
 beforeEach(() => {
   global.ResizeObserver = class {
     observe = vi.fn()
@@ -2804,5 +2810,49 @@ describe('toolbar z-order (#284)', () => {
     )
     expect(toolbarIndex).not.toBe(-1)
     expect(toolbarIndex).toBeGreaterThan(lastMemoIndex)
+  })
+})
+
+describe('PNG export (#310)', () => {
+  beforeEach(() => {
+    cleanup()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('should render the PNG download button in the export panel', () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // i18n is mocked — key strings are rendered as-is
+    const btn = screen.getByText('rightPanel.imagePngDownload')
+    expect(btn).toBeInTheDocument()
+  })
+
+  it('should call htmlToImage.toPng when the PNG button is clicked', async () => {
+    const flow = createMinimalFlow()
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Stub URL.createObjectURL to avoid jsdom errors when creating a download URL
+    const origCreateObjectURL = URL.createObjectURL
+    const origRevokeObjectURL = URL.revokeObjectURL
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-png')
+    URL.revokeObjectURL = vi.fn()
+
+    try {
+      const btn = screen.getByText('rightPanel.imagePngDownload')
+      const user = userEvent.setup()
+      await user.click(btn)
+
+      const htmlToImage = await import('html-to-image')
+      await waitFor(() => {
+        expect(htmlToImage.toPng).toHaveBeenCalled()
+      })
+    } finally {
+      URL.createObjectURL = origCreateObjectURL
+      URL.revokeObjectURL = origRevokeObjectURL
+    }
   })
 })
