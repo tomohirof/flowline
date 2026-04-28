@@ -313,9 +313,10 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                 {isDiamond ? (
                   <polygon
                     points={`${c.x},${c.y - DS} ${c.x + DS},${c.y} ${c.x},${c.y + DS} ${c.x - DS},${c.y}`}
-                    fill={T.nodeFill}
-                    stroke={T.accent}
+                    fill={node.bg || T.nodeFill}
+                    stroke={node.strokeColor || T.accent}
                     strokeWidth={1.2}
+                    strokeDasharray={node.dash || 'none'}
                     style={{
                       filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
                     }}
@@ -326,9 +327,10 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                     y={c.y - TH / 2}
                     width={TW}
                     height={TH}
-                    fill={T.nodeFill}
-                    stroke={T.nodeStroke}
+                    fill={node.bg || T.nodeFill}
+                    stroke={node.strokeColor || T.nodeStroke}
                     strokeWidth={1.2}
+                    strokeDasharray={node.dash || 'none'}
                     rx={10}
                     style={{
                       filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
@@ -446,6 +448,8 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           {/* Arrows */}
           {arrowPaths.map(({ arrow, path }) => {
             const { d, mx, my } = path
+            const ac = arrow.color || T.arrowColor
+            const dashArr = arrow.dash || 'none'
             return (
               <g key={`arrow-${arrow.id}`}>
                 <defs>
@@ -457,13 +461,14 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                     refY="4"
                     orient="auto"
                   >
-                    <polygon points="0 0.5, 9 4, 0 7.5" fill={T.arrowColor} />
+                    <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
                   </marker>
                 </defs>
                 <path
                   d={d}
-                  stroke={T.arrowColor}
+                  stroke={ac}
                   strokeWidth={2}
+                  strokeDasharray={dashArr}
                   fill="none"
                   markerEnd={`url(#sm-${arrow.id})`}
                 />
