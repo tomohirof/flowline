@@ -22,6 +22,7 @@
     "@resvg/resvg-wasm": "^2.6.2",
     "bcryptjs": "^3.0.3",
     "hono": "^4.11.9",
+    "html-to-image": "^1.11.13",
     "i18next": "^25.8.14",
     "i18next-browser-languagedetector": "^8.2.1",
     "react": "^19.2.0",
