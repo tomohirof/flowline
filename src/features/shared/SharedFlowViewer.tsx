@@ -308,14 +308,17 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             const c = ct(li, node.rowIndex)
             const tagW = lane.name.length * 7 + 14
             const isDiamond = node.shape === 'diamond'
+            const nodeFillColor = node.bg || T.nodeFill
+            const nodeDash = node.dash || 'none'
             return (
               <g key={`node-${node.id}`}>
                 {isDiamond ? (
                   <polygon
                     points={`${c.x},${c.y - DS} ${c.x + DS},${c.y} ${c.x},${c.y + DS} ${c.x - DS},${c.y}`}
-                    fill={T.nodeFill}
-                    stroke={T.accent}
+                    fill={nodeFillColor}
+                    stroke={node.strokeColor || T.accent}
                     strokeWidth={1.2}
+                    strokeDasharray={nodeDash}
                     style={{
                       filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
                     }}
@@ -326,9 +329,10 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                     y={c.y - TH / 2}
                     width={TW}
                     height={TH}
-                    fill={T.nodeFill}
-                    stroke={T.nodeStroke}
+                    fill={nodeFillColor}
+                    stroke={node.strokeColor || T.nodeStroke}
                     strokeWidth={1.2}
+                    strokeDasharray={nodeDash}
                     rx={10}
                     style={{
                       filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
@@ -446,6 +450,8 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           {/* Arrows */}
           {arrowPaths.map(({ arrow, path }) => {
             const { d, mx, my } = path
+            const ac = arrow.color || T.arrowColor
+            const dashArr = arrow.dash || 'none'
             return (
               <g key={`arrow-${arrow.id}`}>
                 <defs>
@@ -457,13 +463,14 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                     refY="4"
                     orient="auto"
                   >
-                    <polygon points="0 0.5, 9 4, 0 7.5" fill={T.arrowColor} />
+                    <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
                   </marker>
                 </defs>
                 <path
                   d={d}
-                  stroke={T.arrowColor}
+                  stroke={ac}
                   strokeWidth={2}
+                  strokeDasharray={dashArr}
                   fill="none"
                   markerEnd={`url(#sm-${arrow.id})`}
                 />
