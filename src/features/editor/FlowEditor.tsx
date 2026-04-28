@@ -1507,7 +1507,11 @@ export default function FlowEditor({
 
   const downloadPng = async (): Promise<void> => {
     if (!svgRef.current) return
-    const decision = pickPixelRatio(svgW, svgH)
+    // svgW/svgH are zoom-scaled screen dimensions; the viewBox uses logical units (svgW/zoom).
+    // PNG export must ignore current zoom, so we work in logical space.
+    const logicalW = svgW / zoom
+    const logicalH = svgH / zoom
+    const decision = pickPixelRatio(logicalW, logicalH)
     if (decision.abort) {
       addErrorToast({ message: t('rightPanel.imagePngTooLarge') })
       return
@@ -1518,8 +1522,8 @@ export default function FlowEditor({
       svgRef.current,
       T.canvasBg,
       T.dotGrid,
-      svgW,
-      svgH,
+      logicalW,
+      logicalH,
       editorSettings.showDotGrid,
     )
     try {
