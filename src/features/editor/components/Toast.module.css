@@ -96,6 +96,10 @@
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
+.iconInfo {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
 .retryBtn {
   padding: 6px 16px;
   border-radius: 6px;
