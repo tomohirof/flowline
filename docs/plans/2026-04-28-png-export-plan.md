@@ -19,27 +19,27 @@
 
 ### 新規
 
-| Path | 責務 |
-|---|---|
-| `src/features/editor/png-export.ts` | 純粋ロジック: `pickPixelRatio`, `buildExportSvg` |
-| `src/features/editor/png-export.test.ts` | 上記の単体テスト |
+| Path                                     | 責務                                             |
+| ---------------------------------------- | ------------------------------------------------ |
+| `src/features/editor/png-export.ts`      | 純粋ロジック: `pickPixelRatio`, `buildExportSvg` |
+| `src/features/editor/png-export.test.ts` | 上記の単体テスト                                 |
 
 ### 変更
 
-| Path | 変更内容 |
-|---|---|
-| `package.json` | `html-to-image` を dependencies に追加 |
-| `src/features/editor/FlowEditor.tsx` | `downloadPng` 関数追加、`pngState`/`pngTimerRef` state、`addInfoToast` 取得、RightPanel に props 経由で渡す |
-| `src/features/editor/components/RightPanel.tsx` | Props 拡張（`downloadPng`, `pngState`）、エクスポートセクションに 3 つ目の `PanelBtn` 追加 |
-| `src/features/editor/components/PanelParts.tsx` | `PanelBtn` に `disabled` prop 追加 |
-| `src/features/editor/hooks/useToast.ts` | `addInfoToast` を追加、`ToastData['type']` に `'info'` を追加 |
-| `src/features/editor/components/Toast.tsx` | `info` variant のアイコン・スタイル分岐 |
-| `src/features/editor/components/Toast.module.css` | `.iconInfo` スタイル追加 |
-| `src/features/editor/components/Toast.test.tsx` | info variant のレンダリングテスト追加 |
-| `src/features/editor/components/RightPanel.test.tsx`（既存があれば） | PNG ボタン props 追加 |
-| `src/features/editor/FlowEditor.test.tsx`（既存があれば） | downloadPng のモックテスト追加 |
-| `src/locales/ja/editor.json` | i18n キー 6 個追加 |
-| `src/locales/en/editor.json` | i18n キー 6 個追加 |
+| Path                                                                 | 変更内容                                                                                                    |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `package.json`                                                       | `html-to-image` を dependencies に追加                                                                      |
+| `src/features/editor/FlowEditor.tsx`                                 | `downloadPng` 関数追加、`pngState`/`pngTimerRef` state、`addInfoToast` 取得、RightPanel に props 経由で渡す |
+| `src/features/editor/components/RightPanel.tsx`                      | Props 拡張（`downloadPng`, `pngState`）、エクスポートセクションに 3 つ目の `PanelBtn` 追加                  |
+| `src/features/editor/components/PanelParts.tsx`                      | `PanelBtn` に `disabled` prop 追加                                                                          |
+| `src/features/editor/hooks/useToast.ts`                              | `addInfoToast` を追加、`ToastData['type']` に `'info'` を追加                                               |
+| `src/features/editor/components/Toast.tsx`                           | `info` variant のアイコン・スタイル分岐                                                                     |
+| `src/features/editor/components/Toast.module.css`                    | `.iconInfo` スタイル追加                                                                                    |
+| `src/features/editor/components/Toast.test.tsx`                      | info variant のレンダリングテスト追加                                                                       |
+| `src/features/editor/components/RightPanel.test.tsx`（既存があれば） | PNG ボタン props 追加                                                                                       |
+| `src/features/editor/FlowEditor.test.tsx`（既存があれば）            | downloadPng のモックテスト追加                                                                              |
+| `src/locales/ja/editor.json`                                         | i18n キー 6 個追加                                                                                          |
+| `src/locales/en/editor.json`                                         | i18n キー 6 個追加                                                                                          |
 
 ### 設計書との差分
 
@@ -54,11 +54,13 @@
 ### Task 1: html-to-image を依存に追加
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: html-to-image を dependencies にインストール**
 
 Run（worktree 内で）:
+
 ```bash
 npm install html-to-image@^1.11.13
 ```
@@ -68,6 +70,7 @@ Expected: `package.json` の `dependencies` に `"html-to-image": "^1.11.13"` �
 - [ ] **Step 2: 既存テストが壊れていないことを確認**
 
 Run:
+
 ```bash
 npm test -- --run
 ```
@@ -86,6 +89,7 @@ git commit -m "chore(#310): add html-to-image dependency for PNG export"
 ### Task 2: png-export.ts に `pickPixelRatio` を TDD で実装
 
 **Files:**
+
 - Create: `src/features/editor/png-export.ts`
 - Create: `src/features/editor/png-export.test.ts`
 
@@ -136,6 +140,7 @@ describe('pickPixelRatio', () => {
 - [ ] **Step 2: テストが失敗することを確認**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/png-export.test.ts
 ```
@@ -170,6 +175,7 @@ export function pickPixelRatio(width: number, height: number): PixelRatioDecisio
 - [ ] **Step 4: テストが pass することを確認**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/png-export.test.ts
 ```
@@ -188,6 +194,7 @@ git commit -m "feat(#310): add pickPixelRatio for PNG resolution fallback"
 ### Task 3: png-export.ts に `buildExportSvg` を TDD で実装
 
 **Files:**
+
 - Modify: `src/features/editor/png-export.ts`
 - Modify: `src/features/editor/png-export.test.ts`
 
@@ -279,6 +286,7 @@ describe('buildExportSvg', () => {
 - [ ] **Step 2: テストが失敗することを確認**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/png-export.test.ts
 ```
@@ -372,6 +380,7 @@ export function buildExportSvg(
 - [ ] **Step 4: テストが pass することを確認**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/png-export.test.ts
 ```
@@ -390,6 +399,7 @@ git commit -m "feat(#310): add buildExportSvg to clone SVG with background and d
 ### Task 4: i18n キーを ja/en に追加
 
 **Files:**
+
 - Modify: `src/locales/ja/editor.json`
 - Modify: `src/locales/en/editor.json`
 
@@ -422,6 +432,7 @@ Edit `src/locales/en/editor.json` の `rightPanel` 内、`"jsonDownloaded": "✓
 - [ ] **Step 3: JSON が valid であることを確認**
 
 Run:
+
 ```bash
 node -e "JSON.parse(require('fs').readFileSync('src/locales/ja/editor.json','utf8')); JSON.parse(require('fs').readFileSync('src/locales/en/editor.json','utf8')); console.log('OK')"
 ```
@@ -440,6 +451,7 @@ git commit -m "feat(#310): add i18n keys for PNG export button and toasts"
 ### Task 5: useToast に `addInfoToast` を TDD で追加
 
 **Files:**
+
 - Modify: `src/features/editor/hooks/useToast.ts`
 - Create: `src/features/editor/hooks/useToast.test.ts`
 
@@ -486,6 +498,7 @@ describe('useToast.addInfoToast', () => {
 - [ ] **Step 2: テストが失敗することを確認**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/hooks/useToast.test.ts
 ```
@@ -552,6 +565,7 @@ return {
 - [ ] **Step 4: テストが pass することを確認**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/hooks/useToast.test.ts
 ```
@@ -561,6 +575,7 @@ Expected: PASS — 2 tests
 - [ ] **Step 5: 既存テストが壊れていないことを確認**
 
 Run:
+
 ```bash
 npm test -- --run
 ```
@@ -579,6 +594,7 @@ git commit -m "feat(#310): add addInfoToast to useToast for low-resolution notic
 ### Task 6: Toast.tsx と CSS に `info` variant を追加
 
 **Files:**
+
 - Modify: `src/features/editor/components/Toast.tsx`
 - Modify: `src/features/editor/components/Toast.module.css`
 - Modify: `src/features/editor/components/Toast.test.tsx`
@@ -611,6 +627,7 @@ it('renders an info toast with the ℹ icon and the info-styled background', () 
 - [ ] **Step 2: テストが失敗することを確認**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/components/Toast.test.tsx
 ```
@@ -622,10 +639,9 @@ Expected: FAIL — `Unable to find an element by: [data-testid="toast-info"]` �
 Edit `src/features/editor/components/Toast.tsx`、`<div className={...}>` の icon 部分:
 
 既存:
+
 ```tsx
-<div
-  className={`${styles.icon}${toast.type === 'error' ? ` ${styles.iconError}` : ''}`}
->
+<div className={`${styles.icon}${toast.type === 'error' ? ` ${styles.iconError}` : ''}`}>
   {toast.type === 'confirm' ? '↻' : toast.type === 'error' ? '⚠' : '✓'}
 </div>
 ```
@@ -665,6 +681,7 @@ Edit `src/features/editor/components/Toast.module.css`、`.iconError` 定義の�
 - [ ] **Step 5: テストが pass することを確認**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/components/Toast.test.tsx
 ```
@@ -683,6 +700,7 @@ git commit -m "feat(#310): add info variant to Toast component"
 ### Task 7: PanelBtn に `disabled` prop を追加
 
 **Files:**
+
 - Modify: `src/features/editor/components/PanelParts.tsx`
 
 - [ ] **Step 1: PanelBtn の型と実装を更新**
@@ -725,6 +743,7 @@ export const PanelBtn = ({
 - [ ] **Step 2: 既存テストが壊れていないことを確認**
 
 Run:
+
 ```bash
 npm test -- --run
 ```
@@ -743,6 +762,7 @@ git commit -m "feat(#310): add disabled prop to PanelBtn"
 ### Task 8: RightPanel に PNG ボタンと props を追加
 
 **Files:**
+
 - Modify: `src/features/editor/components/RightPanel.tsx`
 
 - [ ] **Step 1: RightPanelProps に props を追加**
@@ -781,6 +801,7 @@ Edit `src/features/editor/components/RightPanel.tsx` の `RightPanelProps` 末�
 - [ ] **Step 4: TypeScript ビルドが通ることを確認**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.app.json 2>&1 | head -30
 ```
@@ -796,6 +817,7 @@ Expected: 一時的に FlowEditor.tsx 側で `Property 'downloadPng' is missing`
 ### Task 9: FlowEditor に `downloadPng` を実装し、RightPanel に渡す
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 - [ ] **Step 1: import 追加**
@@ -886,6 +908,7 @@ const downloadPng = async (): Promise<void> => {
 ```
 
 注:
+
 - 設計書には `embedCss: true` と記載していたが、SVG 内に背景・パターンを直接焼き込んでおり、CSS 依存はないため `embedCss` は省略可能。html-to-image のデフォルトで動作する。
 - `THEMES` import は既にある（既存の theme 切替で使用）。なければ `import { THEMES } from './theme-constants'` を追加。
 
@@ -905,6 +928,7 @@ const downloadPng = async (): Promise<void> => {
 - [ ] **Step 6: TypeScript ビルドが通ることを確認**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p tsconfig.app.json
 ```
@@ -914,6 +938,7 @@ Expected: 0 errors
 - [ ] **Step 7: 既存テストが壊れていないことを確認**
 
 Run:
+
 ```bash
 npm test -- --run
 ```
@@ -932,6 +957,7 @@ git commit -m "feat(#310): wire PNG download button into FlowEditor and RightPan
 ### Task 10: FlowEditor の downloadPng に対するインタラクションテストを追加
 
 **Files:**
+
 - Create or Modify: `src/features/editor/FlowEditor.test.tsx`（既存ファイルがあればケース追加、なければ新規作成 — 新規の場合はテンプレート最小化）
 
 > **既存 `FlowEditor.test.tsx` の有無を最初に確認:** `ls src/features/editor/FlowEditor.test.tsx`
@@ -942,6 +968,7 @@ git commit -m "feat(#310): wire PNG download button into FlowEditor and RightPan
 - [ ] **Step 1: 既存 FlowEditor.test.tsx の有無を確認**
 
 Run:
+
 ```bash
 ls src/features/editor/FlowEditor.test.tsx 2>&1
 ```
@@ -955,9 +982,11 @@ B) ファイルが**ある**場合: 以下に進む。
 
 ```ts
 vi.mock('html-to-image', () => ({
-  toPng: vi.fn().mockResolvedValue(
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-  ),
+  toPng: vi
+    .fn()
+    .mockResolvedValue(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    ),
 }))
 ```
 
@@ -989,6 +1018,7 @@ describe('PNG export button', () => {
 - [ ] **Step 3: テストを実行**
 
 Run:
+
 ```bash
 npm test -- --run src/features/editor/FlowEditor.test.tsx
 ```
@@ -1011,6 +1041,7 @@ git commit -m "test(#310): cover PNG export button rendering and click in FlowEd
 - [ ] **Step 1: 全テスト通過を確認**
 
 Run:
+
 ```bash
 npm test -- --run
 ```
@@ -1020,6 +1051,7 @@ Expected: 全 pass、FAIL 0
 - [ ] **Step 2: lint 通過を確認**
 
 Run:
+
 ```bash
 npm run lint
 ```
@@ -1029,6 +1061,7 @@ Expected: 0 errors
 - [ ] **Step 3: 開発サーバ起動**
 
 Run（別ターミナルで）:
+
 ```bash
 npm run dev:frontend
 ```
@@ -1063,6 +1096,7 @@ npm run dev:frontend
 - [ ] **Step 6: PR 作成（コミット済みの全変更を push）**
 
 Run:
+
 ```bash
 git push -u origin feat/png-export-310
 gh pr create --title "feat(#310): add PNG export button to editor" --body "$(cat <<'EOF'

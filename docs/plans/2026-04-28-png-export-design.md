@@ -11,30 +11,31 @@
 
 ## 2. 仕様サマリ
 
-| 項目 | 値 |
-|---|---|
-| 保存形式 | PNG のみ |
-| 保存範囲 | フロー全体（スクロール外も含む。現在のズーム値は無視） |
-| 背景 | 現在のテーマの `T.canvasBg` を SVG 内 `<rect>` に焼き込み |
-| ドットグリッド | `editorSettings.showDotGrid` が true のとき含める（SVG `<pattern>`） |
-| 解像度 | 既定 2x DPR。長辺が 8000px を超える場合は 1x にフォールバックし Info Toast |
-| 中止条件 | 1x でも長辺 8000px 超過 → 生成中止 + Error Toast |
-| ファイル名 | `flowline-{sanitized-title}-{YYYYMMDDhhmmss}.png` |
-| ボタン配置 | 右パネル「エクスポート」セクション、Mermaid コピー / JSON ダウンロードの下 |
-| ボタン状態 | idle → generating（disabled）→ done（1.5 秒）→ idle |
+| 項目           | 値                                                                         |
+| -------------- | -------------------------------------------------------------------------- |
+| 保存形式       | PNG のみ                                                                   |
+| 保存範囲       | フロー全体（スクロール外も含む。現在のズーム値は無視）                     |
+| 背景           | 現在のテーマの `T.canvasBg` を SVG 内 `<rect>` に焼き込み                  |
+| ドットグリッド | `editorSettings.showDotGrid` が true のとき含める（SVG `<pattern>`）       |
+| 解像度         | 既定 2x DPR。長辺が 8000px を超える場合は 1x にフォールバックし Info Toast |
+| 中止条件       | 1x でも長辺 8000px 超過 → 生成中止 + Error Toast                           |
+| ファイル名     | `flowline-{sanitized-title}-{YYYYMMDDhhmmss}.png`                          |
+| ボタン配置     | 右パネル「エクスポート」セクション、Mermaid コピー / JSON ダウンロードの下 |
+| ボタン状態     | idle → generating（disabled）→ done（1.5 秒）→ idle                        |
 
 ## 3. アーキテクチャ
 
 ### 3.1 モジュール境界
 
-| 単位 | 場所 | 責務 |
-|---|---|---|
-| `downloadPng()` | `FlowEditor.tsx`（既存 `downloadJSON` の隣） | 状態管理、Blob 作成、ダウンロード起動、Toast 通知 |
-| `buildExportSvg()` | 新規 `src/features/editor/png-export.ts` | SVG クローン、背景 rect・ドット pattern 挿入、画面外マウント |
-| `pickPixelRatio()` | 同上 `png-export.ts` | 長辺と DPR から安全な解像度を決定 |
-| ボタン UI | `RightPanel.tsx` のエクスポートセクション末尾 | 状態に応じてラベル切替、disabled 制御 |
+| 単位               | 場所                                          | 責務                                                         |
+| ------------------ | --------------------------------------------- | ------------------------------------------------------------ |
+| `downloadPng()`    | `FlowEditor.tsx`（既存 `downloadJSON` の隣）  | 状態管理、Blob 作成、ダウンロード起動、Toast 通知            |
+| `buildExportSvg()` | 新規 `src/features/editor/png-export.ts`      | SVG クローン、背景 rect・ドット pattern 挿入、画面外マウント |
+| `pickPixelRatio()` | 同上 `png-export.ts`                          | 長辺と DPR から安全な解像度を決定                            |
+| ボタン UI          | `RightPanel.tsx` のエクスポートセクション末尾 | 状態に応じてラベル切替、disabled 制御                        |
 
 `png-export.ts` を分離する理由:
+
 - `FlowEditor.tsx` は既に 3100 行超（God Component）。新規 100 行をこれ以上太らせない
 - `pickPixelRatio` などの純粋関数は単体テストが容易
 
@@ -75,8 +76,8 @@ finally: cleanup() で一時 DOM 削除
 function buildExportSvg(
   src: SVGSVGElement,
   T: ThemeColors,
-  fullW: number,    // svgW (zoom=1 換算の実寸)
-  fullH: number,    // svgH (zoom=1 換算の実寸)
+  fullW: number, // svgW (zoom=1 換算の実寸)
+  fullH: number, // svgH (zoom=1 換算の実寸)
   showDotGrid: boolean,
 ): { node: SVGSVGElement; cleanup: () => void }
 ```
@@ -103,18 +104,21 @@ function buildExportSvg(
 ```ts
 const MAX_LONG_EDGE = 8000
 
-function pickPixelRatio(w: number, h: number): {
+function pickPixelRatio(
+  w: number,
+  h: number,
+): {
   pixelRatio: number
   downgraded: boolean
   abort: boolean
 }
 ```
 
-| longEdge | pixelRatio | downgraded | abort | 挙動 |
-|---|---|---|---|---|
-| ≤ 4000 | 2 | false | false | 通常（2x 高品質） |
-| 4001 〜 8000 | 1 | true | false | 1x で続行 + Info Toast |
-| > 8000 | 1 | false | true | 中止 + Error Toast |
+| longEdge     | pixelRatio | downgraded | abort | 挙動                   |
+| ------------ | ---------- | ---------- | ----- | ---------------------- |
+| ≤ 4000       | 2          | false      | false | 通常（2x 高品質）      |
+| 4001 〜 8000 | 1          | true       | false | 1x で続行 + Info Toast |
+| > 8000       | 1          | false      | true  | 中止 + Error Toast     |
 
 ### 4.3 `downloadPng()`（FlowEditor.tsx）
 
@@ -194,14 +198,14 @@ const downloadPng = async (): Promise<void> => {
 
 `src/locales/ja/editor.json` および `src/locales/en/editor.json` の `rightPanel` セクションに追加:
 
-| key | ja | en |
-|---|---|---|
-| `imagePngDownload` | 画像 (PNG) を保存 | Download as PNG |
-| `imagePngGenerating` | 生成中… | Generating… |
-| `imagePngDownloaded` | ✓ 保存しました | ✓ Saved |
-| `imagePngLowRes` | フローが大きいため低解像度（1x）で保存しました | Saved at 1x because the flow is large |
-| `imagePngTooLarge` | フローが大きすぎて画像化できません | Flow is too large to export as image |
-| `imagePngFailed` | 画像の生成に失敗しました | Failed to generate image |
+| key                  | ja                                             | en                                    |
+| -------------------- | ---------------------------------------------- | ------------------------------------- |
+| `imagePngDownload`   | 画像 (PNG) を保存                              | Download as PNG                       |
+| `imagePngGenerating` | 生成中…                                        | Generating…                           |
+| `imagePngDownloaded` | ✓ 保存しました                                 | ✓ Saved                               |
+| `imagePngLowRes`     | フローが大きいため低解像度（1x）で保存しました | Saved at 1x because the flow is large |
+| `imagePngTooLarge`   | フローが大きすぎて画像化できません             | Flow is too large to export as image  |
+| `imagePngFailed`     | 画像の生成に失敗しました                       | Failed to generate image              |
 
 ## 6. Toast 拡張（必要に応じて）
 
@@ -211,13 +215,13 @@ const downloadPng = async (): Promise<void> => {
 
 ## 7. エラーハンドリング
 
-| ケース | 検出 | 表示 |
-|---|---|---|
-| `svgRef.current === null` | 関数冒頭ガード | 何もせず return（通常起きない） |
-| `longEdge > 8000` | `pickPixelRatio` (abort=true) | Error Toast: `imagePngTooLarge` |
-| `longEdge > 4000` | `pickPixelRatio` (downgraded=true) | Info Toast: `imagePngLowRes` |
-| `htmlToImage.toPng` reject | try/catch | Error Toast: `imagePngFailed` |
-| ボタン二度押し | `disabled={pngState === 'generating'}` | UI で抑止 |
+| ケース                     | 検出                                   | 表示                            |
+| -------------------------- | -------------------------------------- | ------------------------------- |
+| `svgRef.current === null`  | 関数冒頭ガード                         | 何もせず return（通常起きない） |
+| `longEdge > 8000`          | `pickPixelRatio` (abort=true)          | Error Toast: `imagePngTooLarge` |
+| `longEdge > 4000`          | `pickPixelRatio` (downgraded=true)     | Info Toast: `imagePngLowRes`    |
+| `htmlToImage.toPng` reject | try/catch                              | Error Toast: `imagePngFailed`   |
+| ボタン二度押し             | `disabled={pngState === 'generating'}` | UI で抑止                       |
 
 ## 8. テスト
 
@@ -226,12 +230,14 @@ const downloadPng = async (): Promise<void> => {
 **`src/features/editor/png-export.test.ts`（新規）**:
 
 `pickPixelRatio`:
+
 - 100×100 → `pixelRatio=2, downgraded=false, abort=false`
 - 5000×3000 → `pixelRatio=1, downgraded=true, abort=false`
 - 9000×100 → `pixelRatio=1, downgraded=false, abort=true`
 - 4000×4000（境界） → `pixelRatio=2, downgraded=false, abort=false`
 
 `buildExportSvg`:
+
 - 戻り値の `node` が `SVGSVGElement` であること
 - `node` の最初の子要素が `<rect fill={T.canvasBg}>` であること
 - `showDotGrid=true` のとき `<defs>` に `<pattern id="flowline-dots">` がある
@@ -240,10 +246,12 @@ const downloadPng = async (): Promise<void> => {
 - `cleanup()` 呼び出しで一時 div が `document.body` から消える
 
 **`src/features/editor/components/RightPanel.test.tsx`（既存 + 拡張）**:
+
 - 「画像 (PNG) を保存」ボタンが表示される
 - props に `onPngDownload`, `pngState` を追加してビルドを通す
 
 **`src/features/editor/FlowEditor.test.tsx`（既存 + 拡張）**:
+
 - `vi.mock('html-to-image', () => ({ toPng: vi.fn().mockResolvedValue('data:image/png;base64,iVBORw0KGgo=') }))`
 - ボタンクリック → `toPng` が `pixelRatio: 2`, `embedCss: true` で呼ばれる
 - ラベル遷移 idle → generating（disabled）→ done → idle（`vi.useFakeTimers` で 1.5 秒進める）
@@ -252,6 +260,7 @@ const downloadPng = async (): Promise<void> => {
 ### 8.2 E2E（Playwright）
 
 **新規ケース（既存 e2e ファイルへの追加で可）**:
+
 - ログイン → 既存サンプルフローを開く → 「画像 (PNG) を保存」クリック
 - `page.waitForEvent('download')` で Download 取得
 - ファイル名が `/^flowline-.*-\d{14}\.png$/` に合致
@@ -262,6 +271,7 @@ const downloadPng = async (): Promise<void> => {
 ## 9. 影響範囲
 
 ### 変更
+
 - `src/features/editor/FlowEditor.tsx`: `downloadPng`、`pngState`、`pngTimerRef` を追加。RightPanel に props 経由で渡す
 - `src/features/editor/components/RightPanel.tsx`: `PanelBtn` 追加、props 拡張（`onPngDownload`, `pngState`）
 - `src/features/editor/components/RightPanel.test.tsx`: 既存テストに props を追加
@@ -271,11 +281,13 @@ const downloadPng = async (): Promise<void> => {
 - `package.json`: `html-to-image` を dependencies に追加
 
 ### 新規
+
 - `src/features/editor/png-export.ts`
 - `src/features/editor/png-export.test.ts`
 - E2E: `tests/e2e/png-export.spec.ts`（または既存 e2e ファイルに 1 ケース追加）
 
 ### 変更なし
+
 - `src/features/shared/SharedFlowViewer.tsx`（スコープ外）
 - 矢印ルーティング、テーマ定数、その他既存ロジック
 

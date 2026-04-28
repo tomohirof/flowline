@@ -56,9 +56,11 @@ vi.mock('../../hooks/useAuth', () => ({
 }))
 
 vi.mock('html-to-image', () => ({
-  toPng: vi.fn().mockResolvedValue(
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-  ),
+  toPng: vi
+    .fn()
+    .mockResolvedValue(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    ),
 }))
 
 beforeEach(() => {
