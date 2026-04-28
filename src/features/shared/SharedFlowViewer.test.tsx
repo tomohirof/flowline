@@ -31,6 +31,27 @@ const mockFlow = {
   arrows: [],
 }
 
+const flowWithArrow = (arrowProps: { dash?: string; color?: string }) => ({
+  ...mockFlow,
+  lanes: [
+    { id: 'lane-1', name: 'Lane 1', colorIndex: 0, position: 0 },
+    { id: 'lane-2', name: 'Lane 2', colorIndex: 1, position: 1 },
+  ],
+  nodes: [
+    { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'From', note: null, orderIndex: 0 },
+    { id: 'node-2', laneId: 'lane-2', rowIndex: 1, label: 'To', note: null, orderIndex: 1 },
+  ],
+  arrows: [
+    {
+      id: 'arrow-1',
+      fromNodeId: 'node-1',
+      toNodeId: 'node-2',
+      comment: null,
+      ...arrowProps,
+    },
+  ],
+})
+
 describe('SharedFlowViewer', () => {
   it('should have position relative on .root for overlay stacking', () => {
     const css = readFileSync(resolve(__dirname, './SharedFlowViewer.module.css'), 'utf-8')
@@ -267,27 +288,6 @@ describe('SharedFlowViewer', () => {
   })
 
   describe('arrow custom styles', () => {
-    const flowWithArrow = (arrowProps: { dash?: string; color?: string }) => ({
-      ...mockFlow,
-      lanes: [
-        { id: 'lane-1', name: 'Lane 1', colorIndex: 0, position: 0 },
-        { id: 'lane-2', name: 'Lane 2', colorIndex: 1, position: 1 },
-      ],
-      nodes: [
-        { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'From', note: null, orderIndex: 0 },
-        { id: 'node-2', laneId: 'lane-2', rowIndex: 1, label: 'To', note: null, orderIndex: 1 },
-      ],
-      arrows: [
-        {
-          id: 'arrow-1',
-          fromNodeId: 'node-1',
-          toNodeId: 'node-2',
-          comment: null,
-          ...arrowProps,
-        },
-      ],
-    })
-
     it('should apply arrow.dash to <path> stroke-dasharray', () => {
       render(<SharedFlowViewer flow={flowWithArrow({ dash: '8,4' })} />)
       const path = document.querySelector('path[stroke-dasharray="8,4"]')
@@ -325,32 +325,20 @@ describe('SharedFlowViewer', () => {
 
     it('should apply node.dash to <rect> stroke-dasharray', () => {
       render(<SharedFlowViewer flow={flowWithNode({ dash: '6,3' })} />)
-      const canvas = screen.getByTestId('shared-flow-canvas')
-      const svg = canvas.querySelector('svg')!
-      const rect = Array.from(svg.querySelectorAll('rect')).find(
-        (r) => r.getAttribute('stroke-dasharray') === '6,3',
-      )
-      expect(rect).not.toBeUndefined()
+      const rect = document.querySelector('rect[stroke-dasharray="6,3"]')
+      expect(rect).not.toBeNull()
     })
 
     it('should apply node.bg to <rect> fill', () => {
       render(<SharedFlowViewer flow={flowWithNode({ bg: '#abcdef' })} />)
-      const canvas = screen.getByTestId('shared-flow-canvas')
-      const svg = canvas.querySelector('svg')!
-      const rect = Array.from(svg.querySelectorAll('rect')).find(
-        (r) => r.getAttribute('fill') === '#abcdef',
-      )
-      expect(rect).not.toBeUndefined()
+      const rect = document.querySelector('rect[fill="#abcdef"]')
+      expect(rect).not.toBeNull()
     })
 
     it('should apply node.strokeColor to <rect> stroke', () => {
       render(<SharedFlowViewer flow={flowWithNode({ strokeColor: '#123456' })} />)
-      const canvas = screen.getByTestId('shared-flow-canvas')
-      const svg = canvas.querySelector('svg')!
-      const rect = Array.from(svg.querySelectorAll('rect')).find(
-        (r) => r.getAttribute('stroke') === '#123456',
-      )
-      expect(rect).not.toBeUndefined()
+      const rect = document.querySelector('rect[stroke="#123456"]')
+      expect(rect).not.toBeNull()
     })
   })
 
@@ -373,32 +361,20 @@ describe('SharedFlowViewer', () => {
 
     it('should apply node.dash to diamond <polygon> stroke-dasharray', () => {
       render(<SharedFlowViewer flow={diamondFlow({ dash: '5,2' })} />)
-      const canvas = screen.getByTestId('shared-flow-canvas')
-      const svg = canvas.querySelector('svg')!
-      const polygon = Array.from(svg.querySelectorAll('polygon')).find(
-        (p) => p.getAttribute('stroke-dasharray') === '5,2',
-      )
-      expect(polygon).not.toBeUndefined()
+      const polygon = document.querySelector('polygon[stroke-dasharray="5,2"]')
+      expect(polygon).not.toBeNull()
     })
 
     it('should apply node.bg to diamond <polygon> fill', () => {
       render(<SharedFlowViewer flow={diamondFlow({ bg: '#fedcba' })} />)
-      const canvas = screen.getByTestId('shared-flow-canvas')
-      const svg = canvas.querySelector('svg')!
-      const polygon = Array.from(svg.querySelectorAll('polygon')).find(
-        (p) => p.getAttribute('fill') === '#fedcba',
-      )
-      expect(polygon).not.toBeUndefined()
+      const polygon = document.querySelector('polygon[fill="#fedcba"]')
+      expect(polygon).not.toBeNull()
     })
 
     it('should apply node.strokeColor to diamond <polygon> stroke', () => {
       render(<SharedFlowViewer flow={diamondFlow({ strokeColor: '#654321' })} />)
-      const canvas = screen.getByTestId('shared-flow-canvas')
-      const svg = canvas.querySelector('svg')!
-      const polygon = Array.from(svg.querySelectorAll('polygon')).find(
-        (p) => p.getAttribute('stroke') === '#654321',
-      )
-      expect(polygon).not.toBeUndefined()
+      const polygon = document.querySelector('polygon[stroke="#654321"]')
+      expect(polygon).not.toBeNull()
     })
   })
 
@@ -417,22 +393,8 @@ describe('SharedFlowViewer', () => {
     })
 
     it('should render arrow <path> with stroke-dasharray none when no custom styles', () => {
-      const flowWithDefaultArrow = {
-        ...mockFlow,
-        lanes: [
-          { id: 'lane-1', name: 'Lane 1', colorIndex: 0, position: 0 },
-          { id: 'lane-2', name: 'Lane 2', colorIndex: 1, position: 1 },
-        ],
-        nodes: [
-          { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'From', note: null, orderIndex: 0 },
-          { id: 'node-2', laneId: 'lane-2', rowIndex: 1, label: 'To', note: null, orderIndex: 1 },
-        ],
-        arrows: [{ id: 'arrow-1', fromNodeId: 'node-1', toNodeId: 'node-2', comment: null }],
-      }
-      render(<SharedFlowViewer flow={flowWithDefaultArrow} />)
-      const canvas = screen.getByTestId('shared-flow-canvas')
-      const svg = canvas.querySelector('svg')!
-      const arrowPath = Array.from(svg.querySelectorAll('path')).find((p) =>
+      render(<SharedFlowViewer flow={flowWithArrow({})} />)
+      const arrowPath = Array.from(document.querySelectorAll('path')).find((p) =>
         p.getAttribute('marker-end')?.startsWith('url(#sm-'),
       )
       expect(arrowPath).not.toBeUndefined()

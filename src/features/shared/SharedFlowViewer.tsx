@@ -308,15 +308,17 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             const c = ct(li, node.rowIndex)
             const tagW = lane.name.length * 7 + 14
             const isDiamond = node.shape === 'diamond'
+            const nodeFillColor = node.bg || T.nodeFill
+            const nodeDash = node.dash || 'none'
             return (
               <g key={`node-${node.id}`}>
                 {isDiamond ? (
                   <polygon
                     points={`${c.x},${c.y - DS} ${c.x + DS},${c.y} ${c.x},${c.y + DS} ${c.x - DS},${c.y}`}
-                    fill={node.bg || T.nodeFill}
+                    fill={nodeFillColor}
                     stroke={node.strokeColor || T.accent}
                     strokeWidth={1.2}
-                    strokeDasharray={node.dash || 'none'}
+                    strokeDasharray={nodeDash}
                     style={{
                       filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
                     }}
@@ -327,10 +329,10 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                     y={c.y - TH / 2}
                     width={TW}
                     height={TH}
-                    fill={node.bg || T.nodeFill}
+                    fill={nodeFillColor}
                     stroke={node.strokeColor || T.nodeStroke}
                     strokeWidth={1.2}
-                    strokeDasharray={node.dash || 'none'}
+                    strokeDasharray={nodeDash}
                     rx={10}
                     style={{
                       filter: `drop-shadow(${T.nodeShadow.split('),')[0]})) drop-shadow(${T.nodeShadow.split('), ')[1] || '0 0 0 transparent'})`,
