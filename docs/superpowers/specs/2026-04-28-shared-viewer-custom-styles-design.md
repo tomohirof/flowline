@@ -53,27 +53,27 @@ DB → api/lib/flow-transform.ts → SharedFlowViewer の props
 
 ### 1. Diamond ノード (現 L313-322)
 
-| プロパティ | 現状 | 修正後 |
-|---|---|---|
-| `fill` | `T.nodeFill` | `node.bg \|\| T.nodeFill` |
-| `stroke` | `T.accent` | `node.strokeColor \|\| T.accent` |
-| `strokeDasharray` | （未設定） | `node.dash \|\| 'none'` |
+| プロパティ        | 現状         | 修正後                           |
+| ----------------- | ------------ | -------------------------------- |
+| `fill`            | `T.nodeFill` | `node.bg \|\| T.nodeFill`        |
+| `stroke`          | `T.accent`   | `node.strokeColor \|\| T.accent` |
+| `strokeDasharray` | （未設定）   | `node.dash \|\| 'none'`          |
 
 ### 2. Rect ノード (現 L324-336)
 
-| プロパティ | 現状 | 修正後 |
-|---|---|---|
-| `fill` | `T.nodeFill` | `node.bg \|\| T.nodeFill` |
-| `stroke` | `T.nodeStroke` | `node.strokeColor \|\| T.nodeStroke` |
-| `strokeDasharray` | （未設定） | `node.dash \|\| 'none'` |
+| プロパティ        | 現状           | 修正後                               |
+| ----------------- | -------------- | ------------------------------------ |
+| `fill`            | `T.nodeFill`   | `node.bg \|\| T.nodeFill`            |
+| `stroke`          | `T.nodeStroke` | `node.strokeColor \|\| T.nodeStroke` |
+| `strokeDasharray` | （未設定）     | `node.dash \|\| 'none'`              |
 
 ### 3. Arrow path および marker (現 L460, L463-469)
 
-| 要素 | プロパティ | 現状 | 修正後 |
-|---|---|---|---|
-| `<marker>` 内 polygon | `fill` | `T.arrowColor` | `arrow.color \|\| T.arrowColor` |
-| `<path>` | `stroke` | `T.arrowColor` | `arrow.color \|\| T.arrowColor` |
-| `<path>` | `strokeDasharray` | （未設定） | `arrow.dash \|\| 'none'` |
+| 要素                  | プロパティ        | 現状           | 修正後                          |
+| --------------------- | ----------------- | -------------- | ------------------------------- |
+| `<marker>` 内 polygon | `fill`            | `T.arrowColor` | `arrow.color \|\| T.arrowColor` |
+| `<path>`              | `stroke`          | `T.arrowColor` | `arrow.color \|\| T.arrowColor` |
+| `<path>`              | `strokeDasharray` | （未設定）     | `arrow.dash \|\| 'none'`        |
 
 矢印先端マーカーの色も本体と揃える。これによりエディタの挙動と整合し、「線の色は変わったが矢印先端だけテーマカラーのまま」という見た目の不整合を防ぐ。
 
@@ -85,18 +85,19 @@ DB → api/lib/flow-transform.ts → SharedFlowViewer の props
 
 既存 `src/features/shared/SharedFlowViewer.test.tsx` に以下のテストを追加する。各 SVG 要素は属性ベースのクエリ（例: `document.querySelector('rect[stroke-dasharray="8,4"]')`）または `data-testid` で取得する。
 
-| # | 検証内容 |
-|---|---|
-| 1 | `arrow.dash` が `<path>` の `stroke-dasharray` に反映される |
-| 2 | `arrow.color` が `<path>` の `stroke` に反映される |
-| 3 | `arrow.color` が `<marker>` 内 polygon の `fill` に反映される |
-| 4 | `node.dash` が `<rect>` の `stroke-dasharray` に反映される |
-| 5 | `node.bg` が `<rect>` の `fill` に反映される |
-| 6 | `node.strokeColor` が `<rect>` の `stroke` に反映される |
-| 7 | diamond ノードでも `bg` / `strokeColor` / `dash` が反映される |
-| 8 | スタイル未指定時はテーマのデフォルト値で描画される（既存挙動の回帰防止） |
+| #   | 検証内容                                                                 |
+| --- | ------------------------------------------------------------------------ |
+| 1   | `arrow.dash` が `<path>` の `stroke-dasharray` に反映される              |
+| 2   | `arrow.color` が `<path>` の `stroke` に反映される                       |
+| 3   | `arrow.color` が `<marker>` 内 polygon の `fill` に反映される            |
+| 4   | `node.dash` が `<rect>` の `stroke-dasharray` に反映される               |
+| 5   | `node.bg` が `<rect>` の `fill` に反映される                             |
+| 6   | `node.strokeColor` が `<rect>` の `stroke` に反映される                  |
+| 7   | diamond ノードでも `bg` / `strokeColor` / `dash` が反映される            |
+| 8   | スタイル未指定時はテーマのデフォルト値で描画される（既存挙動の回帰防止） |
 
 実装フロー：
+
 1. **Red**: 上記テストを追加して失敗を確認
 2. **Green**: `SharedFlowViewer.tsx` の3箇所を修正してテストを通す
 3. **Refactor**: 必要に応じて整理

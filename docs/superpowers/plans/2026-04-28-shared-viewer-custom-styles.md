@@ -16,10 +16,10 @@
 
 ## File Structure
 
-| ファイル | 役割 | 変更種別 |
-|---|---|---|
-| `src/features/shared/SharedFlowViewer.tsx` | 共有ビューの SVG 描画 | 3箇所修正 |
-| `src/features/shared/SharedFlowViewer.test.tsx` | 単体テスト | テスト追加 |
+| ファイル                                        | 役割                  | 変更種別   |
+| ----------------------------------------------- | --------------------- | ---------- |
+| `src/features/shared/SharedFlowViewer.tsx`      | 共有ビューの SVG 描画 | 3箇所修正  |
+| `src/features/shared/SharedFlowViewer.test.tsx` | 単体テスト            | テスト追加 |
 
 型定義 (`src/features/editor/types.ts`) は既に `bg?`/`dash?`/`strokeColor?`/`color?` を持っているため変更不要。
 
@@ -59,6 +59,7 @@ cat ~/.claude/rules/testing.md
 ## Task 1: 矢印スタイルのテスト追加（Red）
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.test.tsx`
 
 - [ ] **Step 1: テストを追加**
@@ -124,6 +125,7 @@ git commit -m "test(#312): add failing tests for arrow custom styles in shared v
 ## Task 2: 矢印描画にカスタムスタイル適用（Green）
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`（現 L451-469 周辺、`{/* Arrows */}` ブロック）
 
 - [ ] **Step 1: 矢印 marker と path を修正**
@@ -168,6 +170,7 @@ git commit -m "test(#312): add failing tests for arrow custom styles in shared v
 ```
 
 実際の編集ポイント：
+
 - L460 `<polygon points="0 0.5, 9 4, 0 7.5" fill={T.arrowColor} />` → `fill={ac}`
 - L465 `stroke={T.arrowColor}` → `stroke={ac}`
 - L466-467 の間に `strokeDasharray={dashArr}` を追加
@@ -201,6 +204,7 @@ git commit -m "fix(#312): apply arrow.color/dash to shared viewer arrow renderin
 ## Task 3: rect ノードスタイルのテスト追加（Red）
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.test.tsx`
 
 - [ ] **Step 1: テストを追加**
@@ -264,6 +268,7 @@ git commit -m "test(#312): add failing tests for rect node custom styles in shar
 ## Task 4: rect ノード描画にカスタムスタイル適用（Green）
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`（現 L324-336）
 
 - [ ] **Step 1: rect ノード描画を修正**
@@ -290,6 +295,7 @@ git commit -m "test(#312): add failing tests for rect node custom styles in shar
 ```
 
 変更点：
+
 - L329 `fill={T.nodeFill}` → `fill={node.bg || T.nodeFill}`
 - L330 `stroke={T.nodeStroke}` → `stroke={node.strokeColor || T.nodeStroke}`
 - L331 と L332 の間に `strokeDasharray={node.dash || 'none'}` を追加
@@ -322,6 +328,7 @@ git commit -m "fix(#312): apply node.bg/strokeColor/dash to shared viewer rect r
 ## Task 5: diamond ノードスタイルのテスト追加（Red）
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.test.tsx`
 
 - [ ] **Step 1: テストを追加**
@@ -386,6 +393,7 @@ git commit -m "test(#312): add failing tests for diamond node custom styles in s
 ## Task 6: diamond ノード描画にカスタムスタイル適用（Green）
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`（現 L313-322）
 
 - [ ] **Step 1: diamond ノード描画を修正**
@@ -408,6 +416,7 @@ git commit -m "test(#312): add failing tests for diamond node custom styles in s
 ```
 
 変更点：
+
 - L316 `fill={T.nodeFill}` → `fill={node.bg || T.nodeFill}`
 - L317 `stroke={T.accent}` → `stroke={node.strokeColor || T.accent}`
 - L318 と L319 の間に `strokeDasharray={node.dash || 'none'}` を追加
@@ -440,6 +449,7 @@ git commit -m "fix(#312): apply node.bg/strokeColor/dash to shared viewer diamon
 ## Task 7: デフォルト値 fallback の回帰防止テスト
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.test.tsx`
 
 - [ ] **Step 1: テストを追加**
@@ -514,6 +524,7 @@ npm run dev
 - [ ] **Step 2: テスト用フローを準備**
 
 エディタで以下を含むフローを作成し共有 URL を発行：
+
 - 破線（dashed）の矢印
 - カスタム色の矢印
 - カスタム背景色のノード
@@ -604,6 +615,7 @@ gh pr comment --body '@claude PRをレビューして。
 - [ ] **Step 1: レビューループ（最大10回）**
 
 CLAUDE.md の Step 9 に従う。`claude` のコメントのみで判定。
+
 - `[A:要修正]` / `[B:条件つき承認]`: 修正 → push → CI pass → 再レビュー依頼
 - `[C:承認OK]`: Merge へ
 
