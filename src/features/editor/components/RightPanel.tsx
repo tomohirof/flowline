@@ -63,6 +63,8 @@ interface RightPanelProps {
   onShapeChange?: (taskKey: string, shape?: 'diamond') => void
   exportMermaid: () => string
   downloadJSON: () => void
+  downloadPng: () => void
+  pngState: 'idle' | 'generating' | 'done'
 }
 
 export const RightPanel = ({
@@ -97,6 +99,8 @@ export const RightPanel = ({
   onShapeChange,
   exportMermaid,
   downloadJSON,
+  downloadPng,
+  pngState,
 }: RightPanelProps): ReactNode => {
   const { t } = useTranslation('editor')
   const T: Theme = THEMES[themeId]
@@ -812,6 +816,19 @@ export const RightPanel = ({
             setJsonDownloaded(true)
             jsonTimerRef.current = setTimeout(() => setJsonDownloaded(false), 1500)
           }}
+          full
+        />
+        <PanelBtn
+          label={
+            pngState === 'generating'
+              ? t('rightPanel.imagePngGenerating')
+              : pngState === 'done'
+                ? t('rightPanel.imagePngDownloaded')
+                : t('rightPanel.imagePngDownload')
+          }
+          color={T.accent}
+          disabled={pngState === 'generating'}
+          onClick={downloadPng}
           full
         />
       </PanelSection>

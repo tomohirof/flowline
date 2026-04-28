@@ -30,6 +30,8 @@ import type {
 } from './types'
 import { parseNote, serializeMemo, MEMO_W, measureMemoHeight } from './memo-utils'
 import { PALETTES, THEMES } from './theme-constants'
+import * as htmlToImage from 'html-to-image'
+import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
 import { DS } from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
@@ -364,10 +366,13 @@ export default function FlowEditor({
   const [slidingLaneId, setSlidingLaneId] = useState<string | null>(null)
   const slidingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const suggestedLanesRef = useRef<Set<string>>(new Set())
+  const [pngState, setPngState] = useState<'idle' | 'generating' | 'done'>('idle')
+  const pngTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const {
     toasts,
     addConfirmToast,
     addSuccessToast,
+    addInfoToast,
     addErrorToast,
     dismissToast,
     dismissToastByType,
@@ -1492,6 +1497,52 @@ export default function FlowEditor({
     a.click()
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(url), 100)
+  }
+
+  const downloadPng = async (): Promise<void> => {
+    if (!svgRef.current) return
+    const decision = pickPixelRatio(svgW, svgH)
+    if (decision.abort) {
+      addErrorToast({ message: t('rightPanel.imagePngTooLarge') })
+      return
+    }
+    setPngState('generating')
+    const T = THEMES[themeId]
+    const { node, cleanup } = buildExportSvg(
+      svgRef.current,
+      T.canvasBg,
+      T.dotGrid,
+      svgW,
+      svgH,
+      editorSettings.showDotGrid,
+    )
+    try {
+      const dataUrl = await htmlToImage.toPng(node as unknown as HTMLElement, {
+        pixelRatio: decision.pixelRatio,
+      })
+      const blob = await (await fetch(dataUrl)).blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const sanitized = title.replace(/[^a-zA-Z0-9぀-鿿_-]/g, '_').slice(0, 50)
+      const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
+      a.href = url
+      a.download = `flowline-${sanitized}-${ts}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+      if (decision.downgraded) {
+        addInfoToast({ message: t('rightPanel.imagePngLowRes') })
+      }
+      setPngState('done')
+      if (pngTimerRef.current) clearTimeout(pngTimerRef.current)
+      pngTimerRef.current = setTimeout(() => setPngState('idle'), 1500)
+    } catch {
+      addErrorToast({ message: t('rightPanel.imagePngFailed') })
+      setPngState('idle')
+    } finally {
+      cleanup()
+    }
   }
 
   const bgClick = (): void => {
@@ -3515,6 +3566,8 @@ export default function FlowEditor({
             }}
             exportMermaid={exportMermaid}
             downloadJSON={downloadJSON}
+            downloadPng={downloadPng}
+            pngState={pngState}
           />
         </div>
       </div>
