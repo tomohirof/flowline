@@ -427,15 +427,13 @@ describe('SharedFlowViewer', () => {
           { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'From', note: null, orderIndex: 0 },
           { id: 'node-2', laneId: 'lane-2', rowIndex: 1, label: 'To', note: null, orderIndex: 1 },
         ],
-        arrows: [
-          { id: 'arrow-1', fromNodeId: 'node-1', toNodeId: 'node-2', comment: null },
-        ],
+        arrows: [{ id: 'arrow-1', fromNodeId: 'node-1', toNodeId: 'node-2', comment: null }],
       }
       render(<SharedFlowViewer flow={flowWithDefaultArrow} />)
       const canvas = screen.getByTestId('shared-flow-canvas')
       const svg = canvas.querySelector('svg')!
-      const arrowPath = Array.from(svg.querySelectorAll('path')).find(
-        (p) => p.getAttribute('marker-end')?.startsWith('url(#sm-'),
+      const arrowPath = Array.from(svg.querySelectorAll('path')).find((p) =>
+        p.getAttribute('marker-end')?.startsWith('url(#sm-'),
       )
       expect(arrowPath).not.toBeUndefined()
       expect(arrowPath!.getAttribute('stroke-dasharray')).toBe('none')
