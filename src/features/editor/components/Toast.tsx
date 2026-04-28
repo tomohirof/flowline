@@ -18,9 +18,21 @@ export function ToastList({ toasts, onDismiss, onConfirm }: ToastListProps) {
         <div key={toast.id} data-testid={`toast-${toast.type}`} className={styles.toast}>
           <div className={styles.content}>
             <div
-              className={`${styles.icon}${toast.type === 'error' ? ` ${styles.iconError}` : ''}`}
+              className={`${styles.icon}${
+                toast.type === 'error'
+                  ? ` ${styles.iconError}`
+                  : toast.type === 'info'
+                    ? ` ${styles.iconInfo}`
+                    : ''
+              }`}
             >
-              {toast.type === 'confirm' ? '↻' : toast.type === 'error' ? '⚠' : '✓'}
+              {toast.type === 'confirm'
+                ? '↻'
+                : toast.type === 'error'
+                  ? '⚠'
+                  : toast.type === 'info'
+                    ? 'ℹ'
+                    : '✓'}
             </div>
             <div className={styles.body}>
               <div className={styles.message}>{toast.message}</div>

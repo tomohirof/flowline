@@ -153,4 +153,28 @@ describe('ToastList', () => {
     expect(container.querySelector('[data-testid="toast-close-btn"]')).toBeTruthy()
     expect(container.querySelector('[data-testid="toast-retry-btn"]')).toBeNull()
   })
+
+  // Info toast tests
+  it('renders an info toast with the ℹ icon', () => {
+    const toasts: ToastData[] = [{ id: 'i1', type: 'info', message: 'Saved at 1x' }]
+    const { container } = render(
+      <ToastList toasts={toasts} onDismiss={vi.fn()} onConfirm={vi.fn()} />,
+    )
+    const toast = container.querySelector('[data-testid="toast-info"]')
+    expect(toast).toBeTruthy()
+    expect(toast!.textContent).toContain('Saved at 1x')
+    expect(toast!.textContent).toContain('ℹ')
+  })
+
+  it('should not render action buttons on info toast', () => {
+    const toasts: ToastData[] = [{ id: 'i1', type: 'info', message: 'Low resolution' }]
+    const { container } = render(
+      <ToastList toasts={toasts} onDismiss={vi.fn()} onConfirm={vi.fn()} />,
+    )
+    expect(container.querySelector('[data-testid="toast-info"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="toast-skip-btn"]')).toBeNull()
+    expect(container.querySelector('[data-testid="toast-organize-btn"]')).toBeNull()
+    expect(container.querySelector('[data-testid="toast-close-btn"]')).toBeNull()
+    expect(container.querySelector('[data-testid="toast-retry-btn"]')).toBeNull()
+  })
 })

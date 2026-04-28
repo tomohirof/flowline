@@ -258,4 +258,28 @@ describe('useToast', () => {
     expect(types).toContain('confirm')
     expect(types).toContain('error')
   })
+
+  // --- Info toast tests ---
+
+  it('adds an info-typed toast', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.addInfoToast({ message: 'Saved at 1x' })
+    })
+    expect(result.current.toasts).toHaveLength(1)
+    expect(result.current.toasts[0].type).toBe('info')
+    expect(result.current.toasts[0].message).toBe('Saved at 1x')
+  })
+
+  it('auto-dismisses info toasts after 3 seconds (same as success)', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.addInfoToast({ message: 'hello' })
+    })
+    expect(result.current.toasts).toHaveLength(1)
+    act(() => {
+      vi.advanceTimersByTime(3100)
+    })
+    expect(result.current.toasts).toHaveLength(0)
+  })
 })

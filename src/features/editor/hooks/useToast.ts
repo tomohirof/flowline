@@ -3,7 +3,7 @@ import { uid } from '../../../lib/uid'
 
 export interface ToastData {
   id: string
-  type: 'confirm' | 'success' | 'error'
+  type: 'confirm' | 'success' | 'error' | 'info'
   message: string
   detail?: string
   onConfirm?: () => void
@@ -17,20 +17,20 @@ export interface ToastData {
 export function useToast() {
   const [toasts, setToasts] = useState<ToastData[]>([])
 
-  // Auto-dismiss success toasts after 3 seconds
-  const successToastIds = toasts
-    .filter((t) => t.type === 'success')
+  // Auto-dismiss success and info toasts after 3 seconds
+  const autoDismissIds = toasts
+    .filter((t) => t.type === 'success' || t.type === 'info')
     .map((t) => t.id)
     .join(',')
 
   useEffect(() => {
-    if (!successToastIds) return
-    const ids = new Set(successToastIds.split(','))
+    if (!autoDismissIds) return
+    const ids = new Set(autoDismissIds.split(','))
     const timer = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => !ids.has(t.id)))
     }, 3000)
     return () => clearTimeout(timer)
-  }, [successToastIds])
+  }, [autoDismissIds])
 
   const addConfirmToast = useCallback(
     (toast: Omit<ToastData, 'id' | 'type'> & { crossingCount?: number }): void => {
@@ -71,6 +71,10 @@ export function useToast() {
     setToasts((prev) => [...prev, { ...toast, id: uid(), type: 'success' as const }])
   }, [])
 
+  const addInfoToast = useCallback((toast: Pick<ToastData, 'message' | 'detail'>): void => {
+    setToasts((prev) => [...prev, { ...toast, id: uid(), type: 'info' as const }])
+  }, [])
+
   const addErrorToast = useCallback(
     (toast: Pick<ToastData, 'message' | 'detail' | 'onRetry'>): void => {
       setToasts((prev) => [
@@ -85,6 +89,7 @@ export function useToast() {
     toasts,
     addConfirmToast,
     addSuccessToast,
+    addInfoToast,
     addErrorToast,
     dismissToast,
     dismissToastByType,
