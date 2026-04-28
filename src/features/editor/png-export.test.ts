@@ -109,7 +109,7 @@ describe('buildExportSvg', () => {
 
     cleanup()
 
-    expect(node.parentElement).toBeNull()
+    expect(document.body.contains(node)).toBe(false)
     expect(document.body.contains(parent!)).toBe(false)
   })
 })

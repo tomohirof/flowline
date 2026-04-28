@@ -1,6 +1,6 @@
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
-export interface BuildExportSvgResult {
+interface BuildExportSvgResult {
   node: SVGSVGElement
   cleanup: () => void
 }
@@ -71,14 +71,13 @@ export function buildExportSvg(
     node: clone,
     cleanup: () => {
       if (host.parentNode) host.parentNode.removeChild(host)
-      if (clone.parentNode) clone.parentNode.removeChild(clone)
     },
   }
 }
 
 const MAX_LONG_EDGE = 8000
 
-export interface PixelRatioDecision {
+interface PixelRatioDecision {
   pixelRatio: number
   downgraded: boolean
   abort: boolean

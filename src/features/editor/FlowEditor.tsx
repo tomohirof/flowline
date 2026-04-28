@@ -30,7 +30,7 @@ import type {
 } from './types'
 import { parseNote, serializeMemo, MEMO_W, measureMemoHeight } from './memo-utils'
 import { PALETTES, THEMES } from './theme-constants'
-import * as htmlToImage from 'html-to-image'
+import { toBlob } from 'html-to-image'
 import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
 import { DS } from '../../lib/arrow-routing'
@@ -499,6 +499,12 @@ export default function FlowEditor({
   useEffect(() => {
     return () => {
       if (slidingTimerRef.current) clearTimeout(slidingTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (pngTimerRef.current) clearTimeout(pngTimerRef.current)
     }
   }, [])
 
@@ -1517,10 +1523,11 @@ export default function FlowEditor({
       editorSettings.showDotGrid,
     )
     try {
-      const dataUrl = await htmlToImage.toPng(node as unknown as HTMLElement, {
+      // html-to-image's toBlob is typed for HTMLElement but supports SVG at runtime
+      const blob = await toBlob(node as unknown as HTMLElement, {
         pixelRatio: decision.pixelRatio,
       })
-      const blob = await (await fetch(dataUrl)).blob()
+      if (!blob) throw new Error('toBlob returned null')
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       const sanitized = title.replace(/[^a-zA-Z0-9぀-鿿_-]/g, '_').slice(0, 50)

@@ -56,11 +56,7 @@ vi.mock('../../hooks/useAuth', () => ({
 }))
 
 vi.mock('html-to-image', () => ({
-  toPng: vi
-    .fn()
-    .mockResolvedValue(
-      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-    ),
+  toBlob: vi.fn().mockResolvedValue(new Blob(['fake'], { type: 'image/png' })),
 }))
 
 beforeEach(() => {
@@ -2833,7 +2829,7 @@ describe('PNG export (#310)', () => {
     expect(btn).toBeInTheDocument()
   })
 
-  it('should call htmlToImage.toPng when the PNG button is clicked', async () => {
+  it('should call htmlToImage.toBlob when the PNG button is clicked', async () => {
     const flow = createMinimalFlow()
     render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
@@ -2850,7 +2846,7 @@ describe('PNG export (#310)', () => {
 
       const htmlToImage = await import('html-to-image')
       await waitFor(() => {
-        expect(htmlToImage.toPng).toHaveBeenCalled()
+        expect(htmlToImage.toBlob).toHaveBeenCalled()
       })
     } finally {
       URL.createObjectURL = origCreateObjectURL
