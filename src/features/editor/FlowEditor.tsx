@@ -2722,28 +2722,28 @@ export default function FlowEditor({
                   <defs>
                     <marker
                       id={`m-${arrow.id}`}
-                      markerWidth="9"
-                      markerHeight="8"
-                      refX="8"
-                      refY="4"
+                      markerWidth="7"
+                      markerHeight="6"
+                      refX="6"
+                      refY="3"
                       orient="auto"
                     >
                       <polygon
-                        points="0 0.5, 9 4, 0 7.5"
+                        points="0 0.5, 7 3, 0 5.5"
                         fill={isSel ? arrow.color || T.accent : ac}
                       />
                     </marker>
                     {arrow.bidirectional && (
                       <marker
                         id={`m-start-${arrow.id}`}
-                        markerWidth="9"
-                        markerHeight="8"
-                        refX="8"
-                        refY="4"
+                        markerWidth="7"
+                        markerHeight="6"
+                        refX="6"
+                        refY="3"
                         orient="auto-start-reverse"
                       >
                         <polygon
-                          points="0 0.5, 9 4, 0 7.5"
+                          points="0 0.5, 7 3, 0 5.5"
                           fill={isSel ? arrow.color || T.accent : ac}
                         />
                       </marker>
@@ -2949,13 +2949,13 @@ export default function FlowEditor({
               <defs key={`repair-preview-def-${i}`}>
                 <marker
                   id={`m-preview-${i}`}
-                  markerWidth="9"
-                  markerHeight="8"
-                  refX="8"
-                  refY="4"
+                  markerWidth="7"
+                  markerHeight="6"
+                  refX="6"
+                  refY="3"
                   orient="auto"
                 >
-                  <polygon points="0 0.5, 9 4, 0 7.5" fill={T.accent} opacity={0.6} />
+                  <polygon points="0 0.5, 7 3, 0 5.5" fill={T.accent} opacity={0.6} />
                 </marker>
               </defs>
             ))}

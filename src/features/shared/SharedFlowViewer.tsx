@@ -491,24 +491,24 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                 <defs>
                   <marker
                     id={`sm-${arrow.id}`}
-                    markerWidth="9"
-                    markerHeight="8"
-                    refX="8"
-                    refY="4"
+                    markerWidth="7"
+                    markerHeight="6"
+                    refX="6"
+                    refY="3"
                     orient="auto"
                   >
-                    <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
+                    <polygon points="0 0.5, 7 3, 0 5.5" fill={ac} />
                   </marker>
                   {arrow.bidirectional && (
                     <marker
                       id={`sm-start-${arrow.id}`}
-                      markerWidth="9"
-                      markerHeight="8"
-                      refX="8"
-                      refY="4"
+                      markerWidth="7"
+                      markerHeight="6"
+                      refX="6"
+                      refY="3"
                       orient="auto-start-reverse"
                     >
-                      <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
+                      <polygon points="0 0.5, 7 3, 0 5.5" fill={ac} />
                     </marker>
                   )}
                 </defs>
