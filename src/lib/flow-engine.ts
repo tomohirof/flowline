@@ -27,6 +27,9 @@ interface ArrowConfig {
 /**
  * ノード中心座標とサイズ設定から、矢印のSVGパスを計算する。
  * exitPt → entryPt → buildArrowPath の順に呼び出す薄いラッパー。
+ *
+ * @param obstacles - 同一行上の障害ノード bbox 配列。省略時または空配列時は通常パスを返す。
+ *   水平直線パスの経路上に bbox がある場合、自動的に迂回パスを生成する。
  */
 export function calcArrowPath(
   from: NodePos,
