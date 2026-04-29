@@ -499,6 +499,18 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   >
                     <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
                   </marker>
+                  {arrow.bidirectional && (
+                    <marker
+                      id={`sm-start-${arrow.id}`}
+                      markerWidth="9"
+                      markerHeight="8"
+                      refX="8"
+                      refY="4"
+                      orient="auto-start-reverse"
+                    >
+                      <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
+                    </marker>
+                  )}
                 </defs>
                 <path
                   d={d}
@@ -506,6 +518,9 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   strokeWidth={2}
                   strokeDasharray={dashArr}
                   fill="none"
+                  markerStart={
+                    arrow.bidirectional ? `url(#sm-start-${arrow.id})` : undefined
+                  }
                   markerEnd={`url(#sm-${arrow.id})`}
                 />
                 {arrow.comment && (
