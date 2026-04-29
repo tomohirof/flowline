@@ -14,15 +14,15 @@
 
 ## File Structure
 
-| Path | 操作 | 責務 |
-|---|---|---|
-| `migrations/0012_lane_groups.sql` | Create | `lanes` に `group_id`, `group_role` 追加 + 部分インデックス |
-| `tests/helpers/mock-d1.ts` | Modify | `migrationFiles` 配列に `'0012_lane_groups.sql'` 追加 |
-| `tests/db/migration.test.ts` | Modify | 0012 マイグレーション検証ケース追加 |
-| `api/lib/flow-transform.ts` | Modify | `LaneRow` に `group_id`/`group_role` 追加、`toLane()` でマップ |
-| `api/lib/flow-transform.test.ts` | Modify | `toLane` のユニットテスト追加 |
-| `api/routes/flows.ts` | Modify | POST `/` と PUT `/:id` の lane INSERT に 2 カラム bind |
-| `tests/api/routes/flows.test.ts` | Modify | ラウンドトリップ（POST→GET / PUT→GET）テスト追加 |
+| Path                              | 操作   | 責務                                                           |
+| --------------------------------- | ------ | -------------------------------------------------------------- |
+| `migrations/0012_lane_groups.sql` | Create | `lanes` に `group_id`, `group_role` 追加 + 部分インデックス    |
+| `tests/helpers/mock-d1.ts`        | Modify | `migrationFiles` 配列に `'0012_lane_groups.sql'` 追加          |
+| `tests/db/migration.test.ts`      | Modify | 0012 マイグレーション検証ケース追加                            |
+| `api/lib/flow-transform.ts`       | Modify | `LaneRow` に `group_id`/`group_role` 追加、`toLane()` でマップ |
+| `api/lib/flow-transform.test.ts`  | Modify | `toLane` のユニットテスト追加                                  |
+| `api/routes/flows.ts`             | Modify | POST `/` と PUT `/:id` の lane INSERT に 2 カラム bind         |
+| `tests/api/routes/flows.test.ts`  | Modify | ラウンドトリップ（POST→GET / PUT→GET）テスト追加               |
 
 E2E は Playwright MCP による手動検証（CLAUDE.md ワークフロー Step 6）として扱う。Playwright 自動テスト基盤は本リポジトリに存在しないため、新規導入は本タスクのスコープ外。
 
@@ -57,6 +57,7 @@ gh issue edit 309 --add-label "作業開始" || gh label create "作業開始" -
 ### Task 1: ワークツリー作成
 
 **Files:**
+
 - Create: `.worktrees/fix/lane-group-persistence-309/` (worktree)
 
 - [ ] **Step 1.1: ローカル main を最新化**
@@ -119,6 +120,7 @@ git commit -m "docs(#309): add design and plan for lane group persistence"
 ### Task 2: マイグレーション作成（Red）
 
 **Files:**
+
 - Create: `migrations/0012_lane_groups.sql`
 - Modify: `tests/helpers/mock-d1.ts`
 - Modify: `tests/db/migration.test.ts`
@@ -128,73 +130,71 @@ git commit -m "docs(#309): add design and plan for lane group persistence"
 `tests/db/migration.test.ts` の末尾、`it('should have created_at and updated_at on all tables', ...)` の前に以下を追加:
 
 ```ts
-  it('should add group_id and group_role to lanes (0012)', () => {
-    const db = new Database(':memory:')
-    db.pragma('foreign_keys = ON')
-    const files = [
-      '0001_initial.sql',
-      '0002_node_arrow_styles.sql',
-      '0003_user_settings.sql',
-      '0004_email_verification.sql',
-      '0005_soft_delete.sql',
-      '0006_ai_admin.sql',
-      '0007_node_shape.sql',
-      '0008_projects.sql',
-      '0009_invitation_codes.sql',
-      '0010_project_members.sql',
-      '0011_arrow_bidirectional.sql',
-      '0012_lane_groups.sql',
-    ]
-    for (const f of files) {
-      const sql = readFileSync(resolve(__dirname, '../../migrations/', f), 'utf-8')
-      for (const stmt of sql.split(';').filter((s) => s.trim())) {
-        db.exec(stmt + ';')
-      }
+it('should add group_id and group_role to lanes (0012)', () => {
+  const db = new Database(':memory:')
+  db.pragma('foreign_keys = ON')
+  const files = [
+    '0001_initial.sql',
+    '0002_node_arrow_styles.sql',
+    '0003_user_settings.sql',
+    '0004_email_verification.sql',
+    '0005_soft_delete.sql',
+    '0006_ai_admin.sql',
+    '0007_node_shape.sql',
+    '0008_projects.sql',
+    '0009_invitation_codes.sql',
+    '0010_project_members.sql',
+    '0011_arrow_bidirectional.sql',
+    '0012_lane_groups.sql',
+  ]
+  for (const f of files) {
+    const sql = readFileSync(resolve(__dirname, '../../migrations/', f), 'utf-8')
+    for (const stmt of sql.split(';').filter((s) => s.trim())) {
+      db.exec(stmt + ';')
     }
-    const cols = db.prepare('PRAGMA table_info(lanes)').all() as Array<{
-      name: string
-      type: string
-      notnull: number
-    }>
-    const groupId = cols.find((c) => c.name === 'group_id')
-    const groupRole = cols.find((c) => c.name === 'group_role')
-    expect(groupId).toBeDefined()
-    expect(groupId?.type).toBe('TEXT')
-    expect(groupId?.notnull).toBe(0)
-    expect(groupRole).toBeDefined()
-    expect(groupRole?.type).toBe('TEXT')
-    expect(groupRole?.notnull).toBe(0)
+  }
+  const cols = db.prepare('PRAGMA table_info(lanes)').all() as Array<{
+    name: string
+    type: string
+    notnull: number
+  }>
+  const groupId = cols.find((c) => c.name === 'group_id')
+  const groupRole = cols.find((c) => c.name === 'group_role')
+  expect(groupId).toBeDefined()
+  expect(groupId?.type).toBe('TEXT')
+  expect(groupId?.notnull).toBe(0)
+  expect(groupRole).toBeDefined()
+  expect(groupRole?.type).toBe('TEXT')
+  expect(groupRole?.notnull).toBe(0)
 
-    db.prepare(
-      "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'g@test.com', 'h', 'U')",
-    ).run()
-    db.prepare("INSERT INTO flows (id, user_id) VALUES ('f1', 'u1')").run()
+  db.prepare(
+    "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'g@test.com', 'h', 'U')",
+  ).run()
+  db.prepare("INSERT INTO flows (id, user_id) VALUES ('f1', 'u1')").run()
 
-    db.prepare(
-      "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l1', 'f1', 'L1', 0, 'g1', 'parent')",
-    ).run()
-    db.prepare(
-      "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l2', 'f1', 'L2', 1, 'g1', 'sub')",
-    ).run()
-    db.prepare(
-      "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l3', 'f1', 'L3', 2)",
-    ).run()
+  db.prepare(
+    "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l1', 'f1', 'L1', 0, 'g1', 'parent')",
+  ).run()
+  db.prepare(
+    "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l2', 'f1', 'L2', 1, 'g1', 'sub')",
+  ).run()
+  db.prepare("INSERT INTO lanes (id, flow_id, name, position) VALUES ('l3', 'f1', 'L3', 2)").run()
 
-    expect(() =>
-      db
-        .prepare(
-          "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l_bad', 'f1', 'Bad', 3, 'g2', 'invalid')",
-        )
-        .run(),
-    ).toThrow()
+  expect(() =>
+    db
+      .prepare(
+        "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l_bad', 'f1', 'Bad', 3, 'g2', 'invalid')",
+      )
+      .run(),
+  ).toThrow()
 
-    const indexes = db
-      .prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'lanes'")
-      .all() as Array<{ name: string }>
-    expect(indexes.map((i) => i.name)).toContain('idx_lanes_group_id')
+  const indexes = db
+    .prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'lanes'")
+    .all() as Array<{ name: string }>
+  expect(indexes.map((i) => i.name)).toContain('idx_lanes_group_id')
 
-    db.close()
-  })
+  db.close()
+})
 ```
 
 - [ ] **Step 2.2: テスト失敗を確認**
@@ -221,20 +221,20 @@ CREATE INDEX IF NOT EXISTS idx_lanes_group_id ON lanes(group_id) WHERE group_id 
 `tests/helpers/mock-d1.ts` の `migrationFiles` 配列の末尾に追加:
 
 ```ts
-  const migrationFiles = [
-    '0001_initial.sql',
-    '0002_node_arrow_styles.sql',
-    '0003_user_settings.sql',
-    '0004_email_verification.sql',
-    '0005_soft_delete.sql',
-    '0006_ai_admin.sql',
-    '0007_node_shape.sql',
-    '0008_projects.sql',
-    '0009_invitation_codes.sql',
-    '0010_project_members.sql',
-    '0011_arrow_bidirectional.sql',
-    '0012_lane_groups.sql',
-  ]
+const migrationFiles = [
+  '0001_initial.sql',
+  '0002_node_arrow_styles.sql',
+  '0003_user_settings.sql',
+  '0004_email_verification.sql',
+  '0005_soft_delete.sql',
+  '0006_ai_admin.sql',
+  '0007_node_shape.sql',
+  '0008_projects.sql',
+  '0009_invitation_codes.sql',
+  '0010_project_members.sql',
+  '0011_arrow_bidirectional.sql',
+  '0012_lane_groups.sql',
+]
 ```
 
 - [ ] **Step 2.5: テスト pass を確認**
@@ -257,6 +257,7 @@ git commit -m "feat(#309): add migration 0012 for lane group_id/group_role colum
 ### Task 3: flow-transform 修正
 
 **Files:**
+
 - Modify: `api/lib/flow-transform.ts:18-26, 70-79`
 - Modify: `api/lib/flow-transform.test.ts`
 
@@ -374,6 +375,7 @@ git commit -m "feat(#309): map lane group_id/group_role in flow-transform"
 ### Task 4: API ラウンドトリップテスト（Red）
 
 **Files:**
+
 - Modify: `tests/api/routes/flows.test.ts`
 
 - [ ] **Step 4.1: ラウンドトリップテストを書く（Red）**
@@ -502,6 +504,7 @@ npm test -- tests/api/routes/flows.test.ts -t "Lane group persistence"
 ### Task 5: flows.ts INSERT 修正（Green）
 
 **Files:**
+
 - Modify: `api/routes/flows.ts:230-238` (POST lane INSERT)
 - Modify: `api/routes/flows.ts:391-399` (PUT lane INSERT)
 
@@ -510,24 +513,24 @@ npm test -- tests/api/routes/flows.test.ts -t "Lane group persistence"
 `api/routes/flows.ts` 内の POST ハンドラの `// INSERT lanes` ループ（現状 L230-238）を以下に置き換え:
 
 ```ts
-  // INSERT lanes
-  for (const lane of lanes) {
-    statements.push(
-      db
-        .prepare(
-          'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        )
-        .bind(
-          lane.id,
-          flowId,
-          lane.name,
-          lane.colorIndex,
-          lane.position,
-          lane.groupId ?? null,
-          lane.groupRole ?? null,
-        ),
-    )
-  }
+// INSERT lanes
+for (const lane of lanes) {
+  statements.push(
+    db
+      .prepare(
+        'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      )
+      .bind(
+        lane.id,
+        flowId,
+        lane.name,
+        lane.colorIndex,
+        lane.position,
+        lane.groupId ?? null,
+        lane.groupRole ?? null,
+      ),
+  )
+}
 ```
 
 - [ ] **Step 5.2: PUT `/:id` の lane INSERT を修正**
@@ -535,24 +538,24 @@ npm test -- tests/api/routes/flows.test.ts -t "Lane group persistence"
 同ファイル内 PUT ハンドラの `// INSERT new lanes` ループ（現状 L391-399）を以下に置き換え:
 
 ```ts
-      // INSERT new lanes
-      for (const lane of safeLanes) {
-        statements.push(
-          db
-            .prepare(
-              'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            )
-            .bind(
-              lane.id,
-              flowId,
-              lane.name,
-              lane.colorIndex,
-              lane.position,
-              lane.groupId ?? null,
-              lane.groupRole ?? null,
-            ),
-        )
-      }
+// INSERT new lanes
+for (const lane of safeLanes) {
+  statements.push(
+    db
+      .prepare(
+        'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      )
+      .bind(
+        lane.id,
+        flowId,
+        lane.name,
+        lane.colorIndex,
+        lane.position,
+        lane.groupId ?? null,
+        lane.groupRole ?? null,
+      ),
+  )
+}
 ```
 
 - [ ] **Step 5.3: ラウンドトリップテスト pass を確認**
@@ -593,6 +596,7 @@ git commit -m "fix(#309): persist lane group_id/group_role in POST and PUT"
 > CLAUDE.md ワークフロー Step 6 「実画面検証」の実行。Playwright 自動テスト基盤は無いので、Playwright MCP で手動操作 + スクリーンショットで検証する。
 
 **Files:**
+
 - 検証対象: 既デプロイ環境ではなく **ローカル `npm run dev`** 起動
 - ログイン情報: `.env.local` の `E2E_USER_EMAIL` / `E2E_USER_PASSWORD`
 
@@ -615,6 +619,7 @@ npm run dev
 - [ ] **Step 6.3: 統合 → リロード検証（Playwright MCP）**
 
 Playwright MCP で以下を順に実行:
+
 1. `mcp__playwright__browser_navigate` → ローカル URL（dev サーバ）
 2. ログイン（`.env.local` の `E2E_USER_EMAIL` / `E2E_USER_PASSWORD`）
 3. 新規フロー作成 → レーンを 2 つ確保
@@ -649,6 +654,7 @@ CLAUDE.md ワークフロー Step 6 のパフォーマンス基準: LCP ≤ 1 �
 ### Task 7: 最新 main 同期 + テスト再走
 
 **Files:**
+
 - (なし) ブランチ rebase のみ
 
 - [ ] **Step 7.1: main を rebase**
@@ -672,6 +678,7 @@ npm test
 ### Task 8: PR 作成 + CI
 
 **Files:**
+
 - (なし) GitHub PR
 
 - [ ] **Step 8.1: push**
@@ -820,12 +827,13 @@ git worktree list
 ## Self-Review
 
 **1. Spec coverage:**
+
 - マイグレーション → Task 2 ✓
 - LaneRow / toLane → Task 3 ✓
 - POST/PUT INSERT → Task 5 ✓
 - shared.ts: 変更不要（spec 通り）✓
 - validators: 変更不要（spec 通り）✓
-- ユニットテスト → Task 3 (toLane), Task 2 (migration)  ✓
+- ユニットテスト → Task 3 (toLane), Task 2 (migration) ✓
 - API ラウンドトリップ ケースA/B/C → Task 4 ✓
 - ケースD（CHECK 制約）→ Task 2.1 で網羅 ✓
 - E2E → Task 6（自動 Playwright 基盤が無いため、Playwright MCP による手動検証に変更：Spec の「E2E テスト追加」要件は実態に合わせて「Playwright MCP 手動検証」に置換）。受け入れ基準「E2E テスト / API テストが追加されている」は API テストでカバー
@@ -834,6 +842,7 @@ git worktree list
 **2. Placeholder scan:** TBD/TODO/「実装後で」のような文言なし。全コードブロックに完全な実装あり。
 
 **3. Type consistency:**
+
 - `LaneRow.group_role: 'parent' | 'sub' | null` を Task 3.3 で定義、Task 4.1 のテストでも `'parent' | 'sub'` として一致
 - `toLane` の出力 `groupId?: string` / `groupRole?: 'parent' | 'sub'` がフロント `Lane` 型および validators の `z.enum(['parent','sub'])` と一致
 - マイグレーション SQL の CHECK 制約 `IN ('parent','sub')` が型と一致

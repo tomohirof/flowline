@@ -78,9 +78,13 @@ POST `/`（lane INSERT）と PUT `/:id`（構造更新時の lane INSERT）の S
 
 ```ts
 db.prepare(
-  'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)',
 ).bind(
-  lane.id, flowId, lane.name, lane.colorIndex, lane.position,
+  lane.id,
+  flowId,
+  lane.name,
+  lane.colorIndex,
+  lane.position,
   lane.groupId ?? null,
   lane.groupRole ?? null,
 )
@@ -141,12 +145,12 @@ db.prepare(
 
 ## リスクと対策
 
-| リスク | 対策 |
-|---|---|
+| リスク                                               | 対策                                                                                |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | 本番 D1 にマイグレーションが適用されないままデプロイ | PR description に `wrangler d1 migrations apply` 手順を明記。受け入れ基準にも含める |
-| 既存「壊れた」レーンの自動復元 | **スコープ外**。ユーザーが再操作で修復（Issue 既知の制限） |
-| CHECK 制約違反 | フロント・validator (`z.enum(['parent','sub'])`) で防御済 → DB CHECK と二重防御 |
-| テスト DB (better-sqlite3) と D1 の差異 | 標準 SQLite 構文のみ使用（ALTER TABLE ADD COLUMN, CHECK, partial index） |
+| 既存「壊れた」レーンの自動復元                       | **スコープ外**。ユーザーが再操作で修復（Issue 既知の制限）                          |
+| CHECK 制約違反                                       | フロント・validator (`z.enum(['parent','sub'])`) で防御済 → DB CHECK と二重防御     |
+| テスト DB (better-sqlite3) と D1 の差異              | 標準 SQLite 構文のみ使用（ALTER TABLE ADD COLUMN, CHECK, partial index）            |
 
 ## スコープ外（既知の制限）
 

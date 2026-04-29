@@ -295,9 +295,7 @@ describe('D1 Migration', () => {
     db.prepare(
       "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l2', 'f1', 'L2', 1, 'g1', 'sub')",
     ).run()
-    db.prepare(
-      "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l3', 'f1', 'L3', 2)",
-    ).run()
+    db.prepare("INSERT INTO lanes (id, flow_id, name, position) VALUES ('l3', 'f1', 'L3', 2)").run()
 
     // CHECK does not fire on NULL — explicit verification
     expect(() =>
