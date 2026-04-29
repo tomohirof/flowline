@@ -247,6 +247,74 @@ describe('D1 Migration', () => {
     db.close()
   })
 
+  it('should add group_id and group_role to lanes (0012)', () => {
+    const db = new Database(':memory:')
+    db.pragma('foreign_keys = ON')
+    const files = [
+      '0001_initial.sql',
+      '0002_node_arrow_styles.sql',
+      '0003_user_settings.sql',
+      '0004_email_verification.sql',
+      '0005_soft_delete.sql',
+      '0006_ai_admin.sql',
+      '0007_node_shape.sql',
+      '0008_projects.sql',
+      '0009_invitation_codes.sql',
+      '0010_project_members.sql',
+      '0011_arrow_bidirectional.sql',
+      '0012_lane_groups.sql',
+    ]
+    for (const f of files) {
+      const sql = readFileSync(resolve(__dirname, '../../migrations/', f), 'utf-8')
+      for (const stmt of sql.split(';').filter((s) => s.trim())) {
+        db.exec(stmt + ';')
+      }
+    }
+    const cols = db.prepare('PRAGMA table_info(lanes)').all() as Array<{
+      name: string
+      type: string
+      notnull: number
+    }>
+    const groupId = cols.find((c) => c.name === 'group_id')
+    const groupRole = cols.find((c) => c.name === 'group_role')
+    expect(groupId).toBeDefined()
+    expect(groupId?.type).toBe('TEXT')
+    expect(groupId?.notnull).toBe(0)
+    expect(groupRole).toBeDefined()
+    expect(groupRole?.type).toBe('TEXT')
+    expect(groupRole?.notnull).toBe(0)
+
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'g@test.com', 'h', 'U')",
+    ).run()
+    db.prepare("INSERT INTO flows (id, user_id) VALUES ('f1', 'u1')").run()
+
+    db.prepare(
+      "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l1', 'f1', 'L1', 0, 'g1', 'parent')",
+    ).run()
+    db.prepare(
+      "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l2', 'f1', 'L2', 1, 'g1', 'sub')",
+    ).run()
+    db.prepare(
+      "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l3', 'f1', 'L3', 2)",
+    ).run()
+
+    expect(() =>
+      db
+        .prepare(
+          "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l_bad', 'f1', 'Bad', 3, 'g2', 'invalid')",
+        )
+        .run(),
+    ).toThrow()
+
+    const indexes = db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'lanes'")
+      .all() as Array<{ name: string }>
+    expect(indexes.map((i) => i.name)).toContain('idx_lanes_group_id')
+
+    db.close()
+  })
+
   it('should have created_at and updated_at on all tables', () => {
     db.prepare(
       "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'ts@test.com', 'hash', 'Test')",
