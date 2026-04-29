@@ -400,6 +400,21 @@
   font-family: inherit;
 }
 
+.panelTextarea {
+  width: 100%;
+  min-height: 30px;
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid var(--theme-input-border);
+  border-radius: 6px;
+  outline: none;
+  background: var(--theme-input-bg);
+  color: var(--theme-panel-text);
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.4;
+}
+
 .panelBtn {
   height: 28px;
   border-radius: 6px;
@@ -571,6 +586,23 @@
   color: var(--theme-title-color);
   font-weight: 500;
   font-family: inherit;
+}
+
+.nodeEditTextarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  text-align: center;
+  font-size: 13.5px;
+  background: transparent;
+  color: var(--theme-title-color);
+  font-weight: 500;
+  font-family: inherit;
+  resize: none;
+  overflow: hidden;
+  padding: 0;
+  line-height: 18px;
 }
 
 .noteEditInput {

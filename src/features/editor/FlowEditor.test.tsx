@@ -133,6 +133,40 @@ describe('visual constants (#44, #45)', () => {
     expect(nodeLabel).toBeTruthy()
   })
 
+  it('should not truncate node label longer than 10 characters', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      {
+        id: 'n1',
+        laneId: 'lane-1',
+        rowIndex: 0,
+        label: '12345678901234',
+        note: null,
+        orderIndex: 0,
+      },
+    ]
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const labels = Array.from(document.querySelectorAll('text')).map((t) => t.textContent)
+    expect(labels).toContain('12345678901234')
+    expect(labels.every((l) => !l?.endsWith('…'))).toBe(true)
+  })
+
+  it('should render newline label as multiple tspans in editor', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'a\nb', note: null, orderIndex: 0 },
+    ]
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const labelText = Array.from(document.querySelectorAll('text')).find(
+      (t) => t.textContent === 'ab',
+    )
+    expect(labelText).not.toBeUndefined()
+    const tspans = labelText!.querySelectorAll('tspan')
+    expect(tspans).toHaveLength(2)
+    expect(tspans[0].textContent).toBe('a')
+    expect(tspans[1].textContent).toBe('b')
+  })
+
   it('should render arrow with strokeWidth 2 and updated marker', () => {
     const flow = createMinimalFlow()
     flow.nodes = [
@@ -951,7 +985,9 @@ describe('IME composition Enter (#87)', () => {
     vi.advanceTimersByTime(50)
 
     // Wait for the node edit input to appear
-    const nodeInput = document.querySelector('input[class*="nodeEditInput"]') as HTMLInputElement
+    const nodeInput = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
     expect(nodeInput).toBeTruthy()
 
     // Press Enter with isComposing=true (simulating IME composition)
@@ -959,15 +995,154 @@ describe('IME composition Enter (#87)', () => {
 
     // Node edit input should still be visible
     const nodeInputAfter = document.querySelector(
-      'input[class*="nodeEditInput"]',
-    ) as HTMLInputElement
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
     expect(nodeInputAfter).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it('should insert newline on Shift+Enter during inline edit', async () => {
+    cleanup()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Double-click on node rect to enter edit mode
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.dblClick(nodeRect!)
+
+    vi.advanceTimersByTime(50)
+
+    const nodeTextarea = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(nodeTextarea).toBeTruthy()
+
+    // Clear current value, then type a, Shift+Enter, b
+    nodeTextarea.focus()
+    fireEvent.change(nodeTextarea, { target: { value: '' } })
+    fireEvent.change(nodeTextarea, { target: { value: 'a' } })
+    // Shift+Enter should insert newline (not close)
+    fireEvent.keyDown(nodeTextarea, { key: 'Enter', shiftKey: true })
+    fireEvent.change(nodeTextarea, { target: { value: 'a\nb' } })
+
+    expect(nodeTextarea.value).toBe('a\nb')
+    // textarea is still in DOM
+    const stillEditing = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(stillEditing).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it('should confirm and exit inline edit on Enter alone', async () => {
+    cleanup()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.dblClick(nodeRect!)
+
+    vi.advanceTimersByTime(50)
+
+    const nodeTextarea = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(nodeTextarea).toBeTruthy()
+
+    // Set value to 'foo' then press Enter alone
+    fireEvent.change(nodeTextarea, { target: { value: 'foo' } })
+    fireEvent.keyDown(nodeTextarea, { key: 'Enter' })
+
+    // textarea should be removed from DOM (editing ended)
+    const nodeTextareaAfter = document.querySelector('textarea[class*="nodeEditTextarea"]')
+    expect(nodeTextareaAfter).toBeNull()
+
+    // Label should now be rendered as 'foo' inside a <text>/<tspan>
+    const tspans = container.querySelectorAll('text tspan')
+    const hasFoo = Array.from(tspans).some((el) => el.textContent === 'foo')
+    expect(hasFoo).toBe(true)
     vi.useRealTimers()
   })
 
   // Old inline note editing was removed in the notes→memos migration.
   // Memo editing is now handled by the MemoOverlay component.
   it.skip('should keep note input open when Enter is pressed during IME composition', () => {})
+
+  it('should not delete selected node when Backspace is pressed while focused on PanelTextarea', () => {
+    cleanup()
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.click(nodeRect!)
+
+    const panelTextarea = document.querySelector(
+      'textarea[class*="panelTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(panelTextarea).toBeTruthy()
+    panelTextarea.focus()
+    expect(document.activeElement).toBe(panelTextarea)
+
+    fireEvent.keyDown(window, { key: 'Backspace' })
+
+    const remainingNode = Array.from(container.querySelectorAll('rect[rx="10"]')).find(
+      (r) => r.getAttribute('width') === '152',
+    )
+    expect(remainingNode).toBeTruthy()
+  })
+
+  it('should restore original label when Escape is pressed during inline edit', () => {
+    cleanup()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '元のラベル', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.dblClick(nodeRect!)
+    vi.advanceTimersByTime(50)
+
+    const textarea = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(textarea).toBeTruthy()
+
+    fireEvent.change(textarea, { target: { value: '変更後' } })
+    fireEvent.keyDown(textarea, { key: 'Escape' })
+
+    expect(document.querySelector('textarea[class*="nodeEditTextarea"]')).toBeNull()
+    const restored = Array.from(document.querySelectorAll('text')).find(
+      (t) => t.textContent === '元のラベル',
+    )
+    expect(restored).toBeTruthy()
+    const stale = Array.from(document.querySelectorAll('text')).find(
+      (t) => t.textContent === '変更後',
+    )
+    expect(stale).toBeUndefined()
+
+    vi.useRealTimers()
+  })
 
   it('should keep lane name input open when Enter is pressed during IME composition', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })

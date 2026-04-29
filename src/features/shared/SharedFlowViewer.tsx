@@ -4,6 +4,7 @@ import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { BRAND } from '../../constants/brand'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
+import { NodeLabelText } from './NodeLabelText'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
 import {
   exitPt,
@@ -400,20 +401,16 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                     {lane.name}
                   </text>
                 )}
-                <text
-                  x={c.x}
-                  y={isDiamond ? c.y + 2 : c.y + 6}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={isDiamond ? 12 : 13.5}
-                  fontWeight={isDiamond ? 600 : 500}
-                  fill={node.label === '作業' ? T.statusText : T.titleColor}
-                  style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                >
-                  {node.label.length > (isDiamond ? 8 : 10)
-                    ? node.label.slice(0, isDiamond ? 8 : 10) + '…'
-                    : node.label}
-                </text>
+                <NodeLabelText
+                  label={node.label}
+                  cx={c.x}
+                  cy={c.y}
+                  isDiamond={isDiamond}
+                  defaultLabel="作業"
+                  fillDefault={T.statusText}
+                  fillTitle={T.titleColor}
+                />
+
                 {!isDiamond &&
                   node.note &&
                   (() => {

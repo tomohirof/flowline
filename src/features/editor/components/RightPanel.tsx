@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import styles from '../FlowEditor.module.css'
-import { PanelSection, PanelRow, PanelInput, PanelBtn } from './PanelParts'
+import { PanelSection, PanelRow, PanelInput, PanelTextarea, PanelBtn } from './PanelParts'
 import type {
   Theme,
   ThemeId,
@@ -279,7 +279,7 @@ export const RightPanel = ({
       <>
         <PanelSection label={t('rightPanel.node')}>
           <PanelRow label={t('rightPanel.label')} />
-          <PanelInput
+          <PanelTextarea
             value={selTaskData.label === t('defaultNodeLabel') ? '' : selTaskData.label}
             placeholder={t('rightPanel.defaultLabel')}
             onChange={(v: string) =>
