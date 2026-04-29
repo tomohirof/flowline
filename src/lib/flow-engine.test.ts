@@ -216,6 +216,35 @@ describe('calcArrowPath', () => {
     // exitPt diamond: |dx|<1, dy>0 → {x: 300, y: 200+34} = {x: 300, y: 234}
     expect(result!.d).toContain('M300,234')
   })
+
+  it('should pass obstacles through to buildArrowPath and produce detour path', () => {
+    // A=(200,200) → C=(600,200) 同一行、間に B (400,200) 障害
+    const obstacles = [{ x: 400, y: 200, w: 152, h: 56 }]
+    const r = calcArrowPath(
+      { x: 200, y: 200 },
+      { x: 600, y: 200 },
+      { hw: 76, hh: 28, rh: 84 },
+      obstacles,
+    )
+    expect(r).not.toBeNull()
+    // exitPt: dx=400 横出口 {276,200}, entryPt: 横入口 {524,200}
+    // 迂回: detourY = 228 + 14 = 242
+    expect(r.d).toBe('M276,200 L276,242 L524,242 L524,200')
+    expect(r.mx).toBe(400)
+    expect(r.my).toBe(242)
+  })
+
+  it('should ignore obstacles when arrow is not horizontal', () => {
+    const obstacles = [{ x: 200, y: 200, w: 152, h: 56 }]
+    const r = calcArrowPath(
+      { x: 100, y: 100 },
+      { x: 100, y: 300 },
+      { hw: 76, hh: 28, rh: 84 },
+      obstacles,
+    )
+    // 縦パスなので obstacles 無視 → 既存の直線
+    expect(r.d).toBe('M100,128 L100,272')
+  })
 })
 
 /* ========================================================= */
