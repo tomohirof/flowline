@@ -33,6 +33,7 @@ import { PALETTES, THEMES } from './theme-constants'
 import { toBlob } from 'html-to-image'
 import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
+import { NodeLabelText } from '../shared/NodeLabelText'
 import { DS, collectObstacles, type Bbox, type ObstacleNode } from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
@@ -527,6 +528,7 @@ export default function FlowEditor({
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
   const laneInputRef = useRef<HTMLInputElement | null>(null)
+  const preEditLabelRef = useRef<string | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -738,27 +740,24 @@ export default function FlowEditor({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
+      const ae = document.activeElement as HTMLElement | null
+      const isTextField = !!ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')
       // Undo: Cmd+Z / Ctrl+Z
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        if (isTextField) return
         e.preventDefault()
         undo()
         return
       }
       // Redo: Cmd+Shift+Z / Ctrl+Shift+Z or Cmd+Y / Ctrl+Y
       if ((e.metaKey || e.ctrlKey) && (e.key === 'Z' || e.key === 'y')) {
+        if (isTextField) return
         e.preventDefault()
         redo()
         return
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (
-          editing ||
-          editLane ||
-          editTitle ||
-          editingMemo ||
-          (document.activeElement as HTMLElement)?.tagName === 'INPUT'
-        )
-          return
+        if (editing || editLane || editTitle || editingMemo || isTextField) return
         if (multiSel.size > 0) {
           delMultiSel()
           e.preventDefault()
@@ -773,14 +772,7 @@ export default function FlowEditor({
       }
       // Select All: Cmd+A / Ctrl+A
       if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
-        if (
-          editing ||
-          editLane ||
-          editTitle ||
-          editingMemo ||
-          (document.activeElement as HTMLElement)?.tagName === 'INPUT'
-        )
-          return
+        if (editing || editLane || editTitle || editingMemo || isTextField) return
         e.preventDefault()
         const allKeys = Object.keys(tasks)
         if (allKeys.length === 0) return
@@ -790,6 +782,7 @@ export default function FlowEditor({
         return
       }
       if (e.key === 'Escape') {
+        if (isTextField) return
         setConnectFrom(null)
         setConnectDragPt(null)
         setConnectFromPt(null)
@@ -1198,6 +1191,7 @@ export default function FlowEditor({
     }
     setMultiSel(new Set())
     if (tasks[k]) {
+      preEditLabelRef.current = tasks[k].label
       setEditing(k)
       setSelArrow(null)
       setTimeout(() => inputRef.current?.focus(), 40)
@@ -1231,6 +1225,7 @@ export default function FlowEditor({
     if (bouncingTimerRef.current) clearTimeout(bouncingTimerRef.current)
     bouncingTimerRef.current = setTimeout(() => setBouncingNode(null), 400)
     if (editorSettings.enterEditOnCreate) {
+      preEditLabelRef.current = label
       setEditing(k)
       setTimeout(() => inputRef.current?.focus(), 40)
     }
@@ -2462,6 +2457,7 @@ export default function FlowEditor({
                         onClick={(e: React.MouseEvent) => taskClick(k, e)}
                         onDoubleClick={(e: React.MouseEvent) => {
                           e.stopPropagation()
+                          preEditLabelRef.current = tasks[k].label
                           setEditing(k)
                           setSelTask(k)
                           setMultiSel(new Set())
@@ -2507,6 +2503,7 @@ export default function FlowEditor({
                         onClick={(e: React.MouseEvent) => taskClick(k, e)}
                         onDoubleClick={(e: React.MouseEvent) => {
                           e.stopPropagation()
+                          preEditLabelRef.current = tasks[k].label
                           setEditing(k)
                           setSelTask(k)
                           setMultiSel(new Set())
@@ -2638,74 +2635,72 @@ export default function FlowEditor({
                           </text>
                         </g>
                       )}
-                    {editing === k
-                      ? (() => {
-                          const editingValue =
-                            task.label === t('defaultNodeLabel') ? '' : task.label
-                          const editingLines = Math.max(1, editingValue.split('\n').length)
-                          const lineHeightPx = 18
-                          const baseH = isDiamond ? 24 : TH - 22
-                          const expandedH = baseH + (editingLines - 1) * lineHeightPx
-                          return (
-                            <foreignObject
-                              x={isDiamond ? c.x - DS + 4 : c.x - TW / 2 + 8}
-                              y={isDiamond ? c.y - 10 : c.y - TH / 2 + 18}
-                              width={isDiamond ? DS * 2 - 8 : TW - 16}
-                              height={expandedH}
-                            >
-                              <textarea
-                                ref={inputRef}
-                                value={editingValue}
-                                placeholder={t('defaultNodeLabel')}
-                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                                  const v = e.target.value
-                                  setTasks((p2) => ({
-                                    ...p2,
-                                    [k]: { ...p2[k], label: v || t('defaultNodeLabel') },
-                                  }))
-                                }}
-                                onBlur={() => setEditing(null)}
-                                onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-                                  if (e.nativeEvent.isComposing) return
-                                  if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault()
-                                    setEditing(null)
-                                  } else if (e.key === 'Escape') {
-                                    e.preventDefault()
-                                    setEditing(null)
+                    {editing === k ? (
+                      (() => {
+                        const editingValue = task.label === t('defaultNodeLabel') ? '' : task.label
+                        const editingLines = Math.max(1, editingValue.split('\n').length)
+                        const lineHeightPx = 18
+                        const baseH = isDiamond ? 24 : TH - 22
+                        const expandedH = baseH + (editingLines - 1) * lineHeightPx
+                        return (
+                          <foreignObject
+                            x={isDiamond ? c.x - DS + 4 : c.x - TW / 2 + 8}
+                            y={isDiamond ? c.y - 10 : c.y - TH / 2 + 18}
+                            width={isDiamond ? DS * 2 - 8 : TW - 16}
+                            height={expandedH}
+                          >
+                            <textarea
+                              ref={inputRef}
+                              value={editingValue}
+                              placeholder={t('defaultNodeLabel')}
+                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                const v = e.target.value
+                                setTasks((p2) => ({
+                                  ...p2,
+                                  [k]: { ...p2[k], label: v || t('defaultNodeLabel') },
+                                }))
+                              }}
+                              onBlur={() => {
+                                preEditLabelRef.current = null
+                                setEditing(null)
+                              }}
+                              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                                e.stopPropagation()
+                                if (e.nativeEvent.isComposing) return
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault()
+                                  preEditLabelRef.current = null
+                                  setEditing(null)
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault()
+                                  const original = preEditLabelRef.current
+                                  if (original !== null) {
+                                    setTasks((p2) => ({
+                                      ...p2,
+                                      [k]: { ...p2[k], label: original },
+                                    }))
                                   }
-                                }}
-                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                                className={styles.nodeEditTextarea}
-                              />
-                            </foreignObject>
-                          )
-                        })()
-                      : (() => {
-                          const lines = task.label.split('\n')
-                          const lineHeight = 1.2
-                          const firstDy = -((lines.length - 1) * lineHeight) / 2
-                          return (
-                            <text
-                              x={c.x}
-                              y={isDiamond ? c.y + 2 : c.y + 6}
-                              textAnchor="middle"
-                              dominantBaseline="central"
-                              fontSize={isDiamond ? 12 : 13.5}
-                              fontWeight={isDiamond ? 600 : 500}
-                              fill={
-                                task.label === t('defaultNodeLabel') ? T.statusText : T.titleColor
-                              }
-                              style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                            >
-                              {lines.map((line, i) => (
-                                <tspan key={i} x={c.x} dy={`${i === 0 ? firstDy : lineHeight}em`}>
-                                  {line}
-                                </tspan>
-                              ))}
-                            </text>
-                          )
-                        })()}
+                                  preEditLabelRef.current = null
+                                  setEditing(null)
+                                }
+                              }}
+                              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                              className={styles.nodeEditTextarea}
+                            />
+                          </foreignObject>
+                        )
+                      })()
+                    ) : (
+                      <NodeLabelText
+                        label={task.label}
+                        cx={c.x}
+                        cy={c.y}
+                        isDiamond={isDiamond}
+                        defaultLabel={t('defaultNodeLabel')}
+                        fillDefault={T.statusText}
+                        fillTitle={T.titleColor}
+                      />
+                    )}
                     {/* Memo rendering is now handled by the dedicated MemoOverlay component */}
                   </g>
                 )

@@ -282,7 +282,6 @@ export const RightPanel = ({
           <PanelTextarea
             value={selTaskData.label === t('defaultNodeLabel') ? '' : selTaskData.label}
             placeholder={t('rightPanel.defaultLabel')}
-            rows={2}
             onChange={(v: string) =>
               setTasks((p2) => ({
                 ...p2,

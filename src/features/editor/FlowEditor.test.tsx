@@ -1080,6 +1080,70 @@ describe('IME composition Enter (#87)', () => {
   // Memo editing is now handled by the MemoOverlay component.
   it.skip('should keep note input open when Enter is pressed during IME composition', () => {})
 
+  it('should not delete selected node when Backspace is pressed while focused on PanelTextarea', () => {
+    cleanup()
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.click(nodeRect!)
+
+    const panelTextarea = document.querySelector(
+      'textarea[class*="panelTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(panelTextarea).toBeTruthy()
+    panelTextarea.focus()
+    expect(document.activeElement).toBe(panelTextarea)
+
+    fireEvent.keyDown(window, { key: 'Backspace' })
+
+    const remainingNode = Array.from(container.querySelectorAll('rect[rx="10"]')).find(
+      (r) => r.getAttribute('width') === '152',
+    )
+    expect(remainingNode).toBeTruthy()
+  })
+
+  it('should restore original label when Escape is pressed during inline edit', () => {
+    cleanup()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '元のラベル', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.dblClick(nodeRect!)
+    vi.advanceTimersByTime(50)
+
+    const textarea = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(textarea).toBeTruthy()
+
+    fireEvent.change(textarea, { target: { value: '変更後' } })
+    fireEvent.keyDown(textarea, { key: 'Escape' })
+
+    expect(document.querySelector('textarea[class*="nodeEditTextarea"]')).toBeNull()
+    const restored = Array.from(document.querySelectorAll('text')).find(
+      (t) => t.textContent === '元のラベル',
+    )
+    expect(restored).toBeTruthy()
+    const stale = Array.from(document.querySelectorAll('text')).find(
+      (t) => t.textContent === '変更後',
+    )
+    expect(stale).toBeUndefined()
+
+    vi.useRealTimers()
+  })
+
   it('should keep lane name input open when Enter is pressed during IME composition', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const flow = createMinimalFlow()
