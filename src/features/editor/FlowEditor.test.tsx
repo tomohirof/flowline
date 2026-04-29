@@ -3050,3 +3050,54 @@ describe('PNG export (#310)', () => {
     }
   })
 })
+
+describe('bidirectional arrow toggle (RightPanel)', () => {
+  const flowWithArrow = (): Flow => ({
+    id: 'f1',
+    title: 'T',
+    themeId: 'cloud',
+    shareToken: null,
+    projectId: null,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    lanes: [{ id: 'lane-1', name: 'L', colorIndex: 0, position: 0 }],
+    nodes: [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ],
+    arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
+  })
+
+  it('should toggle bidirectional flag on click and disable reverse button', () => {
+    const { container } = render(
+      <FlowEditor flow={flowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    // Select the arrow first
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+
+    // Find buttons by their label text (i18n in tests returns the key as-is)
+    const buttons = Array.from(container.querySelectorAll('button')) as HTMLButtonElement[]
+    const bidirBtn = buttons.find((b) => b.textContent?.includes('rightPanel.arrowBidirectional'))
+    const reverseBtn = buttons.find((b) => b.textContent?.includes('rightPanel.arrowReverse'))
+    expect(bidirBtn).toBeTruthy()
+    expect(reverseBtn).toBeTruthy()
+    expect(bidirBtn!.getAttribute('aria-pressed')).toBe('false')
+    expect(reverseBtn!.disabled).toBe(false)
+
+    // Toggle on
+    fireEvent.click(bidirBtn!)
+
+    // Re-query (component may re-render)
+    const buttonsAfter = Array.from(container.querySelectorAll('button')) as HTMLButtonElement[]
+    const bidirBtnAfter = buttonsAfter.find((b) =>
+      b.textContent?.includes('rightPanel.arrowBidirectional'),
+    )
+    const reverseBtnAfter = buttonsAfter.find((b) =>
+      b.textContent?.includes('rightPanel.arrowReverse'),
+    )
+    expect(bidirBtnAfter!.getAttribute('aria-pressed')).toBe('true')
+    expect(reverseBtnAfter!.disabled).toBe(true)
+  })
+})

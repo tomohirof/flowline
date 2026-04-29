@@ -52,6 +52,7 @@
     "arrowCommentPlaceholder": "Add label…",
     "arrowColor": "Line color",
     "arrowStyle": "Line style",
+    "arrowBidirectional": "⇄ Bidirectional",
     "arrowReverse": "⇄ Reverse direction",
     "arrowDelete": "Delete",
     "theme": "Theme",

@@ -66,6 +66,7 @@ export const PanelBtn = ({
   onClick,
   full,
   disabled,
+  active,
 }: {
   label: string
   color: string
@@ -73,15 +74,17 @@ export const PanelBtn = ({
   onClick: () => void
   full?: boolean
   disabled?: boolean
+  active?: boolean
 }) => (
   <button
     onClick={onClick}
     disabled={disabled}
+    aria-pressed={active}
     className={`${styles.panelBtn} ${full ? styles.panelBtnFull : styles.panelBtnAuto}`}
     style={{
       border: `1px solid ${color}30`,
-      background: bg || `${color}10`,
-      color,
+      background: active ? color : bg || `${color}10`,
+      color: active ? '#fff' : color,
       opacity: disabled ? 0.5 : 1,
       cursor: disabled ? 'not-allowed' : 'pointer',
     }}
