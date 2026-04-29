@@ -3166,4 +3166,29 @@ describe('bidirectional arrow toggle (RightPanel)', () => {
     expect(screen.getByTestId('canvas-header-svg')).toBeInTheDocument()
     expect(screen.getByTestId('canvas-svg')).toBeInTheDocument()
   })
+
+  it('should render lane name labels inside header svg, not body svg', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const bodySvg = screen.getByTestId('canvas-svg')
+    const headerTexts = Array.from(headerSvg.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((t): t is string => !!t && t.length > 0)
+    const bodyTexts = Array.from(bodySvg.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((t): t is string => !!t && t.length > 0)
+    // Header SVG must have at least one lane name (default flow has lanes)
+    expect(headerTexts.length).toBeGreaterThan(0)
+    // No header label should appear in body SVG
+    headerTexts.forEach((label) => {
+      expect(bodyTexts).not.toContain(label)
+    })
+  })
+
+  it('should render lane color accent dot inside header svg', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const circles = headerSvg.querySelectorAll('circle')
+    expect(circles.length).toBeGreaterThan(0)
+  })
 })

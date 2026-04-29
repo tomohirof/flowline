@@ -1875,7 +1875,88 @@ export default function FlowEditor({
             height={(TM + HH + 30) * zoom}
             viewBox={`0 -30 ${svgW / zoom} ${TM + HH + 30}`}
             className={styles.headerSvg}
-          />
+          >
+            {/* Lane headers (sticky) */}
+            {lanes.map((lane, li) => {
+              const p = PALETTES[lane.ci]
+              const x = laneX(li)
+              const isSub = isGroupSub(lane)
+              const isParent = isGroupParent(lane)
+              const headerW = isParent ? getGroupWidth(lane, lanes, LW, G) : LW
+              if (isSub) return null
+              return (
+                <g
+                  key={`lane-header-${lane.id}`}
+                  className={lane.id === slidingLaneId ? styles.laneSlideInAnim : undefined}
+                >
+                  <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
+                  <rect x={x} y={TM + HH - 10} width={headerW} height={10} fill={T.laneHeaderBg} />
+                  <rect
+                    x={x + 16}
+                    y={TM + HH - 2.5}
+                    width={headerW - 32}
+                    height={2}
+                    rx={1}
+                    fill={p.dot}
+                    opacity={T.laneAccentOpacity}
+                  />
+                  <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
+                  <rect
+                    x={x}
+                    y={TM}
+                    width={headerW}
+                    height={HH}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      setSelLane(selLane === lane.id ? null : lane.id)
+                      setSelTask(null)
+                      setSelArrow(null)
+                      setMultiSel(new Set())
+                    }}
+                    onDoubleClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      setEditLane(lane.id)
+                      setSelLane(lane.id)
+                      setTimeout(() => laneInputRef.current?.focus(), 40)
+                    }}
+                  />
+                  {editLane === lane.id ? (
+                    <foreignObject x={x + 32} y={TM + 9} width={headerW - 44} height={28}>
+                      <input
+                        ref={laneInputRef}
+                        value={lane.name}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const v = e.target.value
+                          setLanes((p2) =>
+                            p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)),
+                          )
+                        }}
+                        onBlur={() => setEditLane(null)}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                          e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
+                        }
+                        className={styles.laneNameInput}
+                      />
+                    </foreignObject>
+                  ) : (
+                    <text
+                      x={x + 32}
+                      y={TM + HH / 2 + 1}
+                      dominantBaseline="central"
+                      fill={T.titleColor}
+                      fontSize={12.5}
+                      fontWeight={600}
+                      style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+                    >
+                      {lane.name}
+                    </text>
+                  )}
+                </g>
+              )
+            })}
+          </svg>
           <svg
             ref={svgRef}
             data-testid="canvas-svg"
@@ -1943,88 +2024,6 @@ export default function FlowEditor({
                       opacity={0.5}
                     />
                   )}
-                  {!isSub && (
-                    <>
-                      <rect
-                        x={x}
-                        y={TM}
-                        width={headerW}
-                        height={HH}
-                        rx={10}
-                        fill={T.laneHeaderBg}
-                      />
-                      <rect
-                        x={x}
-                        y={TM + HH - 10}
-                        width={headerW}
-                        height={10}
-                        fill={T.laneHeaderBg}
-                      />
-                      <rect
-                        x={x + 16}
-                        y={TM + HH - 2.5}
-                        width={headerW - 32}
-                        height={2}
-                        rx={1}
-                        fill={p.dot}
-                        opacity={T.laneAccentOpacity}
-                      />
-                      <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
-                      <rect
-                        x={x}
-                        y={TM}
-                        width={headerW}
-                        height={HH}
-                        fill="transparent"
-                        style={{ cursor: 'pointer' }}
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          setSelLane(selLane === lane.id ? null : lane.id)
-                          setSelTask(null)
-                          setSelArrow(null)
-                          setMultiSel(new Set())
-                        }}
-                        onDoubleClick={(e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          setEditLane(lane.id)
-                          setSelLane(lane.id)
-                          setTimeout(() => laneInputRef.current?.focus(), 40)
-                        }}
-                      />
-                    </>
-                  )}
-                  {!isSub &&
-                    (editLane === lane.id ? (
-                      <foreignObject x={x + 32} y={TM + 9} width={headerW - 44} height={28}>
-                        <input
-                          ref={laneInputRef}
-                          value={lane.name}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const v = e.target.value
-                            setLanes((p2) =>
-                              p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)),
-                            )
-                          }}
-                          onBlur={() => setEditLane(null)}
-                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                            e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
-                          }
-                          className={styles.laneNameInput}
-                        />
-                      </foreignObject>
-                    ) : (
-                      <text
-                        x={x + 32}
-                        y={TM + HH / 2 + 1}
-                        dominantBaseline="central"
-                        fill={T.titleColor}
-                        fontSize={12.5}
-                        fontWeight={600}
-                        style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                      >
-                        {lane.name}
-                      </text>
-                    ))}
                   {isSub && (
                     <line
                       x1={x}
