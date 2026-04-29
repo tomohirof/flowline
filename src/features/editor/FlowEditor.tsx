@@ -130,6 +130,7 @@ function flowToInternalState(flow: Flow): {
       const arr: InternalArrow = { id: a.id, from, to, comment: a.comment ?? '' }
       if (a.color) arr.color = a.color
       if (a.dash) arr.dash = a.dash
+      if (a.bidirectional) arr.bidirectional = true
       return arr
     })
     .filter((a): a is InternalArrow => a !== null)
@@ -199,6 +200,7 @@ function internalStateToPayload(
         comment: a.comment || null,
         color: a.color || null,
         dash: a.dash || null,
+        bidirectional: a.bidirectional ?? false,
       }
     })
     .filter((a): a is NonNullable<typeof a> => a !== null)
