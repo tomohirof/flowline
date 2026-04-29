@@ -207,14 +207,21 @@ export interface CollectObstaclesArgs {
   toCx: number
   rowY: number
   rowH: number    // 行高さ（直上/直下行判定用）
-  bboxW: number
-  bboxH: number
+  bboxW: number   // 全ノード共通の bbox 幅。呼び出し側の TW を渡す。
+  bboxH: number   // 全ノード共通の bbox 高さ。呼び出し側の TH を渡す。
 }
 
 /**
  * 矢印の同一行・直上行・直下行にあるノードを bbox 配列に変換する。
  * 同一行は from-to 間レーンに限定。直上/直下行は X 制限なしで含める（上下塞がり判定用）。
  * from/to 自身および 2 行以上離れたノードは除外する。
+ *
+ * 呼び出し側は同一行（fromRow === toRow）のときのみ本関数を呼ぶ想定。
+ * rowY には fromNode の Y 座標を渡すこと。
+ *
+ * 注意: 固定グリッドレイアウトを前提に、dy が `bboxH/2 + 2` と `rowH - bboxH/2` の間
+ * にあるノード（典型値 30〜56px）は意図的に除外される。これはレイアウトアニメーション中の
+ * 中間状態などを obstacle 扱いしないための保守的な設計。
  */
 export function collectObstacles(args: CollectObstaclesArgs): Bbox[] {
   const { nodes, fromKey, toKey, fromCx, toCx, rowY, rowH, bboxW, bboxH } = args

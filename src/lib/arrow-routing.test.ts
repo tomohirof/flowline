@@ -206,4 +206,40 @@ describe('collectObstacles', () => {
     })
     expect(result.every((b) => b.w === TW && b.h === TH)).toBe(true)
   })
+
+  it('nodes が空配列 → 空配列を返す', () => {
+    const result = collectObstacles({
+      nodes: [],
+      fromKey: 'A',
+      toKey: 'C',
+      fromCx: 200,
+      toCx: 600,
+      rowY: 200,
+      rowH: RH,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toEqual([])
+  })
+
+  it('右→左方向（fromCx > toCx）でも同一行・隣接行を正しく抽出', () => {
+    // fromCx=600 (C), toCx=200 (A) と入れ替え。間に B (cx=400) があるはず
+    const result = collectObstacles({
+      nodes: baseNodes,
+      fromKey: 'C',
+      toKey: 'A',
+      fromCx: 600,
+      toCx: 200,
+      rowY: 200,
+      rowH: RH,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    // 同一行: B (400, 200) が含まれる、C/A は from/to で除外
+    // 直上下: D (400, 284) と E (400, 116)
+    // F (400, 368) は 2 行下で除外
+    expect(result).toHaveLength(3)
+    const cys = result.map((b) => b.y).sort((a, b) => a - b)
+    expect(cys).toEqual([116, 200, 284])
+  })
 })
