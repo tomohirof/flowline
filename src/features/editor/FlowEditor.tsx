@@ -33,7 +33,12 @@ import { PALETTES, THEMES } from './theme-constants'
 import { toBlob } from 'html-to-image'
 import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
-import { DS } from '../../lib/arrow-routing'
+import {
+  DS,
+  collectObstacles,
+  type Bbox,
+  type ObstacleNode,
+} from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { I, Ico } from './components/EditorIcons'
@@ -1370,13 +1375,44 @@ export default function FlowEditor({
     if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
     const from = ct(fli, fri)
     const to = ct(tli, tri)
-    return calcArrowPath(from, to, {
-      hw: TW / 2,
-      hh: TH / 2,
-      rh: RH,
-      fromShape: ft.shape ?? undefined,
-      toShape: tt.shape ?? undefined,
-    })
+
+    // 同一行のときのみ obstacles を組み立てる（迂回判定用）
+    let obstacles: Bbox[] | undefined
+    if (fri === tri) {
+      const nodes: ObstacleNode[] = []
+      for (const k of Object.keys(tasks)) {
+        const t = tasks[k]
+        const li = liMap[t.lid]
+        const ri = riMap[t.rid]
+        if (li === undefined || ri === undefined) continue
+        const c = ct(li, ri)
+        nodes.push({ key: k, cx: c.x, cy: c.y })
+      }
+      obstacles = collectObstacles({
+        nodes,
+        fromKey: arrow.from,
+        toKey: arrow.to,
+        fromCx: from.x,
+        toCx: to.x,
+        rowY: from.y,
+        rowH: RH,
+        bboxW: TW,
+        bboxH: TH,
+      })
+    }
+
+    return calcArrowPath(
+      from,
+      to,
+      {
+        hw: TW / 2,
+        hh: TH / 2,
+        rh: RH,
+        fromShape: ft.shape ?? undefined,
+        toShape: tt.shape ?? undefined,
+      },
+      obstacles,
+    )
   }
 
   const exportMermaid = (): string => {
