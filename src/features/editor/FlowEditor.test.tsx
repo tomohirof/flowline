@@ -195,6 +195,27 @@ describe('visual constants (#44, #45)', () => {
     )
     expect(commentLabel).toBeTruthy()
   })
+
+  it('should render marker-start on bidirectional arrow', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [
+      { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, bidirectional: true },
+      { id: 'a2', fromNodeId: 'n2', toNodeId: 'n1', comment: null, bidirectional: false },
+    ]
+    const { container } = render(
+      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    const a1Path = container.querySelector('path[marker-end="url(#m-a1)"]')
+    const a2Path = container.querySelector('path[marker-end="url(#m-a2)"]')
+    expect(a1Path?.getAttribute('marker-start')).toBe('url(#m-start-a1)')
+    expect(a2Path?.getAttribute('marker-start')).toBeNull()
+    expect(container.querySelector('marker#m-start-a1')).toBeTruthy()
+    expect(container.querySelector('marker#m-start-a2')).toBeNull()
+  })
 })
 
 describe('floating arrow controls (#46)', () => {

@@ -2732,6 +2732,21 @@ export default function FlowEditor({
                         fill={isSel ? arrow.color || T.accent : ac}
                       />
                     </marker>
+                    {arrow.bidirectional && (
+                      <marker
+                        id={`m-start-${arrow.id}`}
+                        markerWidth="9"
+                        markerHeight="8"
+                        refX="8"
+                        refY="4"
+                        orient="auto-start-reverse"
+                      >
+                        <polygon
+                          points="0 0.5, 9 4, 0 7.5"
+                          fill={isSel ? arrow.color || T.accent : ac}
+                        />
+                      </marker>
+                    )}
                   </defs>
                   <path
                     d={d}
@@ -2739,6 +2754,9 @@ export default function FlowEditor({
                     strokeWidth={isSel ? 2.5 : 2}
                     strokeDasharray={dashArr}
                     fill="none"
+                    markerStart={
+                      arrow.bidirectional ? `url(#m-start-${arrow.id})` : undefined
+                    }
                     markerEnd={`url(#m-${arrow.id})`}
                     style={{ pointerEvents: 'none' }}
                   />
