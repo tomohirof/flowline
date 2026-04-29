@@ -3,6 +3,59 @@ export interface Point {
   y: number
 }
 
+export interface Bbox {
+  x: number  // 中心 X
+  y: number  // 中心 Y
+  w: number  // 幅
+  h: number  // 高さ
+}
+
+const DETOUR_MARGIN = 14
+
+function detectDetour(
+  s: Point,
+  e: Point,
+  obstacles: Bbox[],
+): { detourY: number } | null {
+  // 水平直線でなければ迂回しない
+  if (Math.abs(e.y - s.y) >= 2) return null
+
+  const xLow = Math.min(s.x, e.x)
+  const xHigh = Math.max(s.x, e.x)
+  const rowY = s.y
+
+  // 水平移動がなければ迂回対象なし
+  if (xLow >= xHigh - 1) return null
+
+  // 経路上の障害ノード = 同一行（rowY と Y が重なる）かつ X が始終点の間
+  const inRow = obstacles.filter(
+    (b) =>
+      Math.abs(b.y - rowY) < b.h / 2 + 2 &&
+      b.x - b.w / 2 < xHigh - 1 &&
+      b.x + b.w / 2 > xLow + 1,
+  )
+  if (inRow.length === 0) return null
+
+  // 上下塞がり判定（X 重なりするノードが直上/直下に存在するか）
+  const xOverlap = (a: Bbox, b: Bbox) => Math.abs(a.x - b.x) < (a.w + b.w) / 2
+  const downBlocked = inRow.some((obs) =>
+    obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
+  )
+  const upBlocked = inRow.some((obs) =>
+    obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)),
+  )
+
+  // 方向決定: 下空きなら下、下塞がり＆上空きなら上、両塞がりは下優先
+  const goDown = !downBlocked || upBlocked
+
+  // detourY: 障害ノード群の最下端 + マージン or 最上端 - マージン
+  const detourY = goDown
+    ? Math.max(...inRow.map((o) => o.y + o.h / 2)) + DETOUR_MARGIN
+    : Math.min(...inRow.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
+
+  return { detourY }
+}
+
 interface ArrowPath {
   d: string
   mx: number
@@ -90,9 +143,26 @@ export const entryPt = (
  *
  * 戻り値の mx, my はラベル配置用の中間点。
  */
-export const buildArrowPath = (s: Point, e: Point, fc: Point, tc: Point): ArrowPath => {
+export const buildArrowPath = (
+  s: Point,
+  e: Point,
+  fc: Point,
+  tc: Point,
+  obstacles?: Bbox[],
+): ArrowPath => {
   const dx = e.x - s.x,
     dy = e.y - s.y
+
+  // 迂回モード: 同一行で経路上に障害ノードがある場合
+  if (obstacles && obstacles.length > 0) {
+    const detour = detectDetour(s, e, obstacles)
+    if (detour) {
+      const { detourY } = detour
+      const d = `M${s.x},${s.y} L${s.x},${detourY} L${e.x},${detourY} L${e.x},${e.y}`
+      return { d, mx: (s.x + e.x) / 2, my: detourY }
+    }
+  }
+
   let d: string
 
   // 直線パス: ほぼ垂直またはほぼ水平
