@@ -112,4 +112,34 @@ describe('buildExportSvg', () => {
     expect(document.body.contains(node)).toBe(false)
     expect(document.body.contains(parent!)).toBe(false)
   })
+
+  it('appends header SVG children to the clone when headerSrc is provided', () => {
+    const src = makeSvg()
+    const header = document.createElementNS(SVG_NS, 'svg')
+    const laneLabel = document.createElementNS(SVG_NS, 'text')
+    laneLabel.setAttribute('data-testid', 'lane-label')
+    laneLabel.textContent = 'Lane A'
+    header.appendChild(laneLabel)
+
+    const { node, cleanup } = buildExportSvg(src, '#EAEAF2', '#000', 800, 600, false, header)
+
+    const found = node.querySelector('[data-testid="lane-label"]')
+    expect(found).not.toBeNull()
+    expect(found?.textContent).toBe('Lane A')
+
+    cleanup()
+  })
+
+  it('does not throw and omits header content when headerSrc is null', () => {
+    const src = makeSvg()
+    const before = document.body.childNodes.length
+
+    const { node, cleanup } = buildExportSvg(src, '#EAEAF2', '#000', 200, 200, false, null)
+
+    // Should not have thrown; node should be a valid SVGSVGElement
+    expect(node.tagName.toLowerCase()).toBe('svg')
+
+    cleanup()
+    expect(document.body.childNodes.length).toBe(before)
+  })
 })

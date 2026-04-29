@@ -246,8 +246,7 @@ describe('SharedFlowViewer', () => {
       ],
     }
     render(<SharedFlowViewer flow={diamondFlow} />)
-    const canvas = screen.getByTestId('shared-flow-canvas')
-    const svg = canvas.querySelector('svg')!
+    const svg = screen.getByTestId('shared-canvas-svg')
     const texts = Array.from(svg.querySelectorAll('text'))
     const labelText = texts.find((t) => t.textContent === '1234567890')
     expect(labelText).not.toBeUndefined()
@@ -269,8 +268,7 @@ describe('SharedFlowViewer', () => {
       ],
     }
     render(<SharedFlowViewer flow={multilineFlow} />)
-    const canvas = screen.getByTestId('shared-flow-canvas')
-    const svg = canvas.querySelector('svg')!
+    const svg = screen.getByTestId('shared-canvas-svg')
     const texts = Array.from(svg.querySelectorAll('text'))
     const labelText = texts.find((t) => t.textContent === 'line1line2line3')
     expect(labelText).not.toBeUndefined()
@@ -443,8 +441,7 @@ describe('SharedFlowViewer', () => {
   describe('default theme fallback (regression)', () => {
     it('should render <rect> with stroke-dasharray none and non-null fill/stroke when no custom styles', () => {
       render(<SharedFlowViewer flow={mockFlow} />)
-      const canvas = screen.getByTestId('shared-flow-canvas')
-      const svg = canvas.querySelector('svg')!
+      const svg = screen.getByTestId('shared-canvas-svg')
       const nodeRect = Array.from(svg.querySelectorAll('rect')).find(
         (r) => r.getAttribute('rx') === '10' && r.getAttribute('width') === '152',
       )
@@ -565,5 +562,18 @@ describe('SharedFlowViewer', () => {
     )
     expect(path?.getAttribute('marker-start')).toBeNull()
     expect(document.querySelector('marker#sm-start-arrow-1')).toBeNull()
+  })
+
+  it('should render canvas as two stacked SVGs (header + body) in shared viewer', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    expect(screen.getByTestId('shared-canvas-header-svg')).toBeInTheDocument()
+    expect(screen.getByTestId('shared-canvas-svg')).toBeInTheDocument()
+  })
+
+  it('should render lane name labels inside shared header svg', () => {
+    render(<SharedFlowViewer flow={mockFlow} />)
+    const headerSvg = screen.getByTestId('shared-canvas-header-svg')
+    const texts = headerSvg.querySelectorAll('text')
+    expect(texts.length).toBeGreaterThan(0)
   })
 })

@@ -94,14 +94,13 @@ const createMinimalFlow = (): Flow => ({
 
 describe('FlowEditor', () => {
   describe('canvas SVG sizing', () => {
-    it('should render SVG with min-width and min-height 100% to fill container', () => {
+    it('should render body SVG with min-width 100% to fill container', () => {
       const flow = createMinimalFlow()
       render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       const svg = screen.getByTestId('canvas-svg')
       expect(svg).toBeTruthy()
       expect(svg.style.minWidth).toBe('100%')
-      expect(svg.style.minHeight).toBe('100%')
     })
   })
 })
@@ -3106,6 +3105,13 @@ describe('PNG export (#310)', () => {
 })
 
 describe('bidirectional arrow toggle (RightPanel)', () => {
+  beforeEach(() => {
+    cleanup()
+  })
+  afterEach(() => {
+    cleanup()
+  })
+
   const flowWithArrow = (): Flow => ({
     id: 'f1',
     title: 'T',
@@ -3153,5 +3159,89 @@ describe('bidirectional arrow toggle (RightPanel)', () => {
     )
     expect(bidirBtnAfter!.getAttribute('aria-pressed')).toBe('true')
     expect(reverseBtnAfter!.disabled).toBe(true)
+  })
+
+  it('should render canvas as two stacked SVGs (header + body)', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    expect(screen.getByTestId('canvas-header-svg')).toBeInTheDocument()
+    expect(screen.getByTestId('canvas-svg')).toBeInTheDocument()
+  })
+
+  it('should render lane name labels inside header svg, not body svg', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const bodySvg = screen.getByTestId('canvas-svg')
+    const headerTexts = Array.from(headerSvg.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((t): t is string => !!t && t.length > 0)
+    const bodyTexts = Array.from(bodySvg.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((t): t is string => !!t && t.length > 0)
+    // Header SVG must have at least one lane name (default flow has lanes)
+    expect(headerTexts.length).toBeGreaterThan(0)
+    // No header label should appear in body SVG
+    headerTexts.forEach((label) => {
+      expect(bodyTexts).not.toContain(label)
+    })
+  })
+
+  it('should render lane color accent dot inside header svg', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const circles = headerSvg.querySelectorAll('circle')
+    expect(circles.length).toBeGreaterThan(0)
+  })
+
+  it('should render selection highlight in both header and body svgs when a lane is selected', async () => {
+    const user = userEvent.setup()
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const bodySvg = screen.getByTestId('canvas-svg')
+    // Find clickable header hit rects (transparent rects with cursor:pointer in header)
+    const headerHitRects = headerSvg.querySelectorAll('rect[fill="transparent"]')
+    expect(headerHitRects.length).toBeGreaterThan(0)
+    await user.click(headerHitRects[0] as Element)
+    // After selection, both SVGs should have exactly 1 dashed highlight rect
+    const headerHl = headerSvg.querySelectorAll('rect[stroke-dasharray="5,3"]')
+    const bodyHl = bodySvg.querySelectorAll('rect[stroke-dasharray="5,3"]')
+    expect(headerHl.length).toBe(1)
+    expect(bodyHl.length).toBe(1)
+  })
+
+  it('should place lane gap hit area and + button in header svg', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const bodySvg = screen.getByTestId('canvas-svg')
+    expect(headerSvg.querySelector('[data-testid="lanegap-hit-0"]')).not.toBeNull()
+    expect(bodySvg.querySelector('[data-testid="lanegap-hit-0"]')).toBeNull()
+  })
+
+  it('should render lane move buttons (←/→) inside header svg when a lane is selected', async () => {
+    const user = userEvent.setup()
+    const twoLaneFlow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [
+        { id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'L2', colorIndex: 1, position: 1 },
+      ],
+    }
+    render(<FlowEditor flow={twoLaneFlow} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const bodySvg = screen.getByTestId('canvas-svg')
+    // Click a header hit rect to select a lane (use index 1 if multiple lanes; otherwise 0)
+    const headerHitRects = headerSvg.querySelectorAll('rect[fill="transparent"]')
+    expect(headerHitRects.length).toBeGreaterThan(0)
+    const targetIdx = headerHitRects.length >= 2 ? 1 : 0
+    await user.click(headerHitRects[targetIdx] as Element)
+    // Header SVG should contain "←" or "→" text
+    const headerArrows = Array.from(headerSvg.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((c) => c === '←' || c === '→')
+    expect(headerArrows.length).toBeGreaterThan(0)
+    // Body SVG should NOT contain ←/→
+    const bodyArrows = Array.from(bodySvg.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((c) => c === '←' || c === '→')
+    expect(bodyArrows.length).toBe(0)
   })
 })

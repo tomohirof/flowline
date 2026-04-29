@@ -235,21 +235,63 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           </div>
         </div>
         <svg
-          className={styles.svg}
+          data-testid="shared-canvas-header-svg"
+          className={styles.headerSvg}
           width={totalW * zoom}
-          height={(totalH + 30) * zoom}
-          viewBox={`0 -30 ${totalW} ${totalH + 30}`}
+          height={(TM + HH + 30) * zoom}
+          viewBox={`0 -30 ${totalW} ${TM + HH + 30}`}
         >
-          {/* Lanes */}
+          {/* Lane headers (sticky) */}
           {sortedLanes.map((lane, li) => {
             const p = PALETTES[lane.colorIndex % PALETTES.length]
             const x = laneX(li)
-            const fullH = HH + rowCount * RH
             const isSub = isGroupSub(lane)
             const isParent = isGroupParent(lane)
             const headerW = isParent ? getGroupWidth(lane, sortedLanes, LW, G) : LW
+            if (isSub) return null
             return (
-              <g key={`lane-${lane.id}`}>
+              <g key={`lane-header-${lane.id}`}>
+                <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
+                <rect x={x} y={TM + HH - 10} width={headerW} height={10} fill={T.laneHeaderBg} />
+                <rect
+                  x={x + 16}
+                  y={TM + HH - 2.5}
+                  width={headerW - 32}
+                  height={2}
+                  rx={1}
+                  fill={p.dot}
+                  opacity={T.laneAccentOpacity}
+                />
+                <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
+                <text
+                  x={x + 32}
+                  y={TM + HH / 2 + 1}
+                  dominantBaseline="central"
+                  fill={T.titleColor}
+                  fontSize={12.5}
+                  fontWeight={600}
+                  style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+                >
+                  {lane.name}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
+        <svg
+          data-testid="shared-canvas-svg"
+          className={styles.bodySvg}
+          width={totalW * zoom}
+          height={(totalH - HH) * zoom}
+          viewBox={`0 ${TM + HH} ${totalW} ${totalH - HH}`}
+        >
+          {/* Lane bodies (background + sub-lane line + row lines) — header parts removed */}
+          {sortedLanes.map((lane, li) => {
+            const x = laneX(li)
+            const fullH = HH + rowCount * RH
+            const isSub = isGroupSub(lane)
+            return (
+              <g key={`lane-body-${lane.id}`}>
                 <rect
                   x={x}
                   y={isSub ? TM + HH : TM}
@@ -260,39 +302,6 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   stroke={T.laneBorder}
                   strokeWidth={0.5}
                 />
-                {!isSub && (
-                  <>
-                    <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
-                    <rect
-                      x={x}
-                      y={TM + HH - 10}
-                      width={headerW}
-                      height={10}
-                      fill={T.laneHeaderBg}
-                    />
-                    <rect
-                      x={x + 16}
-                      y={TM + HH - 2.5}
-                      width={headerW - 32}
-                      height={2}
-                      rx={1}
-                      fill={p.dot}
-                      opacity={T.laneAccentOpacity}
-                    />
-                    <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
-                    <text
-                      x={x + 32}
-                      y={TM + HH / 2 + 1}
-                      dominantBaseline="central"
-                      fill={T.titleColor}
-                      fontSize={12.5}
-                      fontWeight={600}
-                      style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                    >
-                      {lane.name}
-                    </text>
-                  </>
-                )}
                 {isSub && (
                   <line
                     x1={x}

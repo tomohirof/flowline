@@ -533,6 +533,7 @@ export default function FlowEditor({
   const laneInputRef = useRef<HTMLInputElement | null>(null)
   const preEditLabelRef = useRef<string | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const headerSvgRef = useRef<SVGSVGElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -1557,6 +1558,7 @@ export default function FlowEditor({
       logicalW,
       logicalH,
       editorSettings.showDotGrid,
+      headerSvgRef.current,
     )
     try {
       // html-to-image's toBlob is typed for HTMLElement but supports SVG at runtime
@@ -1641,6 +1643,11 @@ export default function FlowEditor({
     unsaved: t('save.unsaved'),
     error: t('save.error'),
   }
+
+  const bodyPhysicalH = Math.max(
+    containerSize.height - (TM + HH + 30) * zoom,
+    (rows.length * RH + 60) * zoom,
+  )
 
   return (
     <div
@@ -1870,66 +1877,35 @@ export default function FlowEditor({
           }}
         >
           <svg
-            ref={svgRef}
-            data-testid="canvas-svg"
+            ref={headerSvgRef}
+            data-testid="canvas-header-svg"
             width={svgW}
-            height={svgH}
-            viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
-            className={styles.svg}
-            style={{
-              minWidth: '100%',
-              minHeight: '100%',
-              cursor: draggingMemo ? 'grabbing' : undefined,
-            }}
-            onMouseMove={onSvgMouseMove}
-            onMouseUp={onSvgMouseUp}
-            onMouseLeave={() => {
-              if (dragging) {
-                setDragging(null)
-                setDragOver(null)
-                setDragOverMulti(null)
-                setMultiDragAnchorCell(null)
-              }
-              if (connectFrom) {
-                setConnectFrom(null)
-                setConnectDragPt(null)
-                setConnectFromPt(null)
-                setActiveTool('select')
-              }
-              if (draggingMemo) setDraggingMemo(null)
-            }}
+            height={(TM + HH + 30) * zoom}
+            viewBox={`0 -30 ${svgW / zoom} ${TM + HH + 30}`}
+            className={styles.headerSvg}
           >
-            {/* Lanes */}
+            {/* Lane headers (sticky) */}
             {lanes.map((lane, li) => {
-              const p = PALETTES[lane.ci],
-                x = laneX(li),
-                isSel = selLane === lane.id,
-                fullH = HH + rows.length * RH
+              const p = PALETTES[lane.ci]
+              const x = laneX(li)
               const isSub = isGroupSub(lane)
               const isParent = isGroupParent(lane)
               const headerW = isParent ? getGroupWidth(lane, lanes, LW, G) : LW
+              if (isSub) return null
               return (
                 <g
-                  key={`lane-${lane.id}`}
+                  key={`lane-header-${lane.id}`}
                   className={lane.id === slidingLaneId ? styles.laneSlideInAnim : undefined}
                 >
-                  <rect
-                    x={x}
-                    y={isSub ? TM + HH : TM}
-                    width={LW}
-                    height={isSub ? fullH - HH : fullH}
-                    rx={isSub ? 0 : 10}
-                    fill={T.laneBg}
-                    stroke={T.laneBorder}
-                    strokeWidth={0.5}
-                  />
-                  {isSel && (
+                  <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
+                  <rect x={x} y={TM + HH - 10} width={headerW} height={10} fill={T.laneHeaderBg} />
+                  {selLane === lane.id && (
                     <rect
                       x={x + 1}
-                      y={isSub ? TM + HH + 1 : TM + 1}
-                      width={LW - 2}
-                      height={isSub ? fullH - HH - 2 : fullH - 2}
-                      rx={isSub ? 0 : 9}
+                      y={TM + 1}
+                      width={headerW - 2}
+                      height={HH - 2}
+                      rx={9}
                       fill="none"
                       stroke={T.accent}
                       strokeWidth={1.5}
@@ -1937,117 +1913,128 @@ export default function FlowEditor({
                       opacity={0.5}
                     />
                   )}
-                  {!isSub && (
-                    <>
-                      <rect
-                        x={x}
-                        y={TM}
-                        width={headerW}
-                        height={HH}
-                        rx={10}
-                        fill={T.laneHeaderBg}
-                      />
-                      <rect
-                        x={x}
-                        y={TM + HH - 10}
-                        width={headerW}
-                        height={10}
-                        fill={T.laneHeaderBg}
-                      />
-                      <rect
-                        x={x + 16}
-                        y={TM + HH - 2.5}
-                        width={headerW - 32}
-                        height={2}
-                        rx={1}
-                        fill={p.dot}
-                        opacity={T.laneAccentOpacity}
-                      />
-                      <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
-                      <rect
-                        x={x}
-                        y={TM}
-                        width={headerW}
-                        height={HH}
-                        fill="transparent"
-                        style={{ cursor: 'pointer' }}
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          setSelLane(selLane === lane.id ? null : lane.id)
-                          setSelTask(null)
-                          setSelArrow(null)
-                          setMultiSel(new Set())
+                  <rect
+                    x={x + 16}
+                    y={TM + HH - 2.5}
+                    width={headerW - 32}
+                    height={2}
+                    rx={1}
+                    fill={p.dot}
+                    opacity={T.laneAccentOpacity}
+                  />
+                  <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
+                  <rect
+                    x={x}
+                    y={TM}
+                    width={headerW}
+                    height={HH}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      setSelLane(selLane === lane.id ? null : lane.id)
+                      setSelTask(null)
+                      setSelArrow(null)
+                      setMultiSel(new Set())
+                    }}
+                    onDoubleClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      setEditLane(lane.id)
+                      setSelLane(lane.id)
+                      setTimeout(() => laneInputRef.current?.focus(), 40)
+                    }}
+                  />
+                  {editLane === lane.id ? (
+                    <foreignObject x={x + 32} y={TM + 9} width={headerW - 44} height={28}>
+                      <input
+                        ref={laneInputRef}
+                        value={lane.name}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const v = e.target.value
+                          setLanes((p2) =>
+                            p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)),
+                          )
                         }}
-                        onDoubleClick={(e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          setEditLane(lane.id)
-                          setSelLane(lane.id)
-                          setTimeout(() => laneInputRef.current?.focus(), 40)
-                        }}
+                        onBlur={() => setEditLane(null)}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                          e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
+                        }
+                        className={styles.laneNameInput}
                       />
-                    </>
-                  )}
-                  {!isSub &&
-                    (editLane === lane.id ? (
-                      <foreignObject x={x + 32} y={TM + 9} width={headerW - 44} height={28}>
-                        <input
-                          ref={laneInputRef}
-                          value={lane.name}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const v = e.target.value
-                            setLanes((p2) =>
-                              p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)),
-                            )
-                          }}
-                          onBlur={() => setEditLane(null)}
-                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                            e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
-                          }
-                          className={styles.laneNameInput}
-                        />
-                      </foreignObject>
-                    ) : (
-                      <text
-                        x={x + 32}
-                        y={TM + HH / 2 + 1}
-                        dominantBaseline="central"
-                        fill={T.titleColor}
-                        fontSize={12.5}
-                        fontWeight={600}
-                        style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                      >
-                        {lane.name}
-                      </text>
-                    ))}
-                  {isSub && (
-                    <line
-                      x1={x}
-                      y1={TM + 6}
-                      x2={x}
-                      y2={TM + HH + rows.length * RH}
-                      stroke={T.laneBorder}
-                      strokeWidth={1.5}
-                      strokeDasharray="4,3"
-                      opacity={0.4}
-                    />
-                  )}
-                  {rows.map((_, ri) =>
-                    ri === 0 ? null : (
-                      <line
-                        key={ri}
-                        x1={x + 8}
-                        y1={TM + HH + ri * RH}
-                        x2={x + LW - 8}
-                        y2={TM + HH + ri * RH}
-                        stroke={T.laneBorder}
-                        strokeWidth={0.3}
-                      />
-                    ),
+                    </foreignObject>
+                  ) : (
+                    <text
+                      x={x + 32}
+                      y={TM + HH / 2 + 1}
+                      dominantBaseline="central"
+                      fill={T.titleColor}
+                      fontSize={12.5}
+                      fontWeight={600}
+                      style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+                    >
+                      {lane.name}
+                    </text>
                   )}
                 </g>
               )
             })}
-
+            {/* Gap "+" hit + button (header side) */}
+            {Array.from({ length: lanes.length + 1 }, (_, gi) => {
+              const gx =
+                gi === 0
+                  ? LM - G / 2
+                  : gi === lanes.length
+                    ? laneX(gi - 1) + LW + G / 2
+                    : laneX(gi) - G / 2
+              const gy = TM + HH / 2
+              const isHov = hoveredLaneGap === gi
+              const hitX =
+                gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
+              return (
+                <g key={`gap-h-${gi}`}>
+                  <rect
+                    data-testid={`lanegap-hit-${gi}`}
+                    x={hitX}
+                    y={0}
+                    width={gi === 0 || gi === lanes.length ? 14 : G}
+                    height={TM + HH}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredLaneGap(gi)}
+                    onMouseLeave={() => setHoveredLaneGap(null)}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      if (lanes.length === 0) {
+                        insertLaneAt(gi)
+                      } else {
+                        setLaneDropdown({ gapIndex: gi, x: gx, y: gy + 16 })
+                      }
+                    }}
+                  />
+                  {isHov && (
+                    <g style={{ pointerEvents: 'none' }}>
+                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
+                      <line
+                        x1={gx - 4}
+                        y1={gy}
+                        x2={gx + 4}
+                        y2={gy}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                      <line
+                        x1={gx}
+                        y1={gy - 4}
+                        x2={gx}
+                        y2={gy + 4}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                    </g>
+                  )}
+                </g>
+              )
+            })}
             {/* Lane move controls */}
             {selLane &&
               (() => {
@@ -2123,72 +2110,122 @@ export default function FlowEditor({
                   </g>
                 )
               })()}
+          </svg>
+          <svg
+            ref={svgRef}
+            data-testid="canvas-svg"
+            width={svgW}
+            height={bodyPhysicalH}
+            viewBox={`0 ${TM + HH} ${svgW / zoom} ${bodyPhysicalH / zoom}`}
+            className={styles.bodySvg}
+            style={{
+              minWidth: '100%',
+              cursor: draggingMemo ? 'grabbing' : undefined,
+            }}
+            onMouseMove={onSvgMouseMove}
+            onMouseUp={onSvgMouseUp}
+            onMouseLeave={() => {
+              if (dragging) {
+                setDragging(null)
+                setDragOver(null)
+                setDragOverMulti(null)
+                setMultiDragAnchorCell(null)
+              }
+              if (connectFrom) {
+                setConnectFrom(null)
+                setConnectDragPt(null)
+                setConnectFromPt(null)
+                setActiveTool('select')
+              }
+              if (draggingMemo) setDraggingMemo(null)
+            }}
+          >
+            {/* Lanes */}
+            {lanes.map((lane, li) => {
+              const x = laneX(li),
+                isSel = selLane === lane.id,
+                fullH = HH + rows.length * RH
+              const isSub = isGroupSub(lane)
+              return (
+                <g
+                  key={`lane-${lane.id}`}
+                  className={lane.id === slidingLaneId ? styles.laneSlideInAnim : undefined}
+                >
+                  <rect
+                    x={x}
+                    y={isSub ? TM + HH : TM}
+                    width={LW}
+                    height={isSub ? fullH - HH : fullH}
+                    rx={isSub ? 0 : 10}
+                    fill={T.laneBg}
+                    stroke={T.laneBorder}
+                    strokeWidth={0.5}
+                  />
+                  {isSel && (
+                    <rect
+                      x={x + 1}
+                      y={TM + HH + 1}
+                      width={LW - 2}
+                      height={fullH - HH - 2}
+                      rx={0}
+                      fill="none"
+                      stroke={T.accent}
+                      strokeWidth={1.5}
+                      strokeDasharray="5,3"
+                      opacity={0.5}
+                    />
+                  )}
+                  {isSub && (
+                    <line
+                      x1={x}
+                      y1={TM + 6}
+                      x2={x}
+                      y2={TM + HH + rows.length * RH}
+                      stroke={T.laneBorder}
+                      strokeWidth={1.5}
+                      strokeDasharray="4,3"
+                      opacity={0.4}
+                    />
+                  )}
+                  {rows.map((_, ri) =>
+                    ri === 0 ? null : (
+                      <line
+                        key={ri}
+                        x1={x + 8}
+                        y1={TM + HH + ri * RH}
+                        x2={x + LW - 8}
+                        y2={TM + HH + ri * RH}
+                        stroke={T.laneBorder}
+                        strokeWidth={0.3}
+                      />
+                    ),
+                  )}
+                </g>
+              )
+            })}
 
-            {/* Gap "+" */}
+            {/* Gap "+" hover dashed line (body side) */}
             {Array.from({ length: lanes.length + 1 }, (_, gi) => {
+              if (hoveredLaneGap !== gi) return null
               const gx =
                 gi === 0
                   ? LM - G / 2
                   : gi === lanes.length
                     ? laneX(gi - 1) + LW + G / 2
                     : laneX(gi) - G / 2
-              const gy = TM + HH / 2
-              const isHov = hoveredLaneGap === gi
-              const hitX =
-                gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
               return (
-                <g key={`gap-${gi}`}>
-                  <rect
-                    data-testid={`lanegap-hit-${gi}`}
-                    x={hitX}
-                    y={0}
-                    width={gi === 0 || gi === lanes.length ? 14 : G}
-                    height={TM + HH}
-                    fill="transparent"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => setHoveredLaneGap(gi)}
-                    onMouseLeave={() => setHoveredLaneGap(null)}
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      if (lanes.length === 0) {
-                        insertLaneAt(gi)
-                      } else {
-                        setLaneDropdown({ gapIndex: gi, x: gx, y: gy + 16 })
-                      }
-                    }}
-                  />
-                  {isHov && (
-                    <g style={{ pointerEvents: 'none' }}>
-                      <line
-                        x1={gx}
-                        y1={TM + HH}
-                        x2={gx}
-                        y2={TM + HH + rows.length * RH}
-                        stroke={T.accent}
-                        strokeWidth={1.5}
-                        strokeDasharray="4,3"
-                        opacity={0.3}
-                      />
-                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
-                      <line
-                        x1={gx - 4}
-                        y1={gy}
-                        x2={gx + 4}
-                        y2={gy}
-                        stroke="#fff"
-                        strokeWidth={1.5}
-                      />
-                      <line
-                        x1={gx}
-                        y1={gy - 4}
-                        x2={gx}
-                        y2={gy + 4}
-                        stroke="#fff"
-                        strokeWidth={1.5}
-                      />
-                    </g>
-                  )}
-                </g>
+                <line
+                  key={`gap-line-${gi}`}
+                  x1={gx}
+                  y1={TM + HH}
+                  x2={gx}
+                  y2={TM + HH + rows.length * RH}
+                  stroke={T.accent}
+                  strokeWidth={1.5}
+                  strokeDasharray="4,3"
+                  opacity={0.3}
+                  style={{ pointerEvents: 'none' }}
+                />
               )
             })}
 

@@ -315,11 +315,23 @@
 .canvas {
   flex: 1;
   overflow: auto;
+  position: relative;
   background: var(--theme-canvas-bg);
   background-image: radial-gradient(circle, var(--theme-dot-grid) 0.5px, transparent 0.5px);
 }
 
-.svg {
+.headerSvg {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: block;
+  background: var(--theme-canvas-bg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+}
+
+.bodySvg {
+  display: block;
   overflow: visible;
 }
 
