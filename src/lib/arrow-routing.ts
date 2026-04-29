@@ -31,6 +31,9 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   if (inRow.length === 0) return null
 
   // 上下塞がり判定（X 重なりするノードが直上/直下に存在するか）
+  // 前提: obstacles 配列には呼び出し側で「同一行＋直上行＋直下行のみ」をフィルタ済み
+  // のノードが入っていること（collectObstacles ヘルパーがこれを保証する）。Y 距離の
+  // 厳密チェックを省略しているのはこの前提のため。
   const xOverlap = (a: Bbox, b: Bbox) => Math.abs(a.x - b.x) < (a.w + b.w) / 2
   const downBlocked = inRow.some((obs) =>
     obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
@@ -191,7 +194,7 @@ export interface ObstacleNode {
   cy: number // 中心 Y
 }
 
-export interface CollectObstaclesArgs {
+interface CollectObstaclesArgs {
   nodes: ObstacleNode[]
   fromKey: string
   toKey: string
