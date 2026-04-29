@@ -401,4 +401,55 @@ describe('SharedFlowViewer', () => {
       expect(arrowPath!.getAttribute('stroke-dasharray')).toBe('none')
     })
   })
+
+  it('同一行で経路上にノードがある矢印は迂回パスを生成する（A→C, 間にB）', () => {
+    const detourFlow = {
+      ...mockFlow,
+      lanes: [
+        { id: 'lane-1', name: 'A', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'B', colorIndex: 1, position: 1 },
+        { id: 'lane-3', name: 'C', colorIndex: 2, position: 2 },
+      ],
+      nodes: [
+        { id: 'node-a', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'node-b', laneId: 'lane-2', rowIndex: 0, label: 'B', note: null, orderIndex: 1 },
+        { id: 'node-c', laneId: 'lane-3', rowIndex: 0, label: 'C', note: null, orderIndex: 2 },
+      ],
+      arrows: [{ id: 'arrow-1', fromNodeId: 'node-a', toNodeId: 'node-c', comment: null }],
+    }
+    render(<SharedFlowViewer flow={detourFlow} />)
+    // 矢印 svg path（marker-end 付き）を取得
+    const paths = Array.from(document.querySelectorAll('path')).filter((p) =>
+      p.getAttribute('marker-end')?.startsWith('url(#sm-'),
+    )
+    expect(paths.length).toBeGreaterThanOrEqual(1)
+    const d = paths[0].getAttribute('d')!
+    // 迂回パスは 4 セグメント（M L L L）。直線パスは M L のみなので区別可能
+    const segmentCount = d.match(/[ML]/g)?.length ?? 0
+    expect(segmentCount).toBe(4)
+  })
+
+  it('同一行で隣接レーン（間にノードなし）の矢印は直線パス', () => {
+    const straightFlow = {
+      ...mockFlow,
+      lanes: [
+        { id: 'lane-1', name: 'A', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'B', colorIndex: 1, position: 1 },
+      ],
+      nodes: [
+        { id: 'node-a', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'node-b', laneId: 'lane-2', rowIndex: 0, label: 'B', note: null, orderIndex: 1 },
+      ],
+      arrows: [{ id: 'arrow-1', fromNodeId: 'node-a', toNodeId: 'node-b', comment: null }],
+    }
+    render(<SharedFlowViewer flow={straightFlow} />)
+    const paths = Array.from(document.querySelectorAll('path')).filter((p) =>
+      p.getAttribute('marker-end')?.startsWith('url(#sm-'),
+    )
+    expect(paths.length).toBeGreaterThanOrEqual(1)
+    const d = paths[0].getAttribute('d')!
+    // 直線パスは M L の 2 セグメント
+    const segmentCount = d.match(/[ML]/g)?.length ?? 0
+    expect(segmentCount).toBe(2)
+  })
 })

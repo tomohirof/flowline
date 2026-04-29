@@ -1,7 +1,7 @@
 import type { InternalArrow, ArrowPathResult } from './types'
 import type { TaskData, MemoData } from '../features/editor/types'
 import { exitPt, entryPt, buildArrowPath } from './arrow-routing'
-import type { Point } from './arrow-routing'
+import type { Point, Bbox } from './arrow-routing'
 
 /* --------------------------------------------------------- */
 /* calcArrowPath types                                       */
@@ -27,13 +27,21 @@ interface ArrowConfig {
 /**
  * ノード中心座標とサイズ設定から、矢印のSVGパスを計算する。
  * exitPt → entryPt → buildArrowPath の順に呼び出す薄いラッパー。
+ *
+ * @param obstacles - 同一行上の障害ノード bbox 配列。省略時または空配列時は通常パスを返す。
+ *   水平直線パスの経路上に bbox がある場合、自動的に迂回パスを生成する。
  */
-export function calcArrowPath(from: NodePos, to: NodePos, config: ArrowConfig): ArrowPathResult {
+export function calcArrowPath(
+  from: NodePos,
+  to: NodePos,
+  config: ArrowConfig,
+  obstacles?: Bbox[],
+): ArrowPathResult {
   const f: Point = { x: from.x, y: from.y }
   const t: Point = { x: to.x, y: to.y }
   const s = exitPt(f, t, config.hw, config.hh, config.rh, config.fromShape)
   const e = entryPt(t, f, config.hw, config.hh, config.rh, config.toShape)
-  return buildArrowPath(s, e, f, t)
+  return buildArrowPath(s, e, f, t, obstacles)
 }
 
 /**

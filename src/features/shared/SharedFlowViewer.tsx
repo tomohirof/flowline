@@ -5,7 +5,16 @@ import { BRAND } from '../../constants/brand'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
-import { exitPt, entryPt, buildArrowPath, DS, type Point } from '../../lib/arrow-routing'
+import {
+  exitPt,
+  entryPt,
+  buildArrowPath,
+  collectObstacles,
+  DS,
+  type Point,
+  type Bbox,
+  type ObstacleNode,
+} from '../../lib/arrow-routing'
 import { formatRelativeTime } from '../../lib/relative-time'
 import { isGroupSub, isGroupParent, getGroupWidth } from '../../lib/lane-group-utils'
 import { parseNote, measureMemoHeight, MEMO_W } from '../editor/memo-utils'
@@ -89,6 +98,17 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     nodeById[n.id] = n
   })
 
+  // 全ノードの中心座標を1度だけ収集（同一行 obstacles 判定で再利用）
+  // FlowEditor 側は riMap[t.rid] で行インデックスを取得するが、本ビューアでは
+  // flow.nodes に直接 rowIndex があるためそのまま ct() に渡せる（両者は等価）。
+  const obstacleNodes: ObstacleNode[] = []
+  for (const n of flow.nodes) {
+    const li = laneIdToIndex[n.laneId]
+    if (li === undefined) continue
+    const c = ct(li, n.rowIndex)
+    obstacleNodes.push({ key: n.id, cx: c.x, cy: c.y })
+  }
+
   // Arrow path calculation
   const computeArrowPath = (arrow: Arrow): { d: string; mx: number; my: number } | null => {
     const fromNode = nodeById[arrow.fromNodeId]
@@ -105,7 +125,24 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       hh = TH / 2
     const s = exitPt(f, t, hw, hh, RH, fromNode.shape as 'diamond' | undefined)
     const e = entryPt(t, f, hw, hh, RH, toNode.shape as 'diamond' | undefined)
-    return buildArrowPath(s, e, f, t)
+
+    // 同一行のときのみ obstacles を組み立てる（迂回判定用）
+    let obstacles: Bbox[] | undefined
+    if (fromNode.rowIndex === toNode.rowIndex) {
+      obstacles = collectObstacles({
+        nodes: obstacleNodes,
+        fromKey: fromNode.id,
+        toKey: toNode.id,
+        fromCx: f.x,
+        toCx: t.x,
+        rowY: f.y,
+        rowH: RH,
+        bboxW: TW,
+        bboxH: TH,
+      })
+    }
+
+    return buildArrowPath(s, e, f, t, obstacles)
   }
 
   const arrowPaths = flow.arrows
