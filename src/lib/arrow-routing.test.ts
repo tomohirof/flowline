@@ -99,4 +99,18 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const r = buildArrowPath(s, e, fc, tc, [fromSelfBbox, toSelfBbox])
     expect(r.d).toBe('M276,200 L524,200')
   })
+
+  it('同一行・右→左方向でも下迂回する（s.x > e.x）', () => {
+    // s と e を逆転（s.x=524 → e.x=276）。同一行 (y=200)、間に B (400,200)
+    const sR = { x: 524, y: 200 }
+    const eR = { x: 276, y: 200 }
+    const fcR = { x: 600, y: 200 }
+    const tcR = { x: 200, y: 200 }
+    const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(sR, eR, fcR, tcR, [B])
+    // detourY = 200 + 28 + 14 = 242。左右が反転したミラーパス
+    expect(r.d).toBe('M524,200 L524,242 L276,242 L276,200')
+    expect(r.mx).toBe(400)
+    expect(r.my).toBe(242)
+  })
 })
