@@ -163,8 +163,7 @@ export const buildArrowPath = (
       // |e.x - s.x| / 2 で clamp。ノード幅が縮小しても departX/approachX が反対側を越えて
       // パスが自己交差するのを防ぐ防御コード（detectDetour で水平距離は保証されるが、レイアウト
       // 変更時の silent breakage 回避用）。DEPART_GAP/APPROACH_GAP が同値（対称設計）の場合、
-      // clamp が効くと中央で接合する。
-      const dx = e.x - s.x
+      // clamp が効くと中央で接合する（縮退ケースでは中央水平セグメントがゼロ長になる）。
       const sign = Math.sign(dx)
       const halfDx = Math.abs(dx) / 2
       const departX = s.x + sign * Math.min(DEPART_GAP, halfDx)
