@@ -1360,7 +1360,7 @@ describe('Lane group persistence (#309)', () => {
     expect(byId.l_b.groupRole).toBe('sub')
   })
 
-  it('should leave non-grouped lanes intact (groupId undefined)', async () => {
+  it('should leave non-grouped lanes intact (groupId/groupRole undefined)', async () => {
     registerUser(db, 'u_g3', 'g3@test.com')
     const env = createEnv(db)
     const cookie = await authCookie('u_g3', 'g3@test.com')
@@ -1376,9 +1376,47 @@ describe('Lane group persistence (#309)', () => {
     const created = (await postRes.json()) as { flow: { id: string } }
 
     const getRes = await getWithCookie(`/api/flows/${created.flow.id}`, env, cookie)
+    expect(getRes.status).toBe(200)
     const fetched = (await getRes.json()) as {
-      flow: { lanes: Array<{ groupId?: string }> }
+      flow: { lanes: Array<{ groupId?: string; groupRole?: string }> }
     }
     expect(fetched.flow.lanes[0].groupId).toBeUndefined()
+    expect(fetched.flow.lanes[0].groupRole).toBeUndefined()
+  })
+
+  it('shared GET should return groupId/groupRole for grouped lanes', async () => {
+    registerUser(db, 'u_g4', 'g4@test.com')
+    const env = createEnv(db)
+    const cookie = await authCookie('u_g4', 'g4@test.com')
+
+    const groupId = 'grp-shared'
+    const body = {
+      title: 'Shared Merged',
+      lanes: [
+        { id: 'sp', name: 'P', colorIndex: 0, position: 0, groupId, groupRole: 'parent' },
+        { id: 'ss', name: 'S', colorIndex: 1, position: 1, groupId, groupRole: 'sub' },
+      ],
+      nodes: [],
+      arrows: [],
+    }
+    const postRes = await postJson('/api/flows', body, env, cookie)
+    expect(postRes.status).toBe(201)
+    const created = (await postRes.json()) as { flow: { id: string } }
+    const flowId = created.flow.id
+
+    const shareRes = await postJson(`/api/flows/${flowId}/share`, {}, env, cookie)
+    expect(shareRes.status).toBe(200)
+    const shareJson = (await shareRes.json()) as { shareToken: string }
+
+    const sharedRes = await app.request(`/api/shared/${shareJson.shareToken}`, {}, env)
+    expect(sharedRes.status).toBe(200)
+    const sharedJson = (await sharedRes.json()) as {
+      flow: { lanes: Array<{ id: string; groupId?: string; groupRole?: string }> }
+    }
+    const byId = Object.fromEntries(sharedJson.flow.lanes.map((l) => [l.id, l]))
+    expect(byId.sp.groupId).toBe(groupId)
+    expect(byId.sp.groupRole).toBe('parent')
+    expect(byId.ss.groupId).toBe(groupId)
+    expect(byId.ss.groupRole).toBe('sub')
   })
 })
