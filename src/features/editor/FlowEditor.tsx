@@ -1970,6 +1970,81 @@ export default function FlowEditor({
                 </g>
               )
             })}
+            {/* Lane move controls */}
+            {selLane &&
+              (() => {
+                const li = lanes.findIndex((l) => l.id === selLane)
+                if (li === -1) return null
+                const x = laneX(li),
+                  cx = x + LW / 2,
+                  cy = TM - 14
+                return (
+                  <g>
+                    {li > 0 && (
+                      <g
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          moveLane(selLane, -1)
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <rect
+                          x={cx - 44}
+                          y={cy - 11}
+                          width={30}
+                          height={22}
+                          rx={6}
+                          fill={T.sidebar}
+                          stroke={T.laneBorder}
+                          strokeWidth={0.5}
+                        />
+                        <text
+                          x={cx - 29}
+                          y={cy}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={13}
+                          fill={T.sidebarIcon}
+                          fontWeight={600}
+                        >
+                          {'←'}
+                        </text>
+                      </g>
+                    )}
+                    {li < lanes.length - 1 && (
+                      <g
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          moveLane(selLane, 1)
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <rect
+                          x={cx + 14}
+                          y={cy - 11}
+                          width={30}
+                          height={22}
+                          rx={6}
+                          fill={T.sidebar}
+                          stroke={T.laneBorder}
+                          strokeWidth={0.5}
+                        />
+                        <text
+                          x={cx + 29}
+                          y={cy}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={13}
+                          fill={T.sidebarIcon}
+                          fontWeight={600}
+                        >
+                          {'→'}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                )
+              })()}
           </svg>
           <svg
             ref={svgRef}
@@ -2066,82 +2141,6 @@ export default function FlowEditor({
                 </g>
               )
             })}
-
-            {/* Lane move controls */}
-            {selLane &&
-              (() => {
-                const li = lanes.findIndex((l) => l.id === selLane)
-                if (li === -1) return null
-                const x = laneX(li),
-                  cx = x + LW / 2,
-                  cy = TM - 14
-                return (
-                  <g>
-                    {li > 0 && (
-                      <g
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          moveLane(selLane, -1)
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <rect
-                          x={cx - 44}
-                          y={cy - 11}
-                          width={30}
-                          height={22}
-                          rx={6}
-                          fill={T.sidebar}
-                          stroke={T.laneBorder}
-                          strokeWidth={0.5}
-                        />
-                        <text
-                          x={cx - 29}
-                          y={cy}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fontSize={13}
-                          fill={T.sidebarIcon}
-                          fontWeight={600}
-                        >
-                          {'←'}
-                        </text>
-                      </g>
-                    )}
-                    {li < lanes.length - 1 && (
-                      <g
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          moveLane(selLane, 1)
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <rect
-                          x={cx + 14}
-                          y={cy - 11}
-                          width={30}
-                          height={22}
-                          rx={6}
-                          fill={T.sidebar}
-                          stroke={T.laneBorder}
-                          strokeWidth={0.5}
-                        />
-                        <text
-                          x={cx + 29}
-                          y={cy}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fontSize={13}
-                          fill={T.sidebarIcon}
-                          fontWeight={600}
-                        >
-                          {'→'}
-                        </text>
-                      </g>
-                    )}
-                  </g>
-                )
-              })()}
 
             {/* Gap "+" */}
             {Array.from({ length: lanes.length + 1 }, (_, gi) => {

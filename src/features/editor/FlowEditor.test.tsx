@@ -3207,4 +3207,33 @@ describe('bidirectional arrow toggle (RightPanel)', () => {
     expect(headerHl.length).toBe(1)
     expect(bodyHl.length).toBe(1)
   })
+
+  it('should render lane move buttons (←/→) inside header svg when a lane is selected', async () => {
+    const user = userEvent.setup()
+    const twoLaneFlow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [
+        { id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'L2', colorIndex: 1, position: 1 },
+      ],
+    }
+    render(<FlowEditor flow={twoLaneFlow} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const bodySvg = screen.getByTestId('canvas-svg')
+    // Click a header hit rect to select a lane (use index 1 if multiple lanes; otherwise 0)
+    const headerHitRects = headerSvg.querySelectorAll('rect[fill="transparent"]')
+    expect(headerHitRects.length).toBeGreaterThan(0)
+    const targetIdx = headerHitRects.length >= 2 ? 1 : 0
+    await user.click(headerHitRects[targetIdx] as Element)
+    // Header SVG should contain "←" or "→" text
+    const headerArrows = Array.from(headerSvg.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((c) => c === '←' || c === '→')
+    expect(headerArrows.length).toBeGreaterThan(0)
+    // Body SVG should NOT contain ←/→
+    const bodyArrows = Array.from(bodySvg.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((c) => c === '←' || c === '→')
+    expect(bodyArrows.length).toBe(0)
+  })
 })
