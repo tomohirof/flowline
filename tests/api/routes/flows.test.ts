@@ -519,6 +519,44 @@ describe('Flows API', () => {
       expect(getBody.flow.nodes[0].bg).toBe('#EEF5FF')
       expect(getBody.flow.arrows[0].color).toBe('#E06060')
     })
+
+    it('should round-trip bidirectional arrow flag', async () => {
+      const payload = {
+        title: 'Bidir Flow',
+        themeId: 'cloud',
+        lanes: [{ id: 'lane-1', name: 'L', colorIndex: 0, position: 0 }],
+        nodes: [
+          { id: 'node-1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+          { id: 'node-2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+        ],
+        arrows: [
+          {
+            id: 'arrow-1',
+            fromNodeId: 'node-1',
+            toNodeId: 'node-2',
+            comment: null,
+            bidirectional: true,
+          },
+          { id: 'arrow-2', fromNodeId: 'node-2', toNodeId: 'node-1', comment: null },
+        ],
+      }
+      const createRes = await postJson('/api/flows', payload, env, cookie)
+      expect(createRes.status).toBe(201)
+      const created = (await createRes.json()) as {
+        flow: { id: string; arrows: Array<{ id: string; bidirectional?: boolean | null }> }
+      }
+      const a1 = created.flow.arrows.find((a) => a.id === 'arrow-1')
+      const a2 = created.flow.arrows.find((a) => a.id === 'arrow-2')
+      expect(a1?.bidirectional).toBe(true)
+      expect(a2?.bidirectional ?? false).toBe(false)
+
+      // GET should return the same value
+      const getRes = await getWithCookie(`/api/flows/${created.flow.id}`, env, cookie)
+      expect(getRes.status).toBe(200)
+      const got = (await getRes.json()) as typeof created
+      expect(got.flow.arrows.find((a) => a.id === 'arrow-1')?.bidirectional).toBe(true)
+      expect(got.flow.arrows.find((a) => a.id === 'arrow-2')?.bidirectional ?? false).toBe(false)
+    })
   })
 
   // ========================================

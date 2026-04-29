@@ -424,4 +424,19 @@ describe('useArrows', () => {
       expect(addConfirmToast).not.toHaveBeenCalled()
     })
   })
+
+  it('should preserve bidirectional flag through setArrows', () => {
+    const arrows: InternalArrow[] = [
+      { id: 'a1', from: 'x', to: 'y', comment: '', bidirectional: true },
+    ]
+    const { result } = renderHook(() => useArrows({ ...defaultOptions(), initialArrows: arrows }))
+    expect(result.current.arrows[0].bidirectional).toBe(true)
+    act(() => {
+      result.current.setArrows((p) =>
+        p.map((a) => (a.id === 'a1' ? { ...a, comment: 'updated' } : a)),
+      )
+    })
+    expect(result.current.arrows[0].bidirectional).toBe(true)
+    expect(result.current.arrows[0].comment).toBe('updated')
+  })
 })

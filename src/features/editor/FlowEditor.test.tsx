@@ -195,6 +195,25 @@ describe('visual constants (#44, #45)', () => {
     )
     expect(commentLabel).toBeTruthy()
   })
+
+  it('should render marker-start on bidirectional arrow', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [
+      { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, bidirectional: true },
+      { id: 'a2', fromNodeId: 'n2', toNodeId: 'n1', comment: null, bidirectional: false },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const a1Path = container.querySelector('path[marker-end="url(#m-a1)"]')
+    const a2Path = container.querySelector('path[marker-end="url(#m-a2)"]')
+    expect(a1Path?.getAttribute('marker-start')).toBe('url(#m-start-a1)')
+    expect(a2Path?.getAttribute('marker-start')).toBeNull()
+    expect(container.querySelector('marker#m-start-a1')).toBeTruthy()
+    expect(container.querySelector('marker#m-start-a2')).toBeNull()
+  })
 })
 
 describe('floating arrow controls (#46)', () => {
@@ -1955,6 +1974,36 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
     expect(screen.getByText('rightPanel.mermaidCopy')).toBeInTheDocument()
     expect(screen.queryByText('rightPanel.mermaidCopied')).not.toBeInTheDocument()
   })
+
+  it('exportMermaid should emit <--> for bidirectional arrows', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'L', colorIndex: 0, position: 0 }],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+        { id: 'n3', laneId: 'lane-1', rowIndex: 2, label: 'C', note: null, orderIndex: 2 },
+      ],
+      arrows: [
+        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, bidirectional: true },
+        { id: 'a2', fromNodeId: 'n2', toNodeId: 'n3', comment: 'sync', bidirectional: true },
+        { id: 'a3', fromNodeId: 'n1', toNodeId: 'n3', comment: null, bidirectional: false },
+      ],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+    // Bidirectional, no comment
+    expect(mermaid).toMatch(/n\d+ <--> n\d+/)
+    // Bidirectional, with comment
+    expect(mermaid).toMatch(/n\d+ <-->\|sync\| n\d+/)
+    // One-way still uses -->
+    expect(mermaid).toMatch(/n\d+ --> n\d+/)
+    // Make sure we don't emit the old --> for the bidirectional ones
+    const a1Match = mermaid.match(/n\d+ (?:<-->|-->)(?:\|[^|]*\|)?\s*n\d+/g) || []
+    const arrows = a1Match.filter((s) => s.includes('<-->')).length
+    expect(arrows).toBeGreaterThanOrEqual(2) // a1 and a2 are bidirectional
+  })
 })
 
 describe('auto-connect by flow position (#182)', () => {
@@ -3027,5 +3076,56 @@ describe('PNG export (#310)', () => {
       URL.createObjectURL = origCreateObjectURL
       URL.revokeObjectURL = origRevokeObjectURL
     }
+  })
+})
+
+describe('bidirectional arrow toggle (RightPanel)', () => {
+  const flowWithArrow = (): Flow => ({
+    id: 'f1',
+    title: 'T',
+    themeId: 'cloud',
+    shareToken: null,
+    projectId: null,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    lanes: [{ id: 'lane-1', name: 'L', colorIndex: 0, position: 0 }],
+    nodes: [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ],
+    arrows: [{ id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null }],
+  })
+
+  it('should toggle bidirectional flag on click and disable reverse button', () => {
+    const { container } = render(
+      <FlowEditor flow={flowWithArrow()} onSave={vi.fn()} saveStatus="saved" />,
+    )
+    // Select the arrow first
+    const arrowHit = container.querySelector('path[pointer-events="stroke"][stroke-width="20"]')
+    expect(arrowHit).toBeTruthy()
+    fireEvent.click(arrowHit!)
+
+    // Find buttons by their label text (i18n in tests returns the key as-is)
+    const buttons = Array.from(container.querySelectorAll('button')) as HTMLButtonElement[]
+    const bidirBtn = buttons.find((b) => b.textContent?.includes('rightPanel.arrowBidirectional'))
+    const reverseBtn = buttons.find((b) => b.textContent?.includes('rightPanel.arrowReverse'))
+    expect(bidirBtn).toBeTruthy()
+    expect(reverseBtn).toBeTruthy()
+    expect(bidirBtn!.getAttribute('aria-pressed')).toBe('false')
+    expect(reverseBtn!.disabled).toBe(false)
+
+    // Toggle on
+    fireEvent.click(bidirBtn!)
+
+    // Re-query (component may re-render)
+    const buttonsAfter = Array.from(container.querySelectorAll('button')) as HTMLButtonElement[]
+    const bidirBtnAfter = buttonsAfter.find((b) =>
+      b.textContent?.includes('rightPanel.arrowBidirectional'),
+    )
+    const reverseBtnAfter = buttonsAfter.find((b) =>
+      b.textContent?.includes('rightPanel.arrowReverse'),
+    )
+    expect(bidirBtnAfter!.getAttribute('aria-pressed')).toBe('true')
+    expect(reverseBtnAfter!.disabled).toBe(true)
   })
 })

@@ -130,6 +130,7 @@ function flowToInternalState(flow: Flow): {
       const arr: InternalArrow = { id: a.id, from, to, comment: a.comment ?? '' }
       if (a.color) arr.color = a.color
       if (a.dash) arr.dash = a.dash
+      if (a.bidirectional) arr.bidirectional = true
       return arr
     })
     .filter((a): a is InternalArrow => a !== null)
@@ -199,6 +200,7 @@ function internalStateToPayload(
         comment: a.comment || null,
         color: a.color || null,
         dash: a.dash || null,
+        bidirectional: a.bidirectional ?? false,
       }
     })
     .filter((a): a is NonNullable<typeof a> => a !== null)
@@ -1482,10 +1484,11 @@ export default function FlowEditor({
       const fromId = nodeIdMap.get(a.from)
       const toId = nodeIdMap.get(a.to)
       if (!fromId || !toId) return
+      const arrowOp = a.bidirectional ? '<-->' : '-->'
       if (a.comment) {
-        m += `    ${fromId} -->|${esc(a.comment)}| ${toId}\n`
+        m += `    ${fromId} ${arrowOp}|${esc(a.comment)}| ${toId}\n`
       } else {
-        m += `    ${fromId} --> ${toId}\n`
+        m += `    ${fromId} ${arrowOp} ${toId}\n`
       }
     })
 
@@ -2730,6 +2733,21 @@ export default function FlowEditor({
                         fill={isSel ? arrow.color || T.accent : ac}
                       />
                     </marker>
+                    {arrow.bidirectional && (
+                      <marker
+                        id={`m-start-${arrow.id}`}
+                        markerWidth="9"
+                        markerHeight="8"
+                        refX="8"
+                        refY="4"
+                        orient="auto-start-reverse"
+                      >
+                        <polygon
+                          points="0 0.5, 9 4, 0 7.5"
+                          fill={isSel ? arrow.color || T.accent : ac}
+                        />
+                      </marker>
+                    )}
                   </defs>
                   <path
                     d={d}
@@ -2737,6 +2755,7 @@ export default function FlowEditor({
                     strokeWidth={isSel ? 2.5 : 2}
                     strokeDasharray={dashArr}
                     fill="none"
+                    markerStart={arrow.bidirectional ? `url(#m-start-${arrow.id})` : undefined}
                     markerEnd={`url(#m-${arrow.id})`}
                     style={{ pointerEvents: 'none' }}
                   />

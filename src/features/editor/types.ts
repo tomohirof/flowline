@@ -98,6 +98,7 @@ export interface Arrow {
   comment: string | null
   color?: string | null
   dash?: string | null
+  bidirectional?: boolean
 }
 
 export interface Flow {

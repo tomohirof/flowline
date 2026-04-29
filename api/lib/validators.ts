@@ -29,6 +29,7 @@ const arrowSchema = z.object({
   comment: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   dash: z.string().nullable().optional(),
+  bidirectional: z.boolean().optional(),
 })
 
 export const createFlowSchema = z.object({

@@ -479,4 +479,55 @@ describe('SharedFlowViewer', () => {
     const segmentCount = d.match(/[ML]/g)?.length ?? 0
     expect(segmentCount).toBe(2)
   })
+
+  it('should render marker-start on bidirectional arrow', () => {
+    const flow = {
+      ...mockFlow,
+      lanes: [
+        { id: 'lane-1', name: 'Lane 1', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'Lane 2', colorIndex: 1, position: 1 },
+      ],
+      nodes: [
+        { id: 'node-a', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'node-b', laneId: 'lane-2', rowIndex: 0, label: 'B', note: null, orderIndex: 1 },
+      ],
+      arrows: [
+        {
+          id: 'arrow-1',
+          fromNodeId: 'node-a',
+          toNodeId: 'node-b',
+          comment: null,
+          bidirectional: true,
+        },
+      ],
+    }
+    render(<SharedFlowViewer flow={flow} />)
+    const path = Array.from(document.querySelectorAll('path')).find((p) =>
+      p.getAttribute('marker-end')?.startsWith('url(#sm-'),
+    )
+    expect(path).toBeTruthy()
+    expect(path?.getAttribute('marker-start')).toBe('url(#sm-start-arrow-1)')
+    expect(document.querySelector('marker#sm-start-arrow-1')).toBeTruthy()
+  })
+
+  it('should not render marker-start on regular (one-way) arrow', () => {
+    const flow = {
+      ...mockFlow,
+      lanes: [
+        { id: 'lane-1', name: 'Lane 1', colorIndex: 0, position: 0 },
+        { id: 'lane-2', name: 'Lane 2', colorIndex: 1, position: 1 },
+      ],
+      nodes: [
+        { id: 'node-a', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'node-b', laneId: 'lane-2', rowIndex: 0, label: 'B', note: null, orderIndex: 1 },
+      ],
+      arrows: [{ id: 'arrow-1', fromNodeId: 'node-a', toNodeId: 'node-b', comment: null }],
+    }
+    render(<SharedFlowViewer flow={flow} />)
+    const path = Array.from(document.querySelectorAll('path')).find((p) =>
+      p.getAttribute('marker-end')?.startsWith('url(#sm-'),
+    )
+    expect(path?.getAttribute('marker-start')).toBeNull()
+    expect(document.querySelector('marker#sm-start-arrow-1')).toBeNull()
+  })
 })

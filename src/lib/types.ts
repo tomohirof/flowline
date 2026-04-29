@@ -6,6 +6,7 @@ export interface InternalArrow {
   comment: string
   color?: string
   dash?: string
+  bidirectional?: boolean
 }
 
 /** 矢印パス計算結果（DOM/React非依存） */

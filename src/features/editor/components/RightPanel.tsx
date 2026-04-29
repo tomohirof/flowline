@@ -653,8 +653,19 @@ export const RightPanel = ({
         <PanelSection label={t('rightPanel.operations')}>
           <div className={styles.panelActions}>
             <PanelBtn
+              label={t('rightPanel.arrowBidirectional')}
+              color={T.accent}
+              active={!!selArrowData.bidirectional}
+              onClick={() =>
+                setArrows((p) =>
+                  p.map((a) => (a.id === selArrow ? { ...a, bidirectional: !a.bidirectional } : a)),
+                )
+              }
+            />
+            <PanelBtn
               label={t('rightPanel.arrowReverse')}
               color={T.accent}
+              disabled={!!selArrowData.bidirectional}
               onClick={() =>
                 setArrows((p) =>
                   p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
