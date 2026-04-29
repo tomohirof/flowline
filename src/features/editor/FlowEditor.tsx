@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BRAND } from '../../constants/brand'
+import { ARROW_MARKER } from '../../constants/arrowMarker'
 import { useNavigate, Link } from 'react-router-dom'
 import { ShareDialog } from './components/ShareDialog'
 import { AiAssistant } from './components/AiAssistant'
@@ -2722,28 +2723,28 @@ export default function FlowEditor({
                   <defs>
                     <marker
                       id={`m-${arrow.id}`}
-                      markerWidth="7"
-                      markerHeight="6"
-                      refX="6"
-                      refY="3"
+                      markerWidth={ARROW_MARKER.width}
+                      markerHeight={ARROW_MARKER.height}
+                      refX={ARROW_MARKER.refX}
+                      refY={ARROW_MARKER.refY}
                       orient="auto"
                     >
                       <polygon
-                        points="0 0.5, 7 3, 0 5.5"
+                        points={ARROW_MARKER.points}
                         fill={isSel ? arrow.color || T.accent : ac}
                       />
                     </marker>
                     {arrow.bidirectional && (
                       <marker
                         id={`m-start-${arrow.id}`}
-                        markerWidth="7"
-                        markerHeight="6"
-                        refX="6"
-                        refY="3"
+                        markerWidth={ARROW_MARKER.width}
+                        markerHeight={ARROW_MARKER.height}
+                        refX={ARROW_MARKER.refX}
+                        refY={ARROW_MARKER.refY}
                         orient="auto-start-reverse"
                       >
                         <polygon
-                          points="0 0.5, 7 3, 0 5.5"
+                          points={ARROW_MARKER.points}
                           fill={isSel ? arrow.color || T.accent : ac}
                         />
                       </marker>
@@ -2949,13 +2950,13 @@ export default function FlowEditor({
               <defs key={`repair-preview-def-${i}`}>
                 <marker
                   id={`m-preview-${i}`}
-                  markerWidth="7"
-                  markerHeight="6"
-                  refX="6"
-                  refY="3"
+                  markerWidth={ARROW_MARKER.width}
+                  markerHeight={ARROW_MARKER.height}
+                  refX={ARROW_MARKER.refX}
+                  refY={ARROW_MARKER.refY}
                   orient="auto"
                 >
-                  <polygon points="0 0.5, 7 3, 0 5.5" fill={T.accent} opacity={0.6} />
+                  <polygon points={ARROW_MARKER.points} fill={T.accent} opacity={0.6} />
                 </marker>
               </defs>
             ))}
