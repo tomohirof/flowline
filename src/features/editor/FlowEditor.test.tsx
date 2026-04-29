@@ -1976,6 +1976,36 @@ describe('Mermaid flowchart TD export (#mermaid)', () => {
     expect(screen.getByText('rightPanel.mermaidCopy')).toBeInTheDocument()
     expect(screen.queryByText('rightPanel.mermaidCopied')).not.toBeInTheDocument()
   })
+
+  it('exportMermaid should emit <--> for bidirectional arrows', async () => {
+    const writeTextSpy = setupClipboardMock()
+    const flow: Flow = {
+      ...createMinimalFlow(),
+      lanes: [{ id: 'lane-1', name: 'L', colorIndex: 0, position: 0 }],
+      nodes: [
+        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+        { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+        { id: 'n3', laneId: 'lane-1', rowIndex: 2, label: 'C', note: null, orderIndex: 2 },
+      ],
+      arrows: [
+        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, bidirectional: true },
+        { id: 'a2', fromNodeId: 'n2', toNodeId: 'n3', comment: 'sync', bidirectional: true },
+        { id: 'a3', fromNodeId: 'n1', toNodeId: 'n3', comment: null, bidirectional: false },
+      ],
+    }
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const mermaid = await clickMermaidCopyButton(writeTextSpy)
+    // Bidirectional, no comment
+    expect(mermaid).toMatch(/n\d+ <--> n\d+/)
+    // Bidirectional, with comment
+    expect(mermaid).toMatch(/n\d+ <-->\|sync\| n\d+/)
+    // One-way still uses -->
+    expect(mermaid).toMatch(/n\d+ --> n\d+/)
+    // Make sure we don't emit the old --> for the bidirectional ones
+    const a1Match = mermaid.match(/n\d+ (?:<-->|-->)(?:\|[^|]*\|)?\s*n\d+/g) || []
+    const arrows = a1Match.filter((s) => s.includes('<-->')).length
+    expect(arrows).toBeGreaterThanOrEqual(2) // a1 and a2 are bidirectional
+  })
 })
 
 describe('auto-connect by flow position (#182)', () => {

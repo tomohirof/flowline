@@ -1484,10 +1484,11 @@ export default function FlowEditor({
       const fromId = nodeIdMap.get(a.from)
       const toId = nodeIdMap.get(a.to)
       if (!fromId || !toId) return
+      const arrowOp = a.bidirectional ? '<-->' : '-->'
       if (a.comment) {
-        m += `    ${fromId} -->|${esc(a.comment)}| ${toId}\n`
+        m += `    ${fromId} ${arrowOp}|${esc(a.comment)}| ${toId}\n`
       } else {
-        m += `    ${fromId} --> ${toId}\n`
+        m += `    ${fromId} ${arrowOp} ${toId}\n`
       }
     })
 
