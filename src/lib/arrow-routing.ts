@@ -13,6 +13,7 @@ export interface Bbox {
 const DETOUR_MARGIN = 14
 // 迂回パスの target 直前で水平切り返しを行う距離。
 // 最終セグメントを水平にすることで矢印先端が target 側面に水平進入する。
+// 値は DETOUR_MARGIN と同値だが意図が異なる（迂回 Y オフセット vs 水平進入 X オフセット）ため別定数とする。
 const APPROACH_GAP = 14
 
 function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
@@ -156,7 +157,11 @@ export const buildArrowPath = (
     const detour = detectDetour(s, e, obstacles)
     if (detour) {
       const { detourY } = detour
-      const approachX = e.x - Math.sign(e.x - s.x) * APPROACH_GAP
+      // |e.x - s.x| / 2 で clamp。ノード幅が縮小しても approachX が s.x 側を越えてパスが
+      // 自己交差するのを防ぐ防御コード（detectDetour で水平距離は保証されるが、レイアウト
+      // 変更時の silent breakage 回避用）。
+      const dx = e.x - s.x
+      const approachX = e.x - Math.sign(dx) * Math.min(APPROACH_GAP, Math.abs(dx) / 2)
       // 5 セグメント: M → 垂直(detourY まで) → 水平(approachX まで) → 垂直(e.y まで) → 水平(e.x へ進入)
       const d = `M${s.x},${s.y} L${s.x},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
       return { d, mx: (s.x + e.x) / 2, my: detourY }

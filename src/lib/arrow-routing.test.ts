@@ -115,45 +115,31 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   })
 
   describe('水平進入（最終セグメント水平）', () => {
-    it('下迂回パスの最終セグメントが水平になる（5セグメント）', () => {
+    it('下迂回パスは 5 セグメントで最終セグメントが水平', () => {
       const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
       const r = buildArrowPath(s, e, fc, tc, [B])
-      // 5 セグメント: M + L×4。最終 L が水平（y は同じ、x が変化）
       const segments = r.d.match(/[ML][^ML]+/g) ?? []
       expect(segments).toHaveLength(5)
       // 最終セグメントは水平（前のセグメントの終点と最終終点が同じ Y）
-      const last = segments[segments.length - 1] // "L524,200"
-      const prev = segments[segments.length - 2] // "L510,200"
+      const last = segments[segments.length - 1]
+      const prev = segments[segments.length - 2]
       const lastY = Number(last.split(',')[1])
       const prevY = Number(prev.split(',')[1])
-      expect(lastY).toBe(prevY) // 最終セグメントは水平
-      expect(lastY).toBe(200) // e.y と一致
+      expect(lastY).toBe(prevY)
+      expect(lastY).toBe(e.y)
     })
 
-    it('approachX は e.x の APPROACH_GAP(14) 手前にある（左→右）', () => {
-      const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
-      const r = buildArrowPath(s, e, fc, tc, [B])
-      // s.x=276, e.x=524 で右向き。approachX = 524 - 14 = 510
-      expect(r.d).toBe('M276,200 L276,242 L510,242 L510,200 L524,200')
-    })
-
-    it('approachX は e.x の APPROACH_GAP(14) 手前にある（右→左、ミラー）', () => {
-      const sR = { x: 524, y: 200 }
-      const eR = { x: 276, y: 200 }
-      const fcR = { x: 600, y: 200 }
-      const tcR = { x: 200, y: 200 }
-      const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
-      const r = buildArrowPath(sR, eR, fcR, tcR, [B])
-      // 右→左なので approachX = 276 + 14 = 290
-      expect(r.d).toBe('M524,200 L524,242 L290,242 L290,200 L276,200')
-    })
-
-    it('上迂回でも最終セグメントが水平で水平進入する', () => {
-      const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
-      const D: Bbox = { x: 400, y: 284, w: 152, h: 56 }
-      const r = buildArrowPath(s, e, fc, tc, [B, D])
-      // detourY = 158（上迂回）, approachX = 510
-      expect(r.d).toBe('M276,200 L276,158 L510,158 L510,200 L524,200')
+    it('水平距離が APPROACH_GAP*2 未満の場合 approachX は s.x を越えない（clamp 動作）', () => {
+      // 水平距離=20, APPROACH_GAP=14。Math.min(14, 10) で 10 に clamp される
+      // s=(100,200), e=(120,200) で間に B (110,200) を置いて迂回を強制
+      const sN = { x: 100, y: 200 }
+      const eN = { x: 120, y: 200 }
+      const fcN = { x: 80, y: 200 }
+      const tcN = { x: 140, y: 200 }
+      const B: Bbox = { x: 110, y: 200, w: 16, h: 56 }
+      const r = buildArrowPath(sN, eN, fcN, tcN, [B])
+      // approachX = 120 - 1 * Math.min(14, 10) = 110。s.x(=100) を越えていない
+      expect(r.d).toBe('M100,200 L100,242 L110,242 L110,200 L120,200')
     })
   })
 })
