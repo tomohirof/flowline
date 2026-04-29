@@ -23,7 +23,8 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   it('同一行・障害1個・上下空き → 下迂回パス（detourY = 障害下端 + 14）', () => {
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B])
-    expect(r.d).toBe('M276,200 L276,242 L524,242 L524,200')
+    // approachX = 524 - 14 = 510
+    expect(r.d).toBe('M276,200 L276,242 L510,242 L510,200 L524,200')
     expect(r.mx).toBe(400)
     expect(r.my).toBe(242)
   })
@@ -32,7 +33,7 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
     const D: Bbox = { x: 400, y: 284, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B, D])
-    expect(r.d).toBe('M276,200 L276,158 L524,158 L524,200')
+    expect(r.d).toBe('M276,200 L276,158 L510,158 L510,200 L524,200')
     expect(r.my).toBe(158)
   })
 
@@ -51,7 +52,8 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const eExt = { x: 624, y: 200 }
     const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 700, y: 200 }, [B, C2])
     expect(r.my).toBe(254)
-    expect(r.d).toBe('M276,200 L276,254 L624,254 L624,200')
+    // approachX = 624 - 14 = 610
+    expect(r.d).toBe('M276,200 L276,254 L610,254 L610,200 L624,200')
   })
 
   it('同一行・障害2個・1つだけ直下塞がり → 上迂回', () => {
@@ -106,10 +108,53 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const tcR = { x: 200, y: 200 }
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
     const r = buildArrowPath(sR, eR, fcR, tcR, [B])
-    // detourY = 200 + 28 + 14 = 242。左右が反転したミラーパス
-    expect(r.d).toBe('M524,200 L524,242 L276,242 L276,200')
+    // detourY = 200 + 28 + 14 = 242。左右が反転したミラーパス（approachX = 276 + 14 = 290）
+    expect(r.d).toBe('M524,200 L524,242 L290,242 L290,200 L276,200')
     expect(r.mx).toBe(400)
     expect(r.my).toBe(242)
+  })
+
+  describe('水平進入（最終セグメント水平）', () => {
+    it('下迂回パスの最終セグメントが水平になる（5セグメント）', () => {
+      const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+      const r = buildArrowPath(s, e, fc, tc, [B])
+      // 5 セグメント: M + L×4。最終 L が水平（y は同じ、x が変化）
+      const segments = r.d.match(/[ML][^ML]+/g) ?? []
+      expect(segments).toHaveLength(5)
+      // 最終セグメントは水平（前のセグメントの終点と最終終点が同じ Y）
+      const last = segments[segments.length - 1] // "L524,200"
+      const prev = segments[segments.length - 2] // "L510,200"
+      const lastY = Number(last.split(',')[1])
+      const prevY = Number(prev.split(',')[1])
+      expect(lastY).toBe(prevY) // 最終セグメントは水平
+      expect(lastY).toBe(200) // e.y と一致
+    })
+
+    it('approachX は e.x の APPROACH_GAP(14) 手前にある（左→右）', () => {
+      const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+      const r = buildArrowPath(s, e, fc, tc, [B])
+      // s.x=276, e.x=524 で右向き。approachX = 524 - 14 = 510
+      expect(r.d).toBe('M276,200 L276,242 L510,242 L510,200 L524,200')
+    })
+
+    it('approachX は e.x の APPROACH_GAP(14) 手前にある（右→左、ミラー）', () => {
+      const sR = { x: 524, y: 200 }
+      const eR = { x: 276, y: 200 }
+      const fcR = { x: 600, y: 200 }
+      const tcR = { x: 200, y: 200 }
+      const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+      const r = buildArrowPath(sR, eR, fcR, tcR, [B])
+      // 右→左なので approachX = 276 + 14 = 290
+      expect(r.d).toBe('M524,200 L524,242 L290,242 L290,200 L276,200')
+    })
+
+    it('上迂回でも最終セグメントが水平で水平進入する', () => {
+      const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+      const D: Bbox = { x: 400, y: 284, w: 152, h: 56 }
+      const r = buildArrowPath(s, e, fc, tc, [B, D])
+      // detourY = 158（上迂回）, approachX = 510
+      expect(r.d).toBe('M276,200 L276,158 L510,158 L510,200 L524,200')
+    })
   })
 })
 
