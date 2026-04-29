@@ -985,7 +985,9 @@ describe('IME composition Enter (#87)', () => {
     vi.advanceTimersByTime(50)
 
     // Wait for the node edit input to appear
-    const nodeInput = document.querySelector('input[class*="nodeEditInput"]') as HTMLInputElement
+    const nodeInput = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
     expect(nodeInput).toBeTruthy()
 
     // Press Enter with isComposing=true (simulating IME composition)
@@ -993,13 +995,14 @@ describe('IME composition Enter (#87)', () => {
 
     // Node edit input should still be visible
     const nodeInputAfter = document.querySelector(
-      'input[class*="nodeEditInput"]',
-    ) as HTMLInputElement
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
     expect(nodeInputAfter).toBeTruthy()
     vi.useRealTimers()
   })
 
   it('should insert newline on Shift+Enter during inline edit', async () => {
+    cleanup()
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const flow = createMinimalFlow()
     flow.nodes = [
@@ -1038,6 +1041,7 @@ describe('IME composition Enter (#87)', () => {
   })
 
   it('should confirm and exit inline edit on Enter alone', async () => {
+    cleanup()
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const flow = createMinimalFlow()
     flow.nodes = [

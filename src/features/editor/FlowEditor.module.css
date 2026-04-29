@@ -588,6 +588,23 @@
   font-family: inherit;
 }
 
+.nodeEditTextarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  text-align: center;
+  font-size: 13.5px;
+  background: transparent;
+  color: var(--theme-title-color);
+  font-weight: 500;
+  font-family: inherit;
+  resize: none;
+  overflow: hidden;
+  padding: 0;
+  line-height: 18px;
+}
+
 .noteEditInput {
   width: 100%;
   height: 100%;

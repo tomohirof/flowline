@@ -525,7 +525,7 @@ export default function FlowEditor({
     [isDemo],
   )
 
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -2637,33 +2637,48 @@ export default function FlowEditor({
                           </text>
                         </g>
                       )}
-                    {editing === k ? (
-                      <foreignObject
-                        x={isDiamond ? c.x - DS + 4 : c.x - TW / 2 + 8}
-                        y={isDiamond ? c.y - 10 : c.y - TH / 2 + 18}
-                        width={isDiamond ? DS * 2 - 8 : TW - 16}
-                        height={isDiamond ? 24 : TH - 22}
-                      >
-                        <input
-                          ref={inputRef}
-                          value={task.label === t('defaultNodeLabel') ? '' : task.label}
-                          placeholder={t('defaultNodeLabel')}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const v = e.target.value
-                            setTasks((p2) => ({
-                              ...p2,
-                              [k]: { ...p2[k], label: v || t('defaultNodeLabel') },
-                            }))
-                          }}
-                          onBlur={() => setEditing(null)}
-                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                            if (e.key === 'Enter' && !e.nativeEvent.isComposing) setEditing(null)
-                          }}
-                          onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                          className={styles.nodeEditInput}
-                        />
-                      </foreignObject>
-                    ) : (
+                    {editing === k ? (() => {
+                      const editingValue =
+                        task.label === t('defaultNodeLabel') ? '' : task.label
+                      const editingLines = Math.max(1, editingValue.split('\n').length)
+                      const lineHeightPx = 18
+                      const baseH = isDiamond ? 24 : TH - 22
+                      const expandedH = baseH + (editingLines - 1) * lineHeightPx
+                      return (
+                        <foreignObject
+                          x={isDiamond ? c.x - DS + 4 : c.x - TW / 2 + 8}
+                          y={isDiamond ? c.y - 10 : c.y - TH / 2 + 18}
+                          width={isDiamond ? DS * 2 - 8 : TW - 16}
+                          height={expandedH}
+                        >
+                          <textarea
+                            ref={inputRef}
+                            value={editingValue}
+                            placeholder={t('defaultNodeLabel')}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                              const v = e.target.value
+                              setTasks((p2) => ({
+                                ...p2,
+                                [k]: { ...p2[k], label: v || t('defaultNodeLabel') },
+                              }))
+                            }}
+                            onBlur={() => setEditing(null)}
+                            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                              if (e.nativeEvent.isComposing) return
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault()
+                                setEditing(null)
+                              } else if (e.key === 'Escape') {
+                                e.preventDefault()
+                                setEditing(null)
+                              }
+                            }}
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                            className={styles.nodeEditTextarea}
+                          />
+                        </foreignObject>
+                      )
+                    })() : (
                       (() => {
                         const lines = task.label.split('\n')
                         const lineHeight = 1.2
