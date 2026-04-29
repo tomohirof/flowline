@@ -2755,9 +2755,7 @@ export default function FlowEditor({
                     strokeWidth={isSel ? 2.5 : 2}
                     strokeDasharray={dashArr}
                     fill="none"
-                    markerStart={
-                      arrow.bidirectional ? `url(#m-start-${arrow.id})` : undefined
-                    }
+                    markerStart={arrow.bidirectional ? `url(#m-start-${arrow.id})` : undefined}
                     markerEnd={`url(#m-${arrow.id})`}
                     style={{ pointerEvents: 'none' }}
                   />

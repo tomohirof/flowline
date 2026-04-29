@@ -429,9 +429,7 @@ describe('useArrows', () => {
     const arrows: InternalArrow[] = [
       { id: 'a1', from: 'x', to: 'y', comment: '', bidirectional: true },
     ]
-    const { result } = renderHook(() =>
-      useArrows({ ...defaultOptions(), initialArrows: arrows }),
-    )
+    const { result } = renderHook(() => useArrows({ ...defaultOptions(), initialArrows: arrows }))
     expect(result.current.arrows[0].bidirectional).toBe(true)
     act(() => {
       result.current.setArrows((p) =>

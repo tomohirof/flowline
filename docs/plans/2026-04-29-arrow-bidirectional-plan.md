@@ -58,9 +58,11 @@ cat ~/.claude/rules/testing.md
 ## ファイル構成
 
 **作成:**
+
 - `migrations/0011_arrow_bidirectional.sql` — DB マイグレーション
 
 **修正（型・データ層）:**
+
 - `src/lib/types.ts` — `InternalArrow` に `bidirectional`
 - `src/features/editor/types.ts` — `Arrow` に `bidirectional`
 - `api/lib/validators.ts` — zod schema に `bidirectional`
@@ -69,14 +71,17 @@ cat ~/.claude/rules/testing.md
 - `src/features/editor/FlowEditor.tsx` — `flowToInternal` / `internalStateToPayload` で引き継ぎ
 
 **修正（描画）:**
+
 - `src/features/editor/FlowEditor.tsx` — `markerStart` 追加 + Mermaid 出力分岐
 - `src/features/shared/SharedFlowViewer.tsx` — `markerStart` 追加
 
 **修正（UI）:**
+
 - `src/features/editor/components/RightPanel.tsx` — 「⇄ 双方向」ボタン追加 + 「方向を逆転」を条件付き disabled
 - `src/locales/ja/editor.json`, `src/locales/en/editor.json` — i18n キー追加
 
 **修正（テスト）:**
+
 - `tests/db/migration.test.ts` — マイグレーション 0011 検証
 - `tests/api/routes/flows.test.ts` — `bidirectional` の round-trip
 - `src/features/editor/hooks/useArrows.test.ts` — `bidirectional` 保持
@@ -88,6 +93,7 @@ cat ~/.claude/rules/testing.md
 ## Task 1: DB マイグレーション 0011
 
 **Files:**
+
 - Create: `migrations/0011_arrow_bidirectional.sql`
 - Test: `tests/db/migration.test.ts`
 
@@ -96,59 +102,57 @@ cat ~/.claude/rules/testing.md
 `tests/db/migration.test.ts` の末尾（`'should have created_at and updated_at on all tables'` テストの直前）に追加:
 
 ```ts
-  it('should add bidirectional column to arrows (0011)', () => {
-    const db = new Database(':memory:')
-    db.pragma('foreign_keys = ON')
-    const files = [
-      '0001_initial.sql',
-      '0002_node_arrow_styles.sql',
-      '0003_user_settings.sql',
-      '0004_email_verification.sql',
-      '0005_soft_delete.sql',
-      '0006_ai_admin.sql',
-      '0007_node_shape.sql',
-      '0008_projects.sql',
-      '0009_invitation_codes.sql',
-      '0010_project_members.sql',
-      '0011_arrow_bidirectional.sql',
-    ]
-    for (const f of files) {
-      const sql = readFileSync(resolve(__dirname, '../../migrations/', f), 'utf-8')
-      for (const stmt of sql.split(';').filter((s) => s.trim())) {
-        db.exec(stmt + ';')
-      }
+it('should add bidirectional column to arrows (0011)', () => {
+  const db = new Database(':memory:')
+  db.pragma('foreign_keys = ON')
+  const files = [
+    '0001_initial.sql',
+    '0002_node_arrow_styles.sql',
+    '0003_user_settings.sql',
+    '0004_email_verification.sql',
+    '0005_soft_delete.sql',
+    '0006_ai_admin.sql',
+    '0007_node_shape.sql',
+    '0008_projects.sql',
+    '0009_invitation_codes.sql',
+    '0010_project_members.sql',
+    '0011_arrow_bidirectional.sql',
+  ]
+  for (const f of files) {
+    const sql = readFileSync(resolve(__dirname, '../../migrations/', f), 'utf-8')
+    for (const stmt of sql.split(';').filter((s) => s.trim())) {
+      db.exec(stmt + ';')
     }
-    const cols = db.prepare('PRAGMA table_info(arrows)').all() as Array<{
-      name: string
-      dflt_value: string | null
-    }>
-    const bidir = cols.find((c) => c.name === 'bidirectional')
-    expect(bidir).toBeDefined()
-    expect(bidir?.dflt_value).toBe('0')
+  }
+  const cols = db.prepare('PRAGMA table_info(arrows)').all() as Array<{
+    name: string
+    dflt_value: string | null
+  }>
+  const bidir = cols.find((c) => c.name === 'bidirectional')
+  expect(bidir).toBeDefined()
+  expect(bidir?.dflt_value).toBe('0')
 
-    // 既存 INSERT が動くこと（DEFAULT 0 で挿入される）
-    db.prepare(
-      "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'u1@test.com', 'h', 'U')",
-    ).run()
-    db.prepare("INSERT INTO flows (id, user_id) VALUES ('f1', 'u1')").run()
-    db.prepare(
-      "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l1', 'f1', 'L', 0)",
-    ).run()
-    db.prepare(
-      "INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n1', 'f1', 'l1', 0, 0)",
-    ).run()
-    db.prepare(
-      "INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n2', 'f1', 'l1', 1, 1)",
-    ).run()
-    db.prepare(
-      "INSERT INTO arrows (id, flow_id, from_node_id, to_node_id) VALUES ('a1', 'f1', 'n1', 'n2')",
-    ).run()
-    const row = db.prepare("SELECT bidirectional FROM arrows WHERE id = 'a1'").get() as {
-      bidirectional: number
-    }
-    expect(row.bidirectional).toBe(0)
-    db.close()
-  })
+  // 既存 INSERT が動くこと（DEFAULT 0 で挿入される）
+  db.prepare(
+    "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'u1@test.com', 'h', 'U')",
+  ).run()
+  db.prepare("INSERT INTO flows (id, user_id) VALUES ('f1', 'u1')").run()
+  db.prepare("INSERT INTO lanes (id, flow_id, name, position) VALUES ('l1', 'f1', 'L', 0)").run()
+  db.prepare(
+    "INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n1', 'f1', 'l1', 0, 0)",
+  ).run()
+  db.prepare(
+    "INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n2', 'f1', 'l1', 1, 1)",
+  ).run()
+  db.prepare(
+    "INSERT INTO arrows (id, flow_id, from_node_id, to_node_id) VALUES ('a1', 'f1', 'n1', 'n2')",
+  ).run()
+  const row = db.prepare("SELECT bidirectional FROM arrows WHERE id = 'a1'").get() as {
+    bidirectional: number
+  }
+  expect(row.bidirectional).toBe(0)
+  db.close()
+})
 ```
 
 - [ ] **Step 2: テスト失敗を確認**
@@ -188,6 +192,7 @@ git commit -m "feat(#316): add bidirectional column to arrows table"
 ## Task 2: 型定義（InternalArrow / Arrow）
 
 **Files:**
+
 - Modify: `src/lib/types.ts`
 - Modify: `src/features/editor/types.ts`
 
@@ -253,6 +258,7 @@ git commit -m "feat(#316): add bidirectional field to Arrow types"
 ## Task 3: API バリデータ + 永続化
 
 **Files:**
+
 - Modify: `api/lib/validators.ts`
 - Modify: `api/lib/flow-transform.ts`
 - Modify: `api/routes/flows.ts:264-280`, `api/routes/flows.ts:423-440`
@@ -263,52 +269,54 @@ git commit -m "feat(#316): add bidirectional field to Arrow types"
 `tests/api/routes/flows.test.ts` に新しい it を追加（既存の flow CRUD テストの近くに配置）:
 
 ```ts
-  it('should round-trip bidirectional arrow flag', async () => {
-    const userId = await createTestUser()
-    const token = await getAuthToken(userId)
+it('should round-trip bidirectional arrow flag', async () => {
+  const userId = await createTestUser()
+  const token = await getAuthToken(userId)
 
-    const createRes = await app.request(
-      '/api/flows',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: 'Bidir test',
-          themeId: 'cloud',
-          lanes: [{ id: 'l1', name: 'L', colorIndex: 0, position: 0 }],
-          nodes: [
-            { id: 'n1', laneId: 'l1', rowIndex: 0, label: 'A', orderIndex: 0 },
-            { id: 'n2', laneId: 'l1', rowIndex: 1, label: 'B', orderIndex: 1 },
-          ],
-          arrows: [
-            { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', bidirectional: true },
-            { id: 'a2', fromNodeId: 'n2', toNodeId: 'n1' },
-          ],
-        }),
+  const createRes = await app.request(
+    '/api/flows',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
-      env,
-    )
-    expect(createRes.status).toBe(201)
-    const { flow } = (await createRes.json()) as { flow: { id: string; arrows: Array<{ id: string; bidirectional?: boolean | null }> } }
-    const a1 = flow.arrows.find((a) => a.id === 'a1')
-    const a2 = flow.arrows.find((a) => a.id === 'a2')
-    expect(a1?.bidirectional).toBe(true)
-    expect(a2?.bidirectional ?? false).toBe(false)
+      body: JSON.stringify({
+        title: 'Bidir test',
+        themeId: 'cloud',
+        lanes: [{ id: 'l1', name: 'L', colorIndex: 0, position: 0 }],
+        nodes: [
+          { id: 'n1', laneId: 'l1', rowIndex: 0, label: 'A', orderIndex: 0 },
+          { id: 'n2', laneId: 'l1', rowIndex: 1, label: 'B', orderIndex: 1 },
+        ],
+        arrows: [
+          { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', bidirectional: true },
+          { id: 'a2', fromNodeId: 'n2', toNodeId: 'n1' },
+        ],
+      }),
+    },
+    env,
+  )
+  expect(createRes.status).toBe(201)
+  const { flow } = (await createRes.json()) as {
+    flow: { id: string; arrows: Array<{ id: string; bidirectional?: boolean | null }> }
+  }
+  const a1 = flow.arrows.find((a) => a.id === 'a1')
+  const a2 = flow.arrows.find((a) => a.id === 'a2')
+  expect(a1?.bidirectional).toBe(true)
+  expect(a2?.bidirectional ?? false).toBe(false)
 
-    // GET でも同じ値が返ること
-    const getRes = await app.request(
-      `/api/flows/${flow.id}`,
-      { headers: { Authorization: `Bearer ${token}` } },
-      env,
-    )
-    expect(getRes.status).toBe(200)
-    const { flow: got } = (await getRes.json()) as { flow: typeof flow }
-    expect(got.arrows.find((a) => a.id === 'a1')?.bidirectional).toBe(true)
-    expect(got.arrows.find((a) => a.id === 'a2')?.bidirectional ?? false).toBe(false)
-  })
+  // GET でも同じ値が返ること
+  const getRes = await app.request(
+    `/api/flows/${flow.id}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+    env,
+  )
+  expect(getRes.status).toBe(200)
+  const { flow: got } = (await getRes.json()) as { flow: typeof flow }
+  expect(got.arrows.find((a) => a.id === 'a1')?.bidirectional).toBe(true)
+  expect(got.arrows.find((a) => a.id === 'a2')?.bidirectional ?? false).toBe(false)
+})
 ```
 
 注: `createTestUser` / `getAuthToken` / `env` / `app` は既存テストで使われているヘルパ。同ファイル内の既存テストの構造をそのまま流用すること。
@@ -379,25 +387,25 @@ export function toArrow(row: ArrowRow) {
 `api/routes/flows.ts:263-280` の arrows INSERT ループを:
 
 ```ts
-  // INSERT arrows
-  for (const arrow of arrows) {
-    statements.push(
-      db
-        .prepare(
-          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash, bidirectional) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        )
-        .bind(
-          arrow.id,
-          flowId,
-          arrow.fromNodeId,
-          arrow.toNodeId,
-          arrow.comment ?? null,
-          arrow.color ?? null,
-          arrow.dash ?? null,
-          arrow.bidirectional ? 1 : 0,
-        ),
-    )
-  }
+// INSERT arrows
+for (const arrow of arrows) {
+  statements.push(
+    db
+      .prepare(
+        'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash, bidirectional) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      )
+      .bind(
+        arrow.id,
+        flowId,
+        arrow.fromNodeId,
+        arrow.toNodeId,
+        arrow.comment ?? null,
+        arrow.color ?? null,
+        arrow.dash ?? null,
+        arrow.bidirectional ? 1 : 0,
+      ),
+  )
+}
 ```
 
 - [ ] **Step 6: INSERT 文に `bidirectional` を追加（PUT /flows/:id）**
@@ -405,25 +413,25 @@ export function toArrow(row: ArrowRow) {
 `api/routes/flows.ts:423-440` の同形式の INSERT ループも同じ変更を適用:
 
 ```ts
-      // INSERT new arrows
-      for (const arrow of safeArrows) {
-        statements.push(
-          db
-            .prepare(
-              'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash, bidirectional) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            )
-            .bind(
-              arrow.id,
-              flowId,
-              arrow.fromNodeId,
-              arrow.toNodeId,
-              arrow.comment ?? null,
-              arrow.color ?? null,
-              arrow.dash ?? null,
-              arrow.bidirectional ? 1 : 0,
-            ),
-        )
-      }
+// INSERT new arrows
+for (const arrow of safeArrows) {
+  statements.push(
+    db
+      .prepare(
+        'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash, bidirectional) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      )
+      .bind(
+        arrow.id,
+        flowId,
+        arrow.fromNodeId,
+        arrow.toNodeId,
+        arrow.comment ?? null,
+        arrow.color ?? null,
+        arrow.dash ?? null,
+        arrow.bidirectional ? 1 : 0,
+      ),
+  )
+}
 ```
 
 - [ ] **Step 7: テスト pass を確認**
@@ -446,6 +454,7 @@ git commit -m "feat(#316): persist bidirectional flag on arrows API"
 ## Task 4: FlowEditor のデータ変換で bidirectional を引き継ぐ
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:124-134`, `src/features/editor/FlowEditor.tsx:188-203`
 - Test: `src/features/editor/hooks/useArrows.test.ts`
 
@@ -456,22 +465,20 @@ git commit -m "feat(#316): persist bidirectional flag on arrows API"
 `src/features/editor/hooks/useArrows.test.ts` の末尾（既存のテストグループ内）に追加:
 
 ```ts
-  it('should preserve bidirectional flag through setArrows', () => {
-    const arrows: InternalArrow[] = [
-      { id: 'a1', from: 'l0_r0', to: 'l0_r1', comment: '', bidirectional: true },
-    ]
-    const { result } = renderHook(() =>
-      useArrows({ ...defaultOptions, initialArrows: arrows }),
+it('should preserve bidirectional flag through setArrows', () => {
+  const arrows: InternalArrow[] = [
+    { id: 'a1', from: 'l0_r0', to: 'l0_r1', comment: '', bidirectional: true },
+  ]
+  const { result } = renderHook(() => useArrows({ ...defaultOptions, initialArrows: arrows }))
+  expect(result.current.arrows[0].bidirectional).toBe(true)
+  act(() => {
+    result.current.setArrows((p) =>
+      p.map((a) => (a.id === 'a1' ? { ...a, comment: 'updated' } : a)),
     )
-    expect(result.current.arrows[0].bidirectional).toBe(true)
-    act(() => {
-      result.current.setArrows((p) =>
-        p.map((a) => (a.id === 'a1' ? { ...a, comment: 'updated' } : a)),
-      )
-    })
-    expect(result.current.arrows[0].bidirectional).toBe(true)
-    expect(result.current.arrows[0].comment).toBe('updated')
   })
+  expect(result.current.arrows[0].bidirectional).toBe(true)
+  expect(result.current.arrows[0].comment).toBe('updated')
+})
 ```
 
 注: `defaultOptions` / `renderHook` / `act` / `InternalArrow` インポートは既存テストの形式に合わせる（同ファイルの既存 `it` を参照）。
@@ -489,19 +496,19 @@ npm test -- src/features/editor/hooks/useArrows.test.ts
 `src/features/editor/FlowEditor.tsx:124-134` の arrows 構築を:
 
 ```ts
-  // Build arrows
-  const arrows: InternalArrow[] = flow.arrows
-    .map((a) => {
-      const from = nodeIdToKey[a.fromNodeId]
-      const to = nodeIdToKey[a.toNodeId]
-      if (!from || !to) return null
-      const arr: InternalArrow = { id: a.id, from, to, comment: a.comment ?? '' }
-      if (a.color) arr.color = a.color
-      if (a.dash) arr.dash = a.dash
-      if (a.bidirectional) arr.bidirectional = true
-      return arr
-    })
-    .filter((a): a is InternalArrow => a !== null)
+// Build arrows
+const arrows: InternalArrow[] = flow.arrows
+  .map((a) => {
+    const from = nodeIdToKey[a.fromNodeId]
+    const to = nodeIdToKey[a.toNodeId]
+    if (!from || !to) return null
+    const arr: InternalArrow = { id: a.id, from, to, comment: a.comment ?? '' }
+    if (a.color) arr.color = a.color
+    if (a.dash) arr.dash = a.dash
+    if (a.bidirectional) arr.bidirectional = true
+    return arr
+  })
+  .filter((a): a is InternalArrow => a !== null)
 ```
 
 - [ ] **Step 4: `internalStateToPayload` で bidirectional を出力に含める**
@@ -509,23 +516,23 @@ npm test -- src/features/editor/hooks/useArrows.test.ts
 `src/features/editor/FlowEditor.tsx:188-203` の apiArrows ビルドを:
 
 ```ts
-  // Build API arrows using stable nodeIds
-  const apiArrows = arrows
-    .map((a) => {
-      const fromNodeId = keyToNodeId[a.from]
-      const toNodeId = keyToNodeId[a.to]
-      if (!fromNodeId || !toNodeId) return null
-      return {
-        id: a.id,
-        fromNodeId,
-        toNodeId,
-        comment: a.comment || null,
-        color: a.color || null,
-        dash: a.dash || null,
-        bidirectional: a.bidirectional ?? false,
-      }
-    })
-    .filter((a): a is NonNullable<typeof a> => a !== null)
+// Build API arrows using stable nodeIds
+const apiArrows = arrows
+  .map((a) => {
+    const fromNodeId = keyToNodeId[a.from]
+    const toNodeId = keyToNodeId[a.to]
+    if (!fromNodeId || !toNodeId) return null
+    return {
+      id: a.id,
+      fromNodeId,
+      toNodeId,
+      comment: a.comment || null,
+      color: a.color || null,
+      dash: a.dash || null,
+      bidirectional: a.bidirectional ?? false,
+    }
+  })
+  .filter((a): a is NonNullable<typeof a> => a !== null)
 ```
 
 - [ ] **Step 5: 型チェック + 既存テスト**
@@ -549,6 +556,7 @@ git commit -m "feat(#316): propagate bidirectional flag in FlowEditor conversion
 ## Task 5: SVG 描画 — FlowEditor
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:2688-2720`（矢印 `<g>` セクション）
 - Test: `src/features/editor/FlowEditor.test.tsx`
 
@@ -663,6 +671,7 @@ git commit -m "feat(#316): render marker-start for bidirectional arrows in FlowE
 ## Task 6: SVG 描画 — SharedFlowViewer
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx:495-512`
 - Test: `src/features/shared/SharedFlowViewer.test.tsx`
 
@@ -707,28 +716,23 @@ npm test -- src/features/shared/SharedFlowViewer.test.tsx -t "marker-start on bi
 `src/features/shared/SharedFlowViewer.tsx:495-512` 付近の矢印 marker 定義 + path を:
 
 ```tsx
-                  <marker
-                    id={`sm-${arrow.id}`}
-                    markerWidth="9"
-                    markerHeight="8"
-                    refX="8"
-                    refY="4"
-                    orient="auto"
-                  >
-                    <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
-                  </marker>
-                  {arrow.bidirectional && (
-                    <marker
-                      id={`sm-start-${arrow.id}`}
-                      markerWidth="9"
-                      markerHeight="8"
-                      refX="8"
-                      refY="4"
-                      orient="auto-start-reverse"
-                    >
-                      <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
-                    </marker>
-                  )}
+;<marker id={`sm-${arrow.id}`} markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto">
+  <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
+</marker>
+{
+  arrow.bidirectional && (
+    <marker
+      id={`sm-start-${arrow.id}`}
+      markerWidth="9"
+      markerHeight="8"
+      refX="8"
+      refY="4"
+      orient="auto-start-reverse"
+    >
+      <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
+    </marker>
+  )
+}
 ```
 
 そして `path` 要素に `markerStart` 属性を追加:
@@ -762,6 +766,7 @@ git commit -m "feat(#316): render marker-start for bidirectional arrows in Share
 ## Task 7: RightPanel UI — 「⇄ 双方向」ボタン
 
 **Files:**
+
 - Modify: `src/features/editor/components/RightPanel.tsx:653-673`
 - Modify: `src/locales/ja/editor.json`, `src/locales/en/editor.json`
 
@@ -796,40 +801,36 @@ git commit -m "feat(#316): render marker-start for bidirectional arrows in Share
 `src/features/editor/components/RightPanel.tsx:653-673` の `<PanelSection label={t('rightPanel.operations')}>` ブロックを:
 
 ```tsx
-        <PanelSection label={t('rightPanel.operations')}>
-          <div className={styles.panelActions}>
-            <PanelBtn
-              label={t('rightPanel.arrowBidirectional')}
-              color={T.accent}
-              active={!!selArrowData.bidirectional}
-              onClick={() =>
-                setArrows((p) =>
-                  p.map((a) =>
-                    a.id === selArrow ? { ...a, bidirectional: !a.bidirectional } : a,
-                  ),
-                )
-              }
-            />
-            <PanelBtn
-              label={t('rightPanel.arrowReverse')}
-              color={T.accent}
-              disabled={!!selArrowData.bidirectional}
-              onClick={() =>
-                setArrows((p) =>
-                  p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)),
-                )
-              }
-            />
-            <PanelBtn
-              label={t('rightPanel.arrowDelete')}
-              color="#E06060"
-              onClick={() => {
-                setArrows((p) => p.filter((a) => a.id !== selArrow))
-                setSelArrow(null)
-              }}
-            />
-          </div>
-        </PanelSection>
+<PanelSection label={t('rightPanel.operations')}>
+  <div className={styles.panelActions}>
+    <PanelBtn
+      label={t('rightPanel.arrowBidirectional')}
+      color={T.accent}
+      active={!!selArrowData.bidirectional}
+      onClick={() =>
+        setArrows((p) =>
+          p.map((a) => (a.id === selArrow ? { ...a, bidirectional: !a.bidirectional } : a)),
+        )
+      }
+    />
+    <PanelBtn
+      label={t('rightPanel.arrowReverse')}
+      color={T.accent}
+      disabled={!!selArrowData.bidirectional}
+      onClick={() =>
+        setArrows((p) => p.map((a) => (a.id === selArrow ? { ...a, from: a.to, to: a.from } : a)))
+      }
+    />
+    <PanelBtn
+      label={t('rightPanel.arrowDelete')}
+      color="#E06060"
+      onClick={() => {
+        setArrows((p) => p.filter((a) => a.id !== selArrow))
+        setSelArrow(null)
+      }}
+    />
+  </div>
+</PanelSection>
 ```
 
 - [ ] **Step 3: PanelBtn が `active`/`disabled` プロパティに対応しているか確認・追加**
@@ -878,18 +879,18 @@ const PanelBtn = ({ label, color, onClick, active, disabled }: PanelBtnProps) =>
 `src/features/editor/components/RightPanel.test.tsx`（既存があれば）または `FlowEditor.test.tsx` 内に統合テストとして:
 
 ```ts
-  it('should toggle bidirectional flag on click', () => {
-    // FlowEditor を arrow 1 つ + 選択状態でレンダリング
-    // 既存テストで arrow 選択をシミュレートしている例を流用
-    const { container, getByText } = renderEditorWithSelectedArrow('a1')
-    const btn = getByText('⇄ 双方向').closest('button')!
-    expect(btn.getAttribute('aria-pressed')).toBe('false')
-    fireEvent.click(btn)
-    expect(btn.getAttribute('aria-pressed')).toBe('true')
-    // 双方向ON時、方向逆転ボタンが disabled
-    const reverseBtn = getByText('⇄ 方向を逆転').closest('button')!
-    expect(reverseBtn).toBeDisabled()
-  })
+it('should toggle bidirectional flag on click', () => {
+  // FlowEditor を arrow 1 つ + 選択状態でレンダリング
+  // 既存テストで arrow 選択をシミュレートしている例を流用
+  const { container, getByText } = renderEditorWithSelectedArrow('a1')
+  const btn = getByText('⇄ 双方向').closest('button')!
+  expect(btn.getAttribute('aria-pressed')).toBe('false')
+  fireEvent.click(btn)
+  expect(btn.getAttribute('aria-pressed')).toBe('true')
+  // 双方向ON時、方向逆転ボタンが disabled
+  const reverseBtn = getByText('⇄ 方向を逆転').closest('button')!
+  expect(reverseBtn).toBeDisabled()
+})
 ```
 
 注: `renderEditorWithSelectedArrow` は既存テストの選択シミュレーション手順を関数化。同等の処理を `FlowEditor.test.tsx` から探して再利用すること。既存テストファイルにヘルパが無ければ、選択状態を作る既存テストの手順をインライン化。
@@ -914,6 +915,7 @@ git commit -m "feat(#316): add bidirectional toggle button to RightPanel"
 ## Task 8: Mermaid 出力で双方向対応
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:1488-1492` 付近
 - Test: `src/features/editor/FlowEditor.test.tsx`
 
@@ -922,23 +924,23 @@ git commit -m "feat(#316): add bidirectional toggle button to RightPanel"
 `src/features/editor/FlowEditor.test.tsx` の Mermaid 出力テスト群（既存の Mermaid 関連テストを検索して追加）:
 
 ```ts
-  it('should output <--> for bidirectional arrows in Mermaid', () => {
-    const flow: Flow = {
-      ...minimalFlow(),
-      lanes: [{ id: 'l1', name: 'L', colorIndex: 0, position: 0 }],
-      nodes: [
-        { id: 'n1', laneId: 'l1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
-        { id: 'n2', laneId: 'l1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
-      ],
-      arrows: [
-        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, bidirectional: true },
-        { id: 'a2', fromNodeId: 'n2', toNodeId: 'n1', comment: 'note', bidirectional: true },
-      ],
-    }
-    const mermaid = buildMermaid(flow)  // または FlowEditor 経由
-    expect(mermaid).toContain('<-->')
-    expect(mermaid).toMatch(/<-->\|note\|/)
-  })
+it('should output <--> for bidirectional arrows in Mermaid', () => {
+  const flow: Flow = {
+    ...minimalFlow(),
+    lanes: [{ id: 'l1', name: 'L', colorIndex: 0, position: 0 }],
+    nodes: [
+      { id: 'n1', laneId: 'l1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'l1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ],
+    arrows: [
+      { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, bidirectional: true },
+      { id: 'a2', fromNodeId: 'n2', toNodeId: 'n1', comment: 'note', bidirectional: true },
+    ],
+  }
+  const mermaid = buildMermaid(flow) // または FlowEditor 経由
+  expect(mermaid).toContain('<-->')
+  expect(mermaid).toMatch(/<-->\|note\|/)
+})
 ```
 
 注: Mermaid は FlowEditor 内のロジックなので、既存 Mermaid テストの呼び出し方法（モーダル経由 or 関数 export）を確認して合わせる。`buildMermaid` のような export 関数が無ければ、既存テストパターン通りボタンクリックでクリップボード書込をスパイする方式を採用。
@@ -956,13 +958,13 @@ npm test -- src/features/editor/FlowEditor.test.tsx -t "Mermaid"
 `src/features/editor/FlowEditor.tsx:1488-1492` 付近を:
 
 ```ts
-      if (!fromId || !toId) return
-      const arrowOp = a.bidirectional ? '<-->' : '-->'
-      if (a.comment) {
-        m += `    ${fromId} ${arrowOp}|${esc(a.comment)}| ${toId}\n`
-      } else {
-        m += `    ${fromId} ${arrowOp} ${toId}\n`
-      }
+if (!fromId || !toId) return
+const arrowOp = a.bidirectional ? '<-->' : '-->'
+if (a.comment) {
+  m += `    ${fromId} ${arrowOp}|${esc(a.comment)}| ${toId}\n`
+} else {
+  m += `    ${fromId} ${arrowOp} ${toId}\n`
+}
 ```
 
 注: `m += ...` のインデントは既存コードに合わせる。Read で当該箇所を確認の上で編集。
@@ -1033,6 +1035,7 @@ npm run dev
 - [ ] **Step 3: 矢印を選択し「⇄ 双方向」をクリック**
 
 操作:
+
 1. 既存または新規フローを開く
 2. 矢印を 1 本クリック → RightPanel に「⇄ 双方向」ボタンが表示されることを確認
 3. クリック → 矢印の両端に矢じりが付くことを確認

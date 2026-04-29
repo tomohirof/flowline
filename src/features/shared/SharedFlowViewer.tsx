@@ -518,9 +518,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   strokeWidth={2}
                   strokeDasharray={dashArr}
                   fill="none"
-                  markerStart={
-                    arrow.bidirectional ? `url(#sm-start-${arrow.id})` : undefined
-                  }
+                  markerStart={arrow.bidirectional ? `url(#sm-start-${arrow.id})` : undefined}
                   markerEnd={`url(#sm-${arrow.id})`}
                 />
                 {arrow.comment && (

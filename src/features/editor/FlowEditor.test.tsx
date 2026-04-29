@@ -206,9 +206,7 @@ describe('visual constants (#44, #45)', () => {
       { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, bidirectional: true },
       { id: 'a2', fromNodeId: 'n2', toNodeId: 'n1', comment: null, bidirectional: false },
     ]
-    const { container } = render(
-      <FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />,
-    )
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
     const a1Path = container.querySelector('path[marker-end="url(#m-a1)"]')
     const a2Path = container.querySelector('path[marker-end="url(#m-a2)"]')
     expect(a1Path?.getAttribute('marker-start')).toBe('url(#m-start-a1)')

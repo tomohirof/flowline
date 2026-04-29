@@ -230,9 +230,7 @@ describe('D1 Migration', () => {
       "INSERT INTO users (id, email, password_hash, name) VALUES ('u1', 'u1@test.com', 'h', 'U')",
     ).run()
     db.prepare("INSERT INTO flows (id, user_id) VALUES ('f1', 'u1')").run()
-    db.prepare(
-      "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l1', 'f1', 'L', 0)",
-    ).run()
+    db.prepare("INSERT INTO lanes (id, flow_id, name, position) VALUES ('l1', 'f1', 'L', 0)").run()
     db.prepare(
       "INSERT INTO nodes (id, flow_id, lane_id, row_index, order_index) VALUES ('n1', 'f1', 'l1', 0, 0)",
     ).run()

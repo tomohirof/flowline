@@ -658,9 +658,7 @@ export const RightPanel = ({
               active={!!selArrowData.bidirectional}
               onClick={() =>
                 setArrows((p) =>
-                  p.map((a) =>
-                    a.id === selArrow ? { ...a, bidirectional: !a.bidirectional } : a,
-                  ),
+                  p.map((a) => (a.id === selArrow ? { ...a, bidirectional: !a.bidirectional } : a)),
                 )
               }
             />
