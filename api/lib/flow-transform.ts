@@ -49,6 +49,7 @@ export interface ArrowRow {
   comment: string | null
   color: string | null
   dash: string | null
+  bidirectional: number | null
   created_at: string
   updated_at: string
 }
@@ -102,6 +103,7 @@ export function toArrow(row: ArrowRow) {
     comment: row.comment,
     color: row.color,
     dash: row.dash,
+    bidirectional: row.bidirectional === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

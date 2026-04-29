@@ -16,6 +16,7 @@ export function createTestDb(): ReturnType<typeof Database> {
     '0008_projects.sql',
     '0009_invitation_codes.sql',
     '0010_project_members.sql',
+    '0011_arrow_bidirectional.sql',
   ]
   for (const file of migrationFiles) {
     const sql = readFileSync(resolve(__dirname, '../../migrations/', file), 'utf-8')
