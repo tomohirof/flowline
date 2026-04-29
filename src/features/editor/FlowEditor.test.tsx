@@ -999,6 +999,79 @@ describe('IME composition Enter (#87)', () => {
     vi.useRealTimers()
   })
 
+  it('should insert newline on Shift+Enter during inline edit', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    // Double-click on node rect to enter edit mode
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.dblClick(nodeRect!)
+
+    vi.advanceTimersByTime(50)
+
+    const nodeTextarea = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(nodeTextarea).toBeTruthy()
+
+    // Clear current value, then type a, Shift+Enter, b
+    nodeTextarea.focus()
+    fireEvent.change(nodeTextarea, { target: { value: '' } })
+    fireEvent.change(nodeTextarea, { target: { value: 'a' } })
+    // Shift+Enter should insert newline (not close)
+    fireEvent.keyDown(nodeTextarea, { key: 'Enter', shiftKey: true })
+    fireEvent.change(nodeTextarea, { target: { value: 'a\nb' } })
+
+    expect(nodeTextarea.value).toBe('a\nb')
+    // textarea is still in DOM
+    const stillEditing = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(stillEditing).toBeTruthy()
+    vi.useRealTimers()
+  })
+
+  it('should confirm and exit inline edit on Enter alone', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.dblClick(nodeRect!)
+
+    vi.advanceTimersByTime(50)
+
+    const nodeTextarea = document.querySelector(
+      'textarea[class*="nodeEditTextarea"]',
+    ) as HTMLTextAreaElement
+    expect(nodeTextarea).toBeTruthy()
+
+    // Set value to 'foo' then press Enter alone
+    fireEvent.change(nodeTextarea, { target: { value: 'foo' } })
+    fireEvent.keyDown(nodeTextarea, { key: 'Enter' })
+
+    // textarea should be removed from DOM (editing ended)
+    const nodeTextareaAfter = document.querySelector('textarea[class*="nodeEditTextarea"]')
+    expect(nodeTextareaAfter).toBeNull()
+
+    // Label should now be rendered as 'foo' inside a <text>/<tspan>
+    const tspans = container.querySelectorAll('text tspan')
+    const hasFoo = Array.from(tspans).some((el) => el.textContent === 'foo')
+    expect(hasFoo).toBe(true)
+    vi.useRealTimers()
+  })
+
   // Old inline note editing was removed in the notes→memos migration.
   // Memo editing is now handled by the MemoOverlay component.
   it.skip('should keep note input open when Enter is pressed during IME composition', () => {})
