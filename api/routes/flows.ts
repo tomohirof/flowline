@@ -231,9 +231,17 @@ flows.post('/', async (c) => {
     statements.push(
       db
         .prepare(
-          'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+          'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)',
         )
-        .bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
+        .bind(
+          lane.id,
+          flowId,
+          lane.name,
+          lane.colorIndex,
+          lane.position,
+          lane.groupId ?? null,
+          lane.groupRole ?? null,
+        ),
     )
   }
 
@@ -392,9 +400,17 @@ flows.put('/:id', async (c) => {
         statements.push(
           db
             .prepare(
-              'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
+              'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)',
             )
-            .bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
+            .bind(
+              lane.id,
+              flowId,
+              lane.name,
+              lane.colorIndex,
+              lane.position,
+              lane.groupId ?? null,
+              lane.groupRole ?? null,
+            ),
         )
       }
 
