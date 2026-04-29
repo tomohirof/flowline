@@ -526,6 +526,7 @@ export default function FlowEditor({
   )
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
+  const laneInputRef = useRef<HTMLInputElement | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -1982,7 +1983,7 @@ export default function FlowEditor({
                           e.stopPropagation()
                           setEditLane(lane.id)
                           setSelLane(lane.id)
-                          setTimeout(() => inputRef.current?.focus(), 40)
+                          setTimeout(() => laneInputRef.current?.focus(), 40)
                         }}
                       />
                     </>
@@ -1991,7 +1992,7 @@ export default function FlowEditor({
                     (editLane === lane.id ? (
                       <foreignObject x={x + 32} y={TM + 9} width={headerW - 44} height={28}>
                         <input
-                          ref={inputRef}
+                          ref={laneInputRef}
                           value={lane.name}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const v = e.target.value
