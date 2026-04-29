@@ -21,6 +21,8 @@ export interface LaneRow {
   name: string
   color_index: number
   position: number
+  group_id: string | null
+  group_role: 'parent' | 'sub' | null
   created_at: string
   updated_at: string
 }
@@ -73,6 +75,8 @@ export function toLane(row: LaneRow) {
     name: row.name,
     colorIndex: row.color_index,
     position: row.position,
+    groupId: row.group_id ?? undefined,
+    groupRole: row.group_role ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

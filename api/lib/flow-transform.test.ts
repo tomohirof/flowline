@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { toNode, toFlowSummary, toProject } from './flow-transform'
-import type { NodeRow, FlowRow, ProjectRow } from './flow-transform'
+import { toNode, toFlowSummary, toProject, toLane } from './flow-transform'
+import type { NodeRow, FlowRow, ProjectRow, LaneRow } from './flow-transform'
 
 describe('toNode', () => {
   it('should map shape field from NodeRow', () => {
@@ -108,5 +108,43 @@ describe('toProject', () => {
     const result = toProject(row)
     expect(result).not.toHaveProperty('user_id')
     expect(result).not.toHaveProperty('userId')
+  })
+})
+
+describe('toLane', () => {
+  const baseRow: LaneRow = {
+    id: 'l1',
+    flow_id: 'f1',
+    name: 'Lane',
+    color_index: 0,
+    position: 0,
+    group_id: null,
+    group_role: null,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+  }
+
+  it('should map group_id and group_role to camelCase for parent role', () => {
+    const row: LaneRow = { ...baseRow, group_id: 'g1', group_role: 'parent' }
+    const result = toLane(row)
+    expect(result.groupId).toBe('g1')
+    expect(result.groupRole).toBe('parent')
+  })
+
+  it('should preserve sub role', () => {
+    const row: LaneRow = { ...baseRow, group_id: 'g1', group_role: 'sub' }
+    expect(toLane(row).groupRole).toBe('sub')
+  })
+
+  it('should normalize null group fields to undefined', () => {
+    const result = toLane(baseRow)
+    expect(result.groupId).toBeUndefined()
+    expect(result.groupRole).toBeUndefined()
+  })
+
+  it('should not include snake_case keys in output', () => {
+    const result = toLane({ ...baseRow, group_id: 'g1', group_role: 'parent' })
+    expect(result).not.toHaveProperty('group_id')
+    expect(result).not.toHaveProperty('group_role')
   })
 })
