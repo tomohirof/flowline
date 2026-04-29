@@ -1891,6 +1891,20 @@ export default function FlowEditor({
                 >
                   <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
                   <rect x={x} y={TM + HH - 10} width={headerW} height={10} fill={T.laneHeaderBg} />
+                  {selLane === lane.id && (
+                    <rect
+                      x={x + 1}
+                      y={TM + 1}
+                      width={headerW - 2}
+                      height={HH - 2}
+                      rx={9}
+                      fill="none"
+                      stroke={T.accent}
+                      strokeWidth={1.5}
+                      strokeDasharray="5,3"
+                      opacity={0.5}
+                    />
+                  )}
                   <rect
                     x={x + 16}
                     y={TM + HH - 2.5}
@@ -2013,10 +2027,10 @@ export default function FlowEditor({
                   {isSel && (
                     <rect
                       x={x + 1}
-                      y={isSub ? TM + HH + 1 : TM + 1}
+                      y={TM + HH + 1}
                       width={LW - 2}
-                      height={isSub ? fullH - HH - 2 : fullH - 2}
-                      rx={isSub ? 0 : 9}
+                      height={fullH - HH - 2}
+                      rx={0}
                       fill="none"
                       stroke={T.accent}
                       strokeWidth={1.5}

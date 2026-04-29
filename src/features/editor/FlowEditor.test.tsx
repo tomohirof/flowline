@@ -3191,4 +3191,20 @@ describe('bidirectional arrow toggle (RightPanel)', () => {
     const circles = headerSvg.querySelectorAll('circle')
     expect(circles.length).toBeGreaterThan(0)
   })
+
+  it('should render selection highlight in both header and body svgs when a lane is selected', async () => {
+    const user = userEvent.setup()
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const bodySvg = screen.getByTestId('canvas-svg')
+    // Find clickable header hit rects (transparent rects with cursor:pointer in header)
+    const headerHitRects = headerSvg.querySelectorAll('rect[fill="transparent"]')
+    expect(headerHitRects.length).toBeGreaterThan(0)
+    await user.click(headerHitRects[0] as Element)
+    // After selection, both SVGs should have exactly 1 dashed highlight rect
+    const headerHl = headerSvg.querySelectorAll('rect[stroke-dasharray="5,3"]')
+    const bodyHl = bodySvg.querySelectorAll('rect[stroke-dasharray="5,3"]')
+    expect(headerHl.length).toBe(1)
+    expect(bodyHl.length).toBe(1)
+  })
 })
