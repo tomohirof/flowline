@@ -23,8 +23,8 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   it('同一行・障害1個・上下空き → 下迂回パス（detourY = 障害下端 + 14）', () => {
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B])
-    // approachX = 524 - 14 = 510
-    expect(r.d).toBe('M276,200 L276,242 L510,242 L510,200 L524,200')
+    // departX = 276 + 14 = 290, approachX = 524 - 14 = 510
+    expect(r.d).toBe('M276,200 L290,200 L290,242 L510,242 L510,200 L524,200')
     expect(r.mx).toBe(400)
     expect(r.my).toBe(242)
   })
@@ -33,7 +33,7 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
     const D: Bbox = { x: 400, y: 284, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B, D])
-    expect(r.d).toBe('M276,200 L276,158 L510,158 L510,200 L524,200')
+    expect(r.d).toBe('M276,200 L290,200 L290,158 L510,158 L510,200 L524,200')
     expect(r.my).toBe(158)
   })
 
@@ -52,8 +52,8 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const eExt = { x: 624, y: 200 }
     const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 700, y: 200 }, [B, C2])
     expect(r.my).toBe(254)
-    // approachX = 624 - 14 = 610
-    expect(r.d).toBe('M276,200 L276,254 L610,254 L610,200 L624,200')
+    // departX = 276 + 14 = 290, approachX = 624 - 14 = 610
+    expect(r.d).toBe('M276,200 L290,200 L290,254 L610,254 L610,200 L624,200')
   })
 
   it('同一行・障害2個・1つだけ直下塞がり → 上迂回', () => {
@@ -108,19 +108,27 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const tcR = { x: 200, y: 200 }
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
     const r = buildArrowPath(sR, eR, fcR, tcR, [B])
-    // detourY = 200 + 28 + 14 = 242。左右が反転したミラーパス（approachX = 276 + 14 = 290）
-    expect(r.d).toBe('M524,200 L524,242 L290,242 L290,200 L276,200')
+    // detourY = 200 + 28 + 14 = 242。左右が反転したミラーパス
+    // departX = 524 - 14 = 510, approachX = 276 + 14 = 290
+    expect(r.d).toBe('M524,200 L510,200 L510,242 L290,242 L290,200 L276,200')
     expect(r.mx).toBe(400)
     expect(r.my).toBe(242)
   })
 
-  describe('水平進入（最終セグメント水平）', () => {
-    it('下迂回パスは 5 セグメントで最終セグメントが水平', () => {
+  describe('水平進入＋水平 depart（始終点とも水平）', () => {
+    it('下迂回パスは 6 セグメントで最初と最終セグメントが水平', () => {
       const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
       const r = buildArrowPath(s, e, fc, tc, [B])
       const segments = r.d.match(/[ML][^ML]+/g) ?? []
-      expect(segments).toHaveLength(5)
-      // 最終セグメントは水平（前のセグメントの終点と最終終点が同じ Y）
+      expect(segments).toHaveLength(6)
+      // 最初のセグメント（M→L）は水平: M の Y と次の L の Y が同じ
+      const first = segments[0]
+      const second = segments[1]
+      const firstY = Number(first.split(',')[1])
+      const secondY = Number(second.split(',')[1])
+      expect(firstY).toBe(secondY)
+      expect(firstY).toBe(s.y)
+      // 最終セグメントは水平
       const last = segments[segments.length - 1]
       const prev = segments[segments.length - 2]
       const lastY = Number(last.split(',')[1])
@@ -129,8 +137,8 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
       expect(lastY).toBe(e.y)
     })
 
-    it('水平距離が APPROACH_GAP*2 未満の場合 approachX は s.x を越えない（clamp 動作）', () => {
-      // 水平距離=20, APPROACH_GAP=14。Math.min(14, 10) で 10 に clamp される
+    it('水平距離が DEPART_GAP*2 未満の場合 departX/approachX は中央で接合し自己交差しない', () => {
+      // 水平距離=20, DEPART_GAP=APPROACH_GAP=14。Math.min(14, 10) で 10 に clamp される
       // s=(100,200), e=(120,200) で間に B (110,200) を置いて迂回を強制
       const sN = { x: 100, y: 200 }
       const eN = { x: 120, y: 200 }
@@ -138,8 +146,10 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
       const tcN = { x: 140, y: 200 }
       const B: Bbox = { x: 110, y: 200, w: 16, h: 56 }
       const r = buildArrowPath(sN, eN, fcN, tcN, [B])
-      // approachX = 120 - 1 * Math.min(14, 10) = 110。s.x(=100) を越えていない
-      expect(r.d).toBe('M100,200 L100,242 L110,242 L110,200 L120,200')
+      // departX = 100 + 1 * Math.min(14, 10) = 110
+      // approachX = 120 - 1 * Math.min(14, 10) = 110
+      // → 中央 (110) で接合。departX も approachX も s.x/e.x を越えない
+      expect(r.d).toBe('M100,200 L110,200 L110,242 L110,242 L110,200 L120,200')
     })
   })
 })
