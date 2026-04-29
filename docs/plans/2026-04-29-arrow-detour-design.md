@@ -11,10 +11,12 @@
 ## スコープ
 
 ### 対象
+
 - 同一行で `from` から `to` の間のレーンに 1 つ以上ノードが存在する場合の水平直線パスの迂回
 - エディタ (`FlowEditor`) と共有ビュー (`SharedFlowViewer`) の両方
 
 ### 対象外
+
 - 縦方向（同一レーンで `from` と `to` の間にノードがある）の貫通対応 — 発生頻度が低いため今回は据え置き
 - 既存の Z 字 / L 字パス（縦横混合の出入口）に対する障害回避
 
@@ -48,10 +50,10 @@
 
 ### 責務分担
 
-| レイヤ | 責務 |
-|--------|------|
-| 呼び出し側 (`aPath` / `computeArrowPath`) | 同一行・直上行・直下行のノードを bbox 配列に変換して渡す。`from`/`to` 自身は除外 |
-| `arrow-routing.ts` | 与えられた bbox 群から経路上の障害を抽出し、上下塞がり判定・迂回方向決定・パス生成を完結 |
+| レイヤ                                    | 責務                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 呼び出し側 (`aPath` / `computeArrowPath`) | 同一行・直上行・直下行のノードを bbox 配列に変換して渡す。`from`/`to` 自身は除外         |
+| `arrow-routing.ts`                        | 与えられた bbox 群から経路上の障害を抽出し、上下塞がり判定・迂回方向決定・パス生成を完結 |
 
 ## 型定義と API
 
@@ -59,10 +61,10 @@
 
 ```ts
 export interface Bbox {
-  x: number  // 中心 X
-  y: number  // 中心 Y
-  w: number  // 幅
-  h: number  // 高さ
+  x: number // 中心 X
+  y: number // 中心 Y
+  w: number // 幅
+  h: number // 高さ
 }
 ```
 
@@ -85,20 +87,16 @@ export function calcArrowPath(
   from: NodePos,
   to: NodePos,
   config: ArrowConfig,
-  obstacles?: Bbox[],   // ← 新規
+  obstacles?: Bbox[], // ← 新規
 ): ArrowPathResult
 ```
 
 ### 内部定数・ヘルパー
 
 ```ts
-const DETOUR_MARGIN = 14  // 行間 28px の中央
+const DETOUR_MARGIN = 14 // 行間 28px の中央
 
-function detectDetour(
-  s: Point,
-  e: Point,
-  obstacles: Bbox[],
-): { detourY: number } | null
+function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null
 ```
 
 ### 後方互換性
@@ -111,11 +109,7 @@ function detectDetour(
 ```ts
 const DETOUR_MARGIN = 14
 
-function detectDetour(
-  s: Point,
-  e: Point,
-  obstacles: Bbox[],
-): { detourY: number } | null {
+function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
   // ① 水平直線でなければ迂回しない
   if (Math.abs(e.y - s.y) >= 2) return null
 
@@ -126,9 +120,7 @@ function detectDetour(
   // ② 経路上の障害ノード = 同一行（rowY と Y が重なる）かつ X が始終点の間
   const inRow = obstacles.filter(
     (b) =>
-      Math.abs(b.y - rowY) < b.h / 2 + 2 &&
-      b.x - b.w / 2 < xHigh - 1 &&
-      b.x + b.w / 2 > xLow + 1,
+      Math.abs(b.y - rowY) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1,
   )
   if (inRow.length === 0) return null
 
@@ -137,9 +129,7 @@ function detectDetour(
   const downBlocked = inRow.some((obs) =>
     obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
   )
-  const upBlocked = inRow.some((obs) =>
-    obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)),
-  )
+  const upBlocked = inRow.some((obs) => obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)))
 
   // ④ 方向決定: 下空きなら下、下塞がり＆上空きなら上、両塞がりは下優先
   const goDown = !downBlocked || upBlocked
@@ -160,7 +150,7 @@ const detour = obstacles && obstacles.length > 0 ? detectDetour(s, e, obstacles)
 if (detour) {
   const { detourY } = detour
   const d = `M${s.x},${s.y} L${s.x},${detourY} L${e.x},${detourY} L${e.x},${e.y}`
-  return { d, mx: (s.x + e.x) / 2, my: detourY }  // ラベルは迂回区間の中点
+  return { d, mx: (s.x + e.x) / 2, my: detourY } // ラベルは迂回区間の中点
 }
 // ↓ 既存の直線/Z字/L字ロジック（変更なし）
 ```
@@ -171,10 +161,13 @@ if (detour) {
 
 ```ts
 const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
-  const ft = tasks[arrow.from], tt = tasks[arrow.to]
+  const ft = tasks[arrow.from],
+    tt = tasks[arrow.to]
   if (!ft || !tt) return null
-  const fli = liMap[ft.lid], fri = riMap[ft.rid]
-  const tli = liMap[tt.lid], tri = riMap[tt.rid]
+  const fli = liMap[ft.lid],
+    fri = riMap[ft.rid]
+  const tli = liMap[tt.lid],
+    tri = riMap[tt.rid]
   if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
 
   const from = ct(fli, fri)
@@ -185,7 +178,8 @@ const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
     // タスク → ObstacleNode[] に変換（自身も含めて全部、collectObstacles 側で from/to を除外）
     const nodes: ObstacleNode[] = []
     for (const [k, t] of Object.entries(tasks)) {
-      const li = liMap[t.lid], ri = riMap[t.rid]
+      const li = liMap[t.lid],
+        ri = riMap[t.rid]
       if (li === undefined || ri === undefined) continue
       const c = ct(li, ri)
       nodes.push({ key: k, cx: c.x, cy: c.y })
@@ -204,8 +198,15 @@ const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
   }
 
   return calcArrowPath(
-    from, to,
-    { hw: TW / 2, hh: TH / 2, rh: RH, fromShape: ft.shape ?? undefined, toShape: tt.shape ?? undefined },
+    from,
+    to,
+    {
+      hw: TW / 2,
+      hh: TH / 2,
+      rh: RH,
+      fromShape: ft.shape ?? undefined,
+      toShape: tt.shape ?? undefined,
+    },
     obstacles,
   )
 }
@@ -219,8 +220,8 @@ const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
 // arrow-routing.ts
 export interface ObstacleNode {
   key: string
-  cx: number  // 中心 X
-  cy: number  // 中心 Y
+  cx: number // 中心 X
+  cy: number // 中心 Y
 }
 
 export interface CollectObstaclesArgs {
@@ -230,7 +231,7 @@ export interface CollectObstaclesArgs {
   fromCx: number
   toCx: number
   rowY: number
-  rowH: number    // 行高さ（直上/直下行判定用）
+  rowH: number // 行高さ（直上/直下行判定用）
   bboxW: number
   bboxH: number
 }
@@ -268,46 +269,50 @@ export function collectObstacles(args: CollectObstaclesArgs): Bbox[] {
 
 ## エラー処理・エッジケース
 
-| ケース | 期待挙動 |
-|--------|----------|
-| `obstacles` が `undefined` または `[]` | 既存挙動完全一致 |
-| 同一レーン縦方向矢印 | 既存挙動（スコープ外） |
-| 同一行・隣接レーン、間にノードなし | `inRow` 空 → 既存直線 |
-| `from === to`（自己参照）| `xLow === xHigh` → `inRow` 空 → 既存挙動 |
-| `from`/`to` 自身が bbox に混入 | 呼び出し側で除外 + arrow-routing 側でも X±1 マージンで二重防御 |
-| 最上行で上塞がり判定 | 直上行ノードが存在しない → 上塞がりは false → 仕様通り |
-| 浮きノード（liMap/riMap が undefined）| `collectObstacles` で除外 |
-| 不正 bbox（w=0, h=0）| 起こり得ないが、X 重なり判定が自然に false → 副作用なし |
+| ケース                                 | 期待挙動                                                       |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `obstacles` が `undefined` または `[]` | 既存挙動完全一致                                               |
+| 同一レーン縦方向矢印                   | 既存挙動（スコープ外）                                         |
+| 同一行・隣接レーン、間にノードなし     | `inRow` 空 → 既存直線                                          |
+| `from === to`（自己参照）              | `xLow === xHigh` → `inRow` 空 → 既存挙動                       |
+| `from`/`to` 自身が bbox に混入         | 呼び出し側で除外 + arrow-routing 側でも X±1 マージンで二重防御 |
+| 最上行で上塞がり判定                   | 直上行ノードが存在しない → 上塞がりは false → 仕様通り         |
+| 浮きノード（liMap/riMap が undefined） | `collectObstacles` で除外                                      |
+| 不正 bbox（w=0, h=0）                  | 起こり得ないが、X 重なり判定が自然に false → 副作用なし        |
 
 ## テスト戦略
 
 ### `src/lib/arrow-routing.test.ts`（新規 or 既存拡張）
 
-| ケース | 期待 |
-|--------|------|
-| `obstacles` 省略 / 空 | 既存パスと完全一致 |
-| 同一行・障害1個・下空き | 下迂回、`detourY = B.y + B.h/2 + 14` |
-| 同一行・障害1個・直下塞がり・上空き | 上迂回、`detourY = B.y - B.h/2 - 14` |
-| 同一行・障害1個・両塞がり | 下迂回（下優先）|
-| 同一行・障害2個・下空き | まとめて下迂回、`detourY = max(B,C の最下端) + 14` |
-| 同一行・障害2個・1つだけ直下塞がり | 上迂回（1つでも塞がっていれば上）|
-| ラベル位置 | 迂回時 `mx = (s.x+e.x)/2`, `my = detourY` |
-| `from`/`to` 自身が bbox に混入 | X±1 マージンで除外、迂回しない |
+| ケース                              | 期待                                               |
+| ----------------------------------- | -------------------------------------------------- |
+| `obstacles` 省略 / 空               | 既存パスと完全一致                                 |
+| 同一行・障害1個・下空き             | 下迂回、`detourY = B.y + B.h/2 + 14`               |
+| 同一行・障害1個・直下塞がり・上空き | 上迂回、`detourY = B.y - B.h/2 - 14`               |
+| 同一行・障害1個・両塞がり           | 下迂回（下優先）                                   |
+| 同一行・障害2個・下空き             | まとめて下迂回、`detourY = max(B,C の最下端) + 14` |
+| 同一行・障害2個・1つだけ直下塞がり  | 上迂回（1つでも塞がっていれば上）                  |
+| ラベル位置                          | 迂回時 `mx = (s.x+e.x)/2`, `my = detourY`          |
+| `from`/`to` 自身が bbox に混入      | X±1 マージンで除外、迂回しない                     |
 
 ### `flow-engine.test.ts`（既存拡張）
+
 - 既存テストは引数省略で通る（後方互換）
 - `obstacles` を渡したときの 1〜2 ケース
 
 ### `collectObstacles` ヘルパーテスト
+
 - 同一行・直上行・直下行のみが集まる
 - `from`/`to` 自身が除外される
 - 浮きノード（座標 undefined）が無視される
 
 ### 統合テスト
+
 - FlowEditor: A→B、A→C 同一行 → A→C が下迂回 / B 直下にもノード → A→C は上迂回 / A→B 単独 → 直線
 - SharedFlowViewer: 同等のシナリオ 1〜2 ケース
 
 ### Playwright 目視確認（Workflow Step 6）
+
 1. A→B、A→C 同一行 → A→C が B を下に迂回
 2. A→C 単独（B あり）→ 同様に下迂回
 3. A→B 単独（隣接、間にノードなし）→ 従来直線

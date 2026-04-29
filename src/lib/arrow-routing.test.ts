@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  buildArrowPath,
-  collectObstacles,
-  type Bbox,
-  type ObstacleNode,
-} from './arrow-routing'
+import { buildArrowPath, collectObstacles, type Bbox, type ObstacleNode } from './arrow-routing'
 
 describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   // 共通の始終点（A→C 同一行、A=(200,200), C=(600,200) のときの exitPt/entryPt 後の値）
@@ -65,11 +60,7 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const Bdown: Bbox = { x: 380, y: 284, w: 152, h: 56 }
     const sExt = { x: 276, y: 200 }
     const eExt = { x: 624, y: 200 }
-    const r = buildArrowPath(
-      sExt, eExt,
-      { x: 200, y: 200 }, { x: 700, y: 200 },
-      [B, C2, Bdown],
-    )
+    const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 700, y: 200 }, [B, C2, Bdown])
     expect(r.my).toBe(158)
   })
 
@@ -91,8 +82,10 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   it('始終点が同じ X（自己参照） → inRow 空 → 直線', () => {
     const B: Bbox = { x: 200, y: 200, w: 152, h: 56 }
     const r = buildArrowPath(
-      { x: 200, y: 200 }, { x: 200, y: 200 },
-      { x: 200, y: 200 }, { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
       [B],
     )
     expect(r.d).toBe('M200,200 L200,200')
@@ -124,7 +117,9 @@ describe('collectObstacles', () => {
   // A=(200,200), B=(400,200), C=(600,200) 同一行 (rowY=200)
   // D=(400,284) B 直下行, E=(400,116) B 直上行
   // F=(400,368) 2行下（除外対象）
-  const TW = 152, TH = 56, RH = 84
+  const TW = 152,
+    TH = 56,
+    RH = 84
 
   const baseNodes: ObstacleNode[] = [
     { key: 'A', cx: 200, cy: 200 },

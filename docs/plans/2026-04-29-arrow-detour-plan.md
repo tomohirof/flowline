@@ -25,14 +25,17 @@
 - ノード E: 中心 `(400, 116)`（B の直上、`rid-1`）
 
 矢印 A→C:
+
 - `exitPt(A, C)` → 横出口 `s = (276, 200)`（A.x + hw）
 - `entryPt(C, A)` → 横入口 `e = (524, 200)`（C.x - hw）
 
 B の bbox `{ x: 400, y: 200, w: 152, h: 56 }`:
+
 - 最下端 = `200 + 28 = 228`
 - 最上端 = `200 - 28 = 172`
 
 `DETOUR_MARGIN = 14` のとき:
+
 - 下迂回 detourY = `228 + 14 = 242`
 - 上迂回 detourY = `172 - 14 = 158`
 
@@ -40,20 +43,21 @@ B の bbox `{ x: 400, y: 200, w: 152, h: 56 }`:
 
 ## File Structure
 
-| ファイル | 役割 |
-|----------|------|
-| `src/lib/arrow-routing.ts` | `Bbox`/`ObstacleNode`/`CollectObstaclesArgs` 型, `DETOUR_MARGIN`, `detectDetour`（内部）, `buildArrowPath` 拡張, `collectObstacles` |
-| `src/lib/flow-engine.ts` | `calcArrowPath` の `obstacles` パススルー |
-| `src/features/editor/FlowEditor.tsx` | `aPath` で bbox 抽出 + `calcArrowPath` 呼び出し |
-| `src/features/shared/SharedFlowViewer.tsx` | `computeArrowPath` で bbox 抽出 + `buildArrowPath` 呼び出し |
-| `src/lib/arrow-routing.test.ts` | 新規。`Bbox`/`detectDetour`（buildArrowPath 経由）、`collectObstacles` のテスト |
-| `src/lib/flow-engine.test.ts` | `calcArrowPath` の `obstacles` パススルーテスト追加 |
+| ファイル                                   | 役割                                                                                                                                |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/arrow-routing.ts`                 | `Bbox`/`ObstacleNode`/`CollectObstaclesArgs` 型, `DETOUR_MARGIN`, `detectDetour`（内部）, `buildArrowPath` 拡張, `collectObstacles` |
+| `src/lib/flow-engine.ts`                   | `calcArrowPath` の `obstacles` パススルー                                                                                           |
+| `src/features/editor/FlowEditor.tsx`       | `aPath` で bbox 抽出 + `calcArrowPath` 呼び出し                                                                                     |
+| `src/features/shared/SharedFlowViewer.tsx` | `computeArrowPath` で bbox 抽出 + `buildArrowPath` 呼び出し                                                                         |
+| `src/lib/arrow-routing.test.ts`            | 新規。`Bbox`/`detectDetour`（buildArrowPath 経由）、`collectObstacles` のテスト                                                     |
+| `src/lib/flow-engine.test.ts`              | `calcArrowPath` の `obstacles` パススルーテスト追加                                                                                 |
 
 ---
 
 ## Task 1: arrow-routing.ts に Bbox 型と buildArrowPath の obstacles 引数を追加（TDD）
 
 **Files:**
+
 - Create: `src/lib/arrow-routing.test.ts`
 - Modify: `src/lib/arrow-routing.ts`
 
@@ -109,8 +113,8 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   })
 
   it('同一行・障害2個・下空き → まとめて下迂回（detourY は最下端の最大）', () => {
-    const B: Bbox = { x: 380, y: 200, w: 152, h: 56 }   // 最下端 228
-    const C2: Bbox = { x: 480, y: 200, w: 152, h: 80 }  // 最下端 240
+    const B: Bbox = { x: 380, y: 200, w: 152, h: 56 } // 最下端 228
+    const C2: Bbox = { x: 480, y: 200, w: 152, h: 80 } // 最下端 240
     // 始終点を広げる: A=(200,200) → 終点=(700,200)
     const sExt = { x: 276, y: 200 }
     const eExt = { x: 624, y: 200 }
@@ -123,14 +127,10 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   it('同一行・障害2個・1つだけ直下塞がり → 上迂回', () => {
     const B: Bbox = { x: 380, y: 200, w: 152, h: 56 }
     const C2: Bbox = { x: 480, y: 200, w: 152, h: 56 }
-    const Bdown: Bbox = { x: 380, y: 284, w: 152, h: 56 }  // B 直下のみ塞がり
+    const Bdown: Bbox = { x: 380, y: 284, w: 152, h: 56 } // B 直下のみ塞がり
     const sExt = { x: 276, y: 200 }
     const eExt = { x: 624, y: 200 }
-    const r = buildArrowPath(
-      sExt, eExt,
-      { x: 200, y: 200 }, { x: 700, y: 200 },
-      [B, C2, Bdown],
-    )
+    const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 700, y: 200 }, [B, C2, Bdown])
     // 1つでも直下塞がりがあれば上迂回。最上端 min(172, 172) = 172, detourY = 158
     expect(r.my).toBe(158)
   })
@@ -151,14 +151,16 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     const r = buildArrowPath(sDiag, eDiag, { x: 200, y: 200 }, { x: 600, y: 300 }, [B])
     // dy=100, dx=248: 縦出口でない（s.y - fc.y = 0, s.x - fc.x = 76 → sV false）
     // 横出口→縦入口（または両横）→ 既存ロジックの結果
-    expect(r.d).not.toContain('L276,242')  // 迂回パスではない
+    expect(r.d).not.toContain('L276,242') // 迂回パスではない
   })
 
   it('始終点が同じ X（自己参照） → inRow 空 → 直線', () => {
     const B: Bbox = { x: 200, y: 200, w: 152, h: 56 }
     const r = buildArrowPath(
-      { x: 200, y: 200 }, { x: 200, y: 200 },
-      { x: 200, y: 200 }, { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
       [B],
     )
     expect(r.d).toBe('M200,200 L200,200')
@@ -166,8 +168,8 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
 
   it('from/to 自身の bbox が混入しても X±1 マージンで除外される', () => {
     // start=(276,200) の真上にある bbox（A 自身を表すかのような位置）は inRow 判定で除外される
-    const fromSelfBbox: Bbox = { x: 200, y: 200, w: 152, h: 56 }  // 左端 124, 右端 276
-    const toSelfBbox: Bbox = { x: 600, y: 200, w: 152, h: 56 }    // 左端 524, 右端 676
+    const fromSelfBbox: Bbox = { x: 200, y: 200, w: 152, h: 56 } // 左端 124, 右端 276
+    const toSelfBbox: Bbox = { x: 600, y: 200, w: 152, h: 56 } // 左端 524, 右端 676
     const r = buildArrowPath(s, e, fc, tc, [fromSelfBbox, toSelfBbox])
     // どちらも inRow フィルタの X 判定で除外される（X±1 マージン）
     expect(r.d).toBe('M276,200 L524,200')
@@ -186,19 +188,15 @@ Expected: 全テスト FAIL（`Bbox` 型なし、`buildArrowPath` が 5 引数�
 
 ```ts
 export interface Bbox {
-  x: number  // 中心 X
-  y: number  // 中心 Y
-  w: number  // 幅
-  h: number  // 高さ
+  x: number // 中心 X
+  y: number // 中心 Y
+  w: number // 幅
+  h: number // 高さ
 }
 
 const DETOUR_MARGIN = 14
 
-function detectDetour(
-  s: Point,
-  e: Point,
-  obstacles: Bbox[],
-): { detourY: number } | null {
+function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
   // 水平直線でなければ迂回しない
   if (Math.abs(e.y - s.y) >= 2) return null
 
@@ -209,9 +207,7 @@ function detectDetour(
   // 経路上の障害ノード = 同一行（rowY と Y が重なる）かつ X が始終点の間
   const inRow = obstacles.filter(
     (b) =>
-      Math.abs(b.y - rowY) < b.h / 2 + 2 &&
-      b.x - b.w / 2 < xHigh - 1 &&
-      b.x + b.w / 2 > xLow + 1,
+      Math.abs(b.y - rowY) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1,
   )
   if (inRow.length === 0) return null
 
@@ -220,9 +216,7 @@ function detectDetour(
   const downBlocked = inRow.some((obs) =>
     obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
   )
-  const upBlocked = inRow.some((obs) =>
-    obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)),
-  )
+  const upBlocked = inRow.some((obs) => obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)))
 
   // 方向決定: 下空きなら下、下塞がり＆上空きなら上、両塞がりは下優先
   const goDown = !downBlocked || upBlocked
@@ -312,6 +306,7 @@ git commit -m "feat(#314): add Bbox type and obstacle-aware arrow detour to buil
 ## Task 2: flow-engine.ts の calcArrowPath を obstacles パススルーに拡張（TDD）
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.ts`
 - Modify: `src/lib/flow-engine.test.ts`
 
@@ -320,34 +315,34 @@ git commit -m "feat(#314): add Bbox type and obstacle-aware arrow detour to buil
 `src/lib/flow-engine.test.ts` の既存 `describe('calcArrowPath', ...)` ブロックの最後の `it` の後ろに以下を追加:
 
 ```ts
-  it('should pass obstacles through to buildArrowPath and produce detour path', () => {
-    // A=(200,200) → C=(600,200) 同一行、間に B (400,200) 障害
-    const obstacles = [{ x: 400, y: 200, w: 152, h: 56 }]
-    const r = calcArrowPath(
-      { x: 200, y: 200 },
-      { x: 600, y: 200 },
-      { hw: 76, hh: 28, rh: 84 },
-      obstacles,
-    )
-    expect(r).not.toBeNull()
-    // exitPt: dx=400 横出口 {276,200}, entryPt: 横入口 {524,200}
-    // 迂回: detourY = 228 + 14 = 242
-    expect(r.d).toBe('M276,200 L276,242 L524,242 L524,200')
-    expect(r.mx).toBe(400)
-    expect(r.my).toBe(242)
-  })
+it('should pass obstacles through to buildArrowPath and produce detour path', () => {
+  // A=(200,200) → C=(600,200) 同一行、間に B (400,200) 障害
+  const obstacles = [{ x: 400, y: 200, w: 152, h: 56 }]
+  const r = calcArrowPath(
+    { x: 200, y: 200 },
+    { x: 600, y: 200 },
+    { hw: 76, hh: 28, rh: 84 },
+    obstacles,
+  )
+  expect(r).not.toBeNull()
+  // exitPt: dx=400 横出口 {276,200}, entryPt: 横入口 {524,200}
+  // 迂回: detourY = 228 + 14 = 242
+  expect(r.d).toBe('M276,200 L276,242 L524,242 L524,200')
+  expect(r.mx).toBe(400)
+  expect(r.my).toBe(242)
+})
 
-  it('should ignore obstacles when arrow is not horizontal', () => {
-    const obstacles = [{ x: 200, y: 200, w: 152, h: 56 }]
-    const r = calcArrowPath(
-      { x: 100, y: 100 },
-      { x: 100, y: 300 },
-      { hw: 76, hh: 28, rh: 84 },
-      obstacles,
-    )
-    // 縦パスなので obstacles 無視 → 既存の直線
-    expect(r.d).toBe('M100,128 L100,272')
-  })
+it('should ignore obstacles when arrow is not horizontal', () => {
+  const obstacles = [{ x: 200, y: 200, w: 152, h: 56 }]
+  const r = calcArrowPath(
+    { x: 100, y: 100 },
+    { x: 100, y: 300 },
+    { hw: 76, hh: 28, rh: 84 },
+    obstacles,
+  )
+  // 縦パスなので obstacles 無視 → 既存の直線
+  expect(r.d).toBe('M100,128 L100,272')
+})
 ```
 
 - [ ] **Step 2: テスト実行 → FAIL を確認**
@@ -398,6 +393,7 @@ git commit -m "feat(#314): pass obstacles through calcArrowPath to buildArrowPat
 ## Task 3: arrow-routing.ts に collectObstacles ヘルパー追加（TDD）
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Modify: `src/lib/arrow-routing.test.ts`
 
@@ -407,12 +403,7 @@ git commit -m "feat(#314): pass obstacles through calcArrowPath to buildArrowPat
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import {
-  buildArrowPath,
-  collectObstacles,
-  type Bbox,
-  type ObstacleNode,
-} from './arrow-routing'
+import { buildArrowPath, collectObstacles, type Bbox, type ObstacleNode } from './arrow-routing'
 ```
 
 ファイル末尾に新規 describe ブロック追加:
@@ -422,7 +413,9 @@ describe('collectObstacles', () => {
   // A=(200,200), B=(400,200), C=(600,200) 同一行 (rowY=200)
   // D=(400,284) B 直下行, E=(400,116) B 直上行
   // F=(400,368) 2行下（除外対象）
-  const TW = 152, TH = 56, RH = 84
+  const TW = 152,
+    TH = 56,
+    RH = 84
 
   const baseNodes: ObstacleNode[] = [
     { key: 'A', cx: 200, cy: 200 },
@@ -517,8 +510,8 @@ Expected: 新規テスト FAIL（`collectObstacles` 未定義）
 ```ts
 export interface ObstacleNode {
   key: string
-  cx: number  // 中心 X
-  cy: number  // 中心 Y
+  cx: number // 中心 X
+  cy: number // 中心 Y
 }
 
 export interface CollectObstaclesArgs {
@@ -528,7 +521,7 @@ export interface CollectObstaclesArgs {
   fromCx: number
   toCx: number
   rowY: number
-  rowH: number    // 行高さ（直上/直下行判定用）
+  rowH: number // 行高さ（直上/直下行判定用）
   bboxW: number
   bboxH: number
 }
@@ -585,6 +578,7 @@ git commit -m "feat(#314): add collectObstacles helper for in-row + adjacent-row
 ## Task 4: FlowEditor.aPath を更新して obstacles を渡す
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 - [ ] **Step 1: import に collectObstacles, Bbox, ObstacleNode 型を追加**
@@ -598,12 +592,7 @@ import { DS } from '../../lib/arrow-routing'
 を以下に置き換える:
 
 ```ts
-import {
-  DS,
-  collectObstacles,
-  type Bbox,
-  type ObstacleNode,
-} from '../../lib/arrow-routing'
+import { DS, collectObstacles, type Bbox, type ObstacleNode } from '../../lib/arrow-routing'
 ```
 
 `flow-engine` 由来の `calcArrowPath` import（`src/features/editor/FlowEditor.tsx:50`）は変更不要。
@@ -613,56 +602,56 @@ import {
 `src/features/editor/FlowEditor.tsx` の `aPath` 関数（`src/features/editor/FlowEditor.tsx:1362` 付近）を以下に置き換える:
 
 ```ts
-  const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
-    const ft = tasks[arrow.from],
-      tt = tasks[arrow.to]
-    if (!ft || !tt) return null
-    const fli = liMap[ft.lid],
-      fri = riMap[ft.rid],
-      tli = liMap[tt.lid],
-      tri = riMap[tt.rid]
-    if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
-    const from = ct(fli, fri)
-    const to = ct(tli, tri)
+const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
+  const ft = tasks[arrow.from],
+    tt = tasks[arrow.to]
+  if (!ft || !tt) return null
+  const fli = liMap[ft.lid],
+    fri = riMap[ft.rid],
+    tli = liMap[tt.lid],
+    tri = riMap[tt.rid]
+  if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
+  const from = ct(fli, fri)
+  const to = ct(tli, tri)
 
-    // 同一行のときのみ obstacles を組み立てる
-    let obstacles: Bbox[] | undefined
-    if (fri === tri) {
-      const nodes: ObstacleNode[] = []
-      for (const k of Object.keys(tasks)) {
-        const t = tasks[k]
-        const li = liMap[t.lid]
-        const ri = riMap[t.rid]
-        if (li === undefined || ri === undefined) continue
-        const c = ct(li, ri)
-        nodes.push({ key: k, cx: c.x, cy: c.y })
-      }
-      obstacles = collectObstacles({
-        nodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCx: from.x,
-        toCx: to.x,
-        rowY: from.y,
-        rowH: RH,
-        bboxW: TW,
-        bboxH: TH,
-      })
+  // 同一行のときのみ obstacles を組み立てる
+  let obstacles: Bbox[] | undefined
+  if (fri === tri) {
+    const nodes: ObstacleNode[] = []
+    for (const k of Object.keys(tasks)) {
+      const t = tasks[k]
+      const li = liMap[t.lid]
+      const ri = riMap[t.rid]
+      if (li === undefined || ri === undefined) continue
+      const c = ct(li, ri)
+      nodes.push({ key: k, cx: c.x, cy: c.y })
     }
-
-    return calcArrowPath(
-      from,
-      to,
-      {
-        hw: TW / 2,
-        hh: TH / 2,
-        rh: RH,
-        fromShape: ft.shape ?? undefined,
-        toShape: tt.shape ?? undefined,
-      },
-      obstacles,
-    )
+    obstacles = collectObstacles({
+      nodes,
+      fromKey: arrow.from,
+      toKey: arrow.to,
+      fromCx: from.x,
+      toCx: to.x,
+      rowY: from.y,
+      rowH: RH,
+      bboxW: TW,
+      bboxH: TH,
+    })
   }
+
+  return calcArrowPath(
+    from,
+    to,
+    {
+      hw: TW / 2,
+      hh: TH / 2,
+      rh: RH,
+      fromShape: ft.shape ?? undefined,
+      toShape: tt.shape ?? undefined,
+    },
+    obstacles,
+  )
+}
 ```
 
 - [ ] **Step 3: TypeScript 型チェック・全テスト実行**
@@ -675,6 +664,7 @@ Expected: 全 PASS（既存テストへの影響なし、aPath は外部 API で
 Run: `npm run dev`
 
 ブラウザで以下を確認:
+
 1. 既存フローを開いて、矢印が従来どおり描画されるか（リグレッションなし）
 2. 同一行 A→B、A→C の構成を作って A→C が B を下に迂回するか
 3. B の直下にノードを配置して A→C が上に迂回するか
@@ -693,6 +683,7 @@ git commit -m "feat(#314): wire obstacles into FlowEditor.aPath via collectObsta
 ## Task 5: SharedFlowViewer.computeArrowPath を更新して obstacles を渡す
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`
 
 - [ ] **Step 1: import に collectObstacles, Bbox, ObstacleNode を追加**
@@ -717,48 +708,48 @@ import {
 既存の `computeArrowPath` 関数（`src/features/shared/SharedFlowViewer.tsx:93` 付近）を以下に置き換える:
 
 ```ts
-  // Arrow path calculation
-  const computeArrowPath = (arrow: Arrow): { d: string; mx: number; my: number } | null => {
-    const fromNode = nodeById[arrow.fromNodeId]
-    const toNode = nodeById[arrow.toNodeId]
-    if (!fromNode || !toNode) return null
+// Arrow path calculation
+const computeArrowPath = (arrow: Arrow): { d: string; mx: number; my: number } | null => {
+  const fromNode = nodeById[arrow.fromNodeId]
+  const toNode = nodeById[arrow.toNodeId]
+  if (!fromNode || !toNode) return null
 
-    const fli = laneIdToIndex[fromNode.laneId]
-    const tli = laneIdToIndex[toNode.laneId]
-    if (fli === undefined || tli === undefined) return null
+  const fli = laneIdToIndex[fromNode.laneId]
+  const tli = laneIdToIndex[toNode.laneId]
+  if (fli === undefined || tli === undefined) return null
 
-    const f = ct(fli, fromNode.rowIndex)
-    const t = ct(tli, toNode.rowIndex)
-    const hw = TW / 2,
-      hh = TH / 2
-    const s = exitPt(f, t, hw, hh, RH, fromNode.shape as 'diamond' | undefined)
-    const e = entryPt(t, f, hw, hh, RH, toNode.shape as 'diamond' | undefined)
+  const f = ct(fli, fromNode.rowIndex)
+  const t = ct(tli, toNode.rowIndex)
+  const hw = TW / 2,
+    hh = TH / 2
+  const s = exitPt(f, t, hw, hh, RH, fromNode.shape as 'diamond' | undefined)
+  const e = entryPt(t, f, hw, hh, RH, toNode.shape as 'diamond' | undefined)
 
-    // 同一行のときのみ obstacles を組み立てる
-    let obstacles: Bbox[] | undefined
-    if (fromNode.rowIndex === toNode.rowIndex) {
-      const nodes: ObstacleNode[] = []
-      for (const n of flow.nodes) {
-        const li = laneIdToIndex[n.laneId]
-        if (li === undefined) continue
-        const c = ct(li, n.rowIndex)
-        nodes.push({ key: n.id, cx: c.x, cy: c.y })
-      }
-      obstacles = collectObstacles({
-        nodes,
-        fromKey: fromNode.id,
-        toKey: toNode.id,
-        fromCx: f.x,
-        toCx: t.x,
-        rowY: f.y,
-        rowH: RH,
-        bboxW: TW,
-        bboxH: TH,
-      })
+  // 同一行のときのみ obstacles を組み立てる
+  let obstacles: Bbox[] | undefined
+  if (fromNode.rowIndex === toNode.rowIndex) {
+    const nodes: ObstacleNode[] = []
+    for (const n of flow.nodes) {
+      const li = laneIdToIndex[n.laneId]
+      if (li === undefined) continue
+      const c = ct(li, n.rowIndex)
+      nodes.push({ key: n.id, cx: c.x, cy: c.y })
     }
-
-    return buildArrowPath(s, e, f, t, obstacles)
+    obstacles = collectObstacles({
+      nodes,
+      fromKey: fromNode.id,
+      toKey: toNode.id,
+      fromCx: f.x,
+      toCx: t.x,
+      rowY: f.y,
+      rowH: RH,
+      bboxW: TW,
+      bboxH: TH,
+    })
   }
+
+  return buildArrowPath(s, e, f, t, obstacles)
+}
 ```
 
 - [ ] **Step 3: 全テスト実行**
@@ -778,6 +769,7 @@ git commit -m "feat(#314): wire obstacles into SharedFlowViewer.computeArrowPath
 ## Task 6: Playwright で実画面検証（受け入れ基準シナリオ）
 
 **Files:**
+
 - Save: `.screenshots/issue-314-*.png`
 
 - [ ] **Step 1: dev server を起動**
@@ -822,6 +814,7 @@ LCP > 1000ms の場合は実装パフォーマンスを見直す。
 - [ ] **Step 4: 共有ビューでも同様に確認**
 
 共有リンクを発行（または既存の共有 URL を使用）し、同じ A→C 構成が共有ビューでも下迂回するか確認。
+
 - スクリーンショット: `.screenshots/issue-314-shared-view-detour.png`
 
 - [ ] **Step 5: 全テスト最終実行**

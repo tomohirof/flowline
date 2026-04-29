@@ -4,19 +4,15 @@ export interface Point {
 }
 
 export interface Bbox {
-  x: number  // 中心 X
-  y: number  // 中心 Y
-  w: number  // 幅
-  h: number  // 高さ
+  x: number // 中心 X
+  y: number // 中心 Y
+  w: number // 幅
+  h: number // 高さ
 }
 
 const DETOUR_MARGIN = 14
 
-function detectDetour(
-  s: Point,
-  e: Point,
-  obstacles: Bbox[],
-): { detourY: number } | null {
+function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
   // 水平直線でなければ迂回しない
   if (Math.abs(e.y - s.y) >= 2) return null
 
@@ -30,9 +26,7 @@ function detectDetour(
   // 経路上の障害ノード = 同一行（rowY と Y が重なる）かつ X が始終点の間
   const inRow = obstacles.filter(
     (b) =>
-      Math.abs(b.y - rowY) < b.h / 2 + 2 &&
-      b.x - b.w / 2 < xHigh - 1 &&
-      b.x + b.w / 2 > xLow + 1,
+      Math.abs(b.y - rowY) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1,
   )
   if (inRow.length === 0) return null
 
@@ -41,9 +35,7 @@ function detectDetour(
   const downBlocked = inRow.some((obs) =>
     obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
   )
-  const upBlocked = inRow.some((obs) =>
-    obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)),
-  )
+  const upBlocked = inRow.some((obs) => obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)))
 
   // 方向決定: 下空きなら下、下塞がり＆上空きなら上、両塞がりは下優先
   const goDown = !downBlocked || upBlocked
@@ -195,8 +187,8 @@ export const buildArrowPath = (
 
 export interface ObstacleNode {
   key: string
-  cx: number  // 中心 X
-  cy: number  // 中心 Y
+  cx: number // 中心 X
+  cy: number // 中心 Y
 }
 
 export interface CollectObstaclesArgs {
@@ -206,9 +198,9 @@ export interface CollectObstaclesArgs {
   fromCx: number
   toCx: number
   rowY: number
-  rowH: number    // 行高さ（直上/直下行判定用）
-  bboxW: number   // 全ノード共通の bbox 幅。呼び出し側の TW を渡す。
-  bboxH: number   // 全ノード共通の bbox 高さ。呼び出し側の TH を渡す。
+  rowH: number // 行高さ（直上/直下行判定用）
+  bboxW: number // 全ノード共通の bbox 幅。呼び出し側の TW を渡す。
+  bboxH: number // 全ノード共通の bbox 高さ。呼び出し側の TH を渡す。
 }
 
 /**

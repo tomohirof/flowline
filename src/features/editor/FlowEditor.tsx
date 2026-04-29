@@ -33,12 +33,7 @@ import { PALETTES, THEMES } from './theme-constants'
 import { toBlob } from 'html-to-image'
 import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
-import {
-  DS,
-  collectObstacles,
-  type Bbox,
-  type ObstacleNode,
-} from '../../lib/arrow-routing'
+import { DS, collectObstacles, type Bbox, type ObstacleNode } from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { I, Ico } from './components/EditorIcons'

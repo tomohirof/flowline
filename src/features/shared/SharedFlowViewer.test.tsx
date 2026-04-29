@@ -415,9 +415,7 @@ describe('SharedFlowViewer', () => {
         { id: 'node-b', laneId: 'lane-2', rowIndex: 0, label: 'B', note: null, orderIndex: 1 },
         { id: 'node-c', laneId: 'lane-3', rowIndex: 0, label: 'C', note: null, orderIndex: 2 },
       ],
-      arrows: [
-        { id: 'arrow-1', fromNodeId: 'node-a', toNodeId: 'node-c', comment: null },
-      ],
+      arrows: [{ id: 'arrow-1', fromNodeId: 'node-a', toNodeId: 'node-c', comment: null }],
     }
     render(<SharedFlowViewer flow={detourFlow} />)
     // 矢印 svg path（marker-end 付き）を取得
@@ -442,9 +440,7 @@ describe('SharedFlowViewer', () => {
         { id: 'node-a', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
         { id: 'node-b', laneId: 'lane-2', rowIndex: 0, label: 'B', note: null, orderIndex: 1 },
       ],
-      arrows: [
-        { id: 'arrow-1', fromNodeId: 'node-a', toNodeId: 'node-b', comment: null },
-      ],
+      arrows: [{ id: 'arrow-1', fromNodeId: 'node-a', toNodeId: 'node-b', comment: null }],
     }
     render(<SharedFlowViewer flow={straightFlow} />)
     const paths = Array.from(document.querySelectorAll('path')).filter((p) =>
