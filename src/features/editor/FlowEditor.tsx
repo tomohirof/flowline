@@ -1364,6 +1364,16 @@ export default function FlowEditor({
     }, 500)
   }
 
+  // 全タスクの中心座標を1度だけ収集（同一行 obstacles 判定で aPath 経由で再利用）
+  const obstacleNodes: ObstacleNode[] = []
+  for (const [k, t] of Object.entries(tasks)) {
+    const li = liMap[t.lid]
+    const ri = riMap[t.rid]
+    if (li === undefined || ri === undefined) continue
+    const c = ct(li, ri)
+    obstacleNodes.push({ key: k, cx: c.x, cy: c.y })
+  }
+
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
     const ft = tasks[arrow.from],
       tt = tasks[arrow.to]
@@ -1379,17 +1389,8 @@ export default function FlowEditor({
     // 同一行のときのみ obstacles を組み立てる（迂回判定用）
     let obstacles: Bbox[] | undefined
     if (fri === tri) {
-      const nodes: ObstacleNode[] = []
-      for (const k of Object.keys(tasks)) {
-        const t = tasks[k]
-        const li = liMap[t.lid]
-        const ri = riMap[t.rid]
-        if (li === undefined || ri === undefined) continue
-        const c = ct(li, ri)
-        nodes.push({ key: k, cx: c.x, cy: c.y })
-      }
       obstacles = collectObstacles({
-        nodes,
+        nodes: obstacleNodes,
         fromKey: arrow.from,
         toKey: arrow.to,
         fromCx: from.x,
