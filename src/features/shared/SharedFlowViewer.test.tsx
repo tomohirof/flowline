@@ -483,10 +483,10 @@ describe('SharedFlowViewer', () => {
     )
     expect(paths.length).toBeGreaterThanOrEqual(1)
     const d = paths[0].getAttribute('d')!
-    // 迂回パスは 5 セグメント（M L L L L）。直線パスは M L のみなので区別可能。
-    // 5 セグメント目は target 側面への水平進入。
+    // 迂回パスは 6 セグメント（M L L L L L）。直線パスは M L のみなので区別可能。
+    // 1 セグメント目は始点側の水平 depart、6 セグメント目は target 側面への水平進入。
     const segmentCount = d.match(/[ML]/g)?.length ?? 0
-    expect(segmentCount).toBe(5)
+    expect(segmentCount).toBe(6)
   })
 
   it('同一行で隣接レーン（間にノードなし）の矢印は直線パス', () => {

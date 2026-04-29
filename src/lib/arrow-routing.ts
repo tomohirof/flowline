@@ -15,6 +15,9 @@ const DETOUR_MARGIN = 14
 // 最終セグメントを水平にすることで矢印先端が target 側面に水平進入する。
 // 値は DETOUR_MARGIN と同値だが意図が異なる（迂回 Y オフセット vs 水平進入 X オフセット）ため別定数とする。
 const APPROACH_GAP = 14
+// 迂回パスの始点直後で水平に出てから垂直に折れる距離。
+// APPROACH_GAP と対称設計（同値）で、始点側もノード端から少し横に進んでから下降させる。
+const DEPART_GAP = 14
 
 function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
   // 水平直線でなければ迂回しない
@@ -157,13 +160,17 @@ export const buildArrowPath = (
     const detour = detectDetour(s, e, obstacles)
     if (detour) {
       const { detourY } = detour
-      // |e.x - s.x| / 2 で clamp。ノード幅が縮小しても approachX が s.x 側を越えてパスが
-      // 自己交差するのを防ぐ防御コード（detectDetour で水平距離は保証されるが、レイアウト
-      // 変更時の silent breakage 回避用）。
-      const dx = e.x - s.x
-      const approachX = e.x - Math.sign(dx) * Math.min(APPROACH_GAP, Math.abs(dx) / 2)
-      // 5 セグメント: M → 垂直(detourY まで) → 水平(approachX まで) → 垂直(e.y まで) → 水平(e.x へ進入)
-      const d = `M${s.x},${s.y} L${s.x},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
+      // |e.x - s.x| / 2 で clamp。ノード幅が縮小しても departX/approachX が反対側を越えて
+      // パスが自己交差するのを防ぐ防御コード（detectDetour で水平距離は保証されるが、レイアウト
+      // 変更時の silent breakage 回避用）。DEPART_GAP/APPROACH_GAP が同値（対称設計）の場合、
+      // clamp が効くと中央で接合する（縮退ケースでは中央水平セグメントがゼロ長になる）。
+      const sign = Math.sign(dx)
+      const halfDx = Math.abs(dx) / 2
+      const departX = s.x + sign * Math.min(DEPART_GAP, halfDx)
+      const approachX = e.x - sign * Math.min(APPROACH_GAP, halfDx)
+      // 6 セグメント: M → 水平(departX まで) → 垂直(detourY まで) → 水平(approachX まで)
+      //               → 垂直(e.y まで) → 水平(e.x へ進入)
+      const d = `M${s.x},${s.y} L${departX},${s.y} L${departX},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
       return { d, mx: (s.x + e.x) / 2, my: detourY }
     }
   }

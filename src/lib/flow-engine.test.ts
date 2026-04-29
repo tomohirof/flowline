@@ -228,8 +228,8 @@ describe('calcArrowPath', () => {
     )
     expect(r).not.toBeNull()
     // exitPt: dx=400 横出口 {276,200}, entryPt: 横入口 {524,200}
-    // 迂回: detourY = 228 + 14 = 242, approachX = 524 - 14 = 510
-    expect(r.d).toBe('M276,200 L276,242 L510,242 L510,200 L524,200')
+    // 迂回: detourY = 228 + 14 = 242, departX = 276 + 14 = 290, approachX = 524 - 14 = 510
+    expect(r.d).toBe('M276,200 L290,200 L290,242 L510,242 L510,200 L524,200')
     expect(r.mx).toBe(400)
     expect(r.my).toBe(242)
   })
