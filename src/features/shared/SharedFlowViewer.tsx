@@ -99,6 +99,8 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
   })
 
   // 全ノードの中心座標を1度だけ収集（同一行 obstacles 判定で再利用）
+  // FlowEditor 側は riMap[t.rid] で行インデックスを取得するが、本ビューアでは
+  // flow.nodes に直接 rowIndex があるためそのまま ct() に渡せる（両者は等価）。
   const obstacleNodes: ObstacleNode[] = []
   for (const n of flow.nodes) {
     const li = laneIdToIndex[n.laneId]
