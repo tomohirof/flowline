@@ -32,6 +32,33 @@ export const PanelInput = ({
   />
 )
 
+export const PanelTextarea = ({
+  value,
+  onChange,
+  placeholder,
+  rows = 2,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  rows?: number
+}) => (
+  <textarea
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    rows={rows}
+    className={styles.panelTextarea}
+    onKeyDown={(e) => {
+      if (e.nativeEvent.isComposing) return
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        ;(e.currentTarget as HTMLTextAreaElement).blur()
+      }
+    }}
+  />
+)
+
 export const PanelBtn = ({
   label,
   color,
