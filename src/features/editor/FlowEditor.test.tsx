@@ -133,6 +133,40 @@ describe('visual constants (#44, #45)', () => {
     expect(nodeLabel).toBeTruthy()
   })
 
+  it('should not truncate node label longer than 10 characters', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      {
+        id: 'n1',
+        laneId: 'lane-1',
+        rowIndex: 0,
+        label: '12345678901234',
+        note: null,
+        orderIndex: 0,
+      },
+    ]
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const labels = Array.from(document.querySelectorAll('text')).map((t) => t.textContent)
+    expect(labels).toContain('12345678901234')
+    expect(labels.every((l) => !l?.endsWith('…'))).toBe(true)
+  })
+
+  it('should render newline label as multiple tspans in editor', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'a\nb', note: null, orderIndex: 0 },
+    ]
+    render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const labelText = Array.from(document.querySelectorAll('text')).find(
+      (t) => t.textContent === 'ab',
+    )
+    expect(labelText).not.toBeUndefined()
+    const tspans = labelText!.querySelectorAll('tspan')
+    expect(tspans).toHaveLength(2)
+    expect(tspans[0].textContent).toBe('a')
+    expect(tspans[1].textContent).toBe('b')
+  })
+
   it('should render arrow with strokeWidth 2 and updated marker', () => {
     const flow = createMinimalFlow()
     flow.nodes = [
