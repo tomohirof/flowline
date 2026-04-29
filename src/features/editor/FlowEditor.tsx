@@ -1970,6 +1970,63 @@ export default function FlowEditor({
                 </g>
               )
             })}
+            {/* Gap "+" hit + button (header side) */}
+            {Array.from({ length: lanes.length + 1 }, (_, gi) => {
+              const gx =
+                gi === 0
+                  ? LM - G / 2
+                  : gi === lanes.length
+                    ? laneX(gi - 1) + LW + G / 2
+                    : laneX(gi) - G / 2
+              const gy = TM + HH / 2
+              const isHov = hoveredLaneGap === gi
+              const hitX =
+                gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
+              return (
+                <g key={`gap-h-${gi}`}>
+                  <rect
+                    data-testid={`lanegap-hit-${gi}`}
+                    x={hitX}
+                    y={0}
+                    width={gi === 0 || gi === lanes.length ? 14 : G}
+                    height={TM + HH}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredLaneGap(gi)}
+                    onMouseLeave={() => setHoveredLaneGap(null)}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation()
+                      if (lanes.length === 0) {
+                        insertLaneAt(gi)
+                      } else {
+                        setLaneDropdown({ gapIndex: gi, x: gx, y: gy + 16 })
+                      }
+                    }}
+                  />
+                  {isHov && (
+                    <g style={{ pointerEvents: 'none' }}>
+                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
+                      <line
+                        x1={gx - 4}
+                        y1={gy}
+                        x2={gx + 4}
+                        y2={gy}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                      <line
+                        x1={gx}
+                        y1={gy - 4}
+                        x2={gx}
+                        y2={gy + 4}
+                        stroke="#fff"
+                        strokeWidth={1.5}
+                      />
+                    </g>
+                  )}
+                </g>
+              )
+            })}
             {/* Lane move controls */}
             {selLane &&
               (() => {
@@ -2142,71 +2199,28 @@ export default function FlowEditor({
               )
             })}
 
-            {/* Gap "+" */}
+            {/* Gap "+" hover dashed line (body side) */}
             {Array.from({ length: lanes.length + 1 }, (_, gi) => {
+              if (hoveredLaneGap !== gi) return null
               const gx =
                 gi === 0
                   ? LM - G / 2
                   : gi === lanes.length
                     ? laneX(gi - 1) + LW + G / 2
                     : laneX(gi) - G / 2
-              const gy = TM + HH / 2
-              const isHov = hoveredLaneGap === gi
-              const hitX =
-                gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
               return (
-                <g key={`gap-${gi}`}>
-                  <rect
-                    data-testid={`lanegap-hit-${gi}`}
-                    x={hitX}
-                    y={0}
-                    width={gi === 0 || gi === lanes.length ? 14 : G}
-                    height={TM + HH}
-                    fill="transparent"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => setHoveredLaneGap(gi)}
-                    onMouseLeave={() => setHoveredLaneGap(null)}
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      if (lanes.length === 0) {
-                        insertLaneAt(gi)
-                      } else {
-                        setLaneDropdown({ gapIndex: gi, x: gx, y: gy + 16 })
-                      }
-                    }}
-                  />
-                  {isHov && (
-                    <g style={{ pointerEvents: 'none' }}>
-                      <line
-                        x1={gx}
-                        y1={TM + HH}
-                        x2={gx}
-                        y2={TM + HH + rows.length * RH}
-                        stroke={T.accent}
-                        strokeWidth={1.5}
-                        strokeDasharray="4,3"
-                        opacity={0.3}
-                      />
-                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
-                      <line
-                        x1={gx - 4}
-                        y1={gy}
-                        x2={gx + 4}
-                        y2={gy}
-                        stroke="#fff"
-                        strokeWidth={1.5}
-                      />
-                      <line
-                        x1={gx}
-                        y1={gy - 4}
-                        x2={gx}
-                        y2={gy + 4}
-                        stroke="#fff"
-                        strokeWidth={1.5}
-                      />
-                    </g>
-                  )}
-                </g>
+                <line
+                  key={`gap-line-${gi}`}
+                  x1={gx}
+                  y1={TM + HH}
+                  x2={gx}
+                  y2={TM + HH + rows.length * RH}
+                  stroke={T.accent}
+                  strokeWidth={1.5}
+                  strokeDasharray="4,3"
+                  opacity={0.3}
+                  style={{ pointerEvents: 'none' }}
+                />
               )
             })}
 

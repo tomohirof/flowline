@@ -3208,6 +3208,14 @@ describe('bidirectional arrow toggle (RightPanel)', () => {
     expect(bodyHl.length).toBe(1)
   })
 
+  it('should place lane gap hit area and + button in header svg', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    const headerSvg = screen.getByTestId('canvas-header-svg')
+    const bodySvg = screen.getByTestId('canvas-svg')
+    expect(headerSvg.querySelector('[data-testid="lanegap-hit-0"]')).not.toBeNull()
+    expect(bodySvg.querySelector('[data-testid="lanegap-hit-0"]')).toBeNull()
+  })
+
   it('should render lane move buttons (←/→) inside header svg when a lane is selected', async () => {
     const user = userEvent.setup()
     const twoLaneFlow: Flow = {
