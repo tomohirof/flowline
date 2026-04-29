@@ -16,13 +16,13 @@
 
 ## File Structure
 
-| ファイル | 変更内容 |
-|---|---|
-| `src/features/editor/FlowEditor.module.css` | `.canvas` に `position: relative` 追加。`.headerSvg` / `.bodySvg` 新規 |
-| `src/features/editor/FlowEditor.tsx` | キャンバス内を 2 SVG 構成に分割。レーンヘッダー描画を headerSvg へ移植 |
-| `src/features/editor/FlowEditor.test.tsx` | ヘッダー分離・選択ハイライト 2 分割・編集 input・移動ボタン位置のテスト追加 |
-| `src/features/shared/SharedFlowViewer.tsx` | エディタと同じ 2 SVG 構成を適用（編集系なしのシンプル版） |
-| `src/features/shared/SharedFlowViewer.test.tsx` | ヘッダー分離テスト追加 |
+| ファイル                                        | 変更内容                                                                    |
+| ----------------------------------------------- | --------------------------------------------------------------------------- |
+| `src/features/editor/FlowEditor.module.css`     | `.canvas` に `position: relative` 追加。`.headerSvg` / `.bodySvg` 新規      |
+| `src/features/editor/FlowEditor.tsx`            | キャンバス内を 2 SVG 構成に分割。レーンヘッダー描画を headerSvg へ移植      |
+| `src/features/editor/FlowEditor.test.tsx`       | ヘッダー分離・選択ハイライト 2 分割・編集 input・移動ボタン位置のテスト追加 |
+| `src/features/shared/SharedFlowViewer.tsx`      | エディタと同じ 2 SVG 構成を適用（編集系なしのシンプル版）                   |
+| `src/features/shared/SharedFlowViewer.test.tsx` | ヘッダー分離テスト追加                                                      |
 
 ブラウザ目視確認は CLAUDE.md Workflow Step 6（MCP playwright 利用）で実施。自動 E2E は未導入のため計画外。
 
@@ -51,6 +51,7 @@ gh issue edit 322 --add-label "作業開始"
 ## Task 1: CSS scaffolding（`.canvas` を sticky の親に、`.headerSvg`/`.bodySvg` 追加）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.module.css:315-324`
 
 - [ ] **Step 1: 既存の `.canvas` / `.svg` を確認して上書き**
@@ -108,6 +109,7 @@ git commit -m "feat(#322): add headerSvg/bodySvg styles for sticky lane header"
 ## Task 2: FlowEditor — ヘッダーSVG足場を追加（RED → GREEN）
 
 **Files:**
+
 - Test: `src/features/editor/FlowEditor.test.tsx`
 - Modify: `src/features/editor/FlowEditor.tsx:1862-1900`
 
@@ -116,11 +118,11 @@ git commit -m "feat(#322): add headerSvg/bodySvg styles for sticky lane header"
 `FlowEditor.test.tsx` の末尾（`describe('FlowEditor', ...)` ブロック内、最後の `it`の後）に追加:
 
 ```tsx
-  it('should render canvas as two stacked SVGs (header + body)', () => {
-    render(<FlowEditor />)
-    expect(screen.getByTestId('canvas-header-svg')).toBeInTheDocument()
-    expect(screen.getByTestId('canvas-svg')).toBeInTheDocument()
-  })
+it('should render canvas as two stacked SVGs (header + body)', () => {
+  render(<FlowEditor />)
+  expect(screen.getByTestId('canvas-header-svg')).toBeInTheDocument()
+  expect(screen.getByTestId('canvas-svg')).toBeInTheDocument()
+})
 ```
 
 - [ ] **Step 2: テスト失敗を確認**
@@ -133,56 +135,58 @@ Expected: FAIL（`canvas-header-svg` not found）
 `FlowEditor.tsx:1862-1900` 付近の `.canvas` div の中、本体 `<svg ref={svgRef} ... data-testid="canvas-svg" ...>` の **直前** に空のヘッダーSVG を追加:
 
 ```tsx
-        <div
-          ref={canvasContainerRef}
-          className={`${styles.canvas} ${editorSettings.showDotGrid ? '' : styles.canvasNoDots}`}
-          style={{
-            backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
-            cursor: connectFrom ? 'crosshair' : dragging ? 'grabbing' : 'default',
-          }}
-        >
-          <svg
-            data-testid="canvas-header-svg"
-            width={svgW}
-            height={(TM + HH + 30) * zoom}
-            viewBox={`0 -30 ${svgW / zoom} ${TM + HH + 30}`}
-            className={styles.headerSvg}
-          />
-          <svg
-            ref={svgRef}
-            data-testid="canvas-svg"
-            width={svgW}
-            height={svgH}
-            viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
-            className={styles.bodySvg}
-            style={{
-              minWidth: '100%',
-              cursor: draggingMemo ? 'grabbing' : undefined,
-            }}
-            onMouseMove={onSvgMouseMove}
-            onMouseUp={onSvgMouseUp}
-            onMouseLeave={() => {
-              if (dragging) {
-                setDragging(null)
-                setDragOver(null)
-                setDragOverMulti(null)
-                setMultiDragAnchorCell(null)
-              }
-              if (connectFrom) {
-                setConnectFrom(null)
-                setConnectDragPt(null)
-                setConnectFromPt(null)
-                setActiveTool('select')
-              }
-              if (draggingMemo) setDraggingMemo(null)
-            }}
-          >
-            ...既存 lanes.map / Lane move controls / Gap "+" / rows.map / nodes / arrows / memos すべてそのまま...
-          </svg>
-        </div>
+<div
+  ref={canvasContainerRef}
+  className={`${styles.canvas} ${editorSettings.showDotGrid ? '' : styles.canvasNoDots}`}
+  style={{
+    backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+    cursor: connectFrom ? 'crosshair' : dragging ? 'grabbing' : 'default',
+  }}
+>
+  <svg
+    data-testid="canvas-header-svg"
+    width={svgW}
+    height={(TM + HH + 30) * zoom}
+    viewBox={`0 -30 ${svgW / zoom} ${TM + HH + 30}`}
+    className={styles.headerSvg}
+  />
+  <svg
+    ref={svgRef}
+    data-testid="canvas-svg"
+    width={svgW}
+    height={svgH}
+    viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
+    className={styles.bodySvg}
+    style={{
+      minWidth: '100%',
+      cursor: draggingMemo ? 'grabbing' : undefined,
+    }}
+    onMouseMove={onSvgMouseMove}
+    onMouseUp={onSvgMouseUp}
+    onMouseLeave={() => {
+      if (dragging) {
+        setDragging(null)
+        setDragOver(null)
+        setDragOverMulti(null)
+        setMultiDragAnchorCell(null)
+      }
+      if (connectFrom) {
+        setConnectFrom(null)
+        setConnectDragPt(null)
+        setConnectFromPt(null)
+        setActiveTool('select')
+      }
+      if (draggingMemo) setDraggingMemo(null)
+    }}
+  >
+    ...既存 lanes.map / Lane move controls / Gap "+" / rows.map / nodes / arrows / memos
+    すべてそのまま...
+  </svg>
+</div>
 ```
 
 注意:
+
 - 既存の `className={styles.svg}` を `className={styles.bodySvg}` に変更
 - 既存 `style={{ minWidth: '100%', minHeight: '100%', ... }}` から `minHeight` を削除（ヘッダー分離後はキャンバスを埋める必要なし）
 - 本体 SVG の viewBox / width / height はこの段階では既存のまま（次タスク以降で本体専用に絞る）
@@ -209,6 +213,7 @@ git commit -m "feat(#322): add empty header svg scaffold above body svg"
 ## Task 3: ヘッダーSVG にレーンヘッダー要素を移植（背景 / アクセント / ドット / ラベル）
 
 **Files:**
+
 - Test: `src/features/editor/FlowEditor.test.tsx`
 - Modify: `src/features/editor/FlowEditor.tsx:1901-2048`
 
@@ -217,34 +222,34 @@ git commit -m "feat(#322): add empty header svg scaffold above body svg"
 `FlowEditor.test.tsx` に追加:
 
 ```tsx
-  it('should render lane name labels inside header svg, not body svg', () => {
-    render(<FlowEditor />)
-    const headerSvg = screen.getByTestId('canvas-header-svg')
-    const bodySvg = screen.getByTestId('canvas-svg')
-    // デフォルトレーンの 1 つ目の名前を取得
-    const allTexts = headerSvg.querySelectorAll('text')
-    const headerLabels = Array.from(allTexts).map((t) => t.textContent)
-    // 本体 SVG にはレーン名ラベル（ヘッダー部分の text）が含まれないこと
-    const bodyTexts = bodySvg.querySelectorAll('text')
-    const bodyLabels = Array.from(bodyTexts).map((t) => t.textContent)
-    // ヘッダー側に少なくとも 1 つレーン名がある
-    expect(headerLabels.length).toBeGreaterThan(0)
-    // 本体側にレーン名（ヘッダー部分のもの）が重複していない
-    headerLabels.forEach((label) => {
-      if (label && label.length > 0) {
-        // 本体 text には行番号などが含まれるが、レーン名が body にあってはいけない
-        expect(bodyLabels).not.toContain(label)
-      }
-    })
+it('should render lane name labels inside header svg, not body svg', () => {
+  render(<FlowEditor />)
+  const headerSvg = screen.getByTestId('canvas-header-svg')
+  const bodySvg = screen.getByTestId('canvas-svg')
+  // デフォルトレーンの 1 つ目の名前を取得
+  const allTexts = headerSvg.querySelectorAll('text')
+  const headerLabels = Array.from(allTexts).map((t) => t.textContent)
+  // 本体 SVG にはレーン名ラベル（ヘッダー部分の text）が含まれないこと
+  const bodyTexts = bodySvg.querySelectorAll('text')
+  const bodyLabels = Array.from(bodyTexts).map((t) => t.textContent)
+  // ヘッダー側に少なくとも 1 つレーン名がある
+  expect(headerLabels.length).toBeGreaterThan(0)
+  // 本体側にレーン名（ヘッダー部分のもの）が重複していない
+  headerLabels.forEach((label) => {
+    if (label && label.length > 0) {
+      // 本体 text には行番号などが含まれるが、レーン名が body にあってはいけない
+      expect(bodyLabels).not.toContain(label)
+    }
   })
+})
 
-  it('should render lane color accent dot inside header svg', () => {
-    render(<FlowEditor />)
-    const headerSvg = screen.getByTestId('canvas-header-svg')
-    const circles = headerSvg.querySelectorAll('circle')
-    // レーン数と同じだけドット circle が描画されている
-    expect(circles.length).toBeGreaterThan(0)
-  })
+it('should render lane color accent dot inside header svg', () => {
+  render(<FlowEditor />)
+  const headerSvg = screen.getByTestId('canvas-header-svg')
+  const circles = headerSvg.querySelectorAll('circle')
+  // レーン数と同じだけドット circle が描画されている
+  expect(circles.length).toBeGreaterThan(0)
+})
 ```
 
 - [ ] **Step 2: テスト失敗を確認**
@@ -257,107 +262,92 @@ Expected: FAIL（headerSvg に text がない）
 `FlowEditor.tsx` の `<svg data-testid="canvas-header-svg" ...>` を以下のように更新（中身に lanes.map を追加）:
 
 ```tsx
-          <svg
-            data-testid="canvas-header-svg"
-            width={svgW}
-            height={(TM + HH + 30) * zoom}
-            viewBox={`0 -30 ${svgW / zoom} ${TM + HH + 30}`}
-            className={styles.headerSvg}
+<svg
+  data-testid="canvas-header-svg"
+  width={svgW}
+  height={(TM + HH + 30) * zoom}
+  viewBox={`0 -30 ${svgW / zoom} ${TM + HH + 30}`}
+  className={styles.headerSvg}
+>
+  {/* Lane headers (sticky) */}
+  {lanes.map((lane, li) => {
+    const p = PALETTES[lane.ci]
+    const x = laneX(li)
+    const isSub = isGroupSub(lane)
+    const isParent = isGroupParent(lane)
+    const headerW = isParent ? getGroupWidth(lane, lanes, LW, G) : LW
+    if (isSub) return null
+    return (
+      <g
+        key={`lane-header-${lane.id}`}
+        className={lane.id === slidingLaneId ? styles.laneSlideInAnim : undefined}
+      >
+        <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
+        <rect x={x} y={TM + HH - 10} width={headerW} height={10} fill={T.laneHeaderBg} />
+        <rect
+          x={x + 16}
+          y={TM + HH - 2.5}
+          width={headerW - 32}
+          height={2}
+          rx={1}
+          fill={p.dot}
+          opacity={T.laneAccentOpacity}
+        />
+        <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
+        <rect
+          x={x}
+          y={TM}
+          width={headerW}
+          height={HH}
+          fill="transparent"
+          style={{ cursor: 'pointer' }}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation()
+            setSelLane(selLane === lane.id ? null : lane.id)
+            setSelTask(null)
+            setSelArrow(null)
+            setMultiSel(new Set())
+          }}
+          onDoubleClick={(e: React.MouseEvent) => {
+            e.stopPropagation()
+            setEditLane(lane.id)
+            setSelLane(lane.id)
+            setTimeout(() => laneInputRef.current?.focus(), 40)
+          }}
+        />
+        {editLane === lane.id ? (
+          <foreignObject x={x + 32} y={TM + 9} width={headerW - 44} height={28}>
+            <input
+              ref={laneInputRef}
+              value={lane.name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const v = e.target.value
+                setLanes((p2) => p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)))
+              }}
+              onBlur={() => setEditLane(null)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
+              }
+              className={styles.laneNameInput}
+            />
+          </foreignObject>
+        ) : (
+          <text
+            x={x + 32}
+            y={TM + HH / 2 + 1}
+            dominantBaseline="central"
+            fill={T.titleColor}
+            fontSize={12.5}
+            fontWeight={600}
+            style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
           >
-            {/* Lane headers (sticky) */}
-            {lanes.map((lane, li) => {
-              const p = PALETTES[lane.ci]
-              const x = laneX(li)
-              const isSub = isGroupSub(lane)
-              const isParent = isGroupParent(lane)
-              const headerW = isParent ? getGroupWidth(lane, lanes, LW, G) : LW
-              if (isSub) return null
-              return (
-                <g
-                  key={`lane-header-${lane.id}`}
-                  className={lane.id === slidingLaneId ? styles.laneSlideInAnim : undefined}
-                >
-                  <rect
-                    x={x}
-                    y={TM}
-                    width={headerW}
-                    height={HH}
-                    rx={10}
-                    fill={T.laneHeaderBg}
-                  />
-                  <rect
-                    x={x}
-                    y={TM + HH - 10}
-                    width={headerW}
-                    height={10}
-                    fill={T.laneHeaderBg}
-                  />
-                  <rect
-                    x={x + 16}
-                    y={TM + HH - 2.5}
-                    width={headerW - 32}
-                    height={2}
-                    rx={1}
-                    fill={p.dot}
-                    opacity={T.laneAccentOpacity}
-                  />
-                  <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
-                  <rect
-                    x={x}
-                    y={TM}
-                    width={headerW}
-                    height={HH}
-                    fill="transparent"
-                    style={{ cursor: 'pointer' }}
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      setSelLane(selLane === lane.id ? null : lane.id)
-                      setSelTask(null)
-                      setSelArrow(null)
-                      setMultiSel(new Set())
-                    }}
-                    onDoubleClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      setEditLane(lane.id)
-                      setSelLane(lane.id)
-                      setTimeout(() => laneInputRef.current?.focus(), 40)
-                    }}
-                  />
-                  {editLane === lane.id ? (
-                    <foreignObject x={x + 32} y={TM + 9} width={headerW - 44} height={28}>
-                      <input
-                        ref={laneInputRef}
-                        value={lane.name}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const v = e.target.value
-                          setLanes((p2) =>
-                            p2.map((l) => (l.id === lane.id ? { ...l, name: v } : l)),
-                          )
-                        }}
-                        onBlur={() => setEditLane(null)}
-                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                          e.key === 'Enter' && !e.nativeEvent.isComposing && setEditLane(null)
-                        }
-                        className={styles.laneNameInput}
-                      />
-                    </foreignObject>
-                  ) : (
-                    <text
-                      x={x + 32}
-                      y={TM + HH / 2 + 1}
-                      dominantBaseline="central"
-                      fill={T.titleColor}
-                      fontSize={12.5}
-                      fontWeight={600}
-                      style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                    >
-                      {lane.name}
-                    </text>
-                  )}
-                </g>
-              )
-            })}
-          </svg>
+            {lane.name}
+          </text>
+        )}
+      </g>
+    )
+  })}
+</svg>
 ```
 
 - [ ] **Step 4: 本体SVG からヘッダー要素を削除**
@@ -394,28 +384,29 @@ git commit -m "feat(#322): move lane headers (label/dot/accent/edit) into header
 ## Task 4: 選択ハイライト rect を 2 分割
 
 **Files:**
+
 - Test: `src/features/editor/FlowEditor.test.tsx`
 - Modify: `src/features/editor/FlowEditor.tsx`（ヘッダーSVG 内の `<g>` と本体SVG 内の `<g>`）
 
 - [ ] **Step 1: 失敗テストを書く（RED）**
 
 ```tsx
-  it('should render selection highlight in both header and body svgs when a lane is selected', async () => {
-    const user = userEvent.setup()
-    render(<FlowEditor />)
-    // 1 番目のレーンヘッダーをクリックして選択
-    const headerSvg = screen.getByTestId('canvas-header-svg')
-    const bodySvg = screen.getByTestId('canvas-svg')
-    // クリック対象のヘッダー hit rect（fill=transparent, cursor:pointer）
-    const headerClickTargets = headerSvg.querySelectorAll('rect[style*="cursor: pointer"]')
-    expect(headerClickTargets.length).toBeGreaterThan(0)
-    await user.click(headerClickTargets[0] as Element)
-    // 選択時の点線 rect（stroke-dasharray="5,3"）が両方の SVG に 1 つずつある
-    const headerHl = headerSvg.querySelectorAll('rect[stroke-dasharray="5,3"]')
-    const bodyHl = bodySvg.querySelectorAll('rect[stroke-dasharray="5,3"]')
-    expect(headerHl.length).toBe(1)
-    expect(bodyHl.length).toBe(1)
-  })
+it('should render selection highlight in both header and body svgs when a lane is selected', async () => {
+  const user = userEvent.setup()
+  render(<FlowEditor />)
+  // 1 番目のレーンヘッダーをクリックして選択
+  const headerSvg = screen.getByTestId('canvas-header-svg')
+  const bodySvg = screen.getByTestId('canvas-svg')
+  // クリック対象のヘッダー hit rect（fill=transparent, cursor:pointer）
+  const headerClickTargets = headerSvg.querySelectorAll('rect[style*="cursor: pointer"]')
+  expect(headerClickTargets.length).toBeGreaterThan(0)
+  await user.click(headerClickTargets[0] as Element)
+  // 選択時の点線 rect（stroke-dasharray="5,3"）が両方の SVG に 1 つずつある
+  const headerHl = headerSvg.querySelectorAll('rect[stroke-dasharray="5,3"]')
+  const bodyHl = bodySvg.querySelectorAll('rect[stroke-dasharray="5,3"]')
+  expect(headerHl.length).toBe(1)
+  expect(bodyHl.length).toBe(1)
+})
 ```
 
 - [ ] **Step 2: テスト失敗を確認**
@@ -428,20 +419,22 @@ Expected: FAIL（ヘッダー側にハイライトがない）
 ヘッダーSVG の `lanes.map` 内、`<rect ... rx={10} fill={T.laneHeaderBg} />` の **直後** に追加:
 
 ```tsx
-                  {selLane === lane.id && !isSub && (
-                    <rect
-                      x={x + 1}
-                      y={TM + 1}
-                      width={headerW - 2}
-                      height={HH - 2}
-                      rx={9}
-                      fill="none"
-                      stroke={T.accent}
-                      strokeWidth={1.5}
-                      strokeDasharray="5,3"
-                      opacity={0.5}
-                    />
-                  )}
+{
+  selLane === lane.id && !isSub && (
+    <rect
+      x={x + 1}
+      y={TM + 1}
+      width={headerW - 2}
+      height={HH - 2}
+      rx={9}
+      fill="none"
+      stroke={T.accent}
+      strokeWidth={1.5}
+      strokeDasharray="5,3"
+      opacity={0.5}
+    />
+  )
+}
 ```
 
 - [ ] **Step 4: 本体SVG 側のハイライト rect を本体高さに変更**
@@ -449,20 +442,22 @@ Expected: FAIL（ヘッダー側にハイライトがない）
 本体SVG の `FlowEditor.tsx:1925-1938` の選択ハイライト rect を以下に変更（高さからヘッダー分を除外）:
 
 ```tsx
-                  {isSel && (
-                    <rect
-                      x={x + 1}
-                      y={TM + HH + 1}
-                      width={LW - 2}
-                      height={fullH - HH - 2}
-                      rx={0}
-                      fill="none"
-                      stroke={T.accent}
-                      strokeWidth={1.5}
-                      strokeDasharray="5,3"
-                      opacity={0.5}
-                    />
-                  )}
+{
+  isSel && (
+    <rect
+      x={x + 1}
+      y={TM + HH + 1}
+      width={LW - 2}
+      height={fullH - HH - 2}
+      rx={0}
+      fill="none"
+      stroke={T.accent}
+      strokeWidth={1.5}
+      strokeDasharray="5,3"
+      opacity={0.5}
+    />
+  )
+}
 ```
 
 `isSub` のときは元々 `y={TM + HH + 1}` だったので変更なし。`isSub === false` の場合のみ y/height を上記に統一。
@@ -489,33 +484,34 @@ git commit -m "feat(#322): split lane selection highlight into header+body parts
 ## Task 5: レーン移動ボタン（←/→）をヘッダーSVG に移植
 
 **Files:**
+
 - Test: `src/features/editor/FlowEditor.test.tsx`
 - Modify: `src/features/editor/FlowEditor.tsx:2050-2125`
 
 - [ ] **Step 1: 失敗テストを書く（RED）**
 
 ```tsx
-  it('should render lane move buttons (←/→) inside header svg when a lane is selected', async () => {
-    const user = userEvent.setup()
-    render(<FlowEditor />)
-    const headerSvg = screen.getByTestId('canvas-header-svg')
-    const bodySvg = screen.getByTestId('canvas-svg')
-    // 真ん中のレーン（index >= 1）を選択して両方のボタンが出るようにする
-    const headerClickTargets = headerSvg.querySelectorAll('rect[style*="cursor: pointer"]')
-    if (headerClickTargets.length >= 2) {
-      await user.click(headerClickTargets[1] as Element)
-    }
-    // ヘッダー側に "←" or "→" の text が出る
-    const headerArrows = Array.from(headerSvg.querySelectorAll('text'))
-      .map((t) => t.textContent)
-      .filter((c) => c === '←' || c === '→')
-    expect(headerArrows.length).toBeGreaterThan(0)
-    // 本体側には ←/→ がない
-    const bodyArrows = Array.from(bodySvg.querySelectorAll('text'))
-      .map((t) => t.textContent)
-      .filter((c) => c === '←' || c === '→')
-    expect(bodyArrows.length).toBe(0)
-  })
+it('should render lane move buttons (←/→) inside header svg when a lane is selected', async () => {
+  const user = userEvent.setup()
+  render(<FlowEditor />)
+  const headerSvg = screen.getByTestId('canvas-header-svg')
+  const bodySvg = screen.getByTestId('canvas-svg')
+  // 真ん中のレーン（index >= 1）を選択して両方のボタンが出るようにする
+  const headerClickTargets = headerSvg.querySelectorAll('rect[style*="cursor: pointer"]')
+  if (headerClickTargets.length >= 2) {
+    await user.click(headerClickTargets[1] as Element)
+  }
+  // ヘッダー側に "←" or "→" の text が出る
+  const headerArrows = Array.from(headerSvg.querySelectorAll('text'))
+    .map((t) => t.textContent)
+    .filter((c) => c === '←' || c === '→')
+  expect(headerArrows.length).toBeGreaterThan(0)
+  // 本体側には ←/→ がない
+  const bodyArrows = Array.from(bodySvg.querySelectorAll('text'))
+    .map((t) => t.textContent)
+    .filter((c) => c === '←' || c === '→')
+  expect(bodyArrows.length).toBe(0)
+})
 ```
 
 - [ ] **Step 2: テスト失敗を確認**
@@ -560,20 +556,21 @@ git commit -m "feat(#322): move lane move buttons into header svg"
 ## Task 6: Gap "+" を分割（hit + ボタン → ヘッダー、ホバー縦線 → 本体）
 
 **Files:**
+
 - Test: `src/features/editor/FlowEditor.test.tsx`
 - Modify: `src/features/editor/FlowEditor.tsx:2126-2192`
 
 - [ ] **Step 1: 失敗テストを書く（RED）**
 
 ```tsx
-  it('should place lane gap hit area and + button in header svg', () => {
-    render(<FlowEditor />)
-    const headerSvg = screen.getByTestId('canvas-header-svg')
-    const bodySvg = screen.getByTestId('canvas-svg')
-    // hit rect は data-testid="lanegap-hit-0" など
-    expect(headerSvg.querySelector('[data-testid="lanegap-hit-0"]')).not.toBeNull()
-    expect(bodySvg.querySelector('[data-testid="lanegap-hit-0"]')).toBeNull()
-  })
+it('should place lane gap hit area and + button in header svg', () => {
+  render(<FlowEditor />)
+  const headerSvg = screen.getByTestId('canvas-header-svg')
+  const bodySvg = screen.getByTestId('canvas-svg')
+  // hit rect は data-testid="lanegap-hit-0" など
+  expect(headerSvg.querySelector('[data-testid="lanegap-hit-0"]')).not.toBeNull()
+  expect(bodySvg.querySelector('[data-testid="lanegap-hit-0"]')).toBeNull()
+})
 ```
 
 - [ ] **Step 2: テスト失敗を確認**
@@ -588,78 +585,77 @@ Expected: FAIL
 **ヘッダーSVG 側（`lanes.map` の後、移動ボタンの前に挿入）:**
 
 ```tsx
-            {/* Gap "+" hit & button */}
-            {Array.from({ length: lanes.length + 1 }, (_, gi) => {
-              const gx =
-                gi === 0
-                  ? LM - G / 2
-                  : gi === lanes.length
-                    ? laneX(gi - 1) + LW + G / 2
-                    : laneX(gi) - G / 2
-              const gy = TM + HH / 2
-              const isHov = hoveredLaneGap === gi
-              const hitX =
-                gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
-              return (
-                <g key={`gap-h-${gi}`}>
-                  <rect
-                    data-testid={`lanegap-hit-${gi}`}
-                    x={hitX}
-                    y={0}
-                    width={gi === 0 || gi === lanes.length ? 14 : G}
-                    height={TM + HH}
-                    fill="transparent"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => setHoveredLaneGap(gi)}
-                    onMouseLeave={() => setHoveredLaneGap(null)}
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation()
-                      if (lanes.length === 0) {
-                        insertLaneAt(gi)
-                      } else {
-                        setLaneDropdown({ gapIndex: gi, x: gx, y: gy + 16 })
-                      }
-                    }}
-                  />
-                  {isHov && (
-                    <g style={{ pointerEvents: 'none' }}>
-                      <circle cx={gx} cy={gy} r={10} fill={T.accent} />
-                      <line x1={gx - 4} y1={gy} x2={gx + 4} y2={gy} stroke="#fff" strokeWidth={1.5} />
-                      <line x1={gx} y1={gy - 4} x2={gx} y2={gy + 4} stroke="#fff" strokeWidth={1.5} />
-                    </g>
-                  )}
-                </g>
-              )
-            })}
+{
+  /* Gap "+" hit & button */
+}
+{
+  Array.from({ length: lanes.length + 1 }, (_, gi) => {
+    const gx =
+      gi === 0 ? LM - G / 2 : gi === lanes.length ? laneX(gi - 1) + LW + G / 2 : laneX(gi) - G / 2
+    const gy = TM + HH / 2
+    const isHov = hoveredLaneGap === gi
+    const hitX = gi === 0 ? LM - 14 : gi === lanes.length ? laneX(gi - 1) + LW : laneX(gi) - G
+    return (
+      <g key={`gap-h-${gi}`}>
+        <rect
+          data-testid={`lanegap-hit-${gi}`}
+          x={hitX}
+          y={0}
+          width={gi === 0 || gi === lanes.length ? 14 : G}
+          height={TM + HH}
+          fill="transparent"
+          style={{ cursor: 'pointer' }}
+          onMouseEnter={() => setHoveredLaneGap(gi)}
+          onMouseLeave={() => setHoveredLaneGap(null)}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation()
+            if (lanes.length === 0) {
+              insertLaneAt(gi)
+            } else {
+              setLaneDropdown({ gapIndex: gi, x: gx, y: gy + 16 })
+            }
+          }}
+        />
+        {isHov && (
+          <g style={{ pointerEvents: 'none' }}>
+            <circle cx={gx} cy={gy} r={10} fill={T.accent} />
+            <line x1={gx - 4} y1={gy} x2={gx + 4} y2={gy} stroke="#fff" strokeWidth={1.5} />
+            <line x1={gx} y1={gy - 4} x2={gx} y2={gy + 4} stroke="#fff" strokeWidth={1.5} />
+          </g>
+        )}
+      </g>
+    )
+  })
+}
 ```
 
 **本体SVG 側（既存 Gap ブロックを以下に置き換え — ホバー縦線のみ残す）:**
 
 ```tsx
-            {/* Gap "+" hover dashed line (body side) */}
-            {Array.from({ length: lanes.length + 1 }, (_, gi) => {
-              if (hoveredLaneGap !== gi) return null
-              const gx =
-                gi === 0
-                  ? LM - G / 2
-                  : gi === lanes.length
-                    ? laneX(gi - 1) + LW + G / 2
-                    : laneX(gi) - G / 2
-              return (
-                <line
-                  key={`gap-b-${gi}`}
-                  x1={gx}
-                  y1={TM + HH}
-                  x2={gx}
-                  y2={TM + HH + rows.length * RH}
-                  stroke={T.accent}
-                  strokeWidth={1.5}
-                  strokeDasharray="4,3"
-                  opacity={0.3}
-                  style={{ pointerEvents: 'none' }}
-                />
-              )
-            })}
+{
+  /* Gap "+" hover dashed line (body side) */
+}
+{
+  Array.from({ length: lanes.length + 1 }, (_, gi) => {
+    if (hoveredLaneGap !== gi) return null
+    const gx =
+      gi === 0 ? LM - G / 2 : gi === lanes.length ? laneX(gi - 1) + LW + G / 2 : laneX(gi) - G / 2
+    return (
+      <line
+        key={`gap-b-${gi}`}
+        x1={gx}
+        y1={TM + HH}
+        x2={gx}
+        y2={TM + HH + rows.length * RH}
+        stroke={T.accent}
+        strokeWidth={1.5}
+        strokeDasharray="4,3"
+        opacity={0.3}
+        style={{ pointerEvents: 'none' }}
+      />
+    )
+  })
+}
 ```
 
 - [ ] **Step 4: テスト pass を確認**
@@ -684,6 +680,7 @@ git commit -m "feat(#322): split lane gap into header (hit/button) and body (hov
 ## Task 7: 本体SVG の高さ計算を調整（ヘッダー分を引く）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:679-680`
 
 - [ ] **Step 1: 本体SVG の `height` 属性を調整**
@@ -729,6 +726,7 @@ git commit -m "feat(#322): adjust body svg height to exclude header area"
 ## Task 8: SharedFlowViewer に同じ 2 SVG 構成を適用
 
 **Files:**
+
 - Test: `src/features/shared/SharedFlowViewer.test.tsx`
 - Modify: `src/features/shared/SharedFlowViewer.tsx:240-322`
 
@@ -737,19 +735,19 @@ git commit -m "feat(#322): adjust body svg height to exclude header area"
 `SharedFlowViewer.test.tsx` に追加:
 
 ```tsx
-  it('should render canvas as two stacked SVGs (header + body)', async () => {
-    // 既存のテストと同じセットアップで render
-    // ... 既存パターンに合わせて render(<SharedFlowViewer ... />) を実行
-    expect(await screen.findByTestId('shared-canvas-header-svg')).toBeInTheDocument()
-    expect(await screen.findByTestId('shared-canvas-svg')).toBeInTheDocument()
-  })
+it('should render canvas as two stacked SVGs (header + body)', async () => {
+  // 既存のテストと同じセットアップで render
+  // ... 既存パターンに合わせて render(<SharedFlowViewer ... />) を実行
+  expect(await screen.findByTestId('shared-canvas-header-svg')).toBeInTheDocument()
+  expect(await screen.findByTestId('shared-canvas-svg')).toBeInTheDocument()
+})
 
-  it('should render lane name labels inside shared header svg', async () => {
-    // 既存のテストと同じセットアップで render
-    const headerSvg = await screen.findByTestId('shared-canvas-header-svg')
-    const texts = headerSvg.querySelectorAll('text')
-    expect(texts.length).toBeGreaterThan(0)
-  })
+it('should render lane name labels inside shared header svg', async () => {
+  // 既存のテストと同じセットアップで render
+  const headerSvg = await screen.findByTestId('shared-canvas-header-svg')
+  const texts = headerSvg.querySelectorAll('text')
+  expect(texts.length).toBeGreaterThan(0)
+})
 ```
 
 注意: SharedFlowViewer.test.tsx の既存パターン（mock データ、render 方法）を踏襲する。既存テストの 1 つを参照してセットアップをコピー。
@@ -764,113 +762,107 @@ Expected: FAIL
 `SharedFlowViewer.tsx:235-245` の `<svg viewBox=... >` を以下のように 2 SVG 構成に書き換える。`.canvas` 相当の wrapper div が必要なら追加し、CSS は SharedFlowViewer 専用の module css か FlowEditor のものを共用するかは既存パターンに合わせる。
 
 ```tsx
-        <div className={sharedStyles.canvas}>
-          <svg
-            data-testid="shared-canvas-header-svg"
-            width={totalW}
-            height={TM + HH + 30}
-            viewBox={`0 -30 ${totalW} ${TM + HH + 30}`}
-            className={sharedStyles.headerSvg}
+<div className={sharedStyles.canvas}>
+  <svg
+    data-testid="shared-canvas-header-svg"
+    width={totalW}
+    height={TM + HH + 30}
+    viewBox={`0 -30 ${totalW} ${TM + HH + 30}`}
+    className={sharedStyles.headerSvg}
+  >
+    {/* Lane headers */}
+    {sortedLanes.map((lane, li) => {
+      const p = PALETTES[lane.colorIndex % PALETTES.length]
+      const x = laneX(li)
+      const isSub = isGroupSub(lane)
+      const isParent = isGroupParent(lane)
+      const headerW = isParent ? getGroupWidth(lane, sortedLanes, LW, G) : LW
+      if (isSub) return null
+      return (
+        <g key={`lane-header-${lane.id}`}>
+          <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
+          <rect x={x} y={TM + HH - 10} width={headerW} height={10} fill={T.laneHeaderBg} />
+          <rect
+            x={x + 16}
+            y={TM + HH - 2.5}
+            width={headerW - 32}
+            height={2}
+            rx={1}
+            fill={p.dot}
+            opacity={T.laneAccentOpacity}
+          />
+          <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
+          <text
+            x={x + 32}
+            y={TM + HH / 2 + 1}
+            dominantBaseline="central"
+            fill={T.titleColor}
+            fontSize={12.5}
+            fontWeight={600}
+            style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
           >
-            {/* Lane headers */}
-            {sortedLanes.map((lane, li) => {
-              const p = PALETTES[lane.colorIndex % PALETTES.length]
-              const x = laneX(li)
-              const isSub = isGroupSub(lane)
-              const isParent = isGroupParent(lane)
-              const headerW = isParent ? getGroupWidth(lane, sortedLanes, LW, G) : LW
-              if (isSub) return null
-              return (
-                <g key={`lane-header-${lane.id}`}>
-                  <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
-                  <rect
-                    x={x}
-                    y={TM + HH - 10}
-                    width={headerW}
-                    height={10}
-                    fill={T.laneHeaderBg}
-                  />
-                  <rect
-                    x={x + 16}
-                    y={TM + HH - 2.5}
-                    width={headerW - 32}
-                    height={2}
-                    rx={1}
-                    fill={p.dot}
-                    opacity={T.laneAccentOpacity}
-                  />
-                  <circle cx={x + 20} cy={TM + HH / 2} r={4.5} fill={p.dot} />
-                  <text
-                    x={x + 32}
-                    y={TM + HH / 2 + 1}
-                    dominantBaseline="central"
-                    fill={T.titleColor}
-                    fontSize={12.5}
-                    fontWeight={600}
-                    style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                  >
-                    {lane.name}
-                  </text>
-                </g>
-              )
-            })}
-          </svg>
-          <svg
-            data-testid="shared-canvas-svg"
-            width={totalW}
-            height={totalH}
-            viewBox={`0 -30 ${totalW} ${totalH + 30}`}
-            className={sharedStyles.bodySvg}
-          >
-            {/* Lane bodies (背景・サブレーン縦線・行ライン) */}
-            {sortedLanes.map((lane, li) => {
-              const x = laneX(li)
-              const fullH = HH + rowCount * RH
-              const isSub = isGroupSub(lane)
-              return (
-                <g key={`lane-body-${lane.id}`}>
-                  <rect
-                    x={x}
-                    y={isSub ? TM + HH : TM}
-                    width={LW}
-                    height={isSub ? fullH - HH : fullH}
-                    rx={isSub ? 0 : 10}
-                    fill={T.laneBg}
-                    stroke={T.laneBorder}
-                    strokeWidth={0.5}
-                  />
-                  {isSub && (
-                    <line
-                      x1={x}
-                      y1={TM + 6}
-                      x2={x}
-                      y2={TM + HH + rowCount * RH}
-                      stroke={T.laneBorder}
-                      strokeWidth={1.5}
-                      strokeDasharray="4,3"
-                      opacity={0.4}
-                    />
-                  )}
-                  {Array.from({ length: rowCount }, (_, ri) =>
-                    ri === 0 ? null : (
-                      <line
-                        key={ri}
-                        x1={x + 8}
-                        y1={TM + HH + ri * RH}
-                        x2={x + LW - 8}
-                        y2={TM + HH + ri * RH}
-                        stroke={T.laneBorder}
-                        strokeWidth={0.3}
-                      />
-                    ),
-                  )}
-                </g>
-              )
-            })}
-            {/* Row numbers, Nodes, Arrows ... 既存コードそのまま */}
-            ...
-          </svg>
-        </div>
+            {lane.name}
+          </text>
+        </g>
+      )
+    })}
+  </svg>
+  <svg
+    data-testid="shared-canvas-svg"
+    width={totalW}
+    height={totalH}
+    viewBox={`0 -30 ${totalW} ${totalH + 30}`}
+    className={sharedStyles.bodySvg}
+  >
+    {/* Lane bodies (背景・サブレーン縦線・行ライン) */}
+    {sortedLanes.map((lane, li) => {
+      const x = laneX(li)
+      const fullH = HH + rowCount * RH
+      const isSub = isGroupSub(lane)
+      return (
+        <g key={`lane-body-${lane.id}`}>
+          <rect
+            x={x}
+            y={isSub ? TM + HH : TM}
+            width={LW}
+            height={isSub ? fullH - HH : fullH}
+            rx={isSub ? 0 : 10}
+            fill={T.laneBg}
+            stroke={T.laneBorder}
+            strokeWidth={0.5}
+          />
+          {isSub && (
+            <line
+              x1={x}
+              y1={TM + 6}
+              x2={x}
+              y2={TM + HH + rowCount * RH}
+              stroke={T.laneBorder}
+              strokeWidth={1.5}
+              strokeDasharray="4,3"
+              opacity={0.4}
+            />
+          )}
+          {Array.from({ length: rowCount }, (_, ri) =>
+            ri === 0 ? null : (
+              <line
+                key={ri}
+                x1={x + 8}
+                y1={TM + HH + ri * RH}
+                x2={x + LW - 8}
+                y2={TM + HH + ri * RH}
+                stroke={T.laneBorder}
+                strokeWidth={0.3}
+              />
+            ),
+          )}
+        </g>
+      )
+    })}
+    {/* Row numbers, Nodes, Arrows ... 既存コードそのまま */}
+    ...
+  </svg>
+</div>
 ```
 
 CSS: 既存の SharedFlowViewer module css に `.canvas` `.headerSvg` `.bodySvg` を追加する（または FlowEditor.module.css と同じ定義）。`.canvas` は `overflow: auto; position: relative;`、`.headerSvg` は `position: sticky; top: 0; z-index: 10; background: var(--theme-canvas-bg); box-shadow: 0 2px 4px rgba(0,0,0,0.05);`、`.bodySvg` は `display: block;`。
@@ -910,6 +902,7 @@ Run: `npm run dev`（バックグラウンド）
 `.env.local` の `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` でログイン → 既存フロー（できれば行数の多いもの。なければ行を 20 行追加）を開く → 本体エリアを縦に 600px スクロール。
 
 検証項目:
+
 - レーンヘッダー（背景・色アクセント・ドット・レーン名）が画面上部に残る
 - ヘッダー下に薄い影が見える（box-shadow 効果）
 - 横スクロールでヘッダーがコンテンツと一緒に動く

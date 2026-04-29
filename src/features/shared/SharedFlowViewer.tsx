@@ -252,13 +252,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
             return (
               <g key={`lane-header-${lane.id}`}>
                 <rect x={x} y={TM} width={headerW} height={HH} rx={10} fill={T.laneHeaderBg} />
-                <rect
-                  x={x}
-                  y={TM + HH - 10}
-                  width={headerW}
-                  height={10}
-                  fill={T.laneHeaderBg}
-                />
+                <rect x={x} y={TM + HH - 10} width={headerW} height={10} fill={T.laneHeaderBg} />
                 <rect
                   x={x + 16}
                   y={TM + HH - 2.5}

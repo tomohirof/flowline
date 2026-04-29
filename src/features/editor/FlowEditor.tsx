@@ -2137,13 +2137,10 @@ export default function FlowEditor({
           >
             {/* Lanes */}
             {lanes.map((lane, li) => {
-              const p = PALETTES[lane.ci],
-                x = laneX(li),
+              const x = laneX(li),
                 isSel = selLane === lane.id,
                 fullH = HH + rows.length * RH
               const isSub = isGroupSub(lane)
-              const isParent = isGroupParent(lane)
-              const headerW = isParent ? getGroupWidth(lane, lanes, LW, G) : LW
               return (
                 <g
                   key={`lane-${lane.id}`}
