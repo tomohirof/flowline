@@ -1870,15 +1870,21 @@ export default function FlowEditor({
           }}
         >
           <svg
+            data-testid="canvas-header-svg"
+            width={svgW}
+            height={(TM + HH + 30) * zoom}
+            viewBox={`0 -30 ${svgW / zoom} ${TM + HH + 30}`}
+            className={styles.headerSvg}
+          />
+          <svg
             ref={svgRef}
             data-testid="canvas-svg"
             width={svgW}
             height={svgH}
             viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
-            className={styles.svg}
+            className={styles.bodySvg}
             style={{
               minWidth: '100%',
-              minHeight: '100%',
               cursor: draggingMemo ? 'grabbing' : undefined,
             }}
             onMouseMove={onSvgMouseMove}

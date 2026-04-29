@@ -94,14 +94,13 @@ const createMinimalFlow = (): Flow => ({
 
 describe('FlowEditor', () => {
   describe('canvas SVG sizing', () => {
-    it('should render SVG with min-width and min-height 100% to fill container', () => {
+    it('should render body SVG with min-width 100% to fill container', () => {
       const flow = createMinimalFlow()
       render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
 
       const svg = screen.getByTestId('canvas-svg')
       expect(svg).toBeTruthy()
       expect(svg.style.minWidth).toBe('100%')
-      expect(svg.style.minHeight).toBe('100%')
     })
   })
 })
@@ -3106,6 +3105,13 @@ describe('PNG export (#310)', () => {
 })
 
 describe('bidirectional arrow toggle (RightPanel)', () => {
+  beforeEach(() => {
+    cleanup()
+  })
+  afterEach(() => {
+    cleanup()
+  })
+
   const flowWithArrow = (): Flow => ({
     id: 'f1',
     title: 'T',
@@ -3153,5 +3159,11 @@ describe('bidirectional arrow toggle (RightPanel)', () => {
     )
     expect(bidirBtnAfter!.getAttribute('aria-pressed')).toBe('true')
     expect(reverseBtnAfter!.disabled).toBe(true)
+  })
+
+  it('should render canvas as two stacked SVGs (header + body)', () => {
+    render(<FlowEditor flow={createMinimalFlow()} onSave={vi.fn()} saveStatus="saved" />)
+    expect(screen.getByTestId('canvas-header-svg')).toBeInTheDocument()
+    expect(screen.getByTestId('canvas-svg')).toBeInTheDocument()
   })
 })
