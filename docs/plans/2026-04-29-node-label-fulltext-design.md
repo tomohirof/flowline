@@ -134,7 +134,7 @@ const editingHeight = editingBaseHeight + (editingLines - 1) * lineHeightPx
 function handleLabelKeyDown(
   e: React.KeyboardEvent<HTMLTextAreaElement>,
   onConfirm: () => void,
-  onCancel?: () => void
+  onCancel?: () => void,
 ) {
   if (e.nativeEvent.isComposing) return // IME変換中は素通し
   if (e.key === 'Enter' && !e.shiftKey) {

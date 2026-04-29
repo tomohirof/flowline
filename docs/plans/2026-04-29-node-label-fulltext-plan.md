@@ -14,21 +14,22 @@
 
 ## File Structure
 
-| Path | 役割 | 変更種別 |
-|---|---|---|
-| `src/features/shared/SharedFlowViewer.tsx` | 共有ビュー描画 | Modify (label tspan化) |
-| `src/features/shared/SharedFlowViewer.test.tsx` | 共有ビューテスト | Modify (truncate削除 + 新テスト2件) |
-| `src/features/editor/FlowEditor.tsx` | エディタ描画 + インライン編集 | Modify (label tspan化 + textarea化 + キーバインド) |
-| `src/features/editor/FlowEditor.test.tsx` | エディタテスト | Modify (新テスト追加) |
-| `src/features/editor/components/PanelParts.tsx` | パネル共通部品 | Modify (PanelTextarea 追加) |
-| `src/features/editor/components/RightPanel.tsx` | 右パネル | Modify (ノードラベル入力差し替え) |
-| `src/features/editor/FlowEditor.module.css` | CSS Modules | Modify (panelTextarea, nodeEditTextarea 追加) |
+| Path                                            | 役割                          | 変更種別                                           |
+| ----------------------------------------------- | ----------------------------- | -------------------------------------------------- |
+| `src/features/shared/SharedFlowViewer.tsx`      | 共有ビュー描画                | Modify (label tspan化)                             |
+| `src/features/shared/SharedFlowViewer.test.tsx` | 共有ビューテスト              | Modify (truncate削除 + 新テスト2件)                |
+| `src/features/editor/FlowEditor.tsx`            | エディタ描画 + インライン編集 | Modify (label tspan化 + textarea化 + キーバインド) |
+| `src/features/editor/FlowEditor.test.tsx`       | エディタテスト                | Modify (新テスト追加)                              |
+| `src/features/editor/components/PanelParts.tsx` | パネル共通部品                | Modify (PanelTextarea 追加)                        |
+| `src/features/editor/components/RightPanel.tsx` | 右パネル                      | Modify (ノードラベル入力差し替え)                  |
+| `src/features/editor/FlowEditor.module.css`     | CSS Modules                   | Modify (panelTextarea, nodeEditTextarea 追加)      |
 
 ---
 
 ## Task 1: SharedFlowViewer 既存テスト差し替え（Red）
 
 **Files:**
+
 - Test: `src/features/shared/SharedFlowViewer.test.tsx:233-255`
 
 - [ ] **Step 1.1: 既存 truncate テストを削除し、新テスト2件を追加**
@@ -36,56 +37,56 @@
 `SharedFlowViewer.test.tsx` の `it('should truncate diamond node label at 8 characters', ...)` ブロックを丸ごと以下に置き換える:
 
 ```tsx
-  it('should not truncate diamond node label', () => {
-    const diamondFlow = {
-      ...mockFlow,
-      nodes: [
-        {
-          id: 'node-1',
-          laneId: 'lane-1',
-          rowIndex: 0,
-          label: '1234567890',
-          note: null,
-          orderIndex: 0,
-          shape: 'diamond' as const,
-        },
-      ],
-    }
-    render(<SharedFlowViewer flow={diamondFlow} />)
-    const canvas = screen.getByTestId('shared-flow-canvas')
-    const svg = canvas.querySelector('svg')!
-    const texts = Array.from(svg.querySelectorAll('text'))
-    const labelText = texts.find((t) => t.textContent === '1234567890')
-    expect(labelText).not.toBeUndefined()
-    expect(labelText!.textContent).not.toContain('…')
-  })
+it('should not truncate diamond node label', () => {
+  const diamondFlow = {
+    ...mockFlow,
+    nodes: [
+      {
+        id: 'node-1',
+        laneId: 'lane-1',
+        rowIndex: 0,
+        label: '1234567890',
+        note: null,
+        orderIndex: 0,
+        shape: 'diamond' as const,
+      },
+    ],
+  }
+  render(<SharedFlowViewer flow={diamondFlow} />)
+  const canvas = screen.getByTestId('shared-flow-canvas')
+  const svg = canvas.querySelector('svg')!
+  const texts = Array.from(svg.querySelectorAll('text'))
+  const labelText = texts.find((t) => t.textContent === '1234567890')
+  expect(labelText).not.toBeUndefined()
+  expect(labelText!.textContent).not.toContain('…')
+})
 
-  it('should render newline label as multiple tspans', () => {
-    const multilineFlow = {
-      ...mockFlow,
-      nodes: [
-        {
-          id: 'node-1',
-          laneId: 'lane-1',
-          rowIndex: 0,
-          label: 'line1\nline2\nline3',
-          note: null,
-          orderIndex: 0,
-        },
-      ],
-    }
-    render(<SharedFlowViewer flow={multilineFlow} />)
-    const canvas = screen.getByTestId('shared-flow-canvas')
-    const svg = canvas.querySelector('svg')!
-    const texts = Array.from(svg.querySelectorAll('text'))
-    const labelText = texts.find((t) => t.textContent === 'line1line2line3')
-    expect(labelText).not.toBeUndefined()
-    const tspans = labelText!.querySelectorAll('tspan')
-    expect(tspans).toHaveLength(3)
-    expect(tspans[0].textContent).toBe('line1')
-    expect(tspans[1].textContent).toBe('line2')
-    expect(tspans[2].textContent).toBe('line3')
-  })
+it('should render newline label as multiple tspans', () => {
+  const multilineFlow = {
+    ...mockFlow,
+    nodes: [
+      {
+        id: 'node-1',
+        laneId: 'lane-1',
+        rowIndex: 0,
+        label: 'line1\nline2\nline3',
+        note: null,
+        orderIndex: 0,
+      },
+    ],
+  }
+  render(<SharedFlowViewer flow={multilineFlow} />)
+  const canvas = screen.getByTestId('shared-flow-canvas')
+  const svg = canvas.querySelector('svg')!
+  const texts = Array.from(svg.querySelectorAll('text'))
+  const labelText = texts.find((t) => t.textContent === 'line1line2line3')
+  expect(labelText).not.toBeUndefined()
+  const tspans = labelText!.querySelectorAll('tspan')
+  expect(tspans).toHaveLength(3)
+  expect(tspans[0].textContent).toBe('line1')
+  expect(tspans[1].textContent).toBe('line2')
+  expect(tspans[2].textContent).toBe('line3')
+})
 ```
 
 - [ ] **Step 1.2: テストを実行して FAIL を確認**
@@ -108,6 +109,7 @@ git commit -m "test(#317): replace truncation test with fulltext + multiline tes
 ## Task 2: SharedFlowViewer 描画修正（Green）
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx:403-416`
 
 - [ ] **Step 2.1: 既存の単一 text を `<tspan>` 配列に置換**
@@ -115,48 +117,50 @@ git commit -m "test(#317): replace truncation test with fulltext + multiline tes
 `SharedFlowViewer.tsx` の以下のブロック:
 
 ```tsx
-                <text
-                  x={c.x}
-                  y={isDiamond ? c.y + 2 : c.y + 6}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={isDiamond ? 12 : 13.5}
-                  fontWeight={isDiamond ? 600 : 500}
-                  fill={node.label === '作業' ? T.statusText : T.titleColor}
-                  style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                >
-                  {node.label.length > (isDiamond ? 8 : 10)
-                    ? node.label.slice(0, isDiamond ? 8 : 10) + '…'
-                    : node.label}
-                </text>
+<text
+  x={c.x}
+  y={isDiamond ? c.y + 2 : c.y + 6}
+  textAnchor="middle"
+  dominantBaseline="central"
+  fontSize={isDiamond ? 12 : 13.5}
+  fontWeight={isDiamond ? 600 : 500}
+  fill={node.label === '作業' ? T.statusText : T.titleColor}
+  style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+>
+  {node.label.length > (isDiamond ? 8 : 10)
+    ? node.label.slice(0, isDiamond ? 8 : 10) + '…'
+    : node.label}
+</text>
 ```
 
 を以下に置き換える:
 
 ```tsx
-                {(() => {
-                  const lines = node.label.split('\n')
-                  const lineHeight = 1.2
-                  const firstDy = -((lines.length - 1) * lineHeight) / 2
-                  return (
-                    <text
-                      x={c.x}
-                      y={isDiamond ? c.y + 2 : c.y + 6}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize={isDiamond ? 12 : 13.5}
-                      fontWeight={isDiamond ? 600 : 500}
-                      fill={node.label === '作業' ? T.statusText : T.titleColor}
-                      style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                    >
-                      {lines.map((line, i) => (
-                        <tspan key={i} x={c.x} dy={`${i === 0 ? firstDy : lineHeight}em`}>
-                          {line}
-                        </tspan>
-                      ))}
-                    </text>
-                  )
-                })()}
+{
+  ;(() => {
+    const lines = node.label.split('\n')
+    const lineHeight = 1.2
+    const firstDy = -((lines.length - 1) * lineHeight) / 2
+    return (
+      <text
+        x={c.x}
+        y={isDiamond ? c.y + 2 : c.y + 6}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={isDiamond ? 12 : 13.5}
+        fontWeight={isDiamond ? 600 : 500}
+        fill={node.label === '作業' ? T.statusText : T.titleColor}
+        style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+      >
+        {lines.map((line, i) => (
+          <tspan key={i} x={c.x} dy={`${i === 0 ? firstDy : lineHeight}em`}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    )
+  })()
+}
 ```
 
 - [ ] **Step 2.2: テストを実行して PASS 確認**
@@ -176,6 +180,7 @@ git commit -m "feat(#317): render label as multiline tspans in SharedFlowViewer"
 ## Task 3: FlowEditor 描画テスト追加（Red）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx`
 
 - [ ] **Step 3.1: ラベル全文表示と改行のテストを追加**
@@ -183,36 +188,41 @@ git commit -m "feat(#317): render label as multiline tspans in SharedFlowViewer"
 `FlowEditor.test.tsx` の末尾に近い `describe` 内に以下2件を追加（既存 `should render node label with fontSize 13.5` の直後など、どこでも `describe` の中であれば良い）:
 
 ```tsx
-  it('should not truncate node label longer than 10 characters', () => {
-    const flow = makeFlow({
-      lanes: [{ id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 }],
-      nodes: [
-        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '12345678901234', note: null, orderIndex: 0 },
-      ],
-    })
-    renderEditor(flow)
-    const labels = Array.from(document.querySelectorAll('text')).map((t) => t.textContent)
-    expect(labels).toContain('12345678901234')
-    expect(labels.every((l) => !l?.endsWith('…'))).toBe(true)
+it('should not truncate node label longer than 10 characters', () => {
+  const flow = makeFlow({
+    lanes: [{ id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 }],
+    nodes: [
+      {
+        id: 'n1',
+        laneId: 'lane-1',
+        rowIndex: 0,
+        label: '12345678901234',
+        note: null,
+        orderIndex: 0,
+      },
+    ],
   })
+  renderEditor(flow)
+  const labels = Array.from(document.querySelectorAll('text')).map((t) => t.textContent)
+  expect(labels).toContain('12345678901234')
+  expect(labels.every((l) => !l?.endsWith('…'))).toBe(true)
+})
 
-  it('should render newline label as multiple tspans in editor', () => {
-    const flow = makeFlow({
-      lanes: [{ id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 }],
-      nodes: [
-        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'a\nb', note: null, orderIndex: 0 },
-      ],
-    })
-    renderEditor(flow)
-    const labelText = Array.from(document.querySelectorAll('text')).find(
-      (t) => t.textContent === 'ab',
-    )
-    expect(labelText).not.toBeUndefined()
-    const tspans = labelText!.querySelectorAll('tspan')
-    expect(tspans).toHaveLength(2)
-    expect(tspans[0].textContent).toBe('a')
-    expect(tspans[1].textContent).toBe('b')
+it('should render newline label as multiple tspans in editor', () => {
+  const flow = makeFlow({
+    lanes: [{ id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 }],
+    nodes: [{ id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'a\nb', note: null, orderIndex: 0 }],
   })
+  renderEditor(flow)
+  const labelText = Array.from(document.querySelectorAll('text')).find(
+    (t) => t.textContent === 'ab',
+  )
+  expect(labelText).not.toBeUndefined()
+  const tspans = labelText!.querySelectorAll('tspan')
+  expect(tspans).toHaveLength(2)
+  expect(tspans[0].textContent).toBe('a')
+  expect(tspans[1].textContent).toBe('b')
+})
 ```
 
 > **Note:** `makeFlow` / `renderEditor` は既存 FlowEditor.test.tsx に定義済みのヘルパ。同ファイルの先頭〜冒頭テストと同じ書き方で揃えること。テスト追加位置の近くにある既存テストの構造に合わせて props を埋める。`makeFlow` の正確なシグネチャは既存テストから確認すること。
@@ -234,6 +244,7 @@ git commit -m "test(#317): add fulltext + multiline label tests for FlowEditor"
 ## Task 4: FlowEditor 描画修正（Green）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:2667-2680`
 
 - [ ] **Step 4.1: 描画ブロックを `<tspan>` 配列に置換**
@@ -241,48 +252,50 @@ git commit -m "test(#317): add fulltext + multiline label tests for FlowEditor"
 `FlowEditor.tsx` の以下のブロック（`{editing === k ? (...foreignObject...) : (...text...)}` の `text` 側）:
 
 ```tsx
-                      <text
-                        x={c.x}
-                        y={isDiamond ? c.y + 2 : c.y + 6}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fontSize={isDiamond ? 12 : 13.5}
-                        fontWeight={isDiamond ? 600 : 500}
-                        fill={task.label === t('defaultNodeLabel') ? T.statusText : T.titleColor}
-                        style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                      >
-                        {task.label.length > (isDiamond ? 8 : 10)
-                          ? task.label.slice(0, isDiamond ? 8 : 10) + '…'
-                          : task.label}
-                      </text>
+<text
+  x={c.x}
+  y={isDiamond ? c.y + 2 : c.y + 6}
+  textAnchor="middle"
+  dominantBaseline="central"
+  fontSize={isDiamond ? 12 : 13.5}
+  fontWeight={isDiamond ? 600 : 500}
+  fill={task.label === t('defaultNodeLabel') ? T.statusText : T.titleColor}
+  style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+>
+  {task.label.length > (isDiamond ? 8 : 10)
+    ? task.label.slice(0, isDiamond ? 8 : 10) + '…'
+    : task.label}
+</text>
 ```
 
 を以下に置き換える:
 
 ```tsx
-                      {(() => {
-                        const lines = task.label.split('\n')
-                        const lineHeight = 1.2
-                        const firstDy = -((lines.length - 1) * lineHeight) / 2
-                        return (
-                          <text
-                            x={c.x}
-                            y={isDiamond ? c.y + 2 : c.y + 6}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fontSize={isDiamond ? 12 : 13.5}
-                            fontWeight={isDiamond ? 600 : 500}
-                            fill={task.label === t('defaultNodeLabel') ? T.statusText : T.titleColor}
-                            style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                          >
-                            {lines.map((line, i) => (
-                              <tspan key={i} x={c.x} dy={`${i === 0 ? firstDy : lineHeight}em`}>
-                                {line}
-                              </tspan>
-                            ))}
-                          </text>
-                        )
-                      })()}
+{
+  ;(() => {
+    const lines = task.label.split('\n')
+    const lineHeight = 1.2
+    const firstDy = -((lines.length - 1) * lineHeight) / 2
+    return (
+      <text
+        x={c.x}
+        y={isDiamond ? c.y + 2 : c.y + 6}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={isDiamond ? 12 : 13.5}
+        fontWeight={isDiamond ? 600 : 500}
+        fill={task.label === t('defaultNodeLabel') ? T.statusText : T.titleColor}
+        style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+      >
+        {lines.map((line, i) => (
+          <tspan key={i} x={c.x} dy={`${i === 0 ? firstDy : lineHeight}em`}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+    )
+  })()
+}
 ```
 
 - [ ] **Step 4.2: テストを実行して PASS 確認**
@@ -302,6 +315,7 @@ git commit -m "feat(#317): render label as multiline tspans in FlowEditor"
 ## Task 5: PanelTextarea 共通コンポーネント + CSS
 
 **Files:**
+
 - Modify: `src/features/editor/components/PanelParts.tsx`
 - Modify: `src/features/editor/FlowEditor.module.css`
 
@@ -376,6 +390,7 @@ git commit -m "feat(#317): add PanelTextarea component for multiline label input
 ## Task 6: RightPanel ノードラベル入力差し替え
 
 **Files:**
+
 - Modify: `src/features/editor/components/RightPanel.tsx:5,282-291`
 
 - [ ] **Step 6.1: import 追加**
@@ -391,32 +406,32 @@ import { PanelSection, PanelRow, PanelInput, PanelTextarea, PanelBtn } from './P
 `RightPanel.tsx:282` の以下のブロック:
 
 ```tsx
-          <PanelInput
-            value={selTaskData.label === t('defaultNodeLabel') ? '' : selTaskData.label}
-            placeholder={t('rightPanel.defaultLabel')}
-            onChange={(v: string) =>
-              setTasks((p2) => ({
-                ...p2,
-                [selTask]: { ...p2[selTask], label: v || t('defaultNodeLabel') },
-              }))
-            }
-          />
+<PanelInput
+  value={selTaskData.label === t('defaultNodeLabel') ? '' : selTaskData.label}
+  placeholder={t('rightPanel.defaultLabel')}
+  onChange={(v: string) =>
+    setTasks((p2) => ({
+      ...p2,
+      [selTask]: { ...p2[selTask], label: v || t('defaultNodeLabel') },
+    }))
+  }
+/>
 ```
 
 を以下に置き換え（`PanelInput` → `PanelTextarea`、`rows={2}` を明示）:
 
 ```tsx
-          <PanelTextarea
-            value={selTaskData.label === t('defaultNodeLabel') ? '' : selTaskData.label}
-            placeholder={t('rightPanel.defaultLabel')}
-            rows={2}
-            onChange={(v: string) =>
-              setTasks((p2) => ({
-                ...p2,
-                [selTask]: { ...p2[selTask], label: v || t('defaultNodeLabel') },
-              }))
-            }
-          />
+<PanelTextarea
+  value={selTaskData.label === t('defaultNodeLabel') ? '' : selTaskData.label}
+  placeholder={t('rightPanel.defaultLabel')}
+  rows={2}
+  onChange={(v: string) =>
+    setTasks((p2) => ({
+      ...p2,
+      [selTask]: { ...p2[selTask], label: v || t('defaultNodeLabel') },
+    }))
+  }
+/>
 ```
 
 > **重要:** RightPanel.tsx には他に3箇所の `PanelInput` 使用（メモ・矢印コメント・レーン名）が残るが、**触らない**。
@@ -438,6 +453,7 @@ git commit -m "feat(#317): switch node label input in RightPanel to PanelTextare
 ## Task 7: インライン編集の textarea 化 + キーバインド（Red）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx`
 
 - [ ] **Step 7.1: Shift+Enter 改行 / Enter 確定 / 表示反映のテストを追加**
@@ -445,48 +461,48 @@ git commit -m "feat(#317): switch node label input in RightPanel to PanelTextare
 `FlowEditor.test.tsx` の既存「should keep node label input open when Enter is pressed during IME composition」テスト（line 936 周辺）の近くに以下を追加:
 
 ```tsx
-  it('should insert newline on Shift+Enter during inline edit', async () => {
-    const flow = makeFlow({
-      lanes: [{ id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 }],
-      nodes: [
-        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
-      ],
-    })
-    const { container } = renderEditor(flow)
-    // ノードをダブルクリックしてインライン編集モードに入る
-    const nodeRect = container.querySelector('rect[data-task-id="n1"]')!
-    await userEvent.dblClick(nodeRect)
-    const textarea = container.querySelector('textarea') as HTMLTextAreaElement
-    expect(textarea).not.toBeNull()
-    await userEvent.clear(textarea)
-    await userEvent.type(textarea, 'a{Shift>}{Enter}{/Shift}b')
-    expect(textarea.value).toBe('a\nb')
-    // textarea がまだフォーカスされている（Enter単独ではない）
-    expect(document.activeElement).toBe(textarea)
+it('should insert newline on Shift+Enter during inline edit', async () => {
+  const flow = makeFlow({
+    lanes: [{ id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 }],
+    nodes: [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ],
   })
+  const { container } = renderEditor(flow)
+  // ノードをダブルクリックしてインライン編集モードに入る
+  const nodeRect = container.querySelector('rect[data-task-id="n1"]')!
+  await userEvent.dblClick(nodeRect)
+  const textarea = container.querySelector('textarea') as HTMLTextAreaElement
+  expect(textarea).not.toBeNull()
+  await userEvent.clear(textarea)
+  await userEvent.type(textarea, 'a{Shift>}{Enter}{/Shift}b')
+  expect(textarea.value).toBe('a\nb')
+  // textarea がまだフォーカスされている（Enter単独ではない）
+  expect(document.activeElement).toBe(textarea)
+})
 
-  it('should confirm and exit inline edit on Enter alone', async () => {
-    const flow = makeFlow({
-      lanes: [{ id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 }],
-      nodes: [
-        { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
-      ],
-    })
-    const { container } = renderEditor(flow)
-    const nodeRect = container.querySelector('rect[data-task-id="n1"]')!
-    await userEvent.dblClick(nodeRect)
-    const textarea = container.querySelector('textarea') as HTMLTextAreaElement
-    expect(textarea).not.toBeNull()
-    await userEvent.clear(textarea)
-    await userEvent.type(textarea, 'foo{Enter}')
-    // Enterで編集終了（textarea が DOM から消える）
-    expect(container.querySelector('textarea')).toBeNull()
-    // labelが反映されている（tspan に "foo"）
-    const labelText = Array.from(document.querySelectorAll('text')).find(
-      (t) => t.textContent === 'foo',
-    )
-    expect(labelText).not.toBeUndefined()
+it('should confirm and exit inline edit on Enter alone', async () => {
+  const flow = makeFlow({
+    lanes: [{ id: 'lane-1', name: 'L1', colorIndex: 0, position: 0 }],
+    nodes: [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'テスト', note: null, orderIndex: 0 },
+    ],
   })
+  const { container } = renderEditor(flow)
+  const nodeRect = container.querySelector('rect[data-task-id="n1"]')!
+  await userEvent.dblClick(nodeRect)
+  const textarea = container.querySelector('textarea') as HTMLTextAreaElement
+  expect(textarea).not.toBeNull()
+  await userEvent.clear(textarea)
+  await userEvent.type(textarea, 'foo{Enter}')
+  // Enterで編集終了（textarea が DOM から消える）
+  expect(container.querySelector('textarea')).toBeNull()
+  // labelが反映されている（tspan に "foo"）
+  const labelText = Array.from(document.querySelectorAll('text')).find(
+    (t) => t.textContent === 'foo',
+  )
+  expect(labelText).not.toBeUndefined()
+})
 ```
 
 > **Note:** 既存テスト `should keep node label input open when Enter is pressed during IME composition` は `<input>` 前提なので、**Task 8 で textarea 用に修正する**。Task 7 ではまだ動いている（既存 input が残っているうち）か、実装変更後に修正が必要になる。Task 7 の Step 7.1 では新テストの追加のみ。
@@ -508,6 +524,7 @@ git commit -m "test(#317): add inline-edit Shift+Enter / Enter behavior tests"
 ## Task 8: インライン編集 textarea 実装（Green）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:2640-2665`
 - Modify: `src/features/editor/FlowEditor.module.css`
 - Modify: `src/features/editor/FlowEditor.test.tsx`（既存IMEテストの input → textarea セレクタ変更）

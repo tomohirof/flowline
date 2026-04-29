@@ -2637,74 +2637,74 @@ export default function FlowEditor({
                           </text>
                         </g>
                       )}
-                    {editing === k ? (() => {
-                      const editingValue =
-                        task.label === t('defaultNodeLabel') ? '' : task.label
-                      const editingLines = Math.max(1, editingValue.split('\n').length)
-                      const lineHeightPx = 18
-                      const baseH = isDiamond ? 24 : TH - 22
-                      const expandedH = baseH + (editingLines - 1) * lineHeightPx
-                      return (
-                        <foreignObject
-                          x={isDiamond ? c.x - DS + 4 : c.x - TW / 2 + 8}
-                          y={isDiamond ? c.y - 10 : c.y - TH / 2 + 18}
-                          width={isDiamond ? DS * 2 - 8 : TW - 16}
-                          height={expandedH}
-                        >
-                          <textarea
-                            ref={inputRef}
-                            value={editingValue}
-                            placeholder={t('defaultNodeLabel')}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                              const v = e.target.value
-                              setTasks((p2) => ({
-                                ...p2,
-                                [k]: { ...p2[k], label: v || t('defaultNodeLabel') },
-                              }))
-                            }}
-                            onBlur={() => setEditing(null)}
-                            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-                              if (e.nativeEvent.isComposing) return
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault()
-                                setEditing(null)
-                              } else if (e.key === 'Escape') {
-                                e.preventDefault()
-                                setEditing(null)
+                    {editing === k
+                      ? (() => {
+                          const editingValue =
+                            task.label === t('defaultNodeLabel') ? '' : task.label
+                          const editingLines = Math.max(1, editingValue.split('\n').length)
+                          const lineHeightPx = 18
+                          const baseH = isDiamond ? 24 : TH - 22
+                          const expandedH = baseH + (editingLines - 1) * lineHeightPx
+                          return (
+                            <foreignObject
+                              x={isDiamond ? c.x - DS + 4 : c.x - TW / 2 + 8}
+                              y={isDiamond ? c.y - 10 : c.y - TH / 2 + 18}
+                              width={isDiamond ? DS * 2 - 8 : TW - 16}
+                              height={expandedH}
+                            >
+                              <textarea
+                                ref={inputRef}
+                                value={editingValue}
+                                placeholder={t('defaultNodeLabel')}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                  const v = e.target.value
+                                  setTasks((p2) => ({
+                                    ...p2,
+                                    [k]: { ...p2[k], label: v || t('defaultNodeLabel') },
+                                  }))
+                                }}
+                                onBlur={() => setEditing(null)}
+                                onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                                  if (e.nativeEvent.isComposing) return
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    setEditing(null)
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault()
+                                    setEditing(null)
+                                  }
+                                }}
+                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                className={styles.nodeEditTextarea}
+                              />
+                            </foreignObject>
+                          )
+                        })()
+                      : (() => {
+                          const lines = task.label.split('\n')
+                          const lineHeight = 1.2
+                          const firstDy = -((lines.length - 1) * lineHeight) / 2
+                          return (
+                            <text
+                              x={c.x}
+                              y={isDiamond ? c.y + 2 : c.y + 6}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              fontSize={isDiamond ? 12 : 13.5}
+                              fontWeight={isDiamond ? 600 : 500}
+                              fill={
+                                task.label === t('defaultNodeLabel') ? T.statusText : T.titleColor
                               }
-                            }}
-                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                            className={styles.nodeEditTextarea}
-                          />
-                        </foreignObject>
-                      )
-                    })() : (
-                      (() => {
-                        const lines = task.label.split('\n')
-                        const lineHeight = 1.2
-                        const firstDy = -((lines.length - 1) * lineHeight) / 2
-                        return (
-                          <text
-                            x={c.x}
-                            y={isDiamond ? c.y + 2 : c.y + 6}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fontSize={isDiamond ? 12 : 13.5}
-                            fontWeight={isDiamond ? 600 : 500}
-                            fill={
-                              task.label === t('defaultNodeLabel') ? T.statusText : T.titleColor
-                            }
-                            style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
-                          >
-                            {lines.map((line, i) => (
-                              <tspan key={i} x={c.x} dy={`${i === 0 ? firstDy : lineHeight}em`}>
-                                {line}
-                              </tspan>
-                            ))}
-                          </text>
-                        )
-                      })()
-                    )}
+                              style={{ pointerEvents: 'none', fontFamily: 'inherit' }}
+                            >
+                              {lines.map((line, i) => (
+                                <tspan key={i} x={c.x} dy={`${i === 0 ? firstDy : lineHeight}em`}>
+                                  {line}
+                                </tspan>
+                              ))}
+                            </text>
+                          )
+                        })()}
                     {/* Memo rendering is now handled by the dedicated MemoOverlay component */}
                   </g>
                 )
