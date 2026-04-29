@@ -299,10 +299,19 @@ describe('D1 Migration', () => {
       "INSERT INTO lanes (id, flow_id, name, position) VALUES ('l3', 'f1', 'L3', 2)",
     ).run()
 
+    // CHECK does not fire on NULL — explicit verification
     expect(() =>
       db
         .prepare(
-          "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l_bad', 'f1', 'Bad', 3, 'g2', 'invalid')",
+          "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l4', 'f1', 'L4', 4, 'g3', NULL)",
+        )
+        .run(),
+    ).not.toThrow()
+
+    expect(() =>
+      db
+        .prepare(
+          "INSERT INTO lanes (id, flow_id, name, position, group_id, group_role) VALUES ('l_bad', 'f1', 'Bad', 5, 'g2', 'invalid')",
         )
         .run(),
     ).toThrow()
