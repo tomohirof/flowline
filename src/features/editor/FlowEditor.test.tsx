@@ -178,7 +178,33 @@ describe('visual constants (#44, #45)', () => {
     const arrowPath = document.querySelector('path[marker-end]')
     expect(arrowPath?.getAttribute('stroke-width')).toBe('2')
     const marker = document.querySelector('marker')
-    expect(marker?.getAttribute('markerWidth')).toBe('9')
+    expect(marker?.getAttribute('markerWidth')).toBe('7')
+    expect(marker?.getAttribute('markerHeight')).toBe('6')
+    expect(marker?.getAttribute('refX')).toBe('6')
+    expect(marker?.getAttribute('refY')).toBe('3')
+    const polygon = marker?.querySelector('polygon')
+    expect(polygon?.getAttribute('points')).toBe('0 0.5, 7 3, 0 5.5')
+  })
+
+  it('should render bidirectional marker-start with shrunk size 7x6', () => {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'B', note: null, orderIndex: 1 },
+    ]
+    flow.arrows = [
+      { id: 'bidir-1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, bidirectional: true },
+    ]
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    const startMarker = container.querySelector('marker#m-start-bidir-1')
+    expect(startMarker?.getAttribute('markerWidth')).toBe('7')
+    expect(startMarker?.getAttribute('markerHeight')).toBe('6')
+    expect(startMarker?.getAttribute('refX')).toBe('6')
+    expect(startMarker?.getAttribute('refY')).toBe('3')
+    expect(startMarker?.getAttribute('orient')).toBe('auto-start-reverse')
+    const polygon = startMarker?.querySelector('polygon')
+    expect(polygon?.getAttribute('points')).toBe('0 0.5, 7 3, 0 5.5')
+    cleanup()
   })
 
   it('should render comment label with fontSize 12 and height 24', () => {

@@ -332,6 +332,41 @@ describe('SharedFlowViewer', () => {
       const polygon = document.querySelector('polygon[fill="#ff0000"]')
       expect(polygon).not.toBeNull()
     })
+
+    it('should render arrow marker with shrunk size 7x6', () => {
+      render(<SharedFlowViewer flow={flowWithArrow({})} />)
+      const marker = document.querySelector('marker#sm-arrow-1')
+      expect(marker?.getAttribute('markerWidth')).toBe('7')
+      expect(marker?.getAttribute('markerHeight')).toBe('6')
+      expect(marker?.getAttribute('refX')).toBe('6')
+      expect(marker?.getAttribute('refY')).toBe('3')
+      const polygon = marker?.querySelector('polygon')
+      expect(polygon?.getAttribute('points')).toBe('0 0.5, 7 3, 0 5.5')
+    })
+
+    it('should render bidirectional marker-start with shrunk size 7x6', () => {
+      const flow = {
+        ...flowWithArrow({}),
+        arrows: [
+          {
+            id: 'arrow-1',
+            fromNodeId: 'node-1',
+            toNodeId: 'node-2',
+            comment: null,
+            bidirectional: true,
+          },
+        ],
+      }
+      render(<SharedFlowViewer flow={flow} />)
+      const startMarker = document.querySelector('marker#sm-start-arrow-1')
+      expect(startMarker?.getAttribute('markerWidth')).toBe('7')
+      expect(startMarker?.getAttribute('markerHeight')).toBe('6')
+      expect(startMarker?.getAttribute('refX')).toBe('6')
+      expect(startMarker?.getAttribute('refY')).toBe('3')
+      expect(startMarker?.getAttribute('orient')).toBe('auto-start-reverse')
+      const polygon = startMarker?.querySelector('polygon')
+      expect(polygon?.getAttribute('points')).toBe('0 0.5, 7 3, 0 5.5')
+    })
   })
 
   describe('rect node custom styles', () => {

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
 import { BRAND } from '../../constants/brand'
+import { ARROW_MARKER } from '../../constants/arrowMarker'
 import { PALETTES, THEMES } from '../editor/theme-constants'
 import styles from './SharedFlowViewer.module.css'
 import { NodeLabelText } from './NodeLabelText'
@@ -491,24 +492,24 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                 <defs>
                   <marker
                     id={`sm-${arrow.id}`}
-                    markerWidth="9"
-                    markerHeight="8"
-                    refX="8"
-                    refY="4"
+                    markerWidth={ARROW_MARKER.width}
+                    markerHeight={ARROW_MARKER.height}
+                    refX={ARROW_MARKER.refX}
+                    refY={ARROW_MARKER.refY}
                     orient="auto"
                   >
-                    <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
+                    <polygon points={ARROW_MARKER.points} fill={ac} />
                   </marker>
                   {arrow.bidirectional && (
                     <marker
                       id={`sm-start-${arrow.id}`}
-                      markerWidth="9"
-                      markerHeight="8"
-                      refX="8"
-                      refY="4"
+                      markerWidth={ARROW_MARKER.width}
+                      markerHeight={ARROW_MARKER.height}
+                      refX={ARROW_MARKER.refX}
+                      refY={ARROW_MARKER.refY}
                       orient="auto-start-reverse"
                     >
-                      <polygon points="0 0.5, 9 4, 0 7.5" fill={ac} />
+                      <polygon points={ARROW_MARKER.points} fill={ac} />
                     </marker>
                   )}
                 </defs>
