@@ -2107,7 +2107,10 @@ export default function FlowEditor({
             ref={svgRef}
             data-testid="canvas-svg"
             width={svgW}
-            height={svgH}
+            height={Math.max(
+              containerSize.height - (TM + HH + 30) * zoom,
+              (rows.length * RH + 60) * zoom,
+            )}
             viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
             className={styles.bodySvg}
             style={{
