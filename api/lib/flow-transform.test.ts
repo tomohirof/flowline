@@ -133,7 +133,9 @@ describe('toLane', () => {
 
   it('should preserve sub role', () => {
     const row: LaneRow = { ...baseRow, group_id: 'g1', group_role: 'sub' }
-    expect(toLane(row).groupRole).toBe('sub')
+    const result = toLane(row)
+    expect(result.groupId).toBe('g1')
+    expect(result.groupRole).toBe('sub')
   })
 
   it('should normalize null group fields to undefined', () => {
