@@ -282,8 +282,8 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
           data-testid="shared-canvas-svg"
           className={styles.bodySvg}
           width={totalW * zoom}
-          height={(totalH + 30) * zoom}
-          viewBox={`0 -30 ${totalW} ${totalH + 30}`}
+          height={(totalH - HH) * zoom}
+          viewBox={`0 ${TM + HH} ${totalW} ${totalH - HH}`}
         >
           {/* Lane bodies (background + sub-lane line + row lines) — header parts removed */}
           {sortedLanes.map((lane, li) => {

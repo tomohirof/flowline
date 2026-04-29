@@ -12,6 +12,7 @@ export function buildExportSvg(
   fullW: number,
   fullH: number,
   showDotGrid: boolean,
+  headerSrc?: SVGSVGElement | null,
 ): BuildExportSvgResult {
   const clone = src.cloneNode(true) as SVGSVGElement
   clone.setAttribute('width', String(fullW))
@@ -56,6 +57,13 @@ export function buildExportSvg(
     gridRect.setAttribute('height', String(fullH))
     gridRect.setAttribute('fill', 'url(#flowline-dots)')
     bg.parentNode?.insertBefore(gridRect, bg.nextSibling)
+  }
+
+  // Merge header SVG children so lane labels/decorations appear in the export
+  if (headerSrc) {
+    Array.from(headerSrc.children).forEach((child) => {
+      clone.appendChild(child.cloneNode(true))
+    })
   }
 
   // Mount off-screen so html-to-image can compute layout

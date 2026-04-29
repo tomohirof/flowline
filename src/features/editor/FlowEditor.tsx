@@ -533,6 +533,7 @@ export default function FlowEditor({
   const laneInputRef = useRef<HTMLInputElement | null>(null)
   const preEditLabelRef = useRef<string | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const headerSvgRef = useRef<SVGSVGElement>(null)
   const canvasContainerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -1557,6 +1558,7 @@ export default function FlowEditor({
       logicalW,
       logicalH,
       editorSettings.showDotGrid,
+      headerSvgRef.current,
     )
     try {
       // html-to-image's toBlob is typed for HTMLElement but supports SVG at runtime
@@ -1641,6 +1643,11 @@ export default function FlowEditor({
     unsaved: t('save.unsaved'),
     error: t('save.error'),
   }
+
+  const bodyPhysicalH = Math.max(
+    containerSize.height - (TM + HH + 30) * zoom,
+    (rows.length * RH + 60) * zoom,
+  )
 
   return (
     <div
@@ -1870,6 +1877,7 @@ export default function FlowEditor({
           }}
         >
           <svg
+            ref={headerSvgRef}
             data-testid="canvas-header-svg"
             width={svgW}
             height={(TM + HH + 30) * zoom}
@@ -2107,11 +2115,8 @@ export default function FlowEditor({
             ref={svgRef}
             data-testid="canvas-svg"
             width={svgW}
-            height={Math.max(
-              containerSize.height - (TM + HH + 30) * zoom,
-              (rows.length * RH + 60) * zoom,
-            )}
-            viewBox={`0 -30 ${svgW / zoom} ${svgH / zoom}`}
+            height={bodyPhysicalH}
+            viewBox={`0 ${TM + HH} ${svgW / zoom} ${bodyPhysicalH / zoom}`}
             className={styles.bodySvg}
             style={{
               minWidth: '100%',
