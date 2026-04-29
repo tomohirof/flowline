@@ -230,7 +230,7 @@ describe('SharedFlowViewer', () => {
     expect(laneTagTexts).toHaveLength(0)
   })
 
-  it('should truncate diamond node label at 8 characters', () => {
+  it('should not truncate diamond node label', () => {
     const diamondFlow = {
       ...mockFlow,
       nodes: [
@@ -249,9 +249,36 @@ describe('SharedFlowViewer', () => {
     const canvas = screen.getByTestId('shared-flow-canvas')
     const svg = canvas.querySelector('svg')!
     const texts = Array.from(svg.querySelectorAll('text'))
-    const labelText = texts.find((t) => t.textContent?.includes('12345678'))
+    const labelText = texts.find((t) => t.textContent === '1234567890')
     expect(labelText).not.toBeUndefined()
-    expect(labelText!.textContent).toBe('12345678…')
+    expect(labelText!.textContent).not.toContain('…')
+  })
+
+  it('should render newline label as multiple tspans', () => {
+    const multilineFlow = {
+      ...mockFlow,
+      nodes: [
+        {
+          id: 'node-1',
+          laneId: 'lane-1',
+          rowIndex: 0,
+          label: 'line1\nline2\nline3',
+          note: null,
+          orderIndex: 0,
+        },
+      ],
+    }
+    render(<SharedFlowViewer flow={multilineFlow} />)
+    const canvas = screen.getByTestId('shared-flow-canvas')
+    const svg = canvas.querySelector('svg')!
+    const texts = Array.from(svg.querySelectorAll('text'))
+    const labelText = texts.find((t) => t.textContent === 'line1line2line3')
+    expect(labelText).not.toBeUndefined()
+    const tspans = labelText!.querySelectorAll('tspan')
+    expect(tspans).toHaveLength(3)
+    expect(tspans[0].textContent).toBe('line1')
+    expect(tspans[1].textContent).toBe('line2')
+    expect(tspans[2].textContent).toBe('line3')
   })
 
   it('should render rect node without polygon when shape is undefined', () => {
