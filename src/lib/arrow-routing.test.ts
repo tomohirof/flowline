@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { buildArrowPath, type Bbox } from './arrow-routing'
+import {
+  buildArrowPath,
+  collectObstacles,
+  type Bbox,
+  type ObstacleNode,
+} from './arrow-routing'
 
 describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   // 共通の始終点（A→C 同一行、A=(200,200), C=(600,200) のときの exitPt/entryPt 後の値）
@@ -112,5 +117,93 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
     expect(r.d).toBe('M524,200 L524,242 L276,242 L276,200')
     expect(r.mx).toBe(400)
     expect(r.my).toBe(242)
+  })
+})
+
+describe('collectObstacles', () => {
+  // A=(200,200), B=(400,200), C=(600,200) 同一行 (rowY=200)
+  // D=(400,284) B 直下行, E=(400,116) B 直上行
+  // F=(400,368) 2行下（除外対象）
+  const TW = 152, TH = 56, RH = 84
+
+  const baseNodes: ObstacleNode[] = [
+    { key: 'A', cx: 200, cy: 200 },
+    { key: 'B', cx: 400, cy: 200 },
+    { key: 'C', cx: 600, cy: 200 },
+    { key: 'D', cx: 400, cy: 284 },
+    { key: 'E', cx: 400, cy: 116 },
+    { key: 'F', cx: 400, cy: 368 },
+  ]
+
+  it('A→C: 同一行の B（from-to 間）と直上 E・直下 D を集める。F（2行下）は除外', () => {
+    const result = collectObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCx: 200,
+      toCx: 600,
+      rowY: 200,
+      rowH: RH,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    // B (同一行・間), D (直下), E (直上) が含まれる
+    const cxs = result.map((b) => b.x).sort((a, b) => a - b)
+    expect(result).toHaveLength(3)
+    expect(cxs).toEqual([400, 400, 400])
+    // F (cy=368) は除外
+    expect(result.every((b) => b.y !== 368)).toBe(true)
+  })
+
+  it('from/to 自身は除外される', () => {
+    const result = collectObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCx: 200,
+      toCx: 600,
+      rowY: 200,
+      rowH: RH,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    // A, C は含まれない
+    const ys = result.map((b) => `${b.x},${b.y}`)
+    expect(ys).not.toContain('200,200')
+    expect(ys).not.toContain('600,200')
+  })
+
+  it('A→B（隣接、間にノードなし）: 同一行は from-to 間限定なので空、直上下は X 制限なしで含む', () => {
+    const result = collectObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'B',
+      fromCx: 200,
+      toCx: 400,
+      rowY: 200,
+      rowH: RH,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    // 同一行: A=200, B=400 が from/to で除外。C=600 は X 範囲外で除外。→ 0件
+    // 直上下: D, E, F は X 制限なしだが F は 2行下で除外。D, E のみ含まれる。
+    expect(result).toHaveLength(2)
+    const cys = result.map((b) => b.y).sort((a, b) => a - b)
+    expect(cys).toEqual([116, 284])
+  })
+
+  it('Bbox の w, h は引数の bboxW, bboxH と一致する', () => {
+    const result = collectObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCx: 200,
+      toCx: 600,
+      rowY: 200,
+      rowH: RH,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result.every((b) => b.w === TW && b.h === TH)).toBe(true)
   })
 })

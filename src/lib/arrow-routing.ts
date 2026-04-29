@@ -192,3 +192,50 @@ export const buildArrowPath = (
 
   return { d, mx: (s.x + e.x) / 2, my: (s.y + e.y) / 2 }
 }
+
+export interface ObstacleNode {
+  key: string
+  cx: number  // 中心 X
+  cy: number  // 中心 Y
+}
+
+export interface CollectObstaclesArgs {
+  nodes: ObstacleNode[]
+  fromKey: string
+  toKey: string
+  fromCx: number
+  toCx: number
+  rowY: number
+  rowH: number    // 行高さ（直上/直下行判定用）
+  bboxW: number
+  bboxH: number
+}
+
+/**
+ * 矢印の同一行・直上行・直下行にあるノードを bbox 配列に変換する。
+ * 同一行は from-to 間レーンに限定。直上/直下行は X 制限なしで含める（上下塞がり判定用）。
+ * from/to 自身および 2 行以上離れたノードは除外する。
+ */
+export function collectObstacles(args: CollectObstaclesArgs): Bbox[] {
+  const { nodes, fromKey, toKey, fromCx, toCx, rowY, rowH, bboxW, bboxH } = args
+  const xLow = Math.min(fromCx, toCx)
+  const xHigh = Math.max(fromCx, toCx)
+  const result: Bbox[] = []
+  for (const n of nodes) {
+    if (n.key === fromKey || n.key === toKey) continue
+    const dy = Math.abs(n.cy - rowY)
+    const onRow = dy < bboxH / 2 + 2
+    // 直上/直下行のみを採用（dy が rowH に近い）。2行以上離れたノードは除外。
+    const onAdjacentRow = !onRow && dy > rowH - bboxH / 2 && dy < rowH + bboxH / 2
+    if (onRow) {
+      // 同一行: from-to 間レーンに限定（始終点 X は除外）
+      if (n.cx > xLow + 1 && n.cx < xHigh - 1) {
+        result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+      }
+    } else if (onAdjacentRow) {
+      // 直上/直下行: 上下塞がり判定用に X 制限なしで含める
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+    }
+  }
+  return result
+}
