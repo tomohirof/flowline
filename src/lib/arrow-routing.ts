@@ -58,6 +58,50 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   return { detourY }
 }
 
+function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX: number } | null {
+  // 垂直直線でなければ迂回しない
+  if (Math.abs(e.x - s.x) >= 2) return null
+
+  const yLow = Math.min(s.y, e.y)
+  const yHigh = Math.max(s.y, e.y)
+  // 注: 上向き同一レーン矢印では exitPt/entryPt がサイド出口（c.x ± hw）を返すため
+  // s.x はレーン中心ではなく `lane center ± bboxW/2` になりうる。一方、collectVerticalObstacles
+  // 側はレーン中心を colX に渡している。そのため同一レーンの障害ノード b.x との差は最大で
+  // bboxW/2 となるが、下記の `< b.w/2 + 2` 判定が `bboxW/2 < bboxW/2 + 2` を保証するため
+  // 同一列の障害は確実に検出される（マージン設計でカバー）。
+  const colX = s.x
+
+  // 垂直移動がなければ迂回対象なし
+  if (yLow >= yHigh - 1) return null
+
+  // 経路上の障害ノード = 同一列（colX と X が重なる）かつ Y が始終点の間
+  const inCol = obstacles.filter(
+    (b) =>
+      Math.abs(b.x - colX) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1,
+  )
+  if (inCol.length === 0) return null
+
+  // 左右塞がり判定（Y 重なりするノードが直左/直右に存在するか）
+  // 前提: obstacles 配列には呼び出し側で「同一列＋直左列＋直右列のみ」をフィルタ済み
+  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+  const rightBlocked = inCol.some((obs) =>
+    obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+  )
+  const leftBlocked = inCol.some((obs) =>
+    obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+  )
+
+  // 方向決定: 右空きなら右、右塞がり＆左空きなら左、両塞がりは右優先
+  const goRight = !rightBlocked || leftBlocked
+
+  // detourX: 障害ノード群の最右端 + マージン or 最左端 - マージン
+  const detourX = goRight
+    ? Math.max(...inCol.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+    : Math.min(...inCol.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+
+  return { detourX }
+}
+
 interface ArrowPath {
   d: string
   mx: number
@@ -155,7 +199,7 @@ export const buildArrowPath = (
   const dx = e.x - s.x,
     dy = e.y - s.y
 
-  // 迂回モード: 同一行で経路上に障害ノードがある場合
+  // 迂回モード: 同一行（水平直線）または同一レーン（垂直直線）で経路上に障害ノードがある場合
   if (obstacles && obstacles.length > 0) {
     const detour = detectDetour(s, e, obstacles)
     if (detour) {
@@ -172,6 +216,22 @@ export const buildArrowPath = (
       //               → 垂直(e.y まで) → 水平(e.x へ進入)
       const d = `M${s.x},${s.y} L${departX},${s.y} L${departX},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
       return { d, mx: (s.x + e.x) / 2, my: detourY }
+    }
+
+    const vDetour = detectVerticalDetour(s, e, obstacles)
+    if (vDetour) {
+      const { detourX } = vDetour
+      // |e.y - s.y| / 2 で clamp。横版（上方の detectDetour ブロック）と対称な防御コードで、
+      // ノード高が縮小しても departY/approachY が反対側を越えて自己交差するのを防ぐ。
+      // 縮退ケースでは中央垂直セグメントがゼロ長になる。
+      const sign = Math.sign(dy)
+      const halfDy = Math.abs(dy) / 2
+      const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
+      const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
+      // 6 セグメント: M → 垂直(departY まで) → 水平(detourX まで) → 垂直(approachY まで)
+      //               → 水平(e.x まで) → 垂直(e.y へ進入)
+      const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+      return { d, mx: detourX, my: (s.y + e.y) / 2 }
     }
   }
 
@@ -253,6 +313,52 @@ export function collectObstacles(args: CollectObstaclesArgs): Bbox[] {
       }
     } else if (onAdjacentRow) {
       // 直上/直下行: 上下塞がり判定用に X 制限なしで含める
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+    }
+  }
+  return result
+}
+
+interface CollectVerticalObstaclesArgs {
+  nodes: ObstacleNode[]
+  fromKey: string
+  toKey: string
+  fromCy: number // 始点 Y
+  toCy: number // 終点 Y
+  colX: number // 同一列 X（始点・終点共通）
+  colW: number // 列ピッチ（FlowEditor の LW + G を渡す）
+  bboxW: number
+  bboxH: number
+}
+
+/**
+ * 矢印の同一列・直左列・直右列にあるノードを bbox 配列に変換する（縦版）。
+ * 同一列は from-to 間レンジに限定。直左/直右列は Y 制限なしで含める（左右塞がり判定用）。
+ * from/to 自身および 2 列以上離れたノードは除外する。
+ *
+ * 呼び出し側は同一レーン（fromLane === toLane）のときのみ本関数を呼ぶ想定。
+ * colX には fromNode の X 座標を渡すこと（同一レーンなので toNode.x と等価）。
+ *
+ * collectObstacles の対称版。横版の rowH に相当するのが colW（レーンピッチ）。
+ */
+export function collectVerticalObstacles(args: CollectVerticalObstaclesArgs): Bbox[] {
+  const { nodes, fromKey, toKey, fromCy, toCy, colX, colW, bboxW, bboxH } = args
+  const yLow = Math.min(fromCy, toCy)
+  const yHigh = Math.max(fromCy, toCy)
+  const result: Bbox[] = []
+  for (const n of nodes) {
+    if (n.key === fromKey || n.key === toKey) continue
+    const dx = Math.abs(n.cx - colX)
+    const onCol = dx < bboxW / 2 + 2
+    // 直左/直右列のみを採用（dx が colW に近い）。2列以上離れたノードは除外。
+    const onAdjacentCol = !onCol && dx > colW - bboxW / 2 && dx < colW + bboxW / 2
+    if (onCol) {
+      // 同一列: from-to 間レンジに限定（始終点 Y は除外）
+      if (n.cy > yLow + 1 && n.cy < yHigh - 1) {
+        result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+      }
+    } else if (onAdjacentCol) {
+      // 直左/直右列: 左右塞がり判定用に Y 制限なしで含める
       result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
     }
   }

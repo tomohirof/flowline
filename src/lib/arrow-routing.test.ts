@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { buildArrowPath, collectObstacles, type Bbox, type ObstacleNode } from './arrow-routing'
+import {
+  buildArrowPath,
+  collectObstacles,
+  collectVerticalObstacles,
+  type Bbox,
+  type ObstacleNode,
+} from './arrow-routing'
 
 describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   // 共通の始終点（A→C 同一行、A=(200,200), C=(600,200) のときの exitPt/entryPt 後の値）
@@ -277,5 +283,287 @@ describe('collectObstacles', () => {
     expect(result).toHaveLength(3)
     const cys = result.map((b) => b.y).sort((a, b) => a - b)
     expect(cys).toEqual([116, 200, 284])
+  })
+})
+
+describe('buildArrowPath - 縦方向迂回（同一レーン）', () => {
+  // 共通の始終点（A→C 同一レーン、A=(200,200), C=(200,600) のときの exitPt/entryPt 後の値）
+  // ノード TW=152, TH=56 → hh=28, exit Y=200+28=228, entry Y=600-28=572
+  const s = { x: 200, y: 228 }
+  const e = { x: 200, y: 572 }
+  const fc = { x: 200, y: 200 }
+  const tc = { x: 200, y: 600 }
+
+  it('obstacles 省略 → 既存の直線パスを返す（垂直直線）', () => {
+    const r = buildArrowPath(s, e, fc, tc)
+    expect(r.d).toBe('M200,228 L200,572')
+  })
+
+  it('obstacles が空配列 → 既存の直線パスを返す', () => {
+    const r = buildArrowPath(s, e, fc, tc, [])
+    expect(r.d).toBe('M200,228 L200,572')
+  })
+
+  it('同一列・障害1個・左右空き → 右迂回パス（detourX = 障害右端 + 14）', () => {
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    // detourX = 200 + 76 + 14 = 290
+    // sign=+1, halfDy=172, departY=228+14=242, approachY=572-14=558
+    expect(r.d).toBe('M200,228 L200,242 L290,242 L290,558 L200,558 L200,572')
+    expect(r.mx).toBe(290)
+    expect(r.my).toBe(400)
+  })
+
+  it('同一列・障害1個・直右塞がり → 左迂回（detourX = 障害左端 - 14）', () => {
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const Bright: Bbox = { x: 284, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B, Bright])
+    // detourX = 200 - 76 - 14 = 110
+    expect(r.d).toBe('M200,228 L200,242 L110,242 L110,558 L200,558 L200,572')
+    expect(r.mx).toBe(110)
+  })
+
+  it('同一列・障害1個・両塞がり → 右優先で右迂回', () => {
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const Bright: Bbox = { x: 284, y: 400, w: 152, h: 56 }
+    const Bleft: Bbox = { x: 116, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B, Bright, Bleft])
+    expect(r.mx).toBe(290)
+  })
+
+  it('同一列・障害2個・右空き → まとめて右迂回（detourX は最右端の最大）', () => {
+    const B: Bbox = { x: 200, y: 380, w: 152, h: 56 }
+    const C2: Bbox = { x: 200, y: 480, w: 200, h: 56 }
+    const sExt = { x: 200, y: 228 }
+    const eExt = { x: 200, y: 624 }
+    const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 200, y: 700 }, [B, C2])
+    // 最右端: max(200+76, 200+100) = 300, +14 = 314
+    expect(r.mx).toBe(314)
+    expect(r.d).toBe('M200,228 L200,242 L314,242 L314,610 L200,610 L200,624')
+  })
+
+  it('同一列・障害2個・1つだけ直右塞がり → 左迂回', () => {
+    const B: Bbox = { x: 200, y: 380, w: 152, h: 56 }
+    const C2: Bbox = { x: 200, y: 480, w: 152, h: 56 }
+    const Bright: Bbox = { x: 284, y: 380, w: 152, h: 56 }
+    const sExt = { x: 200, y: 228 }
+    const eExt = { x: 200, y: 624 }
+    const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 200, y: 700 }, [B, C2, Bright])
+    // 最左端: min(200-76, 200-76) = 124, -14 = 110
+    expect(r.mx).toBe(110)
+  })
+
+  it('同一列・障害なし（経路上に bbox がない）→ 直線', () => {
+    const farUp: Bbox = { x: 200, y: 100, w: 152, h: 56 }
+    const farDown: Bbox = { x: 200, y: 700, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [farUp, farDown])
+    expect(r.d).toBe('M200,228 L200,572')
+  })
+
+  it('斜め方向（dx >= 2）→ 既存の Z/L 字ロジック（縦迂回しない）', () => {
+    const sDiag = { x: 200, y: 228 }
+    const eDiag = { x: 300, y: 572 }
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(sDiag, eDiag, { x: 200, y: 200 }, { x: 300, y: 600 }, [B])
+    expect(r.d).not.toContain('L290,242')
+  })
+
+  it('始終点が同じ Y（自己参照） → inCol 空 → 直線', () => {
+    const B: Bbox = { x: 200, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 200 },
+      [B],
+    )
+    expect(r.d).toBe('M200,200 L200,200')
+  })
+
+  it('from/to 自身の bbox が混入しても Y±1 マージンで除外される', () => {
+    const fromSelfBbox: Bbox = { x: 200, y: 200, w: 152, h: 56 }
+    const toSelfBbox: Bbox = { x: 200, y: 600, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [fromSelfBbox, toSelfBbox])
+    expect(r.d).toBe('M200,228 L200,572')
+  })
+
+  it('同一列・下→上方向でも右迂回する（s.y > e.y）', () => {
+    const sR = { x: 200, y: 572 }
+    const eR = { x: 200, y: 228 }
+    const fcR = { x: 200, y: 600 }
+    const tcR = { x: 200, y: 200 }
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(sR, eR, fcR, tcR, [B])
+    expect(r.d).toBe('M200,572 L200,558 L290,558 L290,242 L200,242 L200,228')
+    expect(r.mx).toBe(290)
+  })
+
+  it('上向き矢印（同一レーン・サイド出口で s.x = lane center + hw）でも障害を検出して迂回', () => {
+    // 上向き矢印では exitPt/entryPt がサイド出口を返すため s.x/e.x がレーン中心からズレる。
+    // colX オフセットが bboxW/2 までであり「< bboxW/2 + 2」マージンに収まることを保証する回帰テスト。
+    // A=(200,600) → C=(200,200) を上向きに引いた想定: s=(276,600), e=(276,200)
+    const sUp = { x: 276, y: 600 }
+    const eUp = { x: 276, y: 200 }
+    const fcUp = { x: 200, y: 600 }
+    const tcUp = { x: 200, y: 200 }
+    // 障害 B はレーン中心 (200) にあり、s.x (276) との差は hw=76 < bboxW/2 + 2 = 78 で検出される
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(sUp, eUp, fcUp, tcUp, [B])
+    // detourX = 200 + 76 + 14 = 290 (障害の右端基準、s.x ではなく b.x 基準)
+    // sign=-1, halfDy=200, departY=600-14=586, approachY=200+14=214
+    expect(r.d).toBe('M276,600 L276,586 L290,586 L290,214 L276,214 L276,200')
+    expect(r.mx).toBe(290)
+  })
+
+  describe('垂直進入＋垂直 depart（始終点とも垂直）', () => {
+    it('右迂回パスは 6 セグメントで最初と最終セグメントが垂直', () => {
+      const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+      const r = buildArrowPath(s, e, fc, tc, [B])
+      const segments = r.d.match(/[ML][^ML]+/g) ?? []
+      expect(segments).toHaveLength(6)
+      const first = segments[0]
+      const second = segments[1]
+      const firstX = Number(first.slice(1).split(',')[0])
+      const secondX = Number(second.slice(1).split(',')[0])
+      expect(firstX).toBe(secondX)
+      expect(firstX).toBe(s.x)
+      const last = segments[segments.length - 1]
+      const prev = segments[segments.length - 2]
+      const lastX = Number(last.slice(1).split(',')[0])
+      const prevX = Number(prev.slice(1).split(',')[0])
+      expect(lastX).toBe(prevX)
+      expect(lastX).toBe(e.x)
+    })
+
+    it('垂直距離が DEPART_GAP*2 未満の場合 departY/approachY は中央で接合し自己交差しない', () => {
+      const sN = { x: 200, y: 100 }
+      const eN = { x: 200, y: 120 }
+      const fcN = { x: 200, y: 80 }
+      const tcN = { x: 200, y: 140 }
+      const B: Bbox = { x: 200, y: 110, w: 152, h: 16 }
+      const r = buildArrowPath(sN, eN, fcN, tcN, [B])
+      // departY = 100 + 1 * Math.min(14, 10) = 110
+      // approachY = 120 - 1 * Math.min(14, 10) = 110
+      // detourX = 200 + 76 + 14 = 290
+      expect(r.d).toBe('M200,100 L200,110 L290,110 L290,110 L200,110 L200,120')
+    })
+  })
+})
+
+describe('collectVerticalObstacles', () => {
+  // A=(200,200), B=(200,400), C=(200,600) 同一レーン (colX=200)
+  // D=(284,400) B 直右列, E=(116,400) B 直左列 (colW=84 → adjacent threshold)
+  // F=(368,400) 2列右（除外対象）
+  // 注: ここではテストしやすい colW=84 を使用。実際の運用では LW + G を渡す。
+  const TW = 152,
+    TH = 56,
+    LANE_W = 84
+
+  const baseNodes: ObstacleNode[] = [
+    { key: 'A', cx: 200, cy: 200 },
+    { key: 'B', cx: 200, cy: 400 },
+    { key: 'C', cx: 200, cy: 600 },
+    { key: 'D', cx: 284, cy: 400 },
+    { key: 'E', cx: 116, cy: 400 },
+    { key: 'F', cx: 368, cy: 400 },
+  ]
+
+  it('A→C: 同一列の B（from-to 間）と直左 E・直右 D を集める。F（2列右）は除外', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCy: 200,
+      toCy: 600,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toHaveLength(3)
+    const cxs = result.map((b) => b.x).sort((a, b) => a - b)
+    expect(cxs).toEqual([116, 200, 284])
+    expect(result.every((b) => b.x !== 368)).toBe(true)
+  })
+
+  it('from/to 自身は除外される', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCy: 200,
+      toCy: 600,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    const xys = result.map((b) => `${b.x},${b.y}`)
+    expect(xys).not.toContain('200,200')
+    expect(xys).not.toContain('200,600')
+  })
+
+  it('A→B（隣接、間にノードなし）: 同一列は from-to 間限定なので空、直左/直右列は Y 制限なしで含む', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'B',
+      fromCy: 200,
+      toCy: 400,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toHaveLength(2)
+    const cxs = result.map((b) => b.x).sort((a, b) => a - b)
+    expect(cxs).toEqual([116, 284])
+  })
+
+  it('下→上方向（fromCy > toCy）でも同一列・隣接列を正しく抽出', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'C',
+      toKey: 'A',
+      fromCy: 600,
+      toCy: 200,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toHaveLength(3)
+    const cxs = result.map((b) => b.x).sort((a, b) => a - b)
+    expect(cxs).toEqual([116, 200, 284])
+  })
+
+  it('Bbox の w, h は引数の bboxW, bboxH と一致する', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCy: 200,
+      toCy: 600,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result.every((b) => b.w === TW && b.h === TH)).toBe(true)
+  })
+
+  it('nodes が空配列 → 空配列を返す', () => {
+    const result = collectVerticalObstacles({
+      nodes: [],
+      fromKey: 'A',
+      toKey: 'C',
+      fromCy: 200,
+      toCy: 600,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toEqual([])
   })
 })

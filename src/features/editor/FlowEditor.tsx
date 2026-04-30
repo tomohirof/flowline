@@ -35,7 +35,13 @@ import { toBlob } from 'html-to-image'
 import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
 import { NodeLabelText } from '../shared/NodeLabelText'
-import { DS, collectObstacles, type Bbox, type ObstacleNode } from '../../lib/arrow-routing'
+import {
+  DS,
+  collectObstacles,
+  collectVerticalObstacles,
+  type Bbox,
+  type ObstacleNode,
+} from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { I, Ico } from './components/EditorIcons'
@@ -1382,7 +1388,7 @@ export default function FlowEditor({
     const from = ct(fli, fri)
     const to = ct(tli, tri)
 
-    // 同一行のときのみ obstacles を組み立てる（迂回判定用）
+    // 同一行/同一レーンのときに obstacles を組み立てる（迂回判定用）
     let obstacles: Bbox[] | undefined
     if (fri === tri) {
       obstacles = collectObstacles({
@@ -1393,6 +1399,18 @@ export default function FlowEditor({
         toCx: to.x,
         rowY: from.y,
         rowH: RH,
+        bboxW: TW,
+        bboxH: TH,
+      })
+    } else if (fli === tli) {
+      obstacles = collectVerticalObstacles({
+        nodes: obstacleNodes,
+        fromKey: arrow.from,
+        toKey: arrow.to,
+        fromCy: from.y,
+        toCy: to.y,
+        colX: from.x,
+        colW: LW + G,
         bboxW: TW,
         bboxH: TH,
       })

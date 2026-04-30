@@ -12,6 +12,7 @@ import {
   entryPt,
   buildArrowPath,
   collectObstacles,
+  collectVerticalObstacles,
   DS,
   type Point,
   type Bbox,
@@ -101,7 +102,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     nodeById[n.id] = n
   })
 
-  // 全ノードの中心座標を1度だけ収集（同一行 obstacles 判定で再利用）
+  // 全ノードの中心座標を1度だけ収集（同一行/同一レーン obstacles 判定で再利用）
   // FlowEditor 側は riMap[t.rid] で行インデックスを取得するが、本ビューアでは
   // flow.nodes に直接 rowIndex があるためそのまま ct() に渡せる（両者は等価）。
   const obstacleNodes: ObstacleNode[] = []
@@ -129,7 +130,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     const s = exitPt(f, t, hw, hh, RH, fromNode.shape as 'diamond' | undefined)
     const e = entryPt(t, f, hw, hh, RH, toNode.shape as 'diamond' | undefined)
 
-    // 同一行のときのみ obstacles を組み立てる（迂回判定用）
+    // 同一行/同一レーンのときに obstacles を組み立てる（迂回判定用）
     let obstacles: Bbox[] | undefined
     if (fromNode.rowIndex === toNode.rowIndex) {
       obstacles = collectObstacles({
@@ -140,6 +141,18 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         toCx: t.x,
         rowY: f.y,
         rowH: RH,
+        bboxW: TW,
+        bboxH: TH,
+      })
+    } else if (fromNode.laneId === toNode.laneId) {
+      obstacles = collectVerticalObstacles({
+        nodes: obstacleNodes,
+        fromKey: fromNode.id,
+        toKey: toNode.id,
+        fromCy: f.y,
+        toCy: t.y,
+        colX: f.x,
+        colW: LW + G,
         bboxW: TW,
         bboxH: TH,
       })
