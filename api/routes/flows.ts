@@ -50,6 +50,35 @@ async function getFlowDetail(db: D1Database, flowId: string) {
 }
 
 // =============================================
+// Helper: build lane INSERT statement
+// =============================================
+
+type LaneInput = {
+  id: string
+  name: string
+  colorIndex: number
+  position: number
+  groupId?: string
+  groupRole?: 'parent' | 'sub'
+}
+
+function buildLaneInsert(db: D1Database, lane: LaneInput, flowId: string) {
+  return db
+    .prepare(
+      'INSERT INTO lanes (id, flow_id, name, color_index, position, group_id, group_role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    )
+    .bind(
+      lane.id,
+      flowId,
+      lane.name,
+      lane.colorIndex,
+      lane.position,
+      lane.groupId ?? null,
+      lane.groupRole ?? null,
+    )
+}
+
+// =============================================
 // Helper: check flow ownership
 // =============================================
 
@@ -228,13 +257,7 @@ flows.post('/', async (c) => {
 
   // INSERT lanes
   for (const lane of lanes) {
-    statements.push(
-      db
-        .prepare(
-          'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
-        )
-        .bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
-    )
+    statements.push(buildLaneInsert(db, lane, flowId))
   }
 
   // INSERT nodes
@@ -389,13 +412,7 @@ flows.put('/:id', async (c) => {
 
       // INSERT new lanes
       for (const lane of safeLanes) {
-        statements.push(
-          db
-            .prepare(
-              'INSERT INTO lanes (id, flow_id, name, color_index, position) VALUES (?, ?, ?, ?, ?)',
-            )
-            .bind(lane.id, flowId, lane.name, lane.colorIndex, lane.position),
-        )
+        statements.push(buildLaneInsert(db, lane, flowId))
       }
 
       // INSERT new nodes

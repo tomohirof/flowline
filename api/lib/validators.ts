@@ -1,13 +1,17 @@
 import { z } from 'zod'
 
-const laneSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  colorIndex: z.number().int().min(0),
-  position: z.number().int().min(0),
-  groupId: z.string().optional(),
-  groupRole: z.enum(['parent', 'sub']).optional(),
-})
+const laneSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    colorIndex: z.number().int().min(0),
+    position: z.number().int().min(0),
+    groupId: z.string().optional(),
+    groupRole: z.enum(['parent', 'sub']).optional(),
+  })
+  .refine((d) => (d.groupId === undefined) === (d.groupRole === undefined), {
+    message: 'groupId と groupRole は両方指定するか、両方省略してください',
+  })
 
 const nodeSchema = z.object({
   id: z.string().min(1),

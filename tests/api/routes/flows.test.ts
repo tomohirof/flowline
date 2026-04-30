@@ -1277,3 +1277,161 @@ describe('Flows API', () => {
     })
   })
 })
+
+describe('Lane group persistence (#309)', () => {
+  let db: ReturnType<typeof Database>
+
+  beforeEach(() => {
+    db = createTestDb()
+  })
+
+  afterEach(() => {
+    db.close()
+  })
+
+  it('POST→GET should round-trip groupId and groupRole', async () => {
+    registerUser(db, 'u_g1', 'g1@test.com')
+    const env = createEnv(db)
+    const cookie = await authCookie('u_g1', 'g1@test.com')
+
+    const groupId = 'grp-1'
+    const body = {
+      title: 'Merged Flow',
+      lanes: [
+        { id: 'lp', name: 'Parent', colorIndex: 0, position: 0, groupId, groupRole: 'parent' },
+        { id: 'ls', name: 'Sub', colorIndex: 1, position: 1, groupId, groupRole: 'sub' },
+        { id: 'lo', name: 'Solo', colorIndex: 2, position: 2 },
+      ],
+      nodes: [],
+      arrows: [],
+    }
+
+    const postRes = await postJson('/api/flows', body, env, cookie)
+    expect(postRes.status).toBe(201)
+    const created = (await postRes.json()) as { flow: { id: string } }
+    const flowId = created.flow.id
+
+    const getRes = await getWithCookie(`/api/flows/${flowId}`, env, cookie)
+    expect(getRes.status).toBe(200)
+    const fetched = (await getRes.json()) as {
+      flow: {
+        lanes: Array<{ id: string; groupId?: string; groupRole?: 'parent' | 'sub' }>
+      }
+    }
+    const byId = Object.fromEntries(fetched.flow.lanes.map((l) => [l.id, l]))
+    expect(byId.lp.groupId).toBe(groupId)
+    expect(byId.lp.groupRole).toBe('parent')
+    expect(byId.ls.groupId).toBe(groupId)
+    expect(byId.ls.groupRole).toBe('sub')
+    expect(byId.lo.groupId).toBeUndefined()
+    expect(byId.lo.groupRole).toBeUndefined()
+  })
+
+  it('PUT→GET should round-trip groupId and groupRole (issue #309 scenario)', async () => {
+    registerUser(db, 'u_g2', 'g2@test.com')
+    insertFlow(db, 'f_g2', 'u_g2', 'Flow')
+    insertLane(db, 'l_a', 'f_g2', 'A', 0, 0)
+    insertLane(db, 'l_b', 'f_g2', 'B', 1, 1)
+    const env = createEnv(db)
+    const cookie = await authCookie('u_g2', 'g2@test.com')
+
+    const groupId = 'grp-2'
+    const body = {
+      lanes: [
+        { id: 'l_a', name: 'A', colorIndex: 0, position: 0, groupId, groupRole: 'parent' },
+        { id: 'l_b', name: 'B', colorIndex: 1, position: 1, groupId, groupRole: 'sub' },
+      ],
+      nodes: [],
+      arrows: [],
+    }
+
+    const putRes = await putJson('/api/flows/f_g2', body, env, cookie)
+    expect(putRes.status).toBe(200)
+
+    const getRes = await getWithCookie('/api/flows/f_g2', env, cookie)
+    expect(getRes.status).toBe(200)
+    const fetched = (await getRes.json()) as {
+      flow: { lanes: Array<{ id: string; groupId?: string; groupRole?: string }> }
+    }
+    const byId = Object.fromEntries(fetched.flow.lanes.map((l) => [l.id, l]))
+    expect(byId.l_a.groupId).toBe(groupId)
+    expect(byId.l_a.groupRole).toBe('parent')
+    expect(byId.l_b.groupId).toBe(groupId)
+    expect(byId.l_b.groupRole).toBe('sub')
+  })
+
+  it('should leave non-grouped lanes intact (groupId/groupRole undefined)', async () => {
+    registerUser(db, 'u_g3', 'g3@test.com')
+    const env = createEnv(db)
+    const cookie = await authCookie('u_g3', 'g3@test.com')
+
+    const body = {
+      title: 'Solo only',
+      lanes: [{ id: 'l_solo', name: 'Solo', colorIndex: 0, position: 0 }],
+      nodes: [],
+      arrows: [],
+    }
+    const postRes = await postJson('/api/flows', body, env, cookie)
+    expect(postRes.status).toBe(201)
+    const created = (await postRes.json()) as { flow: { id: string } }
+
+    const getRes = await getWithCookie(`/api/flows/${created.flow.id}`, env, cookie)
+    expect(getRes.status).toBe(200)
+    const fetched = (await getRes.json()) as {
+      flow: { lanes: Array<{ groupId?: string; groupRole?: string }> }
+    }
+    expect(fetched.flow.lanes[0].groupId).toBeUndefined()
+    expect(fetched.flow.lanes[0].groupRole).toBeUndefined()
+  })
+
+  it('should reject lane with groupId but no groupRole (pair-consistency)', async () => {
+    registerUser(db, 'u_g5', 'g5@test.com')
+    const env = createEnv(db)
+    const cookie = await authCookie('u_g5', 'g5@test.com')
+
+    const body = {
+      title: 'Bad',
+      lanes: [{ id: 'l_bad', name: 'Bad', colorIndex: 0, position: 0, groupId: 'g-orphan' }],
+      nodes: [],
+      arrows: [],
+    }
+    const res = await postJson('/api/flows', body, env, cookie)
+    expect(res.status).toBe(400)
+  })
+
+  it('shared GET should return groupId/groupRole for grouped lanes', async () => {
+    registerUser(db, 'u_g4', 'g4@test.com')
+    const env = createEnv(db)
+    const cookie = await authCookie('u_g4', 'g4@test.com')
+
+    const groupId = 'grp-shared'
+    const body = {
+      title: 'Shared Merged',
+      lanes: [
+        { id: 'sp', name: 'P', colorIndex: 0, position: 0, groupId, groupRole: 'parent' },
+        { id: 'ss', name: 'S', colorIndex: 1, position: 1, groupId, groupRole: 'sub' },
+      ],
+      nodes: [],
+      arrows: [],
+    }
+    const postRes = await postJson('/api/flows', body, env, cookie)
+    expect(postRes.status).toBe(201)
+    const created = (await postRes.json()) as { flow: { id: string } }
+    const flowId = created.flow.id
+
+    const shareRes = await postJson(`/api/flows/${flowId}/share`, {}, env, cookie)
+    expect(shareRes.status).toBe(200)
+    const shareJson = (await shareRes.json()) as { shareToken: string }
+
+    const sharedRes = await app.request(`/api/shared/${shareJson.shareToken}`, {}, env)
+    expect(sharedRes.status).toBe(200)
+    const sharedJson = (await sharedRes.json()) as {
+      flow: { lanes: Array<{ id: string; groupId?: string; groupRole?: string }> }
+    }
+    const byId = Object.fromEntries(sharedJson.flow.lanes.map((l) => [l.id, l]))
+    expect(byId.sp.groupId).toBe(groupId)
+    expect(byId.sp.groupRole).toBe('parent')
+    expect(byId.ss.groupId).toBe(groupId)
+    expect(byId.ss.groupRole).toBe('sub')
+  })
+})
