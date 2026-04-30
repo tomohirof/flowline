@@ -32,6 +32,7 @@ PR #204（commit ef3353f）で「ひし形にはレーンタグ・メモを非�
 `SharedFlowViewer.tsx:438` から `!isDiamond &&` を削除し、`node.note &&` のみで判定する。これにより、ひし形ノードでもメモが描画されるようになり、エディタと挙動が一致する。
 
 **変更前:**
+
 ```tsx
 {!isDiamond &&
   node.note &&
@@ -39,6 +40,7 @@ PR #204（commit ef3353f）で「ひし形にはレーンタグ・メモを非�
 ```
 
 **変更後:**
+
 ```tsx
 {node.note &&
   (() => { ... })()}
@@ -51,6 +53,7 @@ PR #204（commit ef3353f）で「ひし形にはレーンタグ・メモを非�
 現テストは `svg.querySelectorAll('text')` でメモ文字列を検索しているが、`MemoText` コンポーネントは `<foreignObject>` 内の `<div>` 階層で描画されるため、SVG `<text>` 要素は存在せず、`expect(noteText).toBeUndefined()` が誤って通っていた。
 
 **修正方針:**
+
 - テスト名を `should render note for diamond node` に変更
 - アサート方法を `getByText('Some note')` 等、`MemoText` の DOM 構造を検出できる方式に変更
 - ひし形ノードでメモが描画されることを保証
@@ -83,10 +86,10 @@ PR #204（commit ef3353f）で「ひし形にはレーンタグ・メモを非�
 
 ## 影響ファイル
 
-| ファイル | 変更内容 |
-|---|---|
-| `src/features/shared/SharedFlowViewer.tsx` | L438 の `!isDiamond &&` を削除 |
-| `src/features/shared/SharedFlowViewer.test.tsx` | L292 のテストを描画肯定に反転 |
+| ファイル                                        | 変更内容                       |
+| ----------------------------------------------- | ------------------------------ |
+| `src/features/shared/SharedFlowViewer.tsx`      | L438 の `!isDiamond &&` を削除 |
+| `src/features/shared/SharedFlowViewer.test.tsx` | L292 のテストを描画肯定に反転  |
 
 ## TDD アプローチ
 

@@ -19,10 +19,10 @@
 
 ## 影響ファイル
 
-| 種別 | パス | 変更内容 |
-|---|---|---|
-| Modify | `src/features/shared/SharedFlowViewer.tsx` | L438 `!isDiamond &&` を削除 |
-| Test | `src/features/shared/SharedFlowViewer.test.tsx` | L292 のテストを「描画される」に反転 |
+| 種別   | パス                                            | 変更内容                            |
+| ------ | ----------------------------------------------- | ----------------------------------- |
+| Modify | `src/features/shared/SharedFlowViewer.tsx`      | L438 `!isDiamond &&` を削除         |
+| Test   | `src/features/shared/SharedFlowViewer.test.tsx` | L292 のテストを「描画される」に反転 |
 
 ---
 
@@ -31,6 +31,7 @@
 `~/.claude/CLAUDE.md` の Step 0–1 に従い、本作業用の独立ワークツリーを準備する。
 
 **Files:**
+
 - Worktree: `.worktrees/fix/issue-340-shared-diamond-note`
 
 - [ ] **Step 0.1: 迷子プロセスをクリーンアップ**
@@ -92,6 +93,7 @@ cat ~/.claude/rules/testing.md
 ## Task 2: TDD Red — テストを「描画される」に反転
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.test.tsx:292-313`
 
 - [ ] **Step 2.1: 既存テストを反転して失敗するように変更**
@@ -99,27 +101,28 @@ cat ~/.claude/rules/testing.md
 `src/features/shared/SharedFlowViewer.test.tsx` の対象テストブロックを以下に置き換える：
 
 ```tsx
-  it('should render note for diamond node', () => {
-    const diamondFlow = {
-      ...mockFlow,
-      nodes: [
-        {
-          id: 'node-1',
-          laneId: 'lane-1',
-          rowIndex: 0,
-          label: 'Diamond',
-          note: 'Some note',
-          orderIndex: 0,
-          shape: 'diamond' as const,
-        },
-      ],
-    }
-    render(<SharedFlowViewer flow={diamondFlow} />)
-    expect(screen.getByText('Some note')).toBeInTheDocument()
-  })
+it('should render note for diamond node', () => {
+  const diamondFlow = {
+    ...mockFlow,
+    nodes: [
+      {
+        id: 'node-1',
+        laneId: 'lane-1',
+        rowIndex: 0,
+        label: 'Diamond',
+        note: 'Some note',
+        orderIndex: 0,
+        shape: 'diamond' as const,
+      },
+    ],
+  }
+  render(<SharedFlowViewer flow={diamondFlow} />)
+  expect(screen.getByText('Some note')).toBeInTheDocument()
+})
 ```
 
 ポイント：
+
 - `MemoText` は `<foreignObject>` 内の `<div>` で描画されるため、`screen.getByText` で DOM ツリー全体から検出できる。
 - アサート対象を「テキストノードの存在」に絞ることで、座標やスタイル変更に対しても安定したテストになる。
 - `getByText` は DOM に存在しない場合に throw するので、追加の `toBeInTheDocument()` は冗長だが意図を明示するため残す（プロジェクト内既存テストでも併用例あり）。
@@ -138,6 +141,7 @@ npx vitest run src/features/shared/SharedFlowViewer.test.tsx -t "should render n
 ## Task 3: TDD Green — `!isDiamond &&` を削除
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx:438`
 
 - [ ] **Step 3.1: 条件式から `!isDiamond &&` を削除**
@@ -145,6 +149,7 @@ npx vitest run src/features/shared/SharedFlowViewer.test.tsx -t "should render n
 `src/features/shared/SharedFlowViewer.tsx` 438〜440 行を以下に置き換える：
 
 変更前：
+
 ```tsx
                 {!isDiamond &&
                   node.note &&
@@ -152,6 +157,7 @@ npx vitest run src/features/shared/SharedFlowViewer.test.tsx -t "should render n
 ```
 
 変更後：
+
 ```tsx
                 {node.note &&
                   (() => {
@@ -289,6 +295,7 @@ git diff src/features/shared/SharedFlowViewer.tsx src/features/shared/SharedFlow
 ```
 
 期待される差分：
+
 - `SharedFlowViewer.tsx`: `!isDiamond &&` 1 行削除（または同行に統合）
 - `SharedFlowViewer.test.tsx`: `should not render note for diamond node` ブロックを反転
 
