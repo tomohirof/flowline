@@ -169,6 +169,36 @@ describe('splitTextWithUrls', () => {
     ])
   })
 
+  it('keeps balanced parentheses inside the URL (Wikipedia-style)', () => {
+    const url = 'https://en.wikipedia.org/wiki/Python_(programming_language)'
+    expect(splitTextWithUrls(`see ${url} here`)).toEqual([
+      { type: 'text', value: 'see ' },
+      { type: 'url', value: url },
+      { type: 'text', value: ' here' },
+    ])
+  })
+
+  it('strips only unbalanced trailing close parens from a URL', () => {
+    // Outer parens around URL — trailing ) is unbalanced relative to the URL's content
+    expect(splitTextWithUrls('see (https://example.com) here')).toEqual([
+      { type: 'text', value: 'see (' },
+      { type: 'url', value: 'https://example.com' },
+      { type: 'text', value: ') here' },
+    ])
+    // URL ends with ) AND has matching ( inside — keep the )
+    expect(splitTextWithUrls('see https://en.wikipedia.org/wiki/Brace_(punctuation) here')).toEqual([
+      { type: 'text', value: 'see ' },
+      { type: 'url', value: 'https://en.wikipedia.org/wiki/Brace_(punctuation)' },
+      { type: 'text', value: ' here' },
+    ])
+    // Outer parens around a Wikipedia URL — only the OUTER ) is unbalanced
+    expect(splitTextWithUrls('(https://en.wikipedia.org/wiki/Python_(programming_language))')).toEqual([
+      { type: 'text', value: '(' },
+      { type: 'url', value: 'https://en.wikipedia.org/wiki/Python_(programming_language)' },
+      { type: 'text', value: ')' },
+    ])
+  })
+
   it('treats full-width spaces and tabs as separators', () => {
     expect(splitTextWithUrls('a\thttps://example.com\tb')).toEqual([
       { type: 'text', value: 'a\t' },
