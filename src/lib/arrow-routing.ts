@@ -198,7 +198,7 @@ export const buildArrowPath = (
   const dx = e.x - s.x,
     dy = e.y - s.y
 
-  // 迂回モード: 同一行で経路上に障害ノードがある場合
+  // 迂回モード: 同一行（水平直線）または同一レーン（垂直直線）で経路上に障害ノードがある場合
   if (obstacles && obstacles.length > 0) {
     const detour = detectDetour(s, e, obstacles)
     if (detour) {
@@ -220,13 +220,15 @@ export const buildArrowPath = (
     const vDetour = detectVerticalDetour(s, e, obstacles)
     if (vDetour) {
       const { detourX } = vDetour
-      // |e.y - s.y| / 2 で clamp（横版と対称な防御コード）
+      // |e.y - s.y| / 2 で clamp。横版（上方の detectDetour ブロック）と対称な防御コードで、
+      // ノード高が縮小しても departY/approachY が反対側を越えて自己交差するのを防ぐ。
+      // 縮退ケースでは中央垂直セグメントがゼロ長になる。
       const sign = Math.sign(dy)
       const halfDy = Math.abs(dy) / 2
       const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
       const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
       // 6 セグメント: M → 垂直(departY まで) → 水平(detourX まで) → 垂直(approachY まで)
-      //               → 水平(e.x まで=s.x なので戻る) → 垂直(e.y へ進入)
+      //               → 水平(e.x まで) → 垂直(e.y へ進入)
       const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
       return { d, mx: detourX, my: (s.y + e.y) / 2 }
     }
