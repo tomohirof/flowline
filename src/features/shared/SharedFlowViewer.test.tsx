@@ -576,4 +576,50 @@ describe('SharedFlowViewer', () => {
     const texts = headerSvg.querySelectorAll('text')
     expect(texts.length).toBeGreaterThan(0)
   })
+
+  describe('sticky lane header leak fix (#330)', () => {
+    const css = readFileSync(resolve(__dirname, './SharedFlowViewer.module.css'), 'utf-8')
+    const canvasMatch = css.match(/\.canvas\s*\{[^}]*\}/s)
+    const heroMatch = css.match(/\.titleHero\s*\{[^}]*\}/s)
+
+    it('should not have top padding on .canvas so sticky headerSvg sits at the visible top', () => {
+      expect(canvasMatch).not.toBeNull()
+      const block = canvasMatch![0]
+      // `padding: 40px;` (all-sides) creates the 40px gap above the sticky header.
+      expect(block).not.toMatch(/padding:\s*40px\s*;/)
+      // `padding-top: 40px;` (or any non-zero) is also disallowed.
+      expect(block).not.toMatch(/padding-top:\s*[1-9]/)
+    })
+
+    it('should keep horizontal padding on .canvas so titleHero negative margins still align', () => {
+      expect(canvasMatch).not.toBeNull()
+      const block = canvasMatch![0]
+      // padding declaration must still include 40px laterally.
+      // matches `padding: 0 40px 40px;` or `padding: 0 40px 40px 40px;` or padding-left/right: 40px;
+      const hasLateralPadding =
+        /padding:\s*0(?:px)?\s+40px(?:\s+\d+px)*\s*;/.test(block) ||
+        /padding-left:\s*40px/.test(block) ||
+        /padding-right:\s*40px/.test(block)
+      expect(hasLateralPadding).toBe(true)
+    })
+
+    it('should not have negative top margin on .titleHero (no padding-top to compensate for)', () => {
+      expect(heroMatch).not.toBeNull()
+      const block = heroMatch![0]
+      // The old `margin: -40px -40px 0 -40px;` pulled hero up under the canvas top padding.
+      // After the fix there is no top padding to compensate, so margin-top must be 0.
+      expect(block).not.toMatch(/margin:\s*-40px/)
+      expect(block).not.toMatch(/margin-top:\s*-/)
+    })
+
+    it('should keep horizontal negative margins on .titleHero so it spans full canvas width', () => {
+      expect(heroMatch).not.toBeNull()
+      const block = heroMatch![0]
+      // After the fix titleHero still needs to escape the canvas's horizontal padding.
+      // matches `margin: 0 -40px 0 -40px;` or `margin: 0 -40px;`
+      const hasHorizontalNegativeMargin =
+        /margin:\s*0(?:px)?\s+-40px/.test(block) || /margin-left:\s*-40px/.test(block)
+      expect(hasHorizontalNegativeMargin).toBe(true)
+    })
+  })
 })

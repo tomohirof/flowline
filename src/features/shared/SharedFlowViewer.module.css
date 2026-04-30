@@ -86,7 +86,7 @@
   overflow: auto;
   background: var(--theme-canvas-bg);
   background-image: radial-gradient(circle, var(--theme-dot-grid) 0.5px, transparent 0.5px);
-  padding: 40px;
+  padding: 0 40px 40px;
   transition: filter 0.4s;
   position: relative;
 }
@@ -149,7 +149,7 @@
 .titleHero {
   padding: 28px 28px 18px;
   background: linear-gradient(180deg, var(--theme-hero-gradient) 0%, transparent 100%);
-  margin: -40px -40px 0 -40px;
+  margin: 0 -40px 0 -40px;
   padding-right: 40px;
   position: sticky;
   left: 0;
