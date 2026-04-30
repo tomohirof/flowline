@@ -51,7 +51,7 @@ export function measureMemoHeight(text: string, width: number): number {
   return Math.max(30, lines * 17 + 14)
 }
 
-export type MemoTextSegment = { type: 'text' | 'url'; value: string }
+type MemoTextSegment = { type: 'text' | 'url'; value: string }
 
 const URL_REGEX = /\bhttps?:\/\/[^\s<]+[^\s<.,;:!?)\]'"]/g
 
