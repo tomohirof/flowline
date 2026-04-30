@@ -289,7 +289,7 @@ describe('SharedFlowViewer', () => {
     expect(polygons).toHaveLength(0)
   })
 
-  it('should not render note for diamond node', () => {
+  it('should render note for diamond node', () => {
     const diamondFlow = {
       ...mockFlow,
       nodes: [
@@ -305,11 +305,7 @@ describe('SharedFlowViewer', () => {
       ],
     }
     render(<SharedFlowViewer flow={diamondFlow} />)
-    const canvas = screen.getByTestId('shared-flow-canvas')
-    const svg = canvas.querySelector('svg')!
-    const texts = Array.from(svg.querySelectorAll('text'))
-    const noteText = texts.find((t) => t.textContent?.includes('Some note'))
-    expect(noteText).toBeUndefined()
+    expect(screen.getByText('Some note')).toBeInTheDocument()
   })
 
   describe('arrow custom styles', () => {

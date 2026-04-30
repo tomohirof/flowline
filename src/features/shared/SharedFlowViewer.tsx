@@ -435,8 +435,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                   fillTitle={T.titleColor}
                 />
 
-                {!isDiamond &&
-                  node.note &&
+                {node.note &&
                   (() => {
                     const memo = parseNote(node.note, li, sortedLanes.length)
                     if (!memo) return null
