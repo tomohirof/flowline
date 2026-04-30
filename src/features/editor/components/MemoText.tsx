@@ -4,10 +4,9 @@ import { splitTextWithUrls } from '../memo-utils'
 type Props = {
   text: string
   color: string
-  linkColor?: string
 }
 
-export function MemoText({ text, color, linkColor }: Props) {
+export function MemoText({ text, color }: Props) {
   const segments = splitTextWithUrls(text)
   return (
     <div
@@ -33,7 +32,7 @@ export function MemoText({ text, color, linkColor }: Props) {
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             style={{
-              color: linkColor ?? color,
+              color,
               textDecoration: 'underline',
               pointerEvents: 'auto',
               userSelect: 'auto',
