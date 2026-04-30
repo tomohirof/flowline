@@ -58,6 +58,49 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   return { detourY }
 }
 
+function detectVerticalDetour(
+  s: Point,
+  e: Point,
+  obstacles: Bbox[],
+): { detourX: number } | null {
+  // 垂直直線でなければ迂回しない
+  if (Math.abs(e.x - s.x) >= 2) return null
+
+  const yLow = Math.min(s.y, e.y)
+  const yHigh = Math.max(s.y, e.y)
+  const colX = s.x
+
+  // 垂直移動がなければ迂回対象なし
+  if (yLow >= yHigh - 1) return null
+
+  // 経路上の障害ノード = 同一列（colX と X が重なる）かつ Y が始終点の間
+  const inCol = obstacles.filter(
+    (b) =>
+      Math.abs(b.x - colX) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1,
+  )
+  if (inCol.length === 0) return null
+
+  // 左右塞がり判定（Y 重なりするノードが直左/直右に存在するか）
+  // 前提: obstacles 配列には呼び出し側で「同一列＋直左列＋直右列のみ」をフィルタ済み
+  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+  const rightBlocked = inCol.some((obs) =>
+    obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+  )
+  const leftBlocked = inCol.some((obs) =>
+    obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+  )
+
+  // 方向決定: 右空きなら右、右塞がり＆左空きなら左、両塞がりは右優先
+  const goRight = !rightBlocked || leftBlocked
+
+  // detourX: 障害ノード群の最右端 + マージン or 最左端 - マージン
+  const detourX = goRight
+    ? Math.max(...inCol.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+    : Math.min(...inCol.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+
+  return { detourX }
+}
+
 interface ArrowPath {
   d: string
   mx: number
@@ -172,6 +215,20 @@ export const buildArrowPath = (
       //               → 垂直(e.y まで) → 水平(e.x へ進入)
       const d = `M${s.x},${s.y} L${departX},${s.y} L${departX},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
       return { d, mx: (s.x + e.x) / 2, my: detourY }
+    }
+
+    const vDetour = detectVerticalDetour(s, e, obstacles)
+    if (vDetour) {
+      const { detourX } = vDetour
+      // |e.y - s.y| / 2 で clamp（横版と対称な防御コード）
+      const sign = Math.sign(dy)
+      const halfDy = Math.abs(dy) / 2
+      const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
+      const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
+      // 6 セグメント: M → 垂直(departY まで) → 水平(detourX まで) → 垂直(approachY まで)
+      //               → 水平(e.x まで=s.x なので戻る) → 垂直(e.y へ進入)
+      const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+      return { d, mx: detourX, my: (s.y + e.y) / 2 }
     }
   }
 
