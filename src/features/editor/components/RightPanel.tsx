@@ -366,9 +366,11 @@ export const RightPanel = ({
           </div>
         </PanelSection>
         <PanelSection label={t('rightPanel.memo')}>
-          <PanelInput
+          <PanelTextarea
             value={memos[selTask]?.text || ''}
             placeholder={t('rightPanel.memoPlaceholder')}
+            submitOnEnter={false}
+            rows={3}
             onChange={(v: string) =>
               setMemos((p2) => {
                 if (!v) {
