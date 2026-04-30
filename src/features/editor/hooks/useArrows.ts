@@ -24,22 +24,29 @@ export function useArrows({ initialArrows, tasks, rows, lanes, autoConnect }: Us
     const result = findClosestUpstream(tasks, rows, lanes, ri, li, arrows)
     if (!result) return
     const bestKey = result.key
+    const splitArrowId = result.splitArrowId
 
-    // If the chosen upstream lives in a row above the new node, re-route any arrow
-    // from it to a downstream node (row > ri) through the new node, splitting
-    // `bestKey → downstream` into `bestKey → new → downstream`.
-    const bestTask = tasks[bestKey]
-    const bestRi = bestTask ? rows.findIndex((r) => r.id === bestTask.rid) : -1
-    const splitArrows =
-      bestRi >= 0 && bestRi < ri
-        ? arrows.filter((a) => {
-            if (a.from !== bestKey) return false
-            const toTask = tasks[a.to]
-            if (!toTask) return false
-            const toRi = rows.findIndex((r) => r.id === toTask.rid)
-            return toRi > ri
-          })
-        : []
+    // Step 2.5 hit: splice only the matched arrow (targeted).
+    // Otherwise (Step 1/2/3): if upstream is in a row above, splice all of its
+    // outgoing arrows whose target is below the new node (broad — preserves
+    // existing same-lane chain insertion behavior).
+    let splitArrows: InternalArrow[]
+    if (splitArrowId) {
+      splitArrows = arrows.filter((a) => a.id === splitArrowId)
+    } else {
+      const bestTask = tasks[bestKey]
+      const bestRi = bestTask ? rows.findIndex((r) => r.id === bestTask.rid) : -1
+      splitArrows =
+        bestRi >= 0 && bestRi < ri
+          ? arrows.filter((a) => {
+              if (a.from !== bestKey) return false
+              const toTask = tasks[a.to]
+              if (!toTask) return false
+              const toRi = rows.findIndex((r) => r.id === toTask.rid)
+              return toRi > ri
+            })
+          : []
+    }
 
     const splitIds = new Set(splitArrows.map((a) => a.id))
     autoSplitHandledRef.current = splitIds
