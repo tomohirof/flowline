@@ -64,6 +64,11 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
 
   const yLow = Math.min(s.y, e.y)
   const yHigh = Math.max(s.y, e.y)
+  // 注: 上向き同一レーン矢印では exitPt/entryPt がサイド出口（c.x ± hw）を返すため
+  // s.x はレーン中心ではなく `lane center ± bboxW/2` になりうる。一方、collectVerticalObstacles
+  // 側はレーン中心を colX に渡している。そのため同一レーンの障害ノード b.x との差は最大で
+  // bboxW/2 となるが、下記の `< b.w/2 + 2` 判定が `bboxW/2 < bboxW/2 + 2` を保証するため
+  // 同一列の障害は確実に検出される（マージン設計でカバー）。
   const colX = s.x
 
   // 垂直移動がなければ迂回対象なし

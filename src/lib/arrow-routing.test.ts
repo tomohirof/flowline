@@ -398,6 +398,23 @@ describe('buildArrowPath - 縦方向迂回（同一レーン）', () => {
     expect(r.mx).toBe(290)
   })
 
+  it('上向き矢印（同一レーン・サイド出口で s.x = lane center + hw）でも障害を検出して迂回', () => {
+    // 上向き矢印では exitPt/entryPt がサイド出口を返すため s.x/e.x がレーン中心からズレる。
+    // colX オフセットが bboxW/2 までであり「< bboxW/2 + 2」マージンに収まることを保証する回帰テスト。
+    // A=(200,600) → C=(200,200) を上向きに引いた想定: s=(276,600), e=(276,200)
+    const sUp = { x: 276, y: 600 }
+    const eUp = { x: 276, y: 200 }
+    const fcUp = { x: 200, y: 600 }
+    const tcUp = { x: 200, y: 200 }
+    // 障害 B はレーン中心 (200) にあり、s.x (276) との差は hw=76 < bboxW/2 + 2 = 78 で検出される
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(sUp, eUp, fcUp, tcUp, [B])
+    // detourX = 200 + 76 + 14 = 290 (障害の右端基準、s.x ではなく b.x 基準)
+    // sign=-1, halfDy=200, departY=600-14=586, approachY=200+14=214
+    expect(r.d).toBe('M276,600 L276,586 L290,586 L290,214 L276,214 L276,200')
+    expect(r.mx).toBe(290)
+  })
+
   describe('垂直進入＋垂直 depart（始終点とも垂直）', () => {
     it('右迂回パスは 6 セグメントで最初と最終セグメントが垂直', () => {
       const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
