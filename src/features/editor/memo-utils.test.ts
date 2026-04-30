@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { parseNote, serializeMemo, measureMemoHeight, MEMO_W } from './memo-utils'
+import {
+  parseNote,
+  serializeMemo,
+  measureMemoHeight,
+  MEMO_W,
+  splitTextWithUrls,
+} from './memo-utils'
 import type { MemoData } from './types'
 
 describe('parseNote', () => {
@@ -90,8 +96,6 @@ describe('MEMO_W', () => {
   })
 })
 
-import { splitTextWithUrls } from './memo-utils'
-
 describe('splitTextWithUrls', () => {
   it('returns single text segment when input has no URLs', () => {
     expect(splitTextWithUrls('hello world')).toEqual([{ type: 'text', value: 'hello world' }])
@@ -170,6 +174,11 @@ describe('splitTextWithUrls', () => {
       { type: 'text', value: 'a\t' },
       { type: 'url', value: 'https://example.com' },
       { type: 'text', value: '\tb' },
+    ])
+    expect(splitTextWithUrls('a　https://example.com　b')).toEqual([
+      { type: 'text', value: 'a　' },
+      { type: 'url', value: 'https://example.com' },
+      { type: 'text', value: '　b' },
     ])
   })
 })
