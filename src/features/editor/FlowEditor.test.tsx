@@ -3313,3 +3313,72 @@ describe('memo URL/newline rendering (#331)', () => {
     expect((memoTextarea as HTMLTextAreaElement).tagName).toBe('TEXTAREA')
   })
 })
+
+describe('copyLabelOnSameRow distance-based selection (#337)', () => {
+  beforeEach(() => {
+    // Override the default mock: copyLabelOnSameRow ON
+    mockApiFetch.mockResolvedValue({
+      settings: {
+        copyLabelOnSameRow: true,
+        autoConnect: false,
+        autoAddRow: false,
+        enterEditOnCreate: false,
+        autoRepair: false,
+        showDotGrid: true,
+        showOrderBadge: true,
+      },
+      profile: { name: 'Test User', email: 'test@example.com' },
+    })
+  })
+
+  const flowWithLanes = (count: number, nodes: Flow['nodes']): Flow => ({
+    ...createMinimalFlow(),
+    lanes: Array.from({ length: count }, (_, i) => ({
+      id: `lane-${i + 1}`,
+      name: `レーン${i + 1}`,
+      colorIndex: i,
+      position: i,
+    })),
+    nodes,
+  })
+
+  const findEmptyCellAt = (container: HTMLElement, x: number, y: number): SVGRectElement | null => {
+    const allRects = container.querySelectorAll('rect[fill="transparent"]')
+    const empties = Array.from(allRects).filter(
+      (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+    )
+    return (empties.find(
+      (r) => r.getAttribute('x') === String(x) && r.getAttribute('y') === String(y),
+    ) ?? null) as SVGRectElement | null
+  }
+
+  it('should copy label from closer node when same row has nodes at different distances', async () => {
+    // 5 lanes. Row 0 has:
+    //   - node A "案件取得" at lane-1 (li=0, x=28)
+    //   - node B "確定連絡" at lane-3 (li=2, x=396)
+    // Click empty cell at lane-4 (li=3, x=580).
+    // Distance to A is 3, distance to B is 1 → expect B's label to be copied.
+    const flow = flowWithLanes(5, [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '案件取得', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-3', rowIndex: 0, label: '確定連絡', note: null, orderIndex: 1 },
+    ])
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
+    })
+
+    const cell = findEmptyCellAt(container, 580, 70)
+    expect(cell).toBeTruthy()
+    fireEvent.click(cell!) // 1st click — ghost
+    fireEvent.click(cell!) // 2nd click — confirm
+
+    // The new node should have label '確定連絡' (the closer one)
+    // After: 2 instances of '確定連絡' (original n2 + new copy), 1 instance of '案件取得' (n1)
+    await waitFor(() => {
+      const labelTexts = Array.from(container.querySelectorAll('text'))
+        .map((t) => t.textContent)
+        .filter((s) => s === '確定連絡')
+      expect(labelTexts.length).toBe(2)
+    })
+  })
+})
