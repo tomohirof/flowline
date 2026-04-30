@@ -9,7 +9,7 @@ describe('findClosestUpstream', () => {
       l0_r0: { lid: 'l0', rid: 'r0' },
     }
     const result = findClosestUpstream(tasks, rows, lanes, 1, 0, [])
-    expect(result).toBe('l0_r0')
+    expect(result?.key).toBe('l0_r0')
   })
 
   it('should return the closest upstream node when multiple upstream exist', () => {
@@ -20,7 +20,7 @@ describe('findClosestUpstream', () => {
       l0_r1: { lid: 'l0', rid: 'r1' },
     }
     const result = findClosestUpstream(tasks, rows, lanes, 2, 0, [])
-    expect(result).toBe('l0_r1')
+    expect(result?.key).toBe('l0_r1')
   })
 
   it('should return same-row left-lane node as upstream', () => {
@@ -30,7 +30,7 @@ describe('findClosestUpstream', () => {
       l0_r0: { lid: 'l0', rid: 'r0' },
     }
     const result = findClosestUpstream(tasks, rows, lanes, 0, 1, [])
-    expect(result).toBe('l0_r0')
+    expect(result?.key).toBe('l0_r0')
   })
 
   it('should return null when new node is at the top-left (no upstream)', () => {
@@ -69,7 +69,7 @@ describe('findClosestUpstream', () => {
       l1_r1: { lid: 'l1', rid: 'r1' },
     }
     const result = findClosestUpstream(tasks, rows, lanes, 1, 2, [])
-    expect(result).toBe('l1_r1')
+    expect(result?.key).toBe('l1_r1')
   })
 
   it('should prefer tail node (no outgoing arrow) over mid-chain node', () => {
@@ -85,7 +85,7 @@ describe('findClosestUpstream', () => {
       { id: 'a2', from: 'B', to: 'C', comment: '' },
     ]
     const result = findClosestUpstream(tasks, rows, lanes, 3, 0, arrows)
-    expect(result).toBe('C')
+    expect(result?.key).toBe('C')
   })
 
   it('should prefer flow-connected tail over isolated tail', () => {
@@ -98,7 +98,7 @@ describe('findClosestUpstream', () => {
     }
     const arrows = [{ id: 'a1', from: 'A', to: 'B', comment: '' }]
     const result = findClosestUpstream(tasks, rows, lanes, 2, 0, arrows)
-    expect(result).toBe('B')
+    expect(result?.key).toBe('B')
   })
 
   it('should fall back to isolated tails when no flow-connected tails exist', () => {
@@ -110,7 +110,7 @@ describe('findClosestUpstream', () => {
     }
     const arrows: { id: string; from: string; to: string; comment: string }[] = []
     const result = findClosestUpstream(tasks, rows, lanes, 2, 0, arrows)
-    expect(result).toBe('Y')
+    expect(result?.key).toBe('Y')
   })
 
   it('should return same-row non-tail when no tails exist on same row (#297)', () => {
@@ -127,7 +127,7 @@ describe('findClosestUpstream', () => {
     ]
     // A is same-row (r0), has outgoing but is closest same-row node
     const result = findClosestUpstream(tasks, rows, lanes, 0, 1, arrows)
-    expect(result).toBe('A')
+    expect(result?.key).toBe('A')
   })
 
   it('should prefer same-row node over upstream isolated tail (#241, #297)', () => {
@@ -147,7 +147,7 @@ describe('findClosestUpstream', () => {
       { id: 'a2', from: 'N2', to: 'N3', comment: '' },
     ]
     const result = findClosestUpstream(tasks, rows, lanes, 1, 1, arrows)
-    expect(result).toBe('N2')
+    expect(result?.key).toBe('N2')
   })
 
   it('should prefer same-row isolated tail over previous-row flowTail (#265)', () => {
@@ -162,7 +162,7 @@ describe('findClosestUpstream', () => {
     const arrows = [{ id: 'a1', from: 'A', to: 'B', comment: '' }]
     // New node at row4(r4), lane1(l1) — X is same-row isolated tail, B is flowTail at row3
     const result = findClosestUpstream(tasks, rows, lanes, 4, 1, arrows)
-    expect(result).toBe('X')
+    expect(result?.key).toBe('X')
   })
 
   it('should connect from same-row non-tail node when it is closest (#297)', () => {
@@ -184,7 +184,7 @@ describe('findClosestUpstream', () => {
       { id: 'a2', from: 'N4', to: 'N5', comment: '' },
     ]
     const result = findClosestUpstream(tasks, rows, lanes, 2, 1, arrows)
-    expect(result).toBe('N4')
+    expect(result?.key).toBe('N4')
   })
 
   it('should connect from same-row right-lane node (bidirectional) (#297)', () => {
@@ -195,7 +195,7 @@ describe('findClosestUpstream', () => {
       l1_r0: { lid: 'l1', rid: 'r0' },
     }
     const result = findClosestUpstream(tasks, rows, lanes, 0, 0, [])
-    expect(result).toBe('l1_r0')
+    expect(result?.key).toBe('l1_r0')
   })
 
   it('should prefer same-row tail over same-row non-tail at equal distance (#297)', () => {
@@ -208,7 +208,7 @@ describe('findClosestUpstream', () => {
     }
     const arrows = [{ id: 'a1', from: 'A', to: 'X', comment: '' }]
     const result = findClosestUpstream(tasks, rows, lanes, 0, 2, arrows)
-    expect(result).toBe('B')
+    expect(result?.key).toBe('B')
   })
 
   it('should prefer same-row closest tail when multiple same-row tails exist', () => {
@@ -223,7 +223,7 @@ describe('findClosestUpstream', () => {
     const arrows = [{ id: 'a1', from: 'A', to: 'B', comment: '' }]
     const result = findClosestUpstream(tasks, rows, lanes, 0, 3, arrows)
     // C is closer (l2 vs l1), both are same-row tails
-    expect(result).toBe('C')
+    expect(result?.key).toBe('C')
   })
 
   it('should prefer same-lane upstream non-tail over other-lane tail when inserted between linked nodes', () => {
@@ -260,7 +260,7 @@ describe('findClosestUpstream', () => {
       { id: 'a3', from: 'worker_r3', to: 'worker_r5', comment: '' },
     ]
     const result = findClosestUpstream(tasks, rows, lanes, 4, 2, arrows)
-    expect(result).toBe('worker_r3')
+    expect(result?.key).toBe('worker_r3')
   })
 
   it('should still return same-row node when same-lane upstream and same-row both exist', () => {
@@ -273,7 +273,7 @@ describe('findClosestUpstream', () => {
     }
     const arrows = [{ id: 'a1', from: 'sameLaneUpstream', to: 'other', comment: '' }]
     const result = findClosestUpstream(tasks, rows, lanes, 2, 0, arrows)
-    expect(result).toBe('sameRow')
+    expect(result?.key).toBe('sameRow')
   })
 
   it('should fall through to tail-based search when no same-lane upstream exists', () => {
@@ -284,7 +284,7 @@ describe('findClosestUpstream', () => {
       otherLaneTail: { lid: 'l0', rid: 'r0' },
     }
     const result = findClosestUpstream(tasks, rows, lanes, 1, 1, [])
-    expect(result).toBe('otherLaneTail')
+    expect(result?.key).toBe('otherLaneTail')
   })
 })
 

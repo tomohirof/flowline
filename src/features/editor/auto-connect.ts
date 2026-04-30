@@ -1,4 +1,14 @@
 /**
+ * Result of upstream lookup. `splitArrowId` is set only when matched via
+ * Step 2.5 (the new node lies on an existing arrow's path), telling the
+ * caller to splice that specific arrow rather than all outgoing arrows.
+ */
+export type UpstreamResult = {
+  key: string
+  splitArrowId?: string
+}
+
+/**
  * Find the closest upstream node key for auto-connection.
  *
  * Priority:
@@ -9,7 +19,7 @@
  * 3. Upstream tails (previous rows): closest by row index,
  *    with flow-connected tails preferred over isolated at same row.
  *
- * @returns The task key of the closest upstream node, or null if none found.
+ * @returns The upstream lookup result, or null if none found.
  */
 export function findClosestUpstream(
   tasks: Record<string, { lid: string; rid: string }>,
@@ -17,8 +27,8 @@ export function findClosestUpstream(
   lanes: { id: string }[],
   newRi: number,
   newLi: number,
-  arrows: { from: string; to: string }[],
-): string | null {
+  arrows: { id: string; from: string; to: string }[],
+): UpstreamResult | null {
   const outgoing = new Set(arrows.map((a) => a.from))
   const incoming = new Set(arrows.map((a) => a.to))
   const allKeys = Object.keys(tasks)
@@ -44,7 +54,7 @@ export function findClosestUpstream(
         bestIsTail = isTail
       }
     }
-    if (bestKey) return bestKey
+    if (bestKey) return { key: bestKey }
   }
 
   // 2. Same-lane upstream: pick the closest (largest tRi < newRi) node in the same lane.
@@ -64,7 +74,7 @@ export function findClosestUpstream(
         bestRi = tRi
       }
     }
-    if (bestKey) return bestKey
+    if (bestKey) return { key: bestKey }
   }
 
   // 3. Upstream tails: closest by row, flow-connected as tiebreaker
@@ -92,7 +102,7 @@ export function findClosestUpstream(
         bestIsFlow = isFlow
       }
     }
-    return bestKey
+    return bestKey ? { key: bestKey } : null
   }
 }
 

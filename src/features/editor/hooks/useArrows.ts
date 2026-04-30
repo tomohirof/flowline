@@ -21,8 +21,9 @@ export function useArrows({ initialArrows, tasks, rows, lanes, autoConnect }: Us
 
   const autoConnectOnCreate = (taskKey: string, ri: number, li: number): void => {
     if (!autoConnect || Object.keys(tasks).length < 1) return
-    const bestKey = findClosestUpstream(tasks, rows, lanes, ri, li, arrows)
-    if (!bestKey) return
+    const result = findClosestUpstream(tasks, rows, lanes, ri, li, arrows)
+    if (!result) return
+    const bestKey = result.key
 
     // If the chosen upstream lives in a row above the new node, re-route any arrow
     // from it to a downstream node (row > ri) through the new node, splitting
