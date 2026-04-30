@@ -15,18 +15,18 @@
 
 ## File Structure
 
-| Path | Action | Responsibility |
-|---|---|---|
-| `src/features/editor/memo-utils.ts` | Modify | `splitTextWithUrls` と型 `MemoTextSegment` を追加 |
-| `src/features/editor/memo-utils.test.ts` | Modify | `splitTextWithUrls` の単体テストを追加 |
-| `src/features/editor/components/MemoText.tsx` | Create | 改行＋URL クリッカブル化を担うプレゼンテーショナルコンポーネント |
-| `src/features/editor/components/MemoText.test.tsx` | Create | `MemoText` の単体テスト |
-| `src/features/editor/components/PanelParts.tsx` | Modify | `PanelTextarea` に `submitOnEnter` オプション追加 |
-| `src/features/editor/components/PanelParts.test.tsx` | Create | `PanelTextarea` の挙動テスト |
-| `src/features/editor/FlowEditor.tsx` | Modify | 通常表示メモ（3487-3503）を `MemoText` に置換 |
-| `src/features/shared/SharedFlowViewer.tsx` | Modify | 共有ビューのメモ（471-486）を `MemoText` に置換 |
-| `src/features/editor/components/RightPanel.tsx` | Modify | メモ欄の `PanelInput` を `PanelTextarea (submitOnEnter=false)` に置換 |
-| `src/features/editor/FlowEditor.test.tsx` | Modify | 右パネル `<textarea>`／改行表示／URLリンク化の統合テストを追加 |
+| Path                                                 | Action | Responsibility                                                        |
+| ---------------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| `src/features/editor/memo-utils.ts`                  | Modify | `splitTextWithUrls` と型 `MemoTextSegment` を追加                     |
+| `src/features/editor/memo-utils.test.ts`             | Modify | `splitTextWithUrls` の単体テストを追加                                |
+| `src/features/editor/components/MemoText.tsx`        | Create | 改行＋URL クリッカブル化を担うプレゼンテーショナルコンポーネント      |
+| `src/features/editor/components/MemoText.test.tsx`   | Create | `MemoText` の単体テスト                                               |
+| `src/features/editor/components/PanelParts.tsx`      | Modify | `PanelTextarea` に `submitOnEnter` オプション追加                     |
+| `src/features/editor/components/PanelParts.test.tsx` | Create | `PanelTextarea` の挙動テスト                                          |
+| `src/features/editor/FlowEditor.tsx`                 | Modify | 通常表示メモ（3487-3503）を `MemoText` に置換                         |
+| `src/features/shared/SharedFlowViewer.tsx`           | Modify | 共有ビューのメモ（471-486）を `MemoText` に置換                       |
+| `src/features/editor/components/RightPanel.tsx`      | Modify | メモ欄の `PanelInput` を `PanelTextarea (submitOnEnter=false)` に置換 |
+| `src/features/editor/FlowEditor.test.tsx`            | Modify | 右パネル `<textarea>`／改行表示／URLリンク化の統合テストを追加        |
 
 ---
 
@@ -81,6 +81,7 @@ Expected: 振る舞いベース／網羅すべきエッジケースのチェッ�
 ## Task 1: `splitTextWithUrls` の TDD
 
 **Files:**
+
 - Modify: `src/features/editor/memo-utils.test.ts`（末尾に追記）
 - Modify: `src/features/editor/memo-utils.ts`（末尾に追記）
 
@@ -224,6 +225,7 @@ git commit -m "feat(#331): add splitTextWithUrls util for memo URL detection"
 ## Task 2: `MemoText` コンポーネントの TDD
 
 **Files:**
+
 - Create: `src/features/editor/components/MemoText.tsx`
 - Create: `src/features/editor/components/MemoText.test.tsx`
 
@@ -386,6 +388,7 @@ git commit -m "feat(#331): add MemoText component with URL/newline rendering"
 ## Task 3: `PanelTextarea` の `submitOnEnter` 拡張
 
 **Files:**
+
 - Modify: `src/features/editor/components/PanelParts.tsx`
 - Create: `src/features/editor/components/PanelParts.test.tsx`
 
@@ -490,6 +493,7 @@ git commit -m "feat(#331): add submitOnEnter option to PanelTextarea"
 ## Task 4: FlowEditor 通常表示を `MemoText` に置換
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`（3487-3503）
 
 - [ ] **Step 4-1: 既存メモ表示の `<foreignObject>` ＋ `<div>` を `MemoText` に置換**
@@ -552,6 +556,7 @@ git commit -m "refactor(#331): use MemoText for editor memo display"
 ## Task 5: SharedFlowViewer を `MemoText` に置換
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`（471-486）
 
 - [ ] **Step 5-1: 既存メモ表示の `<foreignObject>` ＋ `<div>` を `MemoText` に置換**
@@ -610,6 +615,7 @@ git commit -m "refactor(#331): use MemoText for shared viewer memo display"
 ## Task 6: 右パネルのメモ入力を `PanelTextarea` に置換
 
 **Files:**
+
 - Modify: `src/features/editor/components/RightPanel.tsx`（368 周辺）
 
 - [ ] **Step 6-1: `PanelInput` を `PanelTextarea(submitOnEnter=false, rows=3)` に置換**
@@ -679,6 +685,7 @@ git commit -m "feat(#331): make right panel memo input multi-line"
 ## Task 7: 統合テスト追加（FlowEditor）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx`
 
 - [ ] **Step 7-1: 統合テストを追加**
@@ -793,10 +800,10 @@ Expected: 成功。
 
 Skill: `~/.claude/skills/preview/SKILL.md` の手順に従って起動し、以下を Playwright（または手動）で確認:
 
-  - エディタを開く → ノード選択 → 右パネル「メモ」欄に複数行＋URL を入力 → メモ吹き出しに改行とリンクが反映される
-  - リンククリック → 別タブで開く・ドラッグ／編集モードが起動しない
-  - 共有ビュー（公開リンク）でも改行・リンクが表示される
-  - LCP 1 秒以内（preview skill の計測手順に従う）
+- エディタを開く → ノード選択 → 右パネル「メモ」欄に複数行＋URL を入力 → メモ吹き出しに改行とリンクが反映される
+- リンククリック → 別タブで開く・ドラッグ／編集モードが起動しない
+- 共有ビュー（公開リンク）でも改行・リンクが表示される
+- LCP 1 秒以内（preview skill の計測手順に従う）
 
 スクリーンショットは `.screenshots/` に保存。
 
@@ -814,6 +821,7 @@ Skill: `~/.claude/skills/preview/SKILL.md` の手順に従って起動し、以�
 git pull origin main --rebase
 npm test -- --run
 ```
+
 Expected: 全 pass。コンフリクトがあれば解決して再テスト。
 
 - [ ] **Step 9-2: push と PR 作成**

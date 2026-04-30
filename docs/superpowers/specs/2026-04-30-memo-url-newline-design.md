@@ -51,8 +51,8 @@
 ```ts
 type Props = {
   text: string
-  color: string          // T.memoText
-  linkColor?: string     // 既存テーマがあれば流用、なければ color の派生
+  color: string // T.memoText
+  linkColor?: string // 既存テーマがあれば流用、なければ color の派生
 }
 ```
 
@@ -147,13 +147,13 @@ m.text → measureMemoHeight(text, MEMO_W) → mh (foreignObject の height)
 
 React は子要素の文字列を自動エスケープするため、`<MemoText>` の中で文字列をそのまま渡しても DOM injection は発生しない。今回追加されるリスクは `<a href={...}>` の `href` を URL に組み立てる箇所のみ。
 
-| 攻撃ベクタ | 防御 |
-|---|---|
+| 攻撃ベクタ                                       | 防御                                                                                                                                                     |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `javascript:alert(1)` を埋め込んでクリックさせる | 正規表現が `https?://` で始まる文字列のみマッチ。`javascript:` `data:` `file:` `vbscript:` は検出器を通らないため `<a>` にならず、ただのテキストになる。 |
-| 攻撃サイトへの誘導 | `target="_blank"` ＋ `rel="noopener noreferrer nofollow"` を必ず付ける。`opener` 経由のタブハイジャックを防ぐ。 |
-| URL 内に `"` `<` を埋めて属性を破る | React が属性値を自動エスケープするため `dangerouslySetInnerHTML` を使わない限り発生しない。本実装は `<a href={url}>` の JSX のみ。 |
-| 異常に長い URL ／壊れた URL | 正規表現でマッチしなければただのテキスト。マッチしても `<a>` として表示されるだけ。 |
-| 末尾句読点問題 | 正規表現の末尾クラスで `.,;:!?)\]'"` を除外。 |
+| 攻撃サイトへの誘導                               | `target="_blank"` ＋ `rel="noopener noreferrer nofollow"` を必ず付ける。`opener` 経由のタブハイジャックを防ぐ。                                          |
+| URL 内に `"` `<` を埋めて属性を破る              | React が属性値を自動エスケープするため `dangerouslySetInnerHTML` を使わない限り発生しない。本実装は `<a href={url}>` の JSX のみ。                       |
+| 異常に長い URL ／壊れた URL                      | 正規表現でマッチしなければただのテキスト。マッチしても `<a>` として表示されるだけ。                                                                      |
+| 末尾句読点問題                                   | 正規表現の末尾クラスで `.,;:!?)\]'"` を除外。                                                                                                            |
 
 ### イベント伝播の防御
 
@@ -168,12 +168,12 @@ onClick: (e) => e.stopPropagation()
 
 ### 失敗系の挙動
 
-| ケース | 挙動 |
-|---|---|
-| `text` が空文字 | `MemoText` は安全に空フラグメントを返す。呼び出し側は元から空時に `<text>memoClickToEdit</text>` 経路へ分岐済みで `MemoText` は呼ばれない。 |
-| `text` が極端に長い／URL だらけ | 既存の `wordBreak`/`overflowWrap` で折り返し、高さは `measureMemoHeight` がカバー（無改修で動く）。 |
-| `parseNote` が JSON parse 失敗 | 既存の try/catch がプレーンテキスト扱いに fall through（無改修）。 |
-| 右パネル textarea で巨大入力 | 既存 `setMemos` の更新を通るのみ。サイズ上限は今回スコープ外。 |
+| ケース                          | 挙動                                                                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text` が空文字                 | `MemoText` は安全に空フラグメントを返す。呼び出し側は元から空時に `<text>memoClickToEdit</text>` 経路へ分岐済みで `MemoText` は呼ばれない。 |
+| `text` が極端に長い／URL だらけ | 既存の `wordBreak`/`overflowWrap` で折り返し、高さは `measureMemoHeight` がカバー（無改修で動く）。                                         |
+| `parseNote` が JSON parse 失敗  | 既存の try/catch がプレーンテキスト扱いに fall through（無改修）。                                                                          |
+| 右パネル textarea で巨大入力    | 既存 `setMemos` の更新を通るのみ。サイズ上限は今回スコープ外。                                                                              |
 
 ### 何をしないか
 
