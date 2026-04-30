@@ -20,6 +20,7 @@ import {
 import { formatRelativeTime } from '../../lib/relative-time'
 import { isGroupSub, isGroupParent, getGroupWidth } from '../../lib/lane-group-utils'
 import { parseNote, measureMemoHeight, MEMO_W } from '../editor/memo-utils'
+import { MemoText } from '../editor/components/MemoText'
 import { TeaserModal } from './TeaserModal'
 import { BottomCTABar } from './BottomCTABar'
 
@@ -469,20 +470,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
                           style={{ filter: 'drop-shadow(0 1px 3px rgba(180,160,0,0.08))' }}
                         />
                         <foreignObject x={mx} y={my} width={MEMO_W} height={mh}>
-                          <div
-                            style={{
-                              fontSize: 11,
-                              lineHeight: '1.55',
-                              color: T.memoText,
-                              fontFamily: 'inherit',
-                              padding: '5px 8px',
-                              wordBreak: 'break-all',
-                              pointerEvents: 'none',
-                              userSelect: 'none',
-                            }}
-                          >
-                            {memo.text}
-                          </div>
+                          <MemoText text={memo.text} color={T.memoText} />
                         </foreignObject>
                       </g>
                     )

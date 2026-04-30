@@ -3245,3 +3245,71 @@ describe('bidirectional arrow toggle (RightPanel)', () => {
     expect(bodyArrows.length).toBe(0)
   })
 })
+
+describe('memo URL/newline rendering (#331)', () => {
+  function makeFlowWithNode() {
+    const flow = createMinimalFlow()
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'A', note: null, orderIndex: 0 },
+    ]
+    return flow
+  }
+
+  function addMemoText(container: HTMLElement, text: string) {
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    expect(nodeRect).toBeTruthy()
+    fireEvent.click(nodeRect!)
+
+    const toolbarBtns = container.querySelectorAll('[data-testid="toolbar-btn"]')
+    expect(toolbarBtns.length).toBeGreaterThanOrEqual(2)
+    fireEvent.click(toolbarBtns[1])
+
+    const textarea = container.querySelector('textarea[placeholder="memoPlaceholder"]')
+    expect(textarea).toBeTruthy()
+    fireEvent.change(textarea!, { target: { value: text } })
+    fireEvent.blur(textarea!)
+  }
+
+  it('renders newline in memo text using whiteSpace pre-wrap', () => {
+    const flow = makeFlowWithNode()
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    addMemoText(container, 'line1\nline2')
+
+    const memoNote = container.querySelector('[data-testid="memo-note"]')!
+    const memoDiv = memoNote.querySelector('foreignObject > div') as HTMLElement
+    expect(memoDiv).toBeTruthy()
+    expect(memoDiv.style.whiteSpace).toBe('pre-wrap')
+    expect(memoDiv.textContent).toContain('line1')
+    expect(memoDiv.textContent).toContain('line2')
+  })
+
+  it('renders an anchor element for https URL inside memo', () => {
+    const flow = makeFlowWithNode()
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    addMemoText(container, 'click https://example.com please')
+
+    const memoNote = container.querySelector('[data-testid="memo-note"]')!
+    const link = memoNote.querySelector('a[href="https://example.com"]') as HTMLAnchorElement
+    expect(link).toBeTruthy()
+    expect(link.getAttribute('target')).toBe('_blank')
+    const rel = link.getAttribute('rel') ?? ''
+    expect(rel).toContain('noopener')
+    expect(rel).toContain('noreferrer')
+  })
+
+  it('right panel memo input is a textarea (multi-line)', () => {
+    const flow = makeFlowWithNode()
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+
+    const nodeRects = container.querySelectorAll('rect[rx="10"]')
+    const nodeRect = Array.from(nodeRects).find((r) => r.getAttribute('width') === '152')
+    fireEvent.click(nodeRect!)
+
+    const memoTextarea = container.querySelector(
+      'textarea[placeholder="rightPanel.memoPlaceholder"]',
+    )
+    expect(memoTextarea).toBeTruthy()
+    expect((memoTextarea as HTMLTextAreaElement).tagName).toBe('TEXTAREA')
+  })
+})

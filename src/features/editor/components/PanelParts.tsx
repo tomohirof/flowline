@@ -37,11 +37,13 @@ export const PanelTextarea = ({
   onChange,
   placeholder,
   rows = 2,
+  submitOnEnter = true,
 }: {
   value: string
   onChange: (v: string) => void
   placeholder?: string
   rows?: number
+  submitOnEnter?: boolean
 }) => (
   <textarea
     value={value}
@@ -51,6 +53,7 @@ export const PanelTextarea = ({
     className={styles.panelTextarea}
     onKeyDown={(e) => {
       if (e.nativeEvent.isComposing) return
+      if (!submitOnEnter) return
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
         ;(e.currentTarget as HTMLTextAreaElement).blur()
