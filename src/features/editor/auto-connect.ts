@@ -3,7 +3,7 @@
  * Step 2.5 (the new node lies on an existing arrow's path), telling the
  * caller to splice that specific arrow rather than all outgoing arrows.
  */
-export type UpstreamResult = {
+type UpstreamResult = {
   key: string
   splitArrowId?: string
 }
@@ -95,11 +95,10 @@ export function findClosestUpstream(
       if (fromRi < 0 || toRi < 0 || fromLi < 0 || toLi < 0) continue
       if (!(fromRi < newRi && toRi > newRi)) continue
 
-      const toLiMatches = toLi === newLi
       const minLi = Math.min(fromLi, toLi)
       const maxLi = Math.max(fromLi, toLi)
-      const passesLaneRange = minLi <= newLi && newLi <= maxLi
-      if (!toLiMatches && !passesLaneRange) continue
+      if (newLi < minLi || newLi > maxLi) continue
+      const toLiMatches = toLi === newLi
 
       const fromRiDist = newRi - fromRi
       if (
