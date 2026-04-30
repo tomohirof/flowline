@@ -3414,4 +3414,34 @@ describe('copyLabelOnSameRow distance-based selection (#337)', () => {
       .filter((s) => s === '右')
     expect(rights.length).toBe(1)
   })
+
+  it('should use default label when no other-lane same-row nodes exist', async () => {
+    // 2 lanes. Only one node, on row 1, in lane-1.
+    // Click empty cell at row 0 (no nodes on row 0 at all) → no copy candidate
+    // → default label is used.
+    //
+    // Note on same-lane exclusion: same-lane + same-row would mean the cell is
+    // already occupied (cellClick early-returns at tasks[k] check), so the
+    // `tLi === li` exclusion in the loop is unreachable from the UI. This test
+    // covers the equivalent "no candidate" path which the loop's exits feed into.
+    const flow = flowWithLanes(2, [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 1, label: '別行ノード', note: null, orderIndex: 0 },
+    ])
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
+    })
+
+    // Click empty cell at row 0, lane-1 (li=0, x=28, y=70)
+    const cell = findEmptyCellAt(container, 28, 70)
+    expect(cell).toBeTruthy()
+    fireEvent.click(cell!)
+    fireEvent.click(cell!)
+
+    // '別行ノード' should appear exactly once (the original n1, no copy)
+    await waitFor(() => {
+      const labels = Array.from(container.querySelectorAll('text')).map((t) => t.textContent)
+      expect(labels.filter((s) => s === '別行ノード').length).toBe(1)
+    })
+  })
 })
