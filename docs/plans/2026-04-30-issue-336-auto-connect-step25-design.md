@@ -37,7 +37,7 @@
 ```ts
 export type UpstreamResult = {
   key: string
-  splitArrowId?: string  // Step 2.5 でヒットした矢印 ID（その場合のみセット）
+  splitArrowId?: string // Step 2.5 でヒットした矢印 ID（その場合のみセット）
 }
 
 export function findClosestUpstream(
@@ -59,6 +59,7 @@ export function findClosestUpstream(
 新ヘルパー（`findClosestUpstream` 内のローカル処理として実装してよい）：
 
 候補矢印：
+
 - `arrow.from` / `arrow.to` の task が存在し、その rid/lid が rows/lanes に解決できる（できない矢印はスキップ）
 - `fromRi < newRi < toRi`（行跨ぎ）
 - かつ次のいずれか
@@ -103,21 +104,21 @@ const splitArrows = splitArrowId
 
 新規テスト：
 
-| # | ケース | 期待 |
-|---|---|---|
-| 1 | 通過矢印 `A→C` のセルに B 追加 → A を返し splitArrowId をセット | `result.key === 'A' && result.splitArrowId === 'a1'` |
-| 2 | 複数候補で `toLi===newLi` の方を優先（タイプ①優先） | タイプ①の矢印 |
-| 3 | 複数候補で `fromRi` が近い方を優先 | より近い fromRi の矢印 |
-| 4 | Step 2（同レーン上流）が Step 2.5 より優先 | 同レーン上流のキー、`splitArrowId === undefined` |
-| 5 | Step 1（同行）が Step 2.5 より優先 | 同行のキー、`splitArrowId === undefined` |
-| 6 | レーン条件を満たさない（行跨ぎだけ）→ Step 2.5 ヒットせず Step 3 へ | テール |
-| 7 | issue 再現シナリオ（案件情報登録 → 正式登録 を入力担当・行13 のセルで挟む） | 案件情報登録のキー + 矢印 ID |
+| #   | ケース                                                                      | 期待                                                 |
+| --- | --------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1   | 通過矢印 `A→C` のセルに B 追加 → A を返し splitArrowId をセット             | `result.key === 'A' && result.splitArrowId === 'a1'` |
+| 2   | 複数候補で `toLi===newLi` の方を優先（タイプ①優先）                         | タイプ①の矢印                                        |
+| 3   | 複数候補で `fromRi` が近い方を優先                                          | より近い fromRi の矢印                               |
+| 4   | Step 2（同レーン上流）が Step 2.5 より優先                                  | 同レーン上流のキー、`splitArrowId === undefined`     |
+| 5   | Step 1（同行）が Step 2.5 より優先                                          | 同行のキー、`splitArrowId === undefined`             |
+| 6   | レーン条件を満たさない（行跨ぎだけ）→ Step 2.5 ヒットせず Step 3 へ         | テール                                               |
+| 7   | issue 再現シナリオ（案件情報登録 → 正式登録 を入力担当・行13 のセルで挟む） | 案件情報登録のキー + 矢印 ID                         |
 
 ### `useArrows.test.ts`
 
-| # | ケース | 期待 |
-|---|---|---|
-| 1 | 上流 A が `A→C`（通過）と `A→D`（無関係な別レーン下流）を持つ。B を `A→C` 経路上に追加 | `A→C` のみ `A→B→C` にスプライスされ、`A→D` は無傷 |
+| #   | ケース                                                                                 | 期待                                              |
+| --- | -------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| 1   | 上流 A が `A→C`（通過）と `A→D`（無関係な別レーン下流）を持つ。B を `A→C` 経路上に追加 | `A→C` のみ `A→B→C` にスプライスされ、`A→D` は無傷 |
 
 ## スコープ外
 

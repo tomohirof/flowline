@@ -332,7 +332,14 @@ describe('findClosestUpstream', () => {
     //   - A(l0,r0) → C(l1,r5)  fromRi=0, dist=2
     //   - D(l0,r1) → E(l1,r5)  fromRi=1, dist=1 ← closer
     // New at (r2, l1).
-    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }, { id: 'r4' }, { id: 'r5' }]
+    const rows = [
+      { id: 'r0' },
+      { id: 'r1' },
+      { id: 'r2' },
+      { id: 'r3' },
+      { id: 'r4' },
+      { id: 'r5' },
+    ]
     const lanes = [{ id: 'l0' }, { id: 'l1' }]
     const tasks: Record<string, { lid: string; rid: string }> = {
       A: { lid: 'l0', rid: 'r0' },
@@ -402,11 +409,7 @@ describe('findClosestUpstream', () => {
     // 情報提供依頼 (l_sales, r10) is an isolated tail — must NOT be picked.
     // New node at (r13, l_input). Step 2.5 must intercept.
     const rows = Array.from({ length: 16 }, (_, i) => ({ id: `r${i}` }))
-    const lanes = [
-      { id: 'l_sales' },
-      { id: 'l_sharepoint' },
-      { id: 'l_input' },
-    ]
+    const lanes = [{ id: 'l_sales' }, { id: 'l_sharepoint' }, { id: 'l_input' }]
     const tasks: Record<string, { lid: string; rid: string }> = {
       info_request: { lid: 'l_sales', rid: 'r10' }, // 情報提供依頼 (tail)
       sp_register: { lid: 'l_sharepoint', rid: 'r12' }, // 案件情報登録
