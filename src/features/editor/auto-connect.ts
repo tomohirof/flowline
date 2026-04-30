@@ -77,6 +77,42 @@ export function findClosestUpstream(
     if (bestKey) return { key: bestKey }
   }
 
+  // 2.5. Crossing arrow at cell: if an arrow's path passes through (newRi, newLi),
+  //      use its `from` node as upstream and tag the arrow ID for targeted splice.
+  //      Inserted between Step 2 and Step 3 so same-row / same-lane upstream wins,
+  //      but a crossing arrow beats an unrelated tail.
+  {
+    type Candidate = { id: string; from: string; toLiMatches: boolean; fromRiDist: number }
+    let best: Candidate | null = null
+    for (const arrow of arrows) {
+      const fromTask = tasks[arrow.from]
+      const toTask = tasks[arrow.to]
+      if (!fromTask || !toTask) continue
+      const fromRi = rows.findIndex((r) => r.id === fromTask.rid)
+      const toRi = rows.findIndex((r) => r.id === toTask.rid)
+      const fromLi = lanes.findIndex((l) => l.id === fromTask.lid)
+      const toLi = lanes.findIndex((l) => l.id === toTask.lid)
+      if (fromRi < 0 || toRi < 0 || fromLi < 0 || toLi < 0) continue
+      if (!(fromRi < newRi && toRi > newRi)) continue
+
+      const toLiMatches = toLi === newLi
+      const minLi = Math.min(fromLi, toLi)
+      const maxLi = Math.max(fromLi, toLi)
+      const passesLaneRange = minLi <= newLi && newLi <= maxLi
+      if (!toLiMatches && !passesLaneRange) continue
+
+      const fromRiDist = newRi - fromRi
+      if (
+        !best ||
+        (toLiMatches && !best.toLiMatches) ||
+        (toLiMatches === best.toLiMatches && fromRiDist < best.fromRiDist)
+      ) {
+        best = { id: arrow.id, from: arrow.from, toLiMatches, fromRiDist }
+      }
+    }
+    if (best) return { key: best.from, splitArrowId: best.id }
+  }
+
   // 3. Upstream tails: closest by row, flow-connected as tiebreaker
   {
     let bestKey: string | null = null

@@ -286,6 +286,24 @@ describe('findClosestUpstream', () => {
     const result = findClosestUpstream(tasks, rows, lanes, 1, 1, [])
     expect(result?.key).toBe('otherLaneTail')
   })
+
+  it('should return crossing arrow upstream when new node is on its path (Step 2.5)', () => {
+    // A(l0,r0) → C(l1,r2). New node at (r1, l1).
+    // Step 1: same-row r1 — none.
+    // Step 2: same-lane l1 upstream — none (C is downstream).
+    // Step 2.5: arrow A→C, fromRi=0 < newRi=1 < toRi=2, toLi=l1 === newLi=l1 (タイプ①).
+    //          → returns A + splitArrowId.
+    const rows = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }]
+    const lanes = [{ id: 'l0' }, { id: 'l1' }]
+    const tasks: Record<string, { lid: string; rid: string }> = {
+      A: { lid: 'l0', rid: 'r0' },
+      C: { lid: 'l1', rid: 'r2' },
+    }
+    const arrows = [{ id: 'a1', from: 'A', to: 'C', comment: '' }]
+    const result = findClosestUpstream(tasks, rows, lanes, 1, 1, arrows)
+    expect(result?.key).toBe('A')
+    expect(result?.splitArrowId).toBe('a1')
+  })
 })
 
 describe('findCrossingArrows', () => {
