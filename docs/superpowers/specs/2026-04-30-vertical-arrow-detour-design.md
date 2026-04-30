@@ -54,9 +54,7 @@ issue #314 で「同一行（横方向）で A→C の間に B があるとき�
 横版 `detectDetour` を Y↔X 入れ替えで対称化する:
 
 ```ts
-function detectVerticalDetour(
-  s: Point, e: Point, obstacles: Bbox[]
-): { detourX: number } | null {
+function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX: number } | null {
   // 垂直直線でなければ迂回しない
   if (Math.abs(e.x - s.x) >= 2) return null
 
@@ -70,9 +68,7 @@ function detectVerticalDetour(
   // 経路上の障害ノード = 同一列（colX と X が重なる）かつ Y が始終点の間
   const inCol = obstacles.filter(
     (b) =>
-      Math.abs(b.x - colX) < b.w / 2 + 2 &&
-      b.y - b.h / 2 < yHigh - 1 &&
-      b.y + b.h / 2 > yLow + 1,
+      Math.abs(b.x - colX) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1,
   )
   if (inCol.length === 0) return null
 
@@ -104,7 +100,7 @@ function detectVerticalDetour(
 
 ```ts
 if (obstacles && obstacles.length > 0) {
-  const hDetour = detectDetour(s, e, obstacles)         // 水平直線のとき
+  const hDetour = detectDetour(s, e, obstacles) // 水平直線のとき
   if (hDetour) {
     // 既存の 6 セグメント水平迂回パス
   }
@@ -146,10 +142,10 @@ interface CollectVerticalObstaclesArgs {
   nodes: ObstacleNode[]
   fromKey: string
   toKey: string
-  fromCy: number     // 始点 Y
-  toCy: number       // 終点 Y
-  colX: number       // 同一列 X（始点・終点共通）
-  colW: number       // 列ピッチ（FlowEditor の LW + G を渡す）
+  fromCy: number // 始点 Y
+  toCy: number // 終点 Y
+  colX: number // 同一列 X（始点・終点共通）
+  colW: number // 列ピッチ（FlowEditor の LW + G を渡す）
   bboxW: number
   bboxH: number
 }
@@ -189,18 +185,26 @@ let obstacles: Bbox[] | undefined
 if (fri === tri) {
   obstacles = collectObstacles({
     nodes: obstacleNodes,
-    fromKey: arrow.from, toKey: arrow.to,
-    fromCx: from.x, toCx: to.x,
-    rowY: from.y, rowH: RH,
-    bboxW: TW, bboxH: TH,
+    fromKey: arrow.from,
+    toKey: arrow.to,
+    fromCx: from.x,
+    toCx: to.x,
+    rowY: from.y,
+    rowH: RH,
+    bboxW: TW,
+    bboxH: TH,
   })
 } else if (fli === tli) {
   obstacles = collectVerticalObstacles({
     nodes: obstacleNodes,
-    fromKey: arrow.from, toKey: arrow.to,
-    fromCy: from.y, toCy: to.y,
-    colX: from.x, colW: LW + G,
-    bboxW: TW, bboxH: TH,
+    fromKey: arrow.from,
+    toKey: arrow.to,
+    fromCy: from.y,
+    toCy: to.y,
+    colX: from.x,
+    colW: LW + G,
+    bboxW: TW,
+    bboxH: TH,
   })
 }
 ```
@@ -252,12 +256,12 @@ if (fri === tri) {
 
 ## 影響範囲
 
-| ファイル | 変更内容 |
-|---|---|
-| `src/lib/arrow-routing.ts` | `detectVerticalDetour` 追加、`buildArrowPath` で dispatch、`collectVerticalObstacles` 新設 |
-| `src/lib/arrow-routing.test.ts` | 縦方向迂回テスト 14 件 + `collectVerticalObstacles` テスト 4 件追加 |
-| `src/features/editor/FlowEditor.tsx` | `aPath` の `obstacles` 組み立て条件を `fri === tri || fli === tli` に拡張、`mode` で呼び分け |
-| `src/features/shared/SharedFlowViewer.tsx` | `computeArrowPath` を同様に拡張 |
+| ファイル                                   | 変更内容                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------ | --- | -------------------------------------- |
+| `src/lib/arrow-routing.ts`                 | `detectVerticalDetour` 追加、`buildArrowPath` で dispatch、`collectVerticalObstacles` 新設 |
+| `src/lib/arrow-routing.test.ts`            | 縦方向迂回テスト 14 件 + `collectVerticalObstacles` テスト 4 件追加                        |
+| `src/features/editor/FlowEditor.tsx`       | `aPath` の `obstacles` 組み立て条件を `fri === tri                                         |     | fli === tli` に拡張、`mode` で呼び分け |
+| `src/features/shared/SharedFlowViewer.tsx` | `computeArrowPath` を同様に拡張                                                            |
 
 ## 既知の懸念と対応
 

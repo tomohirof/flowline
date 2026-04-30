@@ -43,18 +43,19 @@ cat ~/.claude/rules/testing.md
 
 ## File Structure
 
-| ファイル | 役割 | 変更種別 |
-|---|---|---|
-| `src/lib/arrow-routing.ts` | 矢印パス計算ロジック | Modify (追加: `detectVerticalDetour`, `collectVerticalObstacles`, `buildArrowPath` dispatch) |
-| `src/lib/arrow-routing.test.ts` | ユニットテスト | Modify (追加: 縦方向テスト 14 件 + collectVerticalObstacles テスト 4 件) |
-| `src/features/editor/FlowEditor.tsx` | エディタ本体 | Modify (`aPath` の obstacles 組み立て) |
-| `src/features/shared/SharedFlowViewer.tsx` | 共有ビューア | Modify (`computeArrowPath` の obstacles 組み立て) |
+| ファイル                                   | 役割                 | 変更種別                                                                                     |
+| ------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------- |
+| `src/lib/arrow-routing.ts`                 | 矢印パス計算ロジック | Modify (追加: `detectVerticalDetour`, `collectVerticalObstacles`, `buildArrowPath` dispatch) |
+| `src/lib/arrow-routing.test.ts`            | ユニットテスト       | Modify (追加: 縦方向テスト 14 件 + collectVerticalObstacles テスト 4 件)                     |
+| `src/features/editor/FlowEditor.tsx`       | エディタ本体         | Modify (`aPath` の obstacles 組み立て)                                                       |
+| `src/features/shared/SharedFlowViewer.tsx` | 共有ビューア         | Modify (`computeArrowPath` の obstacles 組み立て)                                            |
 
 ---
 
 ## Task 1: detectVerticalDetour 基本ロジック（TDD）
 
 **Files:**
+
 - Test: `src/lib/arrow-routing.test.ts` (末尾に新 describe を追加)
 - Modify: `src/lib/arrow-routing.ts`
 
@@ -108,11 +109,7 @@ npm test -- arrow-routing.test
 `src/lib/arrow-routing.ts` の `detectDetour` 関数の **直後** に追加:
 
 ```ts
-function detectVerticalDetour(
-  s: Point,
-  e: Point,
-  obstacles: Bbox[],
-): { detourX: number } | null {
+function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX: number } | null {
   // 垂直直線でなければ迂回しない
   if (Math.abs(e.x - s.x) >= 2) return null
 
@@ -157,32 +154,32 @@ function detectVerticalDetour(
 `src/lib/arrow-routing.ts` の `buildArrowPath` 内、既存の水平迂回ブロック直後に追加。具体的には、既存の `if (obstacles && obstacles.length > 0)` ブロック内で、水平 detour が null だったら垂直 detour を試す形にする:
 
 ```ts
-  // 迂回モード: 同一行/同一レーンで経路上に障害ノードがある場合
-  if (obstacles && obstacles.length > 0) {
-    const detour = detectDetour(s, e, obstacles)
-    if (detour) {
-      const { detourY } = detour
-      const sign = Math.sign(dx)
-      const halfDx = Math.abs(dx) / 2
-      const departX = s.x + sign * Math.min(DEPART_GAP, halfDx)
-      const approachX = e.x - sign * Math.min(APPROACH_GAP, halfDx)
-      const d = `M${s.x},${s.y} L${departX},${s.y} L${departX},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
-      return { d, mx: (s.x + e.x) / 2, my: detourY }
-    }
-    const vDetour = detectVerticalDetour(s, e, obstacles)
-    if (vDetour) {
-      const { detourX } = vDetour
-      // |e.y - s.y| / 2 で clamp（横版と対称な防御コード）
-      const sign = Math.sign(dy)
-      const halfDy = Math.abs(dy) / 2
-      const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
-      const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
-      // 6 セグメント: M → 垂直(departY まで) → 水平(detourX まで) → 垂直(approachY まで)
-      //               → 水平(e.x まで=s.x なので戻る) → 垂直(e.y へ進入)
-      const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
-      return { d, mx: detourX, my: (s.y + e.y) / 2 }
-    }
+// 迂回モード: 同一行/同一レーンで経路上に障害ノードがある場合
+if (obstacles && obstacles.length > 0) {
+  const detour = detectDetour(s, e, obstacles)
+  if (detour) {
+    const { detourY } = detour
+    const sign = Math.sign(dx)
+    const halfDx = Math.abs(dx) / 2
+    const departX = s.x + sign * Math.min(DEPART_GAP, halfDx)
+    const approachX = e.x - sign * Math.min(APPROACH_GAP, halfDx)
+    const d = `M${s.x},${s.y} L${departX},${s.y} L${departX},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
+    return { d, mx: (s.x + e.x) / 2, my: detourY }
   }
+  const vDetour = detectVerticalDetour(s, e, obstacles)
+  if (vDetour) {
+    const { detourX } = vDetour
+    // |e.y - s.y| / 2 で clamp（横版と対称な防御コード）
+    const sign = Math.sign(dy)
+    const halfDy = Math.abs(dy) / 2
+    const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
+    const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
+    // 6 セグメント: M → 垂直(departY まで) → 水平(detourX まで) → 垂直(approachY まで)
+    //               → 水平(e.x まで=s.x なので戻る) → 垂直(e.y へ進入)
+    const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+    return { d, mx: detourX, my: (s.y + e.y) / 2 }
+  }
+}
 ```
 
 - [ ] **Step 5: テスト pass を確認**
@@ -216,6 +213,7 @@ EOF
 直右にノードがあるとき左迂回、両塞がりで右優先になることを検証。
 
 **Files:**
+
 - Test: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: 失敗テストを追加**
@@ -223,22 +221,22 @@ EOF
 Task 1 で追加した `describe('buildArrowPath - 縦方向迂回（同一レーン）', () => {...})` の中に追加:
 
 ```ts
-  it('同一列・障害1個・直右塞がり → 左迂回（detourX = 障害左端 - 14）', () => {
-    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
-    const Bright: Bbox = { x: 284, y: 400, w: 152, h: 56 }
-    const r = buildArrowPath(s, e, fc, tc, [B, Bright])
-    // detourX = 200 - 76 - 14 = 110
-    expect(r.d).toBe('M200,228 L200,242 L110,242 L110,558 L200,558 L200,572')
-    expect(r.mx).toBe(110)
-  })
+it('同一列・障害1個・直右塞がり → 左迂回（detourX = 障害左端 - 14）', () => {
+  const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+  const Bright: Bbox = { x: 284, y: 400, w: 152, h: 56 }
+  const r = buildArrowPath(s, e, fc, tc, [B, Bright])
+  // detourX = 200 - 76 - 14 = 110
+  expect(r.d).toBe('M200,228 L200,242 L110,242 L110,558 L200,558 L200,572')
+  expect(r.mx).toBe(110)
+})
 
-  it('同一列・障害1個・両塞がり → 右優先で右迂回', () => {
-    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
-    const Bright: Bbox = { x: 284, y: 400, w: 152, h: 56 }
-    const Bleft: Bbox = { x: 116, y: 400, w: 152, h: 56 }
-    const r = buildArrowPath(s, e, fc, tc, [B, Bright, Bleft])
-    expect(r.mx).toBe(290)
-  })
+it('同一列・障害1個・両塞がり → 右優先で右迂回', () => {
+  const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+  const Bright: Bbox = { x: 284, y: 400, w: 152, h: 56 }
+  const Bleft: Bbox = { x: 116, y: 400, w: 152, h: 56 }
+  const r = buildArrowPath(s, e, fc, tc, [B, Bright, Bleft])
+  expect(r.mx).toBe(290)
+})
 ```
 
 - [ ] **Step 2: テストを実行して PASS を確認**
@@ -266,6 +264,7 @@ EOF
 ## Task 3: detectVerticalDetour 複数障害・方向・エッジ（TDD）
 
 **Files:**
+
 - Test: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: 残りのテストケースを追加**
@@ -273,75 +272,75 @@ EOF
 Task 1 で追加した describe 内に以下を追加:
 
 ```ts
-  it('同一列・障害2個・右空き → まとめて右迂回（detourX は最右端の最大）', () => {
-    const B: Bbox = { x: 200, y: 380, w: 152, h: 56 }
-    const C2: Bbox = { x: 200, y: 480, w: 200, h: 56 }
-    const sExt = { x: 200, y: 228 }
-    const eExt = { x: 200, y: 624 }
-    const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 200, y: 700 }, [B, C2])
-    // 最右端: max(200+76, 200+100) = 300, +14 = 314
-    expect(r.mx).toBe(314)
-    expect(r.d).toBe('M200,228 L200,242 L314,242 L314,610 L200,610 L200,624')
-  })
+it('同一列・障害2個・右空き → まとめて右迂回（detourX は最右端の最大）', () => {
+  const B: Bbox = { x: 200, y: 380, w: 152, h: 56 }
+  const C2: Bbox = { x: 200, y: 480, w: 200, h: 56 }
+  const sExt = { x: 200, y: 228 }
+  const eExt = { x: 200, y: 624 }
+  const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 200, y: 700 }, [B, C2])
+  // 最右端: max(200+76, 200+100) = 300, +14 = 314
+  expect(r.mx).toBe(314)
+  expect(r.d).toBe('M200,228 L200,242 L314,242 L314,610 L200,610 L200,624')
+})
 
-  it('同一列・障害2個・1つだけ直右塞がり → 左迂回', () => {
-    const B: Bbox = { x: 200, y: 380, w: 152, h: 56 }
-    const C2: Bbox = { x: 200, y: 480, w: 152, h: 56 }
-    const Bright: Bbox = { x: 284, y: 380, w: 152, h: 56 }
-    const sExt = { x: 200, y: 228 }
-    const eExt = { x: 200, y: 624 }
-    const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 200, y: 700 }, [B, C2, Bright])
-    // 最左端: min(200-76, 200-76) = 124, -14 = 110
-    expect(r.mx).toBe(110)
-  })
+it('同一列・障害2個・1つだけ直右塞がり → 左迂回', () => {
+  const B: Bbox = { x: 200, y: 380, w: 152, h: 56 }
+  const C2: Bbox = { x: 200, y: 480, w: 152, h: 56 }
+  const Bright: Bbox = { x: 284, y: 380, w: 152, h: 56 }
+  const sExt = { x: 200, y: 228 }
+  const eExt = { x: 200, y: 624 }
+  const r = buildArrowPath(sExt, eExt, { x: 200, y: 200 }, { x: 200, y: 700 }, [B, C2, Bright])
+  // 最左端: min(200-76, 200-76) = 124, -14 = 110
+  expect(r.mx).toBe(110)
+})
 
-  it('同一列・障害なし（経路上に bbox がない）→ 直線', () => {
-    const farUp: Bbox = { x: 200, y: 100, w: 152, h: 56 }
-    const farDown: Bbox = { x: 200, y: 700, w: 152, h: 56 }
-    const r = buildArrowPath(s, e, fc, tc, [farUp, farDown])
-    expect(r.d).toBe('M200,228 L200,572')
-  })
+it('同一列・障害なし（経路上に bbox がない）→ 直線', () => {
+  const farUp: Bbox = { x: 200, y: 100, w: 152, h: 56 }
+  const farDown: Bbox = { x: 200, y: 700, w: 152, h: 56 }
+  const r = buildArrowPath(s, e, fc, tc, [farUp, farDown])
+  expect(r.d).toBe('M200,228 L200,572')
+})
 
-  it('斜め方向（dx >= 2）→ 既存の Z/L 字ロジック（縦迂回しない）', () => {
-    const sDiag = { x: 200, y: 228 }
-    const eDiag = { x: 300, y: 572 }
-    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
-    const r = buildArrowPath(sDiag, eDiag, { x: 200, y: 200 }, { x: 300, y: 600 }, [B])
-    // 縦迂回特有のセグメント L${detourX},242 等が出ないことを確認
-    expect(r.d).not.toContain('L290,242')
-  })
+it('斜め方向（dx >= 2）→ 既存の Z/L 字ロジック（縦迂回しない）', () => {
+  const sDiag = { x: 200, y: 228 }
+  const eDiag = { x: 300, y: 572 }
+  const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+  const r = buildArrowPath(sDiag, eDiag, { x: 200, y: 200 }, { x: 300, y: 600 }, [B])
+  // 縦迂回特有のセグメント L${detourX},242 等が出ないことを確認
+  expect(r.d).not.toContain('L290,242')
+})
 
-  it('始終点が同じ Y（自己参照） → inCol 空 → 直線', () => {
-    const B: Bbox = { x: 200, y: 200, w: 152, h: 56 }
-    const r = buildArrowPath(
-      { x: 200, y: 200 },
-      { x: 200, y: 200 },
-      { x: 200, y: 200 },
-      { x: 200, y: 200 },
-      [B],
-    )
-    expect(r.d).toBe('M200,200 L200,200')
-  })
+it('始終点が同じ Y（自己参照） → inCol 空 → 直線', () => {
+  const B: Bbox = { x: 200, y: 200, w: 152, h: 56 }
+  const r = buildArrowPath(
+    { x: 200, y: 200 },
+    { x: 200, y: 200 },
+    { x: 200, y: 200 },
+    { x: 200, y: 200 },
+    [B],
+  )
+  expect(r.d).toBe('M200,200 L200,200')
+})
 
-  it('from/to 自身の bbox が混入しても Y±1 マージンで除外される', () => {
-    const fromSelfBbox: Bbox = { x: 200, y: 200, w: 152, h: 56 }
-    const toSelfBbox: Bbox = { x: 200, y: 600, w: 152, h: 56 }
-    const r = buildArrowPath(s, e, fc, tc, [fromSelfBbox, toSelfBbox])
-    expect(r.d).toBe('M200,228 L200,572')
-  })
+it('from/to 自身の bbox が混入しても Y±1 マージンで除外される', () => {
+  const fromSelfBbox: Bbox = { x: 200, y: 200, w: 152, h: 56 }
+  const toSelfBbox: Bbox = { x: 200, y: 600, w: 152, h: 56 }
+  const r = buildArrowPath(s, e, fc, tc, [fromSelfBbox, toSelfBbox])
+  expect(r.d).toBe('M200,228 L200,572')
+})
 
-  it('同一列・下→上方向でも右迂回する（s.y > e.y）', () => {
-    // s と e を逆転
-    const sR = { x: 200, y: 572 }
-    const eR = { x: 200, y: 228 }
-    const fcR = { x: 200, y: 600 }
-    const tcR = { x: 200, y: 200 }
-    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
-    const r = buildArrowPath(sR, eR, fcR, tcR, [B])
-    // sign=-1, departY=572-14=558, approachY=228+14=242
-    expect(r.d).toBe('M200,572 L200,558 L290,558 L290,242 L200,242 L200,228')
-    expect(r.mx).toBe(290)
-  })
+it('同一列・下→上方向でも右迂回する（s.y > e.y）', () => {
+  // s と e を逆転
+  const sR = { x: 200, y: 572 }
+  const eR = { x: 200, y: 228 }
+  const fcR = { x: 200, y: 600 }
+  const tcR = { x: 200, y: 200 }
+  const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+  const r = buildArrowPath(sR, eR, fcR, tcR, [B])
+  // sign=-1, departY=572-14=558, approachY=228+14=242
+  expect(r.d).toBe('M200,572 L200,558 L290,558 L290,242 L200,242 L200,228')
+  expect(r.mx).toBe(290)
+})
 ```
 
 - [ ] **Step 2: テストを実行して PASS を確認**
@@ -369,6 +368,7 @@ EOF
 ## Task 4: 6 セグメント形状＋自己交差防止 clamp（TDD）
 
 **Files:**
+
 - Test: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: テスト追加**
@@ -376,43 +376,43 @@ EOF
 Task 1 の describe ブロックの末尾に追加:
 
 ```ts
-  describe('垂直進入＋垂直 depart（始終点とも垂直）', () => {
-    it('右迂回パスは 6 セグメントで最初と最終セグメントが垂直', () => {
-      const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
-      const r = buildArrowPath(s, e, fc, tc, [B])
-      const segments = r.d.match(/[ML][^ML]+/g) ?? []
-      expect(segments).toHaveLength(6)
-      // 最初のセグメント（M→L）は垂直: M の X と次の L の X が同じ
-      const first = segments[0]
-      const second = segments[1]
-      const firstX = Number(first.slice(1).split(',')[0])
-      const secondX = Number(second.slice(1).split(',')[0])
-      expect(firstX).toBe(secondX)
-      expect(firstX).toBe(s.x)
-      // 最終セグメントは垂直
-      const last = segments[segments.length - 1]
-      const prev = segments[segments.length - 2]
-      const lastX = Number(last.slice(1).split(',')[0])
-      const prevX = Number(prev.slice(1).split(',')[0])
-      expect(lastX).toBe(prevX)
-      expect(lastX).toBe(e.x)
-    })
-
-    it('垂直距離が DEPART_GAP*2 未満の場合 departY/approachY は中央で接合し自己交差しない', () => {
-      // 垂直距離=20, DEPART_GAP=APPROACH_GAP=14。Math.min(14, 10) で 10 に clamp される
-      // s=(200,100), e=(200,120) で間に B (200,110) を置いて迂回を強制
-      const sN = { x: 200, y: 100 }
-      const eN = { x: 200, y: 120 }
-      const fcN = { x: 200, y: 80 }
-      const tcN = { x: 200, y: 140 }
-      const B: Bbox = { x: 200, y: 110, w: 152, h: 16 }
-      const r = buildArrowPath(sN, eN, fcN, tcN, [B])
-      // departY = 100 + 1 * Math.min(14, 10) = 110
-      // approachY = 120 - 1 * Math.min(14, 10) = 110
-      // detourX = 200 + 76 + 14 = 290
-      expect(r.d).toBe('M200,100 L200,110 L290,110 L290,110 L200,110 L200,120')
-    })
+describe('垂直進入＋垂直 depart（始終点とも垂直）', () => {
+  it('右迂回パスは 6 セグメントで最初と最終セグメントが垂直', () => {
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    const segments = r.d.match(/[ML][^ML]+/g) ?? []
+    expect(segments).toHaveLength(6)
+    // 最初のセグメント（M→L）は垂直: M の X と次の L の X が同じ
+    const first = segments[0]
+    const second = segments[1]
+    const firstX = Number(first.slice(1).split(',')[0])
+    const secondX = Number(second.slice(1).split(',')[0])
+    expect(firstX).toBe(secondX)
+    expect(firstX).toBe(s.x)
+    // 最終セグメントは垂直
+    const last = segments[segments.length - 1]
+    const prev = segments[segments.length - 2]
+    const lastX = Number(last.slice(1).split(',')[0])
+    const prevX = Number(prev.slice(1).split(',')[0])
+    expect(lastX).toBe(prevX)
+    expect(lastX).toBe(e.x)
   })
+
+  it('垂直距離が DEPART_GAP*2 未満の場合 departY/approachY は中央で接合し自己交差しない', () => {
+    // 垂直距離=20, DEPART_GAP=APPROACH_GAP=14。Math.min(14, 10) で 10 に clamp される
+    // s=(200,100), e=(200,120) で間に B (200,110) を置いて迂回を強制
+    const sN = { x: 200, y: 100 }
+    const eN = { x: 200, y: 120 }
+    const fcN = { x: 200, y: 80 }
+    const tcN = { x: 200, y: 140 }
+    const B: Bbox = { x: 200, y: 110, w: 152, h: 16 }
+    const r = buildArrowPath(sN, eN, fcN, tcN, [B])
+    // departY = 100 + 1 * Math.min(14, 10) = 110
+    // approachY = 120 - 1 * Math.min(14, 10) = 110
+    // detourX = 200 + 76 + 14 = 290
+    expect(r.d).toBe('M200,100 L200,110 L290,110 L290,110 L200,110 L200,120')
+  })
+})
 ```
 
 - [ ] **Step 2: テストを実行**
@@ -440,6 +440,7 @@ EOF
 ## Task 5: collectVerticalObstacles ヘルパー（TDD）
 
 **Files:**
+
 - Test: `src/lib/arrow-routing.test.ts`
 - Modify: `src/lib/arrow-routing.ts`
 
@@ -642,6 +643,7 @@ EOF
 ## Task 6: FlowEditor.aPath を縦方向対応
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 - [ ] **Step 1: import 文を更新**
@@ -663,33 +665,33 @@ import {
 `src/features/editor/FlowEditor.tsx` の `aPath` 関数内（line 1384-1398 付近）を以下に置き換え:
 
 ```ts
-    // 同一行/同一レーンのときに obstacles を組み立てる（迂回判定用）
-    let obstacles: Bbox[] | undefined
-    if (fri === tri) {
-      obstacles = collectObstacles({
-        nodes: obstacleNodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCx: from.x,
-        toCx: to.x,
-        rowY: from.y,
-        rowH: RH,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    } else if (fli === tli) {
-      obstacles = collectVerticalObstacles({
-        nodes: obstacleNodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCy: from.y,
-        toCy: to.y,
-        colX: from.x,
-        colW: LW + G,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    }
+// 同一行/同一レーンのときに obstacles を組み立てる（迂回判定用）
+let obstacles: Bbox[] | undefined
+if (fri === tri) {
+  obstacles = collectObstacles({
+    nodes: obstacleNodes,
+    fromKey: arrow.from,
+    toKey: arrow.to,
+    fromCx: from.x,
+    toCx: to.x,
+    rowY: from.y,
+    rowH: RH,
+    bboxW: TW,
+    bboxH: TH,
+  })
+} else if (fli === tli) {
+  obstacles = collectVerticalObstacles({
+    nodes: obstacleNodes,
+    fromKey: arrow.from,
+    toKey: arrow.to,
+    fromCy: from.y,
+    toCy: to.y,
+    colX: from.x,
+    colW: LW + G,
+    bboxW: TW,
+    bboxH: TH,
+  })
+}
 ```
 
 `LW` と `G` はこのスコープで利用可能（line 678: `const LW = ...`, line 677: `G = T.laneGap`）。
@@ -722,6 +724,7 @@ EOF
 ## Task 7: SharedFlowViewer.computeArrowPath を縦方向対応
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`
 
 - [ ] **Step 1: import 文を更新**
@@ -747,33 +750,33 @@ import {
 line 131-145 付近の `if (fromNode.rowIndex === toNode.rowIndex) { ... }` ブロックを以下に置き換え:
 
 ```ts
-    // 同一行/同一レーンのときに obstacles を組み立てる（迂回判定用）
-    let obstacles: Bbox[] | undefined
-    if (fromNode.rowIndex === toNode.rowIndex) {
-      obstacles = collectObstacles({
-        nodes: obstacleNodes,
-        fromKey: fromNode.id,
-        toKey: toNode.id,
-        fromCx: f.x,
-        toCx: t.x,
-        rowY: f.y,
-        rowH: RH,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    } else if (fromNode.laneId === toNode.laneId) {
-      obstacles = collectVerticalObstacles({
-        nodes: obstacleNodes,
-        fromKey: fromNode.id,
-        toKey: toNode.id,
-        fromCy: f.y,
-        toCy: t.y,
-        colX: f.x,
-        colW: LW + G,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    }
+// 同一行/同一レーンのときに obstacles を組み立てる（迂回判定用）
+let obstacles: Bbox[] | undefined
+if (fromNode.rowIndex === toNode.rowIndex) {
+  obstacles = collectObstacles({
+    nodes: obstacleNodes,
+    fromKey: fromNode.id,
+    toKey: toNode.id,
+    fromCx: f.x,
+    toCx: t.x,
+    rowY: f.y,
+    rowH: RH,
+    bboxW: TW,
+    bboxH: TH,
+  })
+} else if (fromNode.laneId === toNode.laneId) {
+  obstacles = collectVerticalObstacles({
+    nodes: obstacleNodes,
+    fromKey: fromNode.id,
+    toKey: toNode.id,
+    fromCy: f.y,
+    toCy: t.y,
+    colX: f.x,
+    colW: LW + G,
+    bboxW: TW,
+    bboxH: TH,
+  })
+}
 ```
 
 `LW` と `G` はこのスコープで利用可能（line 81 付近: `const LW = ...`, `G = T.laneGap` 相当）。確認のため line 70-90 を読み、利用可能な変数名と一致するよう調整。

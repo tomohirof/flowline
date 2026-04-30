@@ -58,11 +58,7 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   return { detourY }
 }
 
-function detectVerticalDetour(
-  s: Point,
-  e: Point,
-  obstacles: Bbox[],
-): { detourX: number } | null {
+function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX: number } | null {
   // 垂直直線でなければ迂回しない
   if (Math.abs(e.x - s.x) >= 2) return null
 
