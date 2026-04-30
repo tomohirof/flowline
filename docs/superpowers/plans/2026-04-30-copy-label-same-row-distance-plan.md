@@ -43,6 +43,7 @@
 ## Task 1: テスト追加（Red）— 異距離ケース
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx` (末尾に新規 `describe` ブロック追加)
 
 このタスクで「異なる距離の2ノード → 距離が近い方のラベルがコピーされる」テストを追加する。実装はまだしないので、このテストは実行すると **失敗する想定**（現状は最古ノード=遠い方が選ばれる）。
@@ -153,6 +154,7 @@ EOF
 ## Task 2: 実装（Green）— 距離ベース選択
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:1224-1228`
 
 - [ ] **Step 1: `cellClick` 内のラベルコピー処理を距離ベースに置換**
@@ -160,37 +162,40 @@ EOF
 `src/features/editor/FlowEditor.tsx` の以下の部分を置換：
 
 **置換前 (1224-1228行):**
+
 ```ts
-    let label = t('defaultNodeLabel')
-    if (editorSettings.copyLabelOnSameRow) {
-      const sameRowNode = Object.entries(tasks).find(([key, t]) => t.rid === rid && key !== k)
-      if (sameRowNode) label = sameRowNode[1].label
-    }
+let label = t('defaultNodeLabel')
+if (editorSettings.copyLabelOnSameRow) {
+  const sameRowNode = Object.entries(tasks).find(([key, t]) => t.rid === rid && key !== k)
+  if (sameRowNode) label = sameRowNode[1].label
+}
 ```
 
 **置換後:**
+
 ```ts
-    let label = t('defaultNodeLabel')
-    if (editorSettings.copyLabelOnSameRow) {
-      let bestKey: string | null = null
-      let bestDist = Infinity
-      let bestLi = Infinity
-      for (const [key, task] of Object.entries(tasks)) {
-        if (task.rid !== rid || key === k) continue
-        const tLi = lanes.findIndex((l) => l.id === task.lid)
-        if (tLi < 0 || tLi === li) continue
-        const dist = Math.abs(tLi - li)
-        if (dist < bestDist || (dist === bestDist && tLi < bestLi)) {
-          bestKey = key
-          bestDist = dist
-          bestLi = tLi
-        }
-      }
-      if (bestKey) label = tasks[bestKey].label
+let label = t('defaultNodeLabel')
+if (editorSettings.copyLabelOnSameRow) {
+  let bestKey: string | null = null
+  let bestDist = Infinity
+  let bestLi = Infinity
+  for (const [key, task] of Object.entries(tasks)) {
+    if (task.rid !== rid || key === k) continue
+    const tLi = lanes.findIndex((l) => l.id === task.lid)
+    if (tLi < 0 || tLi === li) continue
+    const dist = Math.abs(tLi - li)
+    if (dist < bestDist || (dist === bestDist && tLi < bestLi)) {
+      bestKey = key
+      bestDist = dist
+      bestLi = tLi
     }
+  }
+  if (bestKey) label = tasks[bestKey].label
+}
 ```
 
 ポイント:
+
 - 内側ループ変数 `task` は外側スコープの `t`（i18n関数）と衝突しないよう、明示的に `task` と命名（既存コードでは `t` というシャドウ変数があったが、これを排除する）。
 - `lanes.findIndex(...)` は1反復ごとに O(N) だが、同行ノード数は通常少なく問題にならない。最適化不要。
 
@@ -222,6 +227,7 @@ EOF
 ## Task 3: テスト追加 — 等距離・左優先タイブレーク
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx` (Task 1 で追加した describe 内に新規 it を追加)
 
 - [ ] **Step 1: 等距離左優先テストを追加**
@@ -229,38 +235,38 @@ EOF
 Task 1 で追加した `describe('copyLabelOnSameRow distance-based selection (#337)', ...)` 内に追加：
 
 ```tsx
-  it('should prefer left node when same row has equidistant left and right nodes', async () => {
-    // 5 lanes. Row 0 has:
-    //   - node L "左" at lane-1 (li=0, x=28)
-    //   - node R "右" at lane-5 (li=4, x=764)
-    // Click empty cell at lane-3 (li=2, x=396).
-    // Distance to both is 2 → tiebreak: smaller tLi wins → expect L's label.
-    const flow = flowWithLanes(5, [
-      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '左', note: null, orderIndex: 0 },
-      { id: 'n2', laneId: 'lane-5', rowIndex: 0, label: '右', note: null, orderIndex: 1 },
-    ])
-    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
-    await waitFor(() => {
-      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
-    })
-
-    const cell = findEmptyCellAt(container, 396, 70)
-    expect(cell).toBeTruthy()
-    fireEvent.click(cell!)
-    fireEvent.click(cell!)
-
-    // Expect '左' to be copied (2 instances: n1 + new copy), '右' stays at 1
-    await waitFor(() => {
-      const lefts = Array.from(container.querySelectorAll('text'))
-        .map((t) => t.textContent)
-        .filter((s) => s === '左')
-      expect(lefts.length).toBe(2)
-    })
-    const rights = Array.from(container.querySelectorAll('text'))
-      .map((t) => t.textContent)
-      .filter((s) => s === '右')
-    expect(rights.length).toBe(1)
+it('should prefer left node when same row has equidistant left and right nodes', async () => {
+  // 5 lanes. Row 0 has:
+  //   - node L "左" at lane-1 (li=0, x=28)
+  //   - node R "右" at lane-5 (li=4, x=764)
+  // Click empty cell at lane-3 (li=2, x=396).
+  // Distance to both is 2 → tiebreak: smaller tLi wins → expect L's label.
+  const flow = flowWithLanes(5, [
+    { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '左', note: null, orderIndex: 0 },
+    { id: 'n2', laneId: 'lane-5', rowIndex: 0, label: '右', note: null, orderIndex: 1 },
+  ])
+  const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+  await waitFor(() => {
+    expect(mockApiFetch).toHaveBeenCalledWith('/settings')
   })
+
+  const cell = findEmptyCellAt(container, 396, 70)
+  expect(cell).toBeTruthy()
+  fireEvent.click(cell!)
+  fireEvent.click(cell!)
+
+  // Expect '左' to be copied (2 instances: n1 + new copy), '右' stays at 1
+  await waitFor(() => {
+    const lefts = Array.from(container.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((s) => s === '左')
+    expect(lefts.length).toBe(2)
+  })
+  const rights = Array.from(container.querySelectorAll('text'))
+    .map((t) => t.textContent)
+    .filter((s) => s === '右')
+  expect(rights.length).toBe(1)
+})
 ```
 
 - [ ] **Step 2: テスト実行**
@@ -288,6 +294,7 @@ EOF
 ## Task 4: テスト追加 — 同レーン除外
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx`
 
 - [ ] **Step 1: 同レーン除外テストを追加**
@@ -295,49 +302,49 @@ EOF
 同じ describe 内に追加：
 
 ```tsx
-  it('should exclude same-lane node and fall back to default label when no other-lane nodes exist', async () => {
-    // 2 lanes. Row 0 has only one node at lane-1 (li=0).
-    // Click empty cell at lane-1 (li=0, same lane, but the click is at row 1, ri=1).
-    // Wait — same row check is by rid, not ri. Need a node at row 0 (ri=0)
-    // and clicking another empty cell in same lane at row 0 wouldn't apply
-    // (it's already occupied). The realistic same-lane case: same row + same lane
-    // means the cell is already occupied. Test the related case: ensure same-lane
-    // siblings on the same row are excluded by checking that when ALL nodes on the
-    // row are in the same lane as the click, default label is used.
-    //
-    // Setup: one node at row 0, lane-1. Click empty cell at row 0, lane-2.
-    // Expected: copy '同行' from lane-1 (different lane, distance 1).
-    // To test exclusion specifically, we need a setup where the only same-row
-    // candidate is in the same lane. Since same-cell == same lane + same row
-    // means the cell is occupied (cellClick early-returns at tasks[k] check),
-    // exclusion of `tLi === li` is impossible to trigger via UI.
-    //
-    // Instead, test that when no other-lane nodes exist on the row,
-    // default label is used. This covers the "no candidate" path.
-    const flow = flowWithLanes(2, [
-      { id: 'n1', laneId: 'lane-1', rowIndex: 1, label: '別行ノード', note: null, orderIndex: 0 },
-      // No nodes on row 0
-    ])
-    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
-    await waitFor(() => {
-      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
-    })
-
-    // Click empty cell at row 0, lane-1 (li=0, x=28, y=70)
-    const cell = findEmptyCellAt(container, 28, 70)
-    expect(cell).toBeTruthy()
-    fireEvent.click(cell!)
-    fireEvent.click(cell!)
-
-    // Default label should be used — '別行ノード' is in row 1, not row 0,
-    // so no copy candidate exists.
-    await waitFor(() => {
-      // The default label depends on i18n: in mock environment it returns 'defaultNodeLabel' key
-      const labels = Array.from(container.querySelectorAll('text')).map((t) => t.textContent)
-      // '別行ノード' should appear exactly once (the original n1)
-      expect(labels.filter((s) => s === '別行ノード').length).toBe(1)
-    })
+it('should exclude same-lane node and fall back to default label when no other-lane nodes exist', async () => {
+  // 2 lanes. Row 0 has only one node at lane-1 (li=0).
+  // Click empty cell at lane-1 (li=0, same lane, but the click is at row 1, ri=1).
+  // Wait — same row check is by rid, not ri. Need a node at row 0 (ri=0)
+  // and clicking another empty cell in same lane at row 0 wouldn't apply
+  // (it's already occupied). The realistic same-lane case: same row + same lane
+  // means the cell is already occupied. Test the related case: ensure same-lane
+  // siblings on the same row are excluded by checking that when ALL nodes on the
+  // row are in the same lane as the click, default label is used.
+  //
+  // Setup: one node at row 0, lane-1. Click empty cell at row 0, lane-2.
+  // Expected: copy '同行' from lane-1 (different lane, distance 1).
+  // To test exclusion specifically, we need a setup where the only same-row
+  // candidate is in the same lane. Since same-cell == same lane + same row
+  // means the cell is occupied (cellClick early-returns at tasks[k] check),
+  // exclusion of `tLi === li` is impossible to trigger via UI.
+  //
+  // Instead, test that when no other-lane nodes exist on the row,
+  // default label is used. This covers the "no candidate" path.
+  const flow = flowWithLanes(2, [
+    { id: 'n1', laneId: 'lane-1', rowIndex: 1, label: '別行ノード', note: null, orderIndex: 0 },
+    // No nodes on row 0
+  ])
+  const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+  await waitFor(() => {
+    expect(mockApiFetch).toHaveBeenCalledWith('/settings')
   })
+
+  // Click empty cell at row 0, lane-1 (li=0, x=28, y=70)
+  const cell = findEmptyCellAt(container, 28, 70)
+  expect(cell).toBeTruthy()
+  fireEvent.click(cell!)
+  fireEvent.click(cell!)
+
+  // Default label should be used — '別行ノード' is in row 1, not row 0,
+  // so no copy candidate exists.
+  await waitFor(() => {
+    // The default label depends on i18n: in mock environment it returns 'defaultNodeLabel' key
+    const labels = Array.from(container.querySelectorAll('text')).map((t) => t.textContent)
+    // '別行ノード' should appear exactly once (the original n1)
+    expect(labels.filter((s) => s === '別行ノード').length).toBe(1)
+  })
+})
 ```
 
 - [ ] **Step 2: テスト実行**
