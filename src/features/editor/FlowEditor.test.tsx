@@ -3420,10 +3420,10 @@ describe('copyLabelOnSameRow distance-based selection (#337)', () => {
     // Click empty cell at row 0 (no nodes on row 0 at all) → no copy candidate
     // → default label is used.
     //
-    // Note on same-lane exclusion: same-lane + same-row would mean the cell is
-    // already occupied (cellClick early-returns at tasks[k] check), so the
-    // `tLi === li` exclusion in the loop is unreachable from the UI. This test
-    // covers the equivalent "no candidate" path which the loop's exits feed into.
+    // Note: same-lane + same-row would mean the cell is already occupied
+    // (cellClick early-returns at the `tasks[k]` check), so that case is
+    // unreachable from the UI. This test covers the equivalent "no candidate"
+    // path which the loop's exit feeds into.
     const flow = flowWithLanes(2, [
       { id: 'n1', laneId: 'lane-1', rowIndex: 1, label: '別行ノード', note: null, orderIndex: 0 },
     ])

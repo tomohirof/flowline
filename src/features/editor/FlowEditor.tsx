@@ -1229,7 +1229,7 @@ export default function FlowEditor({
       for (const [key, task] of Object.entries(tasks)) {
         if (task.rid !== rid || key === k) continue
         const tLi = lanes.findIndex((l) => l.id === task.lid)
-        if (tLi < 0 || tLi === li) continue
+        if (tLi < 0) continue
         const dist = Math.abs(tLi - li)
         if (dist < bestDist || (dist === bestDist && tLi < bestLi)) {
           bestKey = key
