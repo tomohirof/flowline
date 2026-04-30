@@ -3313,3 +3313,142 @@ describe('memo URL/newline rendering (#331)', () => {
     expect((memoTextarea as HTMLTextAreaElement).tagName).toBe('TEXTAREA')
   })
 })
+
+describe('copyLabelOnSameRow distance-based selection (#337)', () => {
+  beforeEach(() => {
+    // Override the default mock: copyLabelOnSameRow ON
+    mockApiFetch.mockResolvedValue({
+      settings: {
+        copyLabelOnSameRow: true,
+        autoConnect: false,
+        autoAddRow: false,
+        enterEditOnCreate: false,
+        autoRepair: false,
+        showDotGrid: true,
+        showOrderBadge: true,
+      },
+      profile: { name: 'Test User', email: 'test@example.com' },
+    })
+  })
+
+  const flowWithLanes = (count: number, nodes: Flow['nodes']): Flow => ({
+    ...createMinimalFlow(),
+    lanes: Array.from({ length: count }, (_, i) => ({
+      id: `lane-${i + 1}`,
+      name: `レーン${i + 1}`,
+      colorIndex: i,
+      position: i,
+    })),
+    nodes,
+  })
+
+  const findEmptyCellAt = (container: HTMLElement, x: number, y: number): SVGRectElement | null => {
+    const allRects = container.querySelectorAll('rect[fill="transparent"]')
+    const empties = Array.from(allRects).filter(
+      (r) => (r as SVGRectElement).style.cursor === 'crosshair',
+    )
+    return (empties.find(
+      (r) => r.getAttribute('x') === String(x) && r.getAttribute('y') === String(y),
+    ) ?? null) as SVGRectElement | null
+  }
+
+  it('should copy label from closer node when same row has nodes at different distances', async () => {
+    // 5 lanes. Row 0 has:
+    //   - node A "案件取得" at lane-1 (li=0, x=28)
+    //   - node B "確定連絡" at lane-3 (li=2, x=396)
+    // Click empty cell at lane-4 (li=3, x=580).
+    // Distance to A is 3, distance to B is 1 → expect B's label to be copied.
+    const flow = flowWithLanes(5, [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '案件取得', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-3', rowIndex: 0, label: '確定連絡', note: null, orderIndex: 1 },
+    ])
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
+    })
+
+    const cell = findEmptyCellAt(container, 580, 70)
+    expect(cell).toBeTruthy()
+    fireEvent.click(cell!) // 1st click — ghost
+    fireEvent.click(cell!) // 2nd click — confirm
+
+    // The new node should have label '確定連絡' (the closer one)
+    // After: 2 instances of '確定連絡' (original n2 + new copy), 1 instance of '案件取得' (n1)
+    await waitFor(() => {
+      const labelTexts = Array.from(container.querySelectorAll('text'))
+        .map((t) => t.textContent)
+        .filter((s) => s === '確定連絡')
+      expect(labelTexts.length).toBe(2)
+    })
+  })
+
+  it('should prefer left node when same row has equidistant left and right nodes', async () => {
+    // 5 lanes. Row 0 has:
+    //   - node L "左" at lane-1 (li=0, x=28)
+    //   - node R "右" at lane-5 (li=4, x=764)
+    // Click empty cell at lane-3 (li=2, x=396).
+    // Distance to both is 2 → tiebreak: smaller tLi wins → expect L's label.
+    const flow = flowWithLanes(5, [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '左', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-5', rowIndex: 0, label: '右', note: null, orderIndex: 1 },
+    ])
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
+    })
+
+    const cell = findEmptyCellAt(container, 396, 70)
+    expect(cell).toBeTruthy()
+    fireEvent.click(cell!)
+    fireEvent.click(cell!)
+
+    // Expect '左' to be copied (2 instances: n1 + new copy), '右' stays at 1
+    await waitFor(() => {
+      const lefts = Array.from(container.querySelectorAll('text'))
+        .map((t) => t.textContent)
+        .filter((s) => s === '左')
+      expect(lefts.length).toBe(2)
+    })
+    const rights = Array.from(container.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((s) => s === '右')
+    expect(rights.length).toBe(1)
+  })
+
+  it('should use default label when no other-lane same-row nodes exist', async () => {
+    // 2 lanes. Only one node, on row 1, in lane-1.
+    // Click empty cell at row 0 (no nodes on row 0 at all) → no copy candidate
+    // → default label is used.
+    //
+    // Note: same-lane + same-row would mean the cell is already occupied
+    // (cellClick early-returns at the `tasks[k]` check), so that case is
+    // unreachable from the UI. This test covers the equivalent "no candidate"
+    // path which the loop's exit feeds into.
+    const flow = flowWithLanes(2, [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 1, label: '別行ノード', note: null, orderIndex: 0 },
+    ])
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
+    })
+
+    // Click empty cell at row 0, lane-1 (li=0, x=28, y=70)
+    const cell = findEmptyCellAt(container, 28, 70)
+    expect(cell).toBeTruthy()
+    fireEvent.click(cell!)
+    fireEvent.click(cell!)
+
+    // '別行ノード' should appear exactly once (the original n1, no copy)
+    await waitFor(() => {
+      const labels = Array.from(container.querySelectorAll('text')).map((t) => t.textContent)
+      expect(labels.filter((s) => s === '別行ノード').length).toBe(1)
+    })
+
+    // Verify a new node was actually created (not just that the existing label
+    // wasn't copied). Node cards are rect[rx=10] with width=152, height=56.
+    const nodeCards = Array.from(container.querySelectorAll('rect[rx="10"]')).filter(
+      (r) => r.getAttribute('width') === '152' && r.getAttribute('height') === '56',
+    )
+    expect(nodeCards.length).toBe(2) // original n1 + newly created default-label node
+  })
+})

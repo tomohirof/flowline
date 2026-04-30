@@ -1223,8 +1223,21 @@ export default function FlowEditor({
     }
     let label = t('defaultNodeLabel')
     if (editorSettings.copyLabelOnSameRow) {
-      const sameRowNode = Object.entries(tasks).find(([key, t]) => t.rid === rid && key !== k)
-      if (sameRowNode) label = sameRowNode[1].label
+      let bestKey: string | null = null
+      let bestDist = Infinity
+      let bestLi = Infinity
+      for (const [key, task] of Object.entries(tasks)) {
+        if (task.rid !== rid || key === k) continue
+        const tLi = lanes.findIndex((l) => l.id === task.lid)
+        if (tLi < 0) continue
+        const dist = Math.abs(tLi - li)
+        if (dist < bestDist || (dist === bestDist && tLi < bestLi)) {
+          bestKey = key
+          bestDist = dist
+          bestLi = tLi
+        }
+      }
+      if (bestKey) label = tasks[bestKey].label
     }
     setTasks((p) => ({ ...p, [k]: { label, lid, rid, nodeId: uid() } }))
     const no = [...order, k]
