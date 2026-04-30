@@ -368,6 +368,52 @@ describe('useArrows', () => {
       expect(pairs).toEqual(['l0_r0->l0_r1', 'l0_r1->l0_r2'])
     })
 
+    it('should splice only the crossing arrow (Step 2.5), not unrelated outgoing from same upstream', () => {
+      // A(l0,r0) → C(l1,r2): タイプ① crossing arrow through (r1, l1)
+      // A(l0,r0) → D(l2,r3): unrelated downstream, NOT on path of (r1, l1)
+      //   But min(l0,l2)=0, max=2, newLi=1 → タイプ② would also match for A→D.
+      //   タイプ① (A→C) must win, and only A→C must be spliced.
+      const tasks: Record<string, TaskData> = {
+        A: { label: 'A', lid: 'l0', rid: 'r0', nodeId: 'n1' },
+        C: { label: 'C', lid: 'l1', rid: 'r2', nodeId: 'n3' },
+        D: { label: 'D', lid: 'l2', rid: 'r3', nodeId: 'n4' },
+        l1_r1: { label: 'B', lid: 'l1', rid: 'r1', nodeId: 'n2' },
+      }
+      const rows: RowData[] = [{ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }]
+      const lanes: InternalLane[] = [
+        { id: 'l0', name: 'L0', ci: 0 },
+        { id: 'l1', name: 'L1', ci: 1 },
+        { id: 'l2', name: 'L2', ci: 2 },
+      ]
+      const arrows: InternalArrow[] = [
+        { id: 'aAC', from: 'A', to: 'C', comment: 'orig' },
+        { id: 'aAD', from: 'A', to: 'D', comment: '' },
+      ]
+      const { result } = renderHook(() =>
+        useArrows({
+          ...defaultOptions(),
+          tasks,
+          rows,
+          lanes,
+          initialArrows: arrows,
+        }),
+      )
+      act(() => {
+        result.current.autoConnectOnCreate('l1_r1', 1, 1)
+      })
+
+      // A→C is spliced into A→B + B→C; A→D is untouched.
+      const pairs = result.current.arrows.map((a) => `${a.from}->${a.to}`).sort()
+      expect(pairs).toEqual(['A->D', 'A->l1_r1', 'l1_r1->C'])
+      // Original A→D arrow ID preserved (not removed and re-added)
+      expect(result.current.arrows.find((a) => a.id === 'aAD')).toBeDefined()
+      // Original A→C arrow is removed
+      expect(result.current.arrows.find((a) => a.id === 'aAC')).toBeUndefined()
+      // Comment from A→C carries to B→C
+      const bToC = result.current.arrows.find((a) => a.from === 'l1_r1' && a.to === 'C')
+      expect(bToC?.comment).toBe('orig')
+    })
+
     it('should still offer toast for remaining crossings not handled by auto-split', () => {
       // A→C is auto-split by autoConnectOnCreate (same-lane upstream),
       // but X→Y still crosses the inserted row and was NOT touched.
