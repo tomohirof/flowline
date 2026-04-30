@@ -3443,5 +3443,12 @@ describe('copyLabelOnSameRow distance-based selection (#337)', () => {
       const labels = Array.from(container.querySelectorAll('text')).map((t) => t.textContent)
       expect(labels.filter((s) => s === '別行ノード').length).toBe(1)
     })
+
+    // Verify a new node was actually created (not just that the existing label
+    // wasn't copied). Node cards are rect[rx=10] with width=152, height=56.
+    const nodeCards = Array.from(container.querySelectorAll('rect[rx="10"]')).filter(
+      (r) => r.getAttribute('width') === '152' && r.getAttribute('height') === '56',
+    )
+    expect(nodeCards.length).toBe(2) // original n1 + newly created default-label node
   })
 })
