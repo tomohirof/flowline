@@ -186,13 +186,17 @@ describe('splitTextWithUrls', () => {
       { type: 'text', value: ') here' },
     ])
     // URL ends with ) AND has matching ( inside — keep the )
-    expect(splitTextWithUrls('see https://en.wikipedia.org/wiki/Brace_(punctuation) here')).toEqual([
-      { type: 'text', value: 'see ' },
-      { type: 'url', value: 'https://en.wikipedia.org/wiki/Brace_(punctuation)' },
-      { type: 'text', value: ' here' },
-    ])
+    expect(splitTextWithUrls('see https://en.wikipedia.org/wiki/Brace_(punctuation) here')).toEqual(
+      [
+        { type: 'text', value: 'see ' },
+        { type: 'url', value: 'https://en.wikipedia.org/wiki/Brace_(punctuation)' },
+        { type: 'text', value: ' here' },
+      ],
+    )
     // Outer parens around a Wikipedia URL — only the OUTER ) is unbalanced
-    expect(splitTextWithUrls('(https://en.wikipedia.org/wiki/Python_(programming_language))')).toEqual([
+    expect(
+      splitTextWithUrls('(https://en.wikipedia.org/wiki/Python_(programming_language))'),
+    ).toEqual([
       { type: 'text', value: '(' },
       { type: 'url', value: 'https://en.wikipedia.org/wiki/Python_(programming_language)' },
       { type: 'text', value: ')' },
