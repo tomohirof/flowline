@@ -519,4 +519,34 @@ describe('collectVerticalObstacles', () => {
     const cxs = result.map((b) => b.x).sort((a, b) => a - b)
     expect(cxs).toEqual([116, 200, 284])
   })
+
+  it('Bbox の w, h は引数の bboxW, bboxH と一致する', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCy: 200,
+      toCy: 600,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result.every((b) => b.w === TW && b.h === TH)).toBe(true)
+  })
+
+  it('nodes が空配列 → 空配列を返す', () => {
+    const result = collectVerticalObstacles({
+      nodes: [],
+      fromKey: 'A',
+      toKey: 'C',
+      fromCy: 200,
+      toCy: 600,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toEqual([])
+  })
 })
