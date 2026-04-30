@@ -1384,6 +1384,21 @@ describe('Lane group persistence (#309)', () => {
     expect(fetched.flow.lanes[0].groupRole).toBeUndefined()
   })
 
+  it('should reject lane with groupId but no groupRole (pair-consistency)', async () => {
+    registerUser(db, 'u_g5', 'g5@test.com')
+    const env = createEnv(db)
+    const cookie = await authCookie('u_g5', 'g5@test.com')
+
+    const body = {
+      title: 'Bad',
+      lanes: [{ id: 'l_bad', name: 'Bad', colorIndex: 0, position: 0, groupId: 'g-orphan' }],
+      nodes: [],
+      arrows: [],
+    }
+    const res = await postJson('/api/flows', body, env, cookie)
+    expect(res.status).toBe(400)
+  })
+
   it('shared GET should return groupId/groupRole for grouped lanes', async () => {
     registerUser(db, 'u_g4', 'g4@test.com')
     const env = createEnv(db)
