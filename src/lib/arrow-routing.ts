@@ -317,3 +317,49 @@ export function collectObstacles(args: CollectObstaclesArgs): Bbox[] {
   }
   return result
 }
+
+interface CollectVerticalObstaclesArgs {
+  nodes: ObstacleNode[]
+  fromKey: string
+  toKey: string
+  fromCy: number // 始点 Y
+  toCy: number // 終点 Y
+  colX: number // 同一列 X（始点・終点共通）
+  colW: number // 列ピッチ（FlowEditor の LW + G を渡す）
+  bboxW: number
+  bboxH: number
+}
+
+/**
+ * 矢印の同一列・直左列・直右列にあるノードを bbox 配列に変換する（縦版）。
+ * 同一列は from-to 間レンジに限定。直左/直右列は Y 制限なしで含める（左右塞がり判定用）。
+ * from/to 自身および 2 列以上離れたノードは除外する。
+ *
+ * 呼び出し側は同一レーン（fromLane === toLane）のときのみ本関数を呼ぶ想定。
+ * colX には fromNode の X 座標を渡すこと（同一レーンなので toNode.x と等価）。
+ *
+ * collectObstacles の対称版。横版の rowH に相当するのが colW（レーンピッチ）。
+ */
+export function collectVerticalObstacles(args: CollectVerticalObstaclesArgs): Bbox[] {
+  const { nodes, fromKey, toKey, fromCy, toCy, colX, colW, bboxW, bboxH } = args
+  const yLow = Math.min(fromCy, toCy)
+  const yHigh = Math.max(fromCy, toCy)
+  const result: Bbox[] = []
+  for (const n of nodes) {
+    if (n.key === fromKey || n.key === toKey) continue
+    const dx = Math.abs(n.cx - colX)
+    const onCol = dx < bboxW / 2 + 2
+    // 直左/直右列のみを採用（dx が colW に近い）。2列以上離れたノードは除外。
+    const onAdjacentCol = !onCol && dx > colW - bboxW / 2 && dx < colW + bboxW / 2
+    if (onCol) {
+      // 同一列: from-to 間レンジに限定（始終点 Y は除外）
+      if (n.cy > yLow + 1 && n.cy < yHigh - 1) {
+        result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+      }
+    } else if (onAdjacentCol) {
+      // 直左/直右列: 左右塞がり判定用に Y 制限なしで含める
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+    }
+  }
+  return result
+}

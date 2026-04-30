@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { buildArrowPath, collectObstacles, type Bbox, type ObstacleNode } from './arrow-routing'
+import {
+  buildArrowPath,
+  collectObstacles,
+  collectVerticalObstacles,
+  type Bbox,
+  type ObstacleNode,
+} from './arrow-routing'
 
 describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   // 共通の始終点（A→C 同一行、A=(200,200), C=(600,200) のときの exitPt/entryPt 後の値）
@@ -424,5 +430,93 @@ describe('buildArrowPath - 縦方向迂回（同一レーン）', () => {
       // detourX = 200 + 76 + 14 = 290
       expect(r.d).toBe('M200,100 L200,110 L290,110 L290,110 L200,110 L200,120')
     })
+  })
+})
+
+describe('collectVerticalObstacles', () => {
+  // A=(200,200), B=(200,400), C=(200,600) 同一レーン (colX=200)
+  // D=(284,400) B 直右列, E=(116,400) B 直左列 (colW=84 → adjacent threshold)
+  // F=(368,400) 2列右（除外対象）
+  // 注: ここではテストしやすい colW=84 を使用。実際の運用では LW + G を渡す。
+  const TW = 152,
+    TH = 56,
+    LANE_W = 84
+
+  const baseNodes: ObstacleNode[] = [
+    { key: 'A', cx: 200, cy: 200 },
+    { key: 'B', cx: 200, cy: 400 },
+    { key: 'C', cx: 200, cy: 600 },
+    { key: 'D', cx: 284, cy: 400 },
+    { key: 'E', cx: 116, cy: 400 },
+    { key: 'F', cx: 368, cy: 400 },
+  ]
+
+  it('A→C: 同一列の B（from-to 間）と直左 E・直右 D を集める。F（2列右）は除外', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCy: 200,
+      toCy: 600,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toHaveLength(3)
+    const cxs = result.map((b) => b.x).sort((a, b) => a - b)
+    expect(cxs).toEqual([116, 200, 284])
+    expect(result.every((b) => b.x !== 368)).toBe(true)
+  })
+
+  it('from/to 自身は除外される', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'C',
+      fromCy: 200,
+      toCy: 600,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    const xys = result.map((b) => `${b.x},${b.y}`)
+    expect(xys).not.toContain('200,200')
+    expect(xys).not.toContain('200,600')
+  })
+
+  it('A→B（隣接、間にノードなし）: 同一列は from-to 間限定なので空、直左/直右列は Y 制限なしで含む', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'A',
+      toKey: 'B',
+      fromCy: 200,
+      toCy: 400,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toHaveLength(2)
+    const cxs = result.map((b) => b.x).sort((a, b) => a - b)
+    expect(cxs).toEqual([116, 284])
+  })
+
+  it('下→上方向（fromCy > toCy）でも同一列・隣接列を正しく抽出', () => {
+    const result = collectVerticalObstacles({
+      nodes: baseNodes,
+      fromKey: 'C',
+      toKey: 'A',
+      fromCy: 600,
+      toCy: 200,
+      colX: 200,
+      colW: LANE_W,
+      bboxW: TW,
+      bboxH: TH,
+    })
+    expect(result).toHaveLength(3)
+    const cxs = result.map((b) => b.x).sort((a, b) => a - b)
+    expect(cxs).toEqual([116, 200, 284])
   })
 })
