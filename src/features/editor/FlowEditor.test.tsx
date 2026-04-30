@@ -3381,4 +3381,37 @@ describe('copyLabelOnSameRow distance-based selection (#337)', () => {
       expect(labelTexts.length).toBe(2)
     })
   })
+
+  it('should prefer left node when same row has equidistant left and right nodes', async () => {
+    // 5 lanes. Row 0 has:
+    //   - node L "左" at lane-1 (li=0, x=28)
+    //   - node R "右" at lane-5 (li=4, x=764)
+    // Click empty cell at lane-3 (li=2, x=396).
+    // Distance to both is 2 → tiebreak: smaller tLi wins → expect L's label.
+    const flow = flowWithLanes(5, [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: '左', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-5', rowIndex: 0, label: '右', note: null, orderIndex: 1 },
+    ])
+    const { container } = render(<FlowEditor flow={flow} onSave={vi.fn()} saveStatus="saved" />)
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith('/settings')
+    })
+
+    const cell = findEmptyCellAt(container, 396, 70)
+    expect(cell).toBeTruthy()
+    fireEvent.click(cell!)
+    fireEvent.click(cell!)
+
+    // Expect '左' to be copied (2 instances: n1 + new copy), '右' stays at 1
+    await waitFor(() => {
+      const lefts = Array.from(container.querySelectorAll('text'))
+        .map((t) => t.textContent)
+        .filter((s) => s === '左')
+      expect(lefts.length).toBe(2)
+    })
+    const rights = Array.from(container.querySelectorAll('text'))
+      .map((t) => t.textContent)
+      .filter((s) => s === '右')
+    expect(rights.length).toBe(1)
+  })
 })
