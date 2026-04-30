@@ -39,6 +39,7 @@ import { DS, collectObstacles, type Bbox, type ObstacleNode } from '../../lib/ar
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { I, Ico } from './components/EditorIcons'
+import { MemoText } from './components/MemoText'
 import { RightPanel } from './components/RightPanel'
 import { useArrows } from './hooks/useArrows'
 import { useMoveAutoRepair } from './hooks/useMoveAutoRepair'
@@ -3486,20 +3487,7 @@ export default function FlowEditor({
                       )}
                       {m.text ? (
                         <foreignObject x={mx} y={my} width={MEMO_W} height={mh}>
-                          <div
-                            style={{
-                              fontSize: 11,
-                              lineHeight: '1.55',
-                              color: T.memoText,
-                              fontFamily: 'inherit',
-                              padding: '5px 8px',
-                              wordBreak: 'break-all' as const,
-                              pointerEvents: 'none',
-                              userSelect: 'none' as const,
-                            }}
-                          >
-                            {m.text}
-                          </div>
+                          <MemoText text={m.text} color={T.memoText} />
                         </foreignObject>
                       ) : (
                         <text
