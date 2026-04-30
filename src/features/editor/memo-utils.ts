@@ -50,3 +50,25 @@ export function measureMemoHeight(text: string, width: number): number {
     .reduce((a, l) => a + Math.max(1, Math.ceil((estimateTextWidth(l) || 1) / cpl)), 0)
   return Math.max(30, lines * 17 + 14)
 }
+
+export type MemoTextSegment = { type: 'text' | 'url'; value: string }
+
+const URL_REGEX = /\bhttps?:\/\/[^\s<]+[^\s<.,;:!?)\]'"]/g
+
+export function splitTextWithUrls(text: string): MemoTextSegment[] {
+  if (!text) return []
+  const segments: MemoTextSegment[] = []
+  let last = 0
+  for (const match of text.matchAll(URL_REGEX)) {
+    const start = match.index ?? 0
+    if (start > last) {
+      segments.push({ type: 'text', value: text.slice(last, start) })
+    }
+    segments.push({ type: 'url', value: match[0] })
+    last = start + match[0].length
+  }
+  if (last < text.length) {
+    segments.push({ type: 'text', value: text.slice(last) })
+  }
+  return segments
+}
