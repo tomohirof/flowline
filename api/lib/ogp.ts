@@ -86,5 +86,14 @@ export function injectOgpMeta(indexHtml: string, params: OgpParams): string {
     (_, p1, p2) => `${p1}${ogImage}${p2}`,
   )
 
+  // Exclude shared pages from search engines. Inserted just before </head>
+  // so it survives re-injection (idempotent: replace if already present).
+  const robotsMeta = '<meta name="robots" content="noindex, nofollow" />'
+  if (/<meta\s+name="robots"[^>]*>/i.test(html)) {
+    html = html.replace(/<meta\s+name="robots"[^>]*>/i, robotsMeta)
+  } else {
+    html = html.replace(/<\/head>/i, `  ${robotsMeta}\n  </head>`)
+  }
+
   return html
 }

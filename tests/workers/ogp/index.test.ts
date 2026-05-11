@@ -142,6 +142,17 @@ describe('OGP Worker', () => {
       expect(res.headers.get('cache-control')).toBe('public, max-age=86400')
     })
 
+    it('should set X-Robots-Tag noindex header to exclude OGP image from search engines (issue #342)', async () => {
+      insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'abc123')
+
+      const res = await getRequest('/share/abc123.png', env)
+      expect(res.status).toBe(200)
+      const robotsTag = res.headers.get('x-robots-tag')
+      expect(robotsTag).toBeTruthy()
+      expect(robotsTag).toMatch(/noindex/i)
+      expect(robotsTag).toMatch(/nofollow/i)
+    })
+
     it('should return valid PNG data with correct PNG signature bytes', async () => {
       insertFlowWithShareToken(db, 'flow-1', USER_ID, 'My Flow', 'abc123')
 

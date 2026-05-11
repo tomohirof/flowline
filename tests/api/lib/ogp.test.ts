@@ -242,5 +242,31 @@ describe('OGP Utility', () => {
       })
       expect(result).toContain('$1 予算チームさんが作成したフロー図')
     })
+
+    // ========================================
+    // noindex / robots meta (issue #342)
+    // ========================================
+    it('should inject robots noindex meta tag for shared pages', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      expect(result).toMatch(
+        /<meta\s+name="robots"\s+content="noindex,\s*nofollow"\s*\/?>/i,
+      )
+    })
+
+    it('should inject robots meta only once even if called repeatedly', () => {
+      const once = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      const twice = injectOgpMeta(once, defaultParams)
+      const matches = twice.match(/<meta\s+name="robots"/gi) ?? []
+      expect(matches.length).toBe(1)
+    })
+
+    it('should place robots noindex meta inside <head>', () => {
+      const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
+      const headSection = result.slice(
+        result.indexOf('<head>'),
+        result.indexOf('</head>'),
+      )
+      expect(headSection).toMatch(/<meta\s+name="robots"\s+content="noindex/i)
+    })
   })
 })
