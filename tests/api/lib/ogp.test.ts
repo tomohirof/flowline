@@ -248,9 +248,7 @@ describe('OGP Utility', () => {
     // ========================================
     it('should inject robots noindex meta tag for shared pages', () => {
       const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
-      expect(result).toMatch(
-        /<meta\s+name="robots"\s+content="noindex,\s*nofollow"\s*\/?>/i,
-      )
+      expect(result).toMatch(/<meta\s+name="robots"\s+content="noindex,\s*nofollow"\s*\/?>/i)
     })
 
     it('should inject robots meta only once even if called repeatedly', () => {
@@ -262,10 +260,7 @@ describe('OGP Utility', () => {
 
     it('should place robots noindex meta inside <head>', () => {
       const result = injectOgpMeta(SAMPLE_INDEX_HTML, defaultParams)
-      const headSection = result.slice(
-        result.indexOf('<head>'),
-        result.indexOf('</head>'),
-      )
+      const headSection = result.slice(result.indexOf('<head>'), result.indexOf('</head>'))
       expect(headSection).toMatch(/<meta\s+name="robots"\s+content="noindex/i)
     })
   })
