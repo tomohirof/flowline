@@ -177,7 +177,7 @@ export function reconnectChain(sortedKeys: string[]): { from: string; to: string
 /* cellFromPos                                               */
 /* --------------------------------------------------------- */
 
-export interface GridGeometry {
+interface GridGeometry {
   TM: number
   HH: number
   RH: number
