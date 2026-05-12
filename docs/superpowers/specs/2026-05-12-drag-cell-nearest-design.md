@@ -78,8 +78,9 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 const riRaw = Math.floor((sy - (geom.TM + geom.HH)) / geom.RH)
 const ri = clamp(riRaw, 0, rows.length - 1)
 
-// レーン: 隣レーンの中心線を越えた瞬間に切替 → Math.round
-const liRaw = Math.round((sx - geom.LM) / (geom.LW + geom.G))
+// レーン: カーソルから最も近いレーン中心を選択
+// レーン N の中心 x = LM + LW/2 + N * (LW + G)
+const liRaw = Math.round((sx - geom.LM - geom.LW / 2) / (geom.LW + geom.G))
 const li = clamp(liRaw, 0, lanes.length - 1)
 
 return {
@@ -139,12 +140,14 @@ return {
 | 最上行より上（クランプ） | `(x=128, y=0)` | R0/L0 |
 | 最左より左（クランプ） | `(x=-100, y=112)` | R0/L0 |
 | 最右より右（クランプ） | `(x=10000, y=112)` | R0/L2 |
-| L0/L1 中心線左1px | `(x=128+5, y=112)` ※L0中心x=128, L1中心x=340, 中点x=234, 中点-1=233 | R0/L0 |
-| L0/L1 中心線右1px | `x=235` | R0/L1 |
+| L0/L1 中心の中点-1（L0中心x=128, L1中心x=340, 中点x=234） | `(x=233, y=112)` | R0/L0 |
+| L0/L1 中心の中点+1 | `(x=235, y=112)` | R0/L1 |
+| L1/L2 中心の中点-1（中点x=446） | `(x=445, y=112)` | R0/L1 |
+| L1/L2 中心の中点+1 | `(x=447, y=112)` | R0/L2 |
 | lanes=[] | `(x=0, y=0, lanes=[])` | null |
 | rows=[] | `(x=0, y=0, rows=[])` | null |
 
-レーンの中点境界の正確な x は `LM + (LW + G/2) - G/2 = LM + LW + G/2 - G/2` 要計算で確定する。テスト記述時に geometry から導出する。
+レーン N と N+1 の中心の中点は `LM + LW/2 + (N + 0.5) * (LW + G)`。テスト記述時に geometry から導出する。Math.round の半端値挙動（`Math.round(0.5) = 1`）に依存しないよう、境界 ±1px の値で確認する。
 
 ### 既存テストとの整合
 
