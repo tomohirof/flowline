@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
-import { createTestDb } from '../helpers/mock-d1'
+import { createTestDb, createMockD1 } from '../helpers/mock-d1'
 import { injectOgpMeta } from '../../api/lib/ogp'
+import { onRequest } from '../../functions/_middleware'
 
 describe('Shared page middleware logic', () => {
   let db: ReturnType<typeof Database>
@@ -314,5 +315,91 @@ describe('Shared page middleware logic', () => {
     expect(html).toContain(
       '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;さんが作成したフロー図',
     )
+  })
+
+  // --- onRequest end-to-end: response headers and HTML for shared pages (issue #342) ---
+
+  function buildContext(
+    request: Request,
+    sqliteDb: ReturnType<typeof Database>,
+    indexHtml: string,
+  ) {
+    const assets = {
+      fetch: async () =>
+        new Response(indexHtml, {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        }),
+    }
+    return {
+      request,
+      env: { FLOWLINE_DB: createMockD1(sqliteDb), ASSETS: assets },
+      next: async () =>
+        new Response('next-fallthrough', {
+          status: 200,
+          headers: { 'Content-Type': 'text/plain' },
+        }),
+      // Pages function fields below are unused by our middleware; cast handles types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any
+  }
+
+  const MINI_INDEX = `<!doctype html>
+<html lang="ja">
+<head>
+<title>Flowline — フローを描く。チームが動く。</title>
+<meta name="description" content="default" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://flowline.six1.jp" />
+<meta property="og:title" content="Flowline" />
+<meta property="og:description" content="default" />
+<meta property="og:image" content="https://flowline.six1.jp/ogp/default.png" />
+<meta name="twitter:title" content="Flowline" />
+<meta name="twitter:description" content="default" />
+<meta name="twitter:image" content="https://flowline.six1.jp/ogp/default.png" />
+</head>
+<body><div id="root"></div></body>
+</html>`
+
+  it('should set X-Robots-Tag noindex header on /shared/:token response (issue #342)', async () => {
+    db.prepare(
+      'INSERT INTO flows (id, user_id, title, theme_id, share_token) VALUES (?, ?, ?, ?, ?)',
+    ).run('flow-noindex', 'user-1', 'noindexテスト', 'cloud', 'noindex-token')
+
+    const ctx = buildContext(
+      new Request('https://flowline.six1.jp/shared/noindex-token'),
+      db,
+      MINI_INDEX,
+    )
+    const res = await onRequest(ctx)
+
+    expect(res.status).toBe(200)
+    const robotsTag = res.headers.get('x-robots-tag')
+    expect(robotsTag).toBeTruthy()
+    expect(robotsTag).toMatch(/noindex/i)
+    expect(robotsTag).toMatch(/nofollow/i)
+  })
+
+  it('should include robots noindex meta tag in /shared/:token HTML body (issue #342)', async () => {
+    db.prepare(
+      'INSERT INTO flows (id, user_id, title, theme_id, share_token) VALUES (?, ?, ?, ?, ?)',
+    ).run('flow-noindex-html', 'user-1', 'noindex本文', 'cloud', 'noindex-html-token')
+
+    const ctx = buildContext(
+      new Request('https://flowline.six1.jp/shared/noindex-html-token'),
+      db,
+      MINI_INDEX,
+    )
+    const res = await onRequest(ctx)
+    const body = await res.text()
+
+    expect(body).toMatch(/<meta\s+name="robots"\s+content="noindex,\s*nofollow"/i)
+  })
+
+  it('should NOT add X-Robots-Tag header on non-shared paths (passes through)', async () => {
+    const ctx = buildContext(new Request('https://flowline.six1.jp/'), db, MINI_INDEX)
+    const res = await onRequest(ctx)
+    // Non-shared paths fall through to context.next() and should not be tagged by this middleware
+    expect(res.headers.get('x-robots-tag')).toBeNull()
   })
 })

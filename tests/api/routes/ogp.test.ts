@@ -43,6 +43,22 @@ describe('OGP Proxy Route', () => {
       expect(res.headers.get('cache-control')).toBe('public, max-age=86400')
     })
 
+    it('should set X-Robots-Tag noindex header on proxied OGP image (issue #342)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+        new Response(VALID_PNG, {
+          status: 200,
+          headers: { 'Content-Type': 'image/png' },
+        }),
+      )
+
+      const res = await app.request('/api/ogp/share/abc123.png', {}, env)
+      expect(res.status).toBe(200)
+      const robotsTag = res.headers.get('x-robots-tag')
+      expect(robotsTag).toBeTruthy()
+      expect(robotsTag).toMatch(/noindex/i)
+      expect(robotsTag).toMatch(/nofollow/i)
+    })
+
     it('should forward 404 from OGP Worker for non-existent token', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
         new Response(JSON.stringify({ error: '共有フローが見つかりません' }), {

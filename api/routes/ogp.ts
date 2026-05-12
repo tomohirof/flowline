@@ -17,6 +17,7 @@ ogp.get('/share/:tokenPng', async (c) => {
       headers: {
         'Content-Type': res.headers.get('Content-Type') || 'image/png',
         'Cache-Control': res.headers.get('Cache-Control') || 'public, max-age=86400',
+        'X-Robots-Tag': res.headers.get('X-Robots-Tag') || 'noindex, nofollow',
       },
     })
   } catch {

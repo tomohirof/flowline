@@ -628,6 +628,7 @@ app.get('/share/:tokenPng', async (c) => {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=86400',
+        'X-Robots-Tag': 'noindex, nofollow',
       },
     })
   } catch (e) {

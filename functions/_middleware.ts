@@ -22,6 +22,12 @@ async function fetchIndexHtml(context: EventContext<Env, string, unknown>): Prom
   return context.env.ASSETS.fetch(new Request(url.toString(), context.request))
 }
 
+function withNoindex(res: Response): Response {
+  const headers = new Headers(res.headers)
+  headers.set('X-Robots-Tag', 'noindex, nofollow')
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers })
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const url = new URL(context.request.url)
   const path = url.pathname
@@ -42,7 +48,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .bind(token)
       .first<FlowWithAuthor>()
 
-    if (!flow) return fetchIndexHtml(context)
+    if (!flow) return withNoindex(await fetchIndexHtml(context))
 
     const [lanesResult, nodesResult] = await db.batch([
       db.prepare('SELECT COUNT(*) as count FROM lanes WHERE flow_id = ?').bind(flow.id),
@@ -69,10 +75,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=3600',
+        'X-Robots-Tag': 'noindex, nofollow',
       },
     })
   } catch {
-    // On error, fall through to SPA
-    return fetchIndexHtml(context)
+    // On error, fall through to SPA but still mark as noindex (shared path).
+    return withNoindex(await fetchIndexHtml(context))
   }
 }
