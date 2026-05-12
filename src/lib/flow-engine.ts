@@ -1,5 +1,5 @@
 import type { InternalArrow, ArrowPathResult } from './types'
-import type { TaskData, MemoData } from '../features/editor/types'
+import type { TaskData, MemoData, CellInfo } from '../features/editor/types'
 import { exitPt, entryPt, buildArrowPath } from './arrow-routing'
 import type { Point, Bbox } from './arrow-routing'
 
@@ -171,6 +171,54 @@ export function reconnectChain(sortedKeys: string[]): { from: string; to: string
     arrows.push({ from: sortedKeys[i], to: sortedKeys[i + 1] })
   }
   return arrows
+}
+
+/* --------------------------------------------------------- */
+/* cellFromPos                                               */
+/* --------------------------------------------------------- */
+
+interface GridGeometry {
+  TM: number
+  HH: number
+  RH: number
+  LM: number
+  LW: number
+  G: number
+}
+
+/**
+ * カーソル座標 (sx, sy) からドロップ候補セルを返す。
+ *
+ * 行はカーソルが行上端を踏み込んだ瞬間に次行へ切り替わるよう Math.floor を、
+ * レーンは隣レーン中心の中点を越えた瞬間に切り替わるよう Math.round を用いる。
+ * グリッド範囲外（最下行より下、最上行より上、両端レーンの外側）では端のセルにクランプ。
+ *
+ * lanes または rows が空のときのみ null を返す。
+ */
+export function cellFromPos(
+  sx: number,
+  sy: number,
+  lanes: { id: string }[],
+  rows: { id: string }[],
+  geom: GridGeometry,
+): CellInfo | null {
+  if (lanes.length === 0 || rows.length === 0) return null
+
+  const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v))
+
+  const riRaw = Math.floor((sy - (geom.TM + geom.HH)) / geom.RH)
+  const ri = clamp(riRaw, 0, rows.length - 1)
+
+  const liRaw = Math.round((sx - geom.LM - geom.LW / 2) / (geom.LW + geom.G))
+  const li = clamp(liRaw, 0, lanes.length - 1)
+
+  return {
+    lid: lanes[li].id,
+    rid: rows[ri].id,
+    li,
+    ri,
+    key: `${lanes[li].id}_${rows[ri].id}`,
+  }
 }
 
 /* --------------------------------------------------------- */

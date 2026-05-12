@@ -11,6 +11,7 @@ import {
   detectCrossLaneRewire,
   swapKeys,
   calcMultiDropTargets,
+  cellFromPos,
 } from './flow-engine'
 import { exitPt, entryPt } from './arrow-routing'
 import { computeBridgeArrows } from '../features/editor/auto-connect'
@@ -1111,5 +1112,85 @@ describe('calcMultiDropTargets', () => {
       rows,
     )
     expect(result).toBeNull()
+  })
+})
+
+/* ========================================================= */
+/* cellFromPos                                               */
+/* ========================================================= */
+
+describe('cellFromPos', () => {
+  const geom = { TM: 24, HH: 46, RH: 84, LM: 28, LW: 200, G: 12 }
+  const lanes = [{ id: 'L0' }, { id: 'L1' }, { id: 'L2' }]
+  const rows = [{ id: 'R0' }, { id: 'R1' }, { id: 'R2' }]
+
+  it('returns the cell when cursor is at the center of a cell', () => {
+    expect(cellFromPos(128, 112, lanes, rows, geom)).toEqual({
+      lid: 'L0',
+      rid: 'R0',
+      li: 0,
+      ri: 0,
+      key: 'L0_R0',
+    })
+  })
+
+  it('returns row 0 cell when cursor is exactly at row 0 top boundary', () => {
+    expect(cellFromPos(128, 70, lanes, rows, geom)?.rid).toBe('R0')
+  })
+
+  it('returns row 0 cell when cursor is 1px before row 1 top boundary', () => {
+    expect(cellFromPos(128, 153, lanes, rows, geom)?.rid).toBe('R0')
+  })
+
+  it('returns row 1 cell at the moment cursor crosses row 1 top boundary (issue #344 regression)', () => {
+    expect(cellFromPos(128, 154, lanes, rows, geom)?.rid).toBe('R1')
+  })
+
+  it('returns row 1 cell when cursor is 1px into row 1', () => {
+    expect(cellFromPos(128, 155, lanes, rows, geom)?.rid).toBe('R1')
+  })
+
+  it('clamps to last row when cursor is below the grid', () => {
+    expect(cellFromPos(128, 10000, lanes, rows, geom)?.rid).toBe('R2')
+  })
+
+  it('clamps to first row when cursor is above the grid', () => {
+    expect(cellFromPos(128, 0, lanes, rows, geom)?.rid).toBe('R0')
+  })
+
+  it('clamps to first lane when cursor is left of the grid', () => {
+    expect(cellFromPos(-100, 112, lanes, rows, geom)?.lid).toBe('L0')
+  })
+
+  it('clamps to last lane when cursor is right of the grid', () => {
+    expect(cellFromPos(10000, 112, lanes, rows, geom)?.lid).toBe('L2')
+  })
+
+  it('returns lane 0 just before L0/L1 center-midpoint', () => {
+    expect(cellFromPos(233, 112, lanes, rows, geom)?.lid).toBe('L0')
+  })
+
+  it('returns lane 1 just after L0/L1 center-midpoint', () => {
+    expect(cellFromPos(235, 112, lanes, rows, geom)?.lid).toBe('L1')
+  })
+
+  it('returns lane 1 just before L1/L2 center-midpoint', () => {
+    expect(cellFromPos(445, 112, lanes, rows, geom)?.lid).toBe('L1')
+  })
+
+  it('returns lane 2 just after L1/L2 center-midpoint', () => {
+    expect(cellFromPos(447, 112, lanes, rows, geom)?.lid).toBe('L2')
+  })
+
+  it('returns null when lanes is empty', () => {
+    expect(cellFromPos(128, 112, [], rows, geom)).toBeNull()
+  })
+
+  it('returns null when rows is empty', () => {
+    expect(cellFromPos(128, 112, lanes, [], geom)).toBeNull()
+  })
+
+  it('returns the correct composite key', () => {
+    expect(cellFromPos(340, 196, lanes, rows, geom)?.key).toBe('L1_R1')
   })
 })

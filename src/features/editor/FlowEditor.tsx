@@ -58,6 +58,7 @@ import {
   filterArrowsByDeletedKeys,
   calcArrowPath,
   calcMultiDropTargets,
+  cellFromPos as cellFromPosLib,
 } from '../../lib/flow-engine'
 import { isGroupParent, isGroupSub, getGroupWidth } from '../../lib/lane-group-utils'
 
@@ -920,16 +921,8 @@ export default function FlowEditor({
       setRowAnim(null)
     }, 450)
   }
-  const cellFromPos = (sx: number, sy: number): CellInfo | null => {
-    for (let li = 0; li < lanes.length; li++)
-      for (let ri = 0; ri < rows.length; ri++) {
-        const cx = laneX(li),
-          cy = TM + HH + ri * RH
-        if (sx >= cx && sx < cx + LW && sy >= cy && sy < cy + RH)
-          return { lid: lanes[li].id, rid: rows[ri].id, li, ri, key: ky(lanes[li].id, rows[ri].id) }
-      }
-    return null
-  }
+  const cellFromPos = (sx: number, sy: number): CellInfo | null =>
+    cellFromPosLib(sx, sy, lanes, rows, { TM, HH, RH, LM, LW, G })
   const svgPt = (cx: number, cy: number): Point => {
     const svg = svgRef.current
     if (!svg) return { x: 0, y: 0 }
