@@ -14,12 +14,12 @@
 
 ## File Structure
 
-| ファイル | 役割 | 変更種別 |
-|---|---|---|
-| `src/lib/flow-engine.ts` | `cellFromPos` ピュア関数を追加 export | Modify |
-| `src/lib/flow-engine.test.ts` | `cellFromPos` のユニットテスト追加 | Modify |
+| ファイル                             | 役割                                                   | 変更種別                         |
+| ------------------------------------ | ------------------------------------------------------ | -------------------------------- |
+| `src/lib/flow-engine.ts`             | `cellFromPos` ピュア関数を追加 export                  | Modify                           |
+| `src/lib/flow-engine.test.ts`        | `cellFromPos` のユニットテスト追加                     | Modify                           |
 | `src/features/editor/FlowEditor.tsx` | クロージャ実装を削除し、ライブラリ関数の呼び出しに置換 | Modify (`923-932` 行、import 文) |
-| `src/features/editor/types.ts` | `CellInfo` は既存 export を再利用（変更なし） | — |
+| `src/features/editor/types.ts`       | `CellInfo` は既存 export を再利用（変更なし）          | —                                |
 
 `GridGeometry` 型は `flow-engine.ts` 内で新規定義（外部公開 export）。`CellInfo` は既に `features/editor/types.ts` に export 済みのため、`flow-engine.ts` から既存パターン（`TaskData`, `MemoData` のインポートと同様）で参照する。
 
@@ -28,9 +28,11 @@
 ## Task 1: cellFromPos のユニットテストを追加（Red）
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.test.ts`
 
 固定ジオメトリ `{ TM: 24, HH: 46, RH: 84, LM: 28, LW: 200, G: 12 }` でテストを書く。この値での座標:
+
 - 行上端 y: R0=70, R1=154, R2=238
 - レーン中心 x: L0=128, L1=340, L2=552
 - レーン中心の中点 x: L0/L1=234, L1/L2=446
@@ -160,6 +162,7 @@ git commit -m "test(#344): add failing tests for cellFromPos pure function"
 ## Task 2: cellFromPos をピュア関数として実装（Green）
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.ts`
 
 - [ ] **Step 1: import を更新**
@@ -246,6 +249,7 @@ git commit -m "feat(#344): add cellFromPos as pure function in flow-engine"
 ## Task 3: FlowEditor.tsx のクロージャを新関数の呼び出しに置換
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:54-61` (import 文)
 - Modify: `src/features/editor/FlowEditor.tsx:923-932` (cellFromPos クロージャ)
 
@@ -272,23 +276,23 @@ import {
 置換前:
 
 ```ts
-  const cellFromPos = (sx: number, sy: number): CellInfo | null => {
-    for (let li = 0; li < lanes.length; li++)
-      for (let ri = 0; ri < rows.length; ri++) {
-        const cx = laneX(li),
-          cy = TM + HH + ri * RH
-        if (sx >= cx && sx < cx + LW && sy >= cy && sy < cy + RH)
-          return { lid: lanes[li].id, rid: rows[ri].id, li, ri, key: ky(lanes[li].id, rows[ri].id) }
-      }
-    return null
-  }
+const cellFromPos = (sx: number, sy: number): CellInfo | null => {
+  for (let li = 0; li < lanes.length; li++)
+    for (let ri = 0; ri < rows.length; ri++) {
+      const cx = laneX(li),
+        cy = TM + HH + ri * RH
+      if (sx >= cx && sx < cx + LW && sy >= cy && sy < cy + RH)
+        return { lid: lanes[li].id, rid: rows[ri].id, li, ri, key: ky(lanes[li].id, rows[ri].id) }
+    }
+  return null
+}
 ```
 
 置換後:
 
 ```ts
-  const cellFromPos = (sx: number, sy: number): CellInfo | null =>
-    cellFromPosLib(sx, sy, lanes, rows, { TM, HH, RH, LM, LW, G })
+const cellFromPos = (sx: number, sy: number): CellInfo | null =>
+  cellFromPosLib(sx, sy, lanes, rows, { TM, HH, RH, LM, LW, G })
 ```
 
 - [ ] **Step 3: 型チェックと既存テスト全 pass を確認**
@@ -357,6 +361,7 @@ Expected: 未コミット変更なし（`.screenshots/` の新規ファイルは
 
 Run: `git log --oneline -5`
 Expected: 以下 3 件のコミットが順に並ぶ:
+
 1. `test(#344): add failing tests for cellFromPos pure function`
 2. `feat(#344): add cellFromPos as pure function in flow-engine`
 3. `feat(#344): use nearest-cell cellFromPos in FlowEditor drag handling`
