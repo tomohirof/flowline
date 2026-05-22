@@ -742,4 +742,29 @@ describe('detectDiagonalDetour', () => {
       approachY: 372 - 14, // 358
     })
   })
+
+  it('should return target-detour with left-side detourX when target column is right-blocked', () => {
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B, R])
+    expect(r).toEqual({
+      kind: 'target-detour',
+      my: 250,
+      detourX: 600 - 76 - 14, // 510 (左迂回)
+      approachY: 358,
+    })
+  })
+
+  it('should prefer right detour when both sides of target column are blocked', () => {
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
+    const L: Bbox = { x: 400, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B, R, L])
+    expect(r).toEqual({
+      kind: 'target-detour',
+      my: 250,
+      detourX: 690, // 右優先
+      approachY: 358,
+    })
+  })
 })
