@@ -126,7 +126,15 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     const t = ct(tli, toNode.rowIndex)
     const hw = TW / 2,
       hh = TH / 2
-    const s = exitPt(f, t, hw, hh, RH, fromNode.shape as 'diamond' | undefined)
+    const s = exitPt(
+      f,
+      t,
+      hw,
+      hh,
+      RH,
+      fromNode.shape as 'diamond' | undefined,
+      arrow.fromSide ?? undefined,
+    )
     const e = entryPt(t, f, hw, hh, RH, toNode.shape as 'diamond' | undefined)
 
     // 同一行/同一レーン/斜め配置に応じて obstacles を組み立てる（迂回判定用）
