@@ -11,6 +11,7 @@ import type {
   RowData,
   InternalLane,
   InternalArrow,
+  ArrowSide,
   EditorSettings,
 } from '../types'
 import {
@@ -21,6 +22,50 @@ import {
   LINE_COLORS,
   STROKE_STYLES,
 } from '../theme-constants'
+
+interface ArrowSideSelectorProps {
+  label: string
+  value: ArrowSide | null | undefined
+  onChange: (v: ArrowSide | undefined) => void
+  T: Theme
+  isDark: boolean
+  options: ReadonlyArray<{ id: string; value: ArrowSide | undefined; label: string }>
+}
+
+function ArrowSideSelector({ label, value, onChange, T, isDark, options }: ArrowSideSelectorProps) {
+  return (
+    <PanelSection label={label}>
+      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+        {options.map((opt) => {
+          const isActive = opt.value === undefined ? !value : value === opt.value
+          return (
+            <div
+              key={opt.id}
+              onClick={() => onChange(opt.value)}
+              style={{
+                flex: 1,
+                minWidth: 36,
+                height: 30,
+                borderRadius: 6,
+                cursor: 'pointer',
+                background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
+                border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                color: isActive ? T.accent : T.panelText,
+                transition: 'all 0.1s',
+              }}
+            >
+              {opt.label}
+            </div>
+          )
+        })}
+      </div>
+    </PanelSection>
+  )
+}
 
 interface RightPanelProps {
   // Selection
@@ -105,6 +150,18 @@ export const RightPanel = ({
   const { t } = useTranslation('editor')
   const T: Theme = THEMES[themeId]
   const isDark = themeId === 'midnight'
+
+  const arrowSideOptions: ReadonlyArray<{
+    id: string
+    value: ArrowSide | undefined
+    label: string
+  }> = [
+    { id: 'auto', value: undefined, label: t('rightPanel.arrowSideAuto') },
+    { id: 'top', value: 'top', label: t('rightPanel.arrowSideTop') },
+    { id: 'right', value: 'right', label: t('rightPanel.arrowSideRight') },
+    { id: 'bottom', value: 'bottom', label: t('rightPanel.arrowSideBottom') },
+    { id: 'left', value: 'left', label: t('rightPanel.arrowSideLeft') },
+  ]
 
   const selTaskData = selTask ? tasks[selTask] : null
   const selArrowData = selArrow ? arrows.find((a) => a.id === selArrow) : null
@@ -652,90 +709,27 @@ export const RightPanel = ({
             })}
           </div>
         </PanelSection>
-        <PanelSection label={t('rightPanel.arrowFromSide')}>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {[
-              { id: 'auto', value: undefined, label: t('rightPanel.arrowSideAuto') },
-              { id: 'top', value: 'top' as const, label: t('rightPanel.arrowSideTop') },
-              { id: 'right', value: 'right' as const, label: t('rightPanel.arrowSideRight') },
-              { id: 'bottom', value: 'bottom' as const, label: t('rightPanel.arrowSideBottom') },
-              { id: 'left', value: 'left' as const, label: t('rightPanel.arrowSideLeft') },
-            ].map((opt) => {
-              const isActive =
-                opt.value === undefined
-                  ? !selArrowData.fromSide
-                  : selArrowData.fromSide === opt.value
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() =>
-                    setArrows((p) =>
-                      p.map((a) => (a.id === selArrow ? { ...a, fromSide: opt.value } : a)),
-                    )
-                  }
-                  style={{
-                    flex: 1,
-                    minWidth: 36,
-                    height: 30,
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
-                    border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    color: isActive ? T.accent : T.panelText,
-                    transition: 'all 0.1s',
-                  }}
-                >
-                  {opt.label}
-                </div>
-              )
-            })}
-          </div>
-        </PanelSection>
-        <PanelSection label={t('rightPanel.arrowToSide')}>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {[
-              { id: 'auto', value: undefined, label: t('rightPanel.arrowSideAuto') },
-              { id: 'top', value: 'top' as const, label: t('rightPanel.arrowSideTop') },
-              { id: 'right', value: 'right' as const, label: t('rightPanel.arrowSideRight') },
-              { id: 'bottom', value: 'bottom' as const, label: t('rightPanel.arrowSideBottom') },
-              { id: 'left', value: 'left' as const, label: t('rightPanel.arrowSideLeft') },
-            ].map((opt) => {
-              const isActive =
-                opt.value === undefined ? !selArrowData.toSide : selArrowData.toSide === opt.value
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() =>
-                    setArrows((p) =>
-                      p.map((a) => (a.id === selArrow ? { ...a, toSide: opt.value } : a)),
-                    )
-                  }
-                  style={{
-                    flex: 1,
-                    minWidth: 36,
-                    height: 30,
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
-                    border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    color: isActive ? T.accent : T.panelText,
-                    transition: 'all 0.1s',
-                  }}
-                >
-                  {opt.label}
-                </div>
-              )
-            })}
-          </div>
-        </PanelSection>
+        <ArrowSideSelector
+          label={t('rightPanel.arrowFromSide')}
+          value={selArrowData.fromSide}
+          onChange={(v) =>
+            setArrows((p) => p.map((a) => (a.id === selArrow ? { ...a, fromSide: v } : a)))
+          }
+          T={T}
+          isDark={isDark}
+          options={arrowSideOptions}
+        />
+        <ArrowSideSelector
+          label={t('rightPanel.arrowToSide')}
+          value={selArrowData.toSide}
+          onChange={(v) =>
+            setArrows((p) => p.map((a) => (a.id === selArrow ? { ...a, toSide: v } : a)))
+          }
+          T={T}
+          isDark={isDark}
+          options={arrowSideOptions}
+        />
+
         <PanelSection label={t('rightPanel.operations')}>
           <div className={styles.panelActions}>
             <PanelBtn

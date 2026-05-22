@@ -1224,6 +1224,7 @@ export default function FlowEditor({
     }
     const k = ky(lid, rid)
     if (connectFrom) {
+      // クリック接続経路: ドロップ座標が無いため fromSide/toSide は派生せず auto routing に委ねる
       if (k !== connectFrom && tasks[k])
         setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
       setConnectFrom(null)
@@ -1288,6 +1289,7 @@ export default function FlowEditor({
   const taskClick = (k: string, e: React.MouseEvent): void => {
     e.stopPropagation()
     if (connectFrom) {
+      // クリック接続経路: ドロップ座標が無いため fromSide/toSide は派生せず auto routing に委ねる
       if (k !== connectFrom)
         setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
       setConnectFrom(null)
