@@ -1,5 +1,5 @@
-import type { InternalArrow, ArrowPathResult } from '../../lib/types'
-export type { InternalArrow, ArrowPathResult }
+import type { InternalArrow, ArrowPathResult, ArrowSide } from '../../lib/types'
+export type { InternalArrow, ArrowPathResult, ArrowSide }
 
 // =============================================
 // Theme & Palette types (from mockup constants)
@@ -99,6 +99,8 @@ export interface Arrow {
   color?: string | null
   dash?: string | null
   bidirectional?: boolean
+  /** 接続元 diamond ノードの出口頂点。null/undefined なら自動。 */
+  fromSide?: ArrowSide | null
 }
 
 export interface Flow {
