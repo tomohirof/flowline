@@ -970,8 +970,8 @@ describe('detectDiagonalDetour', () => {
     expect(r?.kind).toBe('source-detour')
     // 障害下端 (200 + 25) + DETOUR_MARGIN (14) = 239
     if (r?.kind === 'source-detour') {
-      expect(r.my).toBeGreaterThan(225) // shifted below middle-row obstacles
-      expect(r.my).toBeLessThan(300) // 範囲内
+      expect(r.my).toBe(239) // shifted: 200 (障害中心) + 25 (h/2) + 14 (DETOUR_MARGIN)
+      expect(r.departY).toBe(114) // clampOffset(100, 239, 14) = 100 + 14 (shiftedMy ベース)
     }
   })
 
@@ -986,8 +986,8 @@ describe('detectDiagonalDetour', () => {
     const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
     expect(r?.kind).toBe('target-detour')
     if (r?.kind === 'target-detour') {
-      expect(r.my).toBeGreaterThan(225)
-      expect(r.my).toBeLessThan(300)
+      expect(r.my).toBe(239) // shifted: 200 (障害中心) + 25 (h/2) + 14 (DETOUR_MARGIN)
+      expect(r.approachY).toBe(286) // clampOffset(300, 239, 14) = 300 - 14 (shiftedMy ベース)
     }
   })
 
@@ -1002,8 +1002,9 @@ describe('detectDiagonalDetour', () => {
     const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
     expect(r?.kind).toBe('both-detour')
     if (r?.kind === 'both-detour') {
-      expect(r.my).toBeGreaterThan(225)
-      expect(r.my).toBeLessThan(300)
+      expect(r.my).toBe(239) // shifted: 200 (障害中心) + 25 (h/2) + 14 (DETOUR_MARGIN)
+      expect(r.departY).toBe(114) // clampOffset(100, 239, 14)
+      expect(r.approachY).toBe(286) // clampOffset(300, 239, 14)
     }
   })
 
@@ -1023,8 +1024,8 @@ describe('detectDiagonalDetour', () => {
     // source col に障害①、target col に障害無し、中央行に障害② → source-detour + shifted my
     expect(r?.kind).toBe('source-detour')
     if (r?.kind === 'source-detour') {
-      // middle horizontal が y=200 (row1) を回避するため my > 225 になるべき
-      expect(r.my).toBeGreaterThan(225)
+      // middle horizontal が y=200 (row1) を回避: 200 + 25 (h/2) + 14 (DETOUR_MARGIN) = 239
+      expect(r.my).toBe(239)
     }
   })
 

@@ -183,6 +183,11 @@ function computeShiftedMy(
   const bboxHEst = middleRowHits[0].h
   const lo = yLow + bboxHEst / 2 + 1
   const hi = yHigh - bboxHEst / 2 - 1
+  // 範囲外 → 元の my を返す。
+  // 注意: 呼び出し元が source/target/both-detour を選択しており column detour が
+  // 既に発生する場合、この経路では middleRowHits の障害は回避されない。これは
+  // shift-my の単独経路 (L270+) のような escalation 機構を持たないためで、
+  // 行間が狭い稀なケースで残存しうる既知の制約。
   if (shiftedMy >= lo && shiftedMy <= hi) return shiftedMy
   return my
 }
