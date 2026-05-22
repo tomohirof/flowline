@@ -72,8 +72,12 @@ export type ArrowSide = 'top' | 'right' | 'bottom' | 'left'
 ```ts
 export type { ArrowSide } from '../../shared/types'
 
-export interface InternalArrow { /* ... 既存 ... */ }
-export interface ArrowPathResult { /* ... 既存 ... */ }
+export interface InternalArrow {
+  /* ... 既存 ... */
+}
+export interface ArrowPathResult {
+  /* ... 既存 ... */
+}
 ```
 
 ### api/lib/flow-transform.ts
@@ -87,11 +91,13 @@ import type { ArrowSide } from '../../shared/types'
 ### tsconfig
 
 `tsconfig.app.json`:
+
 ```json
 "include": ["src", "shared"]
 ```
 
 `tsconfig.workers.json`:
+
 ```json
 "include": ["api/**/*.ts", "functions/**/*.ts", "workers/**/*.ts", "shared/**/*.ts"]
 ```

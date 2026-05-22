@@ -21,16 +21,19 @@
 - [ ] **Step 1: main を最新化**
 
 Run:
+
 ```bash
 git checkout main
 git fetch origin
 git merge --ff-only origin/main
 ```
+
 Expected: `Already up to date.` または fast-forward 成功。失敗時は人間に報告して中断。
 
 - [ ] **Step 2: worktree 作成**
 
 Run:
+
 ```bash
 git worktree add .worktrees/refactor-357-arrow-side-shared -b refactor/357-arrow-side-shared
 cd .worktrees/refactor-357-arrow-side-shared
@@ -39,19 +42,23 @@ cd .worktrees/refactor-357-arrow-side-shared
 - [ ] **Step 3: .env シンボリックリンク**
 
 Run:
+
 ```bash
 MAIN=$(git worktree list --porcelain | awk '/^worktree / {print $2; exit}')
 for f in "$MAIN"/.env*; do [ -f "$f" ] && ln -sf "$f" .; done
 ls -la .env*
 ```
+
 Expected: `.env`, `.env.local` などがシンボリックリンクとして表示される。
 
 - [ ] **Step 4: issue に「作業開始」ラベル付与**
 
 Run:
+
 ```bash
 gh issue edit 357 --add-label "作業開始"
 ```
+
 Expected: ラベル付与成功。既に付いていればスキップ。
 
 - [ ] **Step 5: 既存テスト Green 確認**
@@ -64,11 +71,13 @@ Expected: 全テスト pass。fail があればリファクタ前に修正方針
 ## Task 1: shared/types.ts を新設
 
 **Files:**
+
 - Create: `shared/types.ts`
 
 - [ ] **Step 1: ディレクトリと初期ファイル作成**
 
 Create `shared/types.ts`:
+
 ```ts
 // ⚠️ Only pure type definitions allowed in this directory.
 //    - No runtime code (no const, no function, no class).
@@ -91,6 +100,7 @@ Expected: ファイルが存在し、コメントと型定義が表示される�
 ## Task 2: tsconfig 両プロジェクトに shared/ を include
 
 **Files:**
+
 - Modify: `tsconfig.app.json`
 - Modify: `tsconfig.workers.json`
 
@@ -99,6 +109,7 @@ Expected: ファイルが存在し、コメントと型定義が表示される�
 `tsconfig.app.json` の `"include": ["src"]` を `"include": ["src", "shared"]` に変更する。`exclude` はそのまま。
 
 変更後の該当行（27行目相当）:
+
 ```json
   "include": ["src", "shared"],
   "exclude": ["src/**/*.test.*"]
@@ -107,6 +118,7 @@ Expected: ファイルが存在し、コメントと型定義が表示される�
 - [ ] **Step 2: tsconfig.workers.json の include を更新**
 
 `tsconfig.workers.json` の最終行 `"include": ["api/**/*.ts", "functions/**/*.ts", "workers/**/*.ts"]` を以下に変更:
+
 ```json
   "include": ["api/**/*.ts", "functions/**/*.ts", "workers/**/*.ts", "shared/**/*.ts"]
 ```
@@ -121,17 +133,20 @@ Expected: エラーなし（exit code 0）。`shared/types.ts` が両プロジ�
 ## Task 3: src/lib/types.ts を shared からの re-export に置換
 
 **Files:**
+
 - Modify: `src/lib/types.ts`
 
 - [ ] **Step 1: ArrowSide 定義を削除し shared から re-export**
 
 `src/lib/types.ts` の冒頭 1-2 行目の `ArrowSide` 定義:
+
 ```ts
 /** ひし形ノードの接続元として使う頂点/辺。未指定なら自動（ターゲット方向から推定）。 */
 export type ArrowSide = 'top' | 'right' | 'bottom' | 'left'
 ```
 
 を以下に置換:
+
 ```ts
 export type { ArrowSide } from '../../shared/types'
 ```
@@ -153,16 +168,19 @@ Expected: 全テスト pass（型 erase のみで実行時挙動は変わらな�
 ## Task 4: api/lib/flow-transform.ts を shared 直接 import に置換
 
 **Files:**
+
 - Modify: `api/lib/flow-transform.ts`
 
 - [ ] **Step 1: import 追加と local 定義削除**
 
 `api/lib/flow-transform.ts` の 6 行目:
+
 ```ts
 export type ArrowSide = 'top' | 'right' | 'bottom' | 'left'
 ```
 
 を以下に置換:
+
 ```ts
 import type { ArrowSide } from '../../shared/types'
 ```
@@ -227,6 +245,7 @@ Run: `npm run dev`（バックグラウンド or 別タブ）
 - [ ] **Step 3: 既存矢印 + ひし形 fromSide 矢印の描画確認**
 
 既存 flow を開き、以下を確認:
+
 - 既存矢印が以前と同じ位置・パスで描画されている
 - ひし形ノードを含む矢印で `fromSide` が指定されているものが正しく頂点から出ている
 - 共有ビュー（share URL）で同じ flow を開いて描画が一致する
@@ -248,6 +267,7 @@ Expected: リファクタなので変化なし。1 秒超過があれば原因�
 
 Run: `git status && git diff --stat`
 Expected: 変更ファイルは以下のみ:
+
 - `shared/types.ts`（新規）
 - `src/lib/types.ts`
 - `api/lib/flow-transform.ts`
@@ -257,15 +277,18 @@ Expected: 変更ファイルは以下のみ:
 - [ ] **Step 2: 最新 main を取り込み**
 
 Run:
+
 ```bash
 git pull origin main --rebase
 npm test
 ```
+
 Expected: rebase 成功、テスト全 pass。conflict があれば手動解決。
 
 - [ ] **Step 3: コミット**
 
 Run:
+
 ```bash
 git add shared/types.ts src/lib/types.ts api/lib/flow-transform.ts tsconfig.app.json tsconfig.workers.json
 git commit -m "$(cat <<'EOF'
@@ -291,6 +314,7 @@ Run: `git push -u origin refactor/357-arrow-side-shared`
 - [ ] **Step 5: PR 作成**
 
 Run:
+
 ```bash
 gh pr create --title "refactor(#357): consolidate ArrowSide type into shared/" --body "$(cat <<'EOF'
 ## Summary
@@ -325,6 +349,7 @@ Expected: 全 check pass。fail があれば修正 → push → 再 watch。
 - [ ] **Step 8: レビュー依頼**
 
 Run:
+
 ```bash
 gh pr comment --body '@claude PRをレビューして。
 以下の観点で確認すること：
@@ -341,6 +366,7 @@ gh pr comment --body '@claude PRをレビューして。
 **Files:** なし（運用フェーズ）
 
 CLAUDE.md workflow Step 9-11 に従う:
+
 - レビュー判定 [C:承認OK] になるまで修正ループ（最大 10 回、1回ずつ）
 - merge: `gh pr merge --merge`
 - main 更新: メインリポジトリで `git -C $MAIN fetch origin main && git -C $MAIN merge --ff-only origin/main`
