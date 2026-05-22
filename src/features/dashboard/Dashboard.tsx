@@ -12,6 +12,7 @@ import {
 } from '../../lib/api'
 import type { FlowListResponse, FlowSummary, FlowDetailResponse, Project } from '../editor/types'
 import { FlowCard } from './FlowCard'
+import { ProjectBadge } from './ProjectBadge'
 import { FlowContextMenu } from './FlowContextMenu'
 import { DashboardTopBar } from './DashboardTopBar'
 import { DashboardSidebar } from './DashboardSidebar'
@@ -231,6 +232,24 @@ export function Dashboard() {
     }
     return sortedFlows
   }, [selectedNav, sortedFlows])
+
+  // プロジェクトID→名前の解決マップ（自分所有 + 共有プロジェクトをマージ）
+  const projectsById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of projects) map.set(p.id, p.name)
+    for (const p of sharedProjects) map.set(p.id, p.name)
+    return map
+  }, [projects, sharedProjects])
+
+  // フローのプロジェクト名を解決。プロジェクトビュー中／未分類／削除済みは undefined。
+  const resolveProjectName = useCallback(
+    (projectId: string | null): string | undefined => {
+      if (!projectId) return undefined
+      if (selectedNav.startsWith('project:')) return undefined
+      return projectsById.get(projectId)
+    },
+    [projectsById, selectedNav],
+  )
 
   const handleCreateProject = async () => {
     const name = prompt(t('dashboard:project.promptName'))
@@ -729,6 +748,7 @@ export function Dashboard() {
                       isHovered={hoveredId === flow.id}
                       onHover={setHoveredId}
                       renamingId={renamingId}
+                      projectName={resolveProjectName(flow.projectId)}
                     />
                   ))}
                 </div>
@@ -757,6 +777,7 @@ export function Dashboard() {
                         >
                           {flow.title}
                         </Link>
+                        <ProjectBadge name={resolveProjectName(flow.projectId)} />
                         {flow.shareToken && (
                           <span
                             data-testid={`share-badge-${flow.id}`}

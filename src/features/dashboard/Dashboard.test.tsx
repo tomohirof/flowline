@@ -1448,4 +1448,201 @@ describe('Dashboard', () => {
       expect(screen.getByTestId('project-members-btn')).toBeInTheDocument()
     })
   })
+
+  describe('project badge on flow card (#354)', () => {
+    const flowInP1 = {
+      id: 'flow-p1',
+      title: 'プロジェクトP1のフロー',
+      themeId: 'cloud',
+      shareToken: null,
+      projectId: 'p1',
+      createdAt: '2026-01-15T10:00:00Z',
+      updatedAt: '2026-01-15T10:00:00Z',
+    }
+    const flowInShared = {
+      id: 'flow-shared',
+      title: '共有プロジェクトのフロー',
+      themeId: 'cloud',
+      shareToken: null,
+      projectId: 'shared-p1',
+      createdAt: '2026-01-15T10:00:00Z',
+      updatedAt: '2026-01-15T10:00:00Z',
+    }
+    const flowUncategorized = {
+      id: 'flow-unc',
+      title: '未分類フロー',
+      themeId: 'cloud',
+      shareToken: null,
+      projectId: null,
+      createdAt: '2026-01-15T10:00:00Z',
+      updatedAt: '2026-01-15T10:00:00Z',
+    }
+    const flowOrphan = {
+      id: 'flow-orphan',
+      title: '削除済みプロジェクトのフロー',
+      themeId: 'cloud',
+      shareToken: null,
+      projectId: 'deleted-project-id',
+      createdAt: '2026-01-15T10:00:00Z',
+      updatedAt: '2026-01-15T10:00:00Z',
+    }
+
+    it('should show project badge for owned project flow', async () => {
+      mockFetchProjects.mockResolvedValueOnce({
+        projects: [
+          {
+            id: 'p1',
+            name: 'プロジェクトA',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+          },
+        ],
+      })
+      mockApiFetch.mockResolvedValueOnce({ flows: [flowInP1] })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-p1')).toBeInTheDocument()
+      })
+      const card = screen.getByTestId('flow-card-flow-p1')
+      const badge = card.querySelector('[data-testid="project-badge"]')
+      expect(badge).not.toBeNull()
+      expect(badge!.textContent).toBe('プロジェクトA')
+    })
+
+    it('should show project badge for shared project flow', async () => {
+      mockFetchProjects.mockResolvedValueOnce({ projects: [] })
+      sharedProjectsFetch.mockImplementationOnce(() =>
+        Promise.resolve({
+          projects: [
+            {
+              id: 'shared-p1',
+              name: '共有プロジェクトX',
+              ownerName: 'Alice',
+            },
+          ],
+        }),
+      )
+      mockApiFetch.mockResolvedValueOnce({ flows: [flowInShared] })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-shared')).toBeInTheDocument()
+      })
+      await waitFor(() => {
+        const card = screen.getByTestId('flow-card-flow-shared')
+        const badge = card.querySelector('[data-testid="project-badge"]')
+        expect(badge).not.toBeNull()
+        expect(badge!.textContent).toBe('共有プロジェクトX')
+      })
+    })
+
+    it('should not show project badge for uncategorized flow', async () => {
+      mockFetchProjects.mockResolvedValueOnce({
+        projects: [
+          {
+            id: 'p1',
+            name: 'プロジェクトA',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+          },
+        ],
+      })
+      mockApiFetch.mockResolvedValueOnce({ flows: [flowUncategorized] })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-unc')).toBeInTheDocument()
+      })
+      const card = screen.getByTestId('flow-card-flow-unc')
+      expect(card.querySelector('[data-testid="project-badge"]')).toBeNull()
+    })
+
+    it('should not show project badge when projectId does not match any project (deleted)', async () => {
+      mockFetchProjects.mockResolvedValueOnce({ projects: [] })
+      mockApiFetch.mockResolvedValueOnce({ flows: [flowOrphan] })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-orphan')).toBeInTheDocument()
+      })
+      const card = screen.getByTestId('flow-card-flow-orphan')
+      expect(card.querySelector('[data-testid="project-badge"]')).toBeNull()
+    })
+
+    it('should not show project badge when in project view (project:xxx)', async () => {
+      mockFetchProjects.mockResolvedValueOnce({
+        projects: [
+          {
+            id: 'p1',
+            name: 'プロジェクトA',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+          },
+        ],
+      })
+      // 初期 fetch (recent)
+      mockApiFetch.mockResolvedValueOnce({ flows: [flowInP1] })
+      // プロジェクトクリック後の filtered fetch
+      mockApiFetch.mockResolvedValueOnce({ flows: [flowInP1] })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-p1')).toBeInTheDocument()
+      })
+
+      // プロジェクト選択前: バッジ表示
+      expect(
+        screen.getByTestId('flow-card-flow-p1').querySelector('[data-testid="project-badge"]'),
+      ).not.toBeNull()
+
+      await userEvent.click(screen.getByTestId('project-item-p1'))
+
+      await waitFor(() => {
+        expect(mockApiFetch).toHaveBeenCalledWith('/flows?projectId=p1')
+      })
+      // プロジェクトビュー中はバッジ非表示
+      await waitFor(() => {
+        const card = screen.getByTestId('flow-card-flow-p1')
+        expect(card.querySelector('[data-testid="project-badge"]')).toBeNull()
+      })
+    })
+
+    it('should show project badge in list view', async () => {
+      const user = userEvent.setup()
+      mockFetchProjects.mockResolvedValueOnce({
+        projects: [
+          {
+            id: 'p1',
+            name: 'プロジェクトA',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+          },
+        ],
+      })
+      mockApiFetch.mockResolvedValueOnce({ flows: [flowInP1] })
+
+      renderDashboard()
+
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-card-flow-p1')).toBeInTheDocument()
+      })
+
+      // リストビューに切り替え
+      await user.click(screen.getByTestId('view-list-button'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-list')).toBeInTheDocument()
+      })
+      const row = screen.getByTestId('flow-card-flow-p1')
+      const badge = row.querySelector('[data-testid="project-badge"]')
+      expect(badge).not.toBeNull()
+      expect(badge!.textContent).toBe('プロジェクトA')
+    })
+  })
 })
