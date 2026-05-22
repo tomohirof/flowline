@@ -988,6 +988,22 @@ describe('detectDiagonalDetour', () => {
       expect(r.my).toBeLessThan(300)
     }
   })
+
+  it('should shift my when both-detour selected AND middle-row obstacle exists', () => {
+    // s=(100, 100), e=(300, 300), my=200
+    // 両列 hit + 中央行 hit
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 50 }, // source col & middle row
+      { x: 300, y: 200, w: 80, h: 50 }, // target col & middle row
+      { x: 200, y: 200, w: 80, h: 50 }, // 中央のみ
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('both-detour')
+    if (r?.kind === 'both-detour') {
+      expect(r.my).toBeGreaterThan(225)
+      expect(r.my).toBeLessThan(300)
+    }
+  })
 })
 
 describe('deriveFromSide', () => {
