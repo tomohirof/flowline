@@ -147,6 +147,53 @@ function clampOffset(from: number, to: number, gap: number): number {
 }
 
 /**
+ * 中央水平セグメント (y=my) に重なる middleRowHits があれば my をシフトした値を返す。
+ * シフトは「下塞がりかどうか」で方向を決め、障害の下/上 + DETOUR_MARGIN に配置する。
+ * シフト後の値が [s.y, e.y] 範囲を逸脱する場合は原 my を返す (range-check 失敗時のフォールバック)。
+ *
+ * source-detour / target-detour / both-detour の各 kind で共通利用する。
+ */
+function computeShiftedMy(
+  s: Point,
+  e: Point,
+  my: number,
+  middleRowHits: Bbox[],
+  obstacles: Bbox[],
+): number {
+  if (middleRowHits.length === 0) return my
+
+  // 上下塞がり判定は中央行と source/target 行の間にある障害だけを対象にする。
+  // source/target 行 (s.y / e.y) に位置する障害は矢印の端点付近で吸収されるため、
+  // 中央水平の Y シフト方向には影響しない。
+  const yLow = Math.min(s.y, e.y)
+  const yHigh = Math.max(s.y, e.y)
+  const inBetween = (b: Bbox) => b.y > yLow + b.h / 2 + 1 && b.y < yHigh - b.h / 2 - 1
+  const downBlocked = middleRowHits.some((obs) =>
+    obstacles.some((b) => b.y > obs.y + 1 && inBetween(b) && xOverlap(obs, b)),
+  )
+  const upBlocked = middleRowHits.some((obs) =>
+    obstacles.some((b) => b.y < obs.y - 1 && inBetween(b) && xOverlap(obs, b)),
+  )
+  const goDown = !downBlocked || upBlocked
+  const shiftedMy = goDown
+    ? Math.max(...middleRowHits.map((o) => o.y + o.h / 2)) + DETOUR_MARGIN
+    : Math.min(...middleRowHits.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
+
+  // range-check: source 行 / target 行を侵食しないこと
+  // 複数障害の高さが異なる場合に保守的な (最も厳しい) 余白を取るため max を使う。
+  const bboxHMax = Math.max(...middleRowHits.map((o) => o.h))
+  const lo = yLow + bboxHMax / 2 + 1
+  const hi = yHigh - bboxHMax / 2 - 1
+  // 範囲外 → 元の my を返す。
+  // 注意: 呼び出し元が source/target/both-detour を選択しており column detour が
+  // 既に発生する場合、この経路では middleRowHits の障害は回避されない。これは
+  // shift-my の単独経路 (L270+) のような escalation 機構を持たないためで、
+  // 行間が狭い稀なケースで残存しうる既知の制約。
+  if (shiftedMy >= lo && shiftedMy <= hi) return shiftedMy
+  return my
+}
+
+/**
  * 斜め配置矢印 (異行×異レーン) の Z字パス 3 セグメント (source 縦/中央水平/target 縦) と
  * 障害ノードの衝突を判定し、迂回パスを記述する DiagonalDetourResult を返す。
  * 障害なしまたは斜めでない (水平・垂直直線) ときは null を返す。
@@ -185,6 +232,18 @@ export function detectDiagonalDetour(
     )
   })
 
+  // 中央水平セグメント衝突: Y ≈ my で X が source-target 間 (早期計算で全 kind 分岐に提供)
+  // source/target 列の hit は対応する column detour で既に回避済みのため除外し、
+  // 純粋に中央水平セグメント上のみに存在する障害だけを評価対象にする。
+  const sourceColSet = new Set(sourceColHits)
+  const targetColSet = new Set(targetColHits)
+  const middleRowHits = obstacles.filter((b) => {
+    if (sourceColSet.has(b) || targetColSet.has(b)) return false
+    const xLow = Math.min(s.x, e.x)
+    const xHigh = Math.max(s.x, e.x)
+    return Math.abs(b.y - my) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1
+  })
+
   if (sourceColHits.length > 0 && targetColHits.length > 0) {
     // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
     const targetIds = new Set(targetColHits)
@@ -193,29 +252,25 @@ export function detectDiagonalDetour(
     const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
     const sourceDetourX = pickDetourX(sourceColHits, srcBlockers)
     const targetDetourX = pickDetourX(targetColHits, tgtBlockers)
-    const departY = clampOffset(s.y, my, DEPART_GAP)
-    const approachY = clampOffset(e.y, my, APPROACH_GAP)
-    return { kind: 'both-detour', departY, sourceDetourX, my, targetDetourX, approachY }
+    const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
+    const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
+    const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
+    return { kind: 'both-detour', departY, sourceDetourX, my: shiftedMy, targetDetourX, approachY }
   }
 
   if (targetColHits.length > 0 && sourceColHits.length === 0) {
     const detourX = pickDetourX(targetColHits, obstacles)
-    const approachY = clampOffset(e.y, my, APPROACH_GAP)
-    return { kind: 'target-detour', my, detourX, approachY }
+    const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
+    const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
+    return { kind: 'target-detour', my: shiftedMy, detourX, approachY }
   }
 
   if (sourceColHits.length > 0 && targetColHits.length === 0) {
     const detourX = pickDetourX(sourceColHits, obstacles)
-    const departY = clampOffset(s.y, my, DEPART_GAP)
-    return { kind: 'source-detour', departY, detourX, my }
+    const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
+    const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
+    return { kind: 'source-detour', departY, detourX, my: shiftedMy }
   }
-
-  // 中央水平セグメント衝突: Y ≈ my で X が源-標的間
-  const middleRowHits = obstacles.filter((b) => {
-    const xLow = Math.min(s.x, e.x)
-    const xHigh = Math.max(s.x, e.x)
-    return Math.abs(b.y - my) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1
-  })
 
   // 到達条件: sourceColHits / targetColHits は共に空 (上方の if ブロックが早期 return している)
   if (middleRowHits.length > 0) {
@@ -231,11 +286,12 @@ export function detectDiagonalDetour(
       : Math.min(...middleRowHits.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
 
     // ガード: shiftedMy が source 行 / target 行を侵食しないこと
+    // 複数障害の高さが異なる場合に保守的な (最も厳しい) 余白を取るため max を使う。
     const yLow = Math.min(s.y, e.y)
     const yHigh = Math.max(s.y, e.y)
-    const bboxHEst = middleRowHits[0].h
-    const lo = yLow + bboxHEst / 2 + 1
-    const hi = yHigh - bboxHEst / 2 - 1
+    const bboxHMax = Math.max(...middleRowHits.map((o) => o.h))
+    const lo = yLow + bboxHMax / 2 + 1
+    const hi = yHigh - bboxHMax / 2 - 1
     if (shiftedMy >= lo && shiftedMy <= hi) {
       return { kind: 'shift-my', my: shiftedMy }
     }

@@ -847,11 +847,13 @@ describe('detectDiagonalDetour', () => {
     const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
     const L: Bbox = { x: 400, y: 250, w: 152, h: 56 }
     const r = detectDiagonalDetour(s, e, [B, R, L])
+    // L は中央行 (y=my=250) 上にあり target-detour の中央水平セグメント [s.x=200, detourX=690]
+    // を貫通するため、my を shiftedMy=292 (#366 修正) にシフトする。direction (right) は detourX で検証。
     expect(r).toEqual({
       kind: 'target-detour',
-      my: 250,
+      my: 292, // 250 + 28 + 14 (障害下端 + DETOUR_MARGIN)
       detourX: 690, // 右優先
-      approachY: 358,
+      approachY: 358, // clampOffset(372, 292, 14) = 372 - 14 = 358 (偶然 unshift と同値)
     })
   })
 
@@ -954,6 +956,93 @@ describe('detectDiagonalDetour', () => {
       targetDetourX: 690,
       approachY: 358,
     })
+  })
+
+  it('should shift my when source-detour selected AND middle-row obstacle exists', () => {
+    // s=(100, 100), e=(300, 300), my=200
+    // source col hit at (100, 200) → source-detour 確定
+    // middle row hit at (200, 200) → my を shiftedMy にシフトすべき
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 50 }, // source col & middle row
+      { x: 200, y: 200, w: 80, h: 50 }, // middle row のみ (target col=300 ではない)
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('source-detour')
+    // 障害下端 (200 + 25) + DETOUR_MARGIN (14) = 239
+    if (r?.kind === 'source-detour') {
+      expect(r.my).toBe(239) // shifted: 200 (障害中心) + 25 (h/2) + 14 (DETOUR_MARGIN)
+      expect(r.departY).toBe(114) // clampOffset(100, 239, 14) = 100 + 14 (shiftedMy ベース)
+    }
+  })
+
+  it('should shift my when target-detour selected AND middle-row obstacle exists', () => {
+    // s=(100, 100), e=(300, 300), my=200
+    // target col hit at (300, 200) → target-detour 確定
+    // middle row hit at (200, 200)
+    const obstacles: Bbox[] = [
+      { x: 300, y: 200, w: 80, h: 50 }, // target col & middle row
+      { x: 200, y: 200, w: 80, h: 50 }, // middle row のみ
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('target-detour')
+    if (r?.kind === 'target-detour') {
+      expect(r.my).toBe(239) // shifted: 200 (障害中心) + 25 (h/2) + 14 (DETOUR_MARGIN)
+      expect(r.approachY).toBe(286) // clampOffset(300, 239, 14) = 300 - 14 (shiftedMy ベース)
+    }
+  })
+
+  it('should shift my when both-detour selected AND middle-row obstacle exists', () => {
+    // s=(100, 100), e=(300, 300), my=200
+    // 両列 hit + 中央行 hit
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 50 }, // source col & middle row
+      { x: 300, y: 200, w: 80, h: 50 }, // target col & middle row
+      { x: 200, y: 200, w: 80, h: 50 }, // 中央のみ
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('both-detour')
+    if (r?.kind === 'both-detour') {
+      expect(r.my).toBe(239) // shifted: 200 (障害中心) + 25 (h/2) + 14 (DETOUR_MARGIN)
+      expect(r.departY).toBe(114) // clampOffset(100, 239, 14)
+      expect(r.approachY).toBe(286) // clampOffset(300, 239, 14)
+    }
+  })
+
+  it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
+    // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
+    // source 店舗/ステータス変更 (col0=100, row0=100)
+    // target グルプラ(2)/請求 (col2=300, row2=300)
+    // 障害①: 店舗/確認連絡(9) (col0=100, row1=200) — source 列・中央行
+    // 障害②: グルプラ/確認連絡(8) (col1=200, row1=200) — 中央行
+    // 障害③: グルプラ/請求 (col1=200, row2=300) — target 隣接列・target 行
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 50 },
+      { x: 200, y: 200, w: 80, h: 50 },
+      { x: 200, y: 300, w: 80, h: 50 },
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    // source col に障害①、target col に障害無し、中央行に障害② → source-detour + shifted my
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      // middle horizontal が y=200 (row1) を回避: 200 + 25 (h/2) + 14 (DETOUR_MARGIN) = 239
+      expect(r.my).toBe(239)
+    }
+  })
+
+  it('should fall back to original my when shiftedMy exceeds row bounds', () => {
+    // 行間隔が狭く shiftedMy が source 行 / target 行を侵食するケース
+    // s=(100, 100), e=(300, 160), my=130 — 行差 60 で狭い
+    // 中央行に大きな障害があると shiftedMy が範囲外になる
+    const obstacles: Bbox[] = [
+      { x: 100, y: 130, w: 80, h: 50 }, // source col & middle row
+      { x: 200, y: 130, w: 80, h: 50 }, // 中央のみ — 下端 155, +14 = 169 > yHigh-25-1 = 134
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 160 }, obstacles)
+    // range-check 失敗 → 従来の my (=130) で source-detour
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      expect(r.my).toBe(130) // unshifted
+    }
   })
 })
 
