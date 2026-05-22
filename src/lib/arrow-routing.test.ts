@@ -643,6 +643,14 @@ describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
     const r = buildArrowPath(s, e, fc, tc)
     expect(r.d).toBe('M200,128 L200,250 L600,250 L600,372')
   })
+
+  it('should handle diagonal detour when source/target points come from diamond shape', () => {
+    const sDia = { x: 200, y: 134 } // approx 中心 (200,100) + DS(34) 下
+    const eDia = { x: 600, y: 366 } // approx 中心 (600,400) - DS(34) 上
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 } // target 列障害
+    const r = buildArrowPath(sDia, eDia, { x: 200, y: 100 }, { x: 600, y: 400 }, [B])
+    expect(r.d).toMatch(/^M200,134 L200,250 L690,250 L690,\d+ L600,\d+ L600,366$/)
+  })
 })
 
 describe('collectDiagonalObstacles', () => {
