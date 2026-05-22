@@ -239,8 +239,20 @@ export function detectDiagonalDetour(
     if (shiftedMy >= lo && shiftedMy <= hi) {
       return { kind: 'shift-my', my: shiftedMy }
     }
-    // 範囲外 → 中央障害を targetColHit 扱いで target-detour に昇格
+    // 範囲外 → 中央水平セグメントが中間行障害を避けるよう、detour 方向に応じて kind を選ぶ。
+    //
+    // target-detour の中央水平は [s.x, detourX]（長い）、source-detour は [detourX, e.x]（短い）。
+    // 障害は s.x < obstacle.x < e.x に位置するため:
+    //   - 右迂回 (detourX > obstacle): source-detour なら水平は障害の右側のみ → 衝突なし
+    //   - 左迂回 (detourX < obstacle): target-detour なら水平は障害の左側のみ → 衝突なし
+    // と幾何学的に決まる (#359)。
     const detourX = pickDetourX(middleRowHits, obstacles)
+    const obstacleMaxX = Math.max(...middleRowHits.map((o) => o.x))
+    const goRight = detourX > obstacleMaxX
+    if (goRight) {
+      const departY = clampOffset(s.y, my, DEPART_GAP)
+      return { kind: 'source-detour', departY, detourX, my }
+    }
     const approachY = clampOffset(e.y, my, APPROACH_GAP)
     return { kind: 'target-detour', my, detourX, approachY }
   }
