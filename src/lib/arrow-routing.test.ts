@@ -1349,6 +1349,16 @@ describe('segmentsToBboxes', () => {
       { x: 100, y: 25, w: 1, h: 50 },
     ])
   })
+
+  it('handles zero-length horizontal segment (range[0] === range[1]) as degenerate {w:0, h:1}', () => {
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 100, range: [50, 50] }]
+    expect(segmentsToBboxes(segs)).toEqual([{ x: 50, y: 100, w: 0, h: 1 }])
+  })
+
+  it('handles zero-length vertical segment (range[0] === range[1]) as degenerate {w:1, h:0}', () => {
+    const segs: EdgeSegment[] = [{ orientation: 'v', fixed: 100, range: [50, 50] }]
+    expect(segmentsToBboxes(segs)).toEqual([{ x: 100, y: 50, w: 1, h: 0 }])
+  })
 })
 
 describe('buildArrowPath segments — straight & L-shape', () => {

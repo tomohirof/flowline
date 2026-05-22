@@ -732,6 +732,10 @@ export const buildArrowPath = (
     } else if (sV) {
       // 縦出口→横入口: L字パス → ラベルは長辺の中点
       d = `M${s.x},${s.y} L${s.x},${e.y} L${e.x},${e.y}`
+      segments = [
+        { orientation: 'v', fixed: s.x, range: [Math.min(s.y, e.y), Math.max(s.y, e.y)] },
+        { orientation: 'h', fixed: e.y, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] },
+      ]
       if (Math.abs(e.y - s.y) >= Math.abs(e.x - s.x)) {
         // 縦辺が長い（または等長）: 縦辺の中点
         mx = s.x
@@ -741,13 +745,13 @@ export const buildArrowPath = (
         mx = (s.x + e.x) / 2
         my = e.y
       }
-      segments = [
-        { orientation: 'v', fixed: s.x, range: [Math.min(s.y, e.y), Math.max(s.y, e.y)] },
-        { orientation: 'h', fixed: e.y, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] },
-      ]
     } else {
       // 横出口→縦入口: L字パス → ラベルは長辺の中点
       d = `M${s.x},${s.y} L${e.x},${s.y} L${e.x},${e.y}`
+      segments = [
+        { orientation: 'h', fixed: s.y, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] },
+        { orientation: 'v', fixed: e.x, range: [Math.min(s.y, e.y), Math.max(s.y, e.y)] },
+      ]
       if (Math.abs(e.x - s.x) >= Math.abs(e.y - s.y)) {
         // 横辺が長い（または等長）: 横辺の中点
         mx = (s.x + e.x) / 2
@@ -757,10 +761,6 @@ export const buildArrowPath = (
         mx = e.x
         my = (s.y + e.y) / 2
       }
-      segments = [
-        { orientation: 'h', fixed: s.y, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] },
-        { orientation: 'v', fixed: e.x, range: [Math.min(s.y, e.y), Math.max(s.y, e.y)] },
-      ]
     }
   }
 
@@ -1013,12 +1013,18 @@ export function buildObstacles(args: BuildObstaclesArgs): Bbox[] {
  * - 水平セグメント: 中央点 ((r0+r1)/2, fixed)、幅=range の長さ、高さ=1
  * - 垂直セグメント: 中央点 (fixed, (r0+r1)/2)、幅=1、高さ=range の長さ
  * - range[0] > range[1] でも絶対値で長さを取り、min/max を中央計算に使う
+ *
+ * 退化ケース（zero-length）: range[0] === range[1] の場合、平行軸方向の長さは 0 となる。
+ * これは「点状の線分」を意味し、直交軸方向のみ厚さ 1 を保つ。
+ * 水平セグメントなら `{w:0, h:1}`、垂直なら `{w:1, h:0}`。
+ * 長さを 1 に水増ししない（実態に忠実に degenerate を表現する）方針。
  */
 export function segmentsToBboxes(segments: EdgeSegment[]): Bbox[] {
   return segments.map((s) => {
     const r0 = Math.min(s.range[0], s.range[1])
     const r1 = Math.max(s.range[0], s.range[1])
-    const len = r1 - r0
+    // 退化ケース（r0 === r1）では len=0。長さを偽装せず degenerate を保つ。
+    const len = Math.max(r1 - r0, 0)
     return s.orientation === 'h'
       ? { x: (r0 + r1) / 2, y: s.fixed, w: len, h: 1 }
       : { x: s.fixed, y: (r0 + r1) / 2, w: 1, h: len }
