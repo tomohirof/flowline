@@ -116,6 +116,37 @@ type DiagonalDetourResult =
     }
 
 /**
+ * 右優先で迂回 X を決定する。hits 中のいずれかが Y 重なりするブロッカーを直右に持てば右塞がり、
+ * 直左に持てば左塞がり。両塞がりなら右優先 (#333 と整合)。
+ *
+ * blockers は方向判定対象のブロッカー候補。target/source 列同士の相互ブロッキングを防ぐ
+ * ため、both-detour では呼び出し側が反対側列の hits を除外した blockers を渡す。
+ */
+function pickDetourX(hits: Bbox[], blockers: Bbox[]): number {
+  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+  const rightBlocked = hits.some((obs) =>
+    blockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+  )
+  const leftBlocked = hits.some((obs) =>
+    blockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+  )
+  const goRight = !rightBlocked || leftBlocked
+  return goRight
+    ? Math.max(...hits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+    : Math.min(...hits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+}
+
+/**
+ * 始点 from から終点 to に向けて gap 分だけオフセットした値を返す。
+ * 自己交差防止のため |to - from| / 2 で clamp。depart Y / approach Y / X の計算で共通化。
+ */
+function clampOffset(from: number, to: number, gap: number): number {
+  const sign = Math.sign(to - from)
+  const halfDist = Math.abs(to - from) / 2
+  return from + sign * Math.min(gap, halfDist)
+}
+
+/**
  * 斜め配置矢印 (異行×異レーン) の Z字パス 3 セグメント (source 縦/中央水平/target 縦) と
  * 障害ノードの衝突を判定し、迂回パスを記述する DiagonalDetourResult を返す。
  * 障害なしまたは斜めでない (水平・垂直直線) ときは null を返す。
@@ -158,80 +189,28 @@ export function detectDiagonalDetour(
     )
   })
 
-  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
-
   if (sourceColHits.length > 0 && targetColHits.length > 0) {
-    // both-detour では source / target 列それぞれの迂回方向を独立に判定する。
-    // 反対側列の障害（既に対応する迂回で回避済み）を blocking に含めると
-    // 誤った方向選択が発生するため、相互に除外する。
-    const sourceIds = new Set(sourceColHits)
+    // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
     const targetIds = new Set(targetColHits)
+    const sourceIds = new Set(sourceColHits)
     const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
     const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
-
-    const srcRightBlocked = sourceColHits.some((obs) =>
-      srcBlockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-    )
-    const srcLeftBlocked = sourceColHits.some((obs) =>
-      srcBlockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-    )
-    const srcGoRight = !srcRightBlocked || srcLeftBlocked
-    const sourceDetourX = srcGoRight
-      ? Math.max(...sourceColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
-      : Math.min(...sourceColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-
-    const tgtRightBlocked = targetColHits.some((obs) =>
-      tgtBlockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-    )
-    const tgtLeftBlocked = targetColHits.some((obs) =>
-      tgtBlockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-    )
-    const tgtGoRight = !tgtRightBlocked || tgtLeftBlocked
-    const targetDetourX = tgtGoRight
-      ? Math.max(...targetColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
-      : Math.min(...targetColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-
-    const signS = Math.sign(my - s.y)
-    const halfDyS = Math.abs(my - s.y) / 2
-    const departY = s.y + signS * Math.min(DEPART_GAP, halfDyS)
-    const signE = Math.sign(e.y - my)
-    const halfDyE = Math.abs(e.y - my) / 2
-    const approachY = e.y - signE * Math.min(APPROACH_GAP, halfDyE)
+    const sourceDetourX = pickDetourX(sourceColHits, srcBlockers)
+    const targetDetourX = pickDetourX(targetColHits, tgtBlockers)
+    const departY = clampOffset(s.y, my, DEPART_GAP)
+    const approachY = clampOffset(e.y, my, APPROACH_GAP)
     return { kind: 'both-detour', departY, sourceDetourX, my, targetDetourX, approachY }
   }
 
   if (targetColHits.length > 0 && sourceColHits.length === 0) {
-    // 方向決定: target 列障害の左右塞がり判定
-    const rightBlocked = targetColHits.some((obs) =>
-      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-    )
-    const leftBlocked = targetColHits.some((obs) =>
-      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-    )
-    const goRight = !rightBlocked || leftBlocked
-    const detourX = goRight
-      ? Math.max(...targetColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
-      : Math.min(...targetColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-    const sign = Math.sign(e.y - my)
-    const halfDy = Math.abs(e.y - my) / 2
-    const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
+    const detourX = pickDetourX(targetColHits, obstacles)
+    const approachY = clampOffset(e.y, my, APPROACH_GAP)
     return { kind: 'target-detour', my, detourX, approachY }
   }
 
   if (sourceColHits.length > 0 && targetColHits.length === 0) {
-    const rightBlocked = sourceColHits.some((obs) =>
-      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-    )
-    const leftBlocked = sourceColHits.some((obs) =>
-      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-    )
-    const goRight = !rightBlocked || leftBlocked
-    const detourX = goRight
-      ? Math.max(...sourceColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
-      : Math.min(...sourceColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-    const sign = Math.sign(my - s.y)
-    const halfDy = Math.abs(my - s.y) / 2
-    const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
+    const detourX = pickDetourX(sourceColHits, obstacles)
+    const departY = clampOffset(s.y, my, DEPART_GAP)
     return { kind: 'source-detour', departY, detourX, my }
   }
 
@@ -269,20 +248,9 @@ export function detectDiagonalDetour(
       return { kind: 'shift-my', my: shiftedMy }
     }
     // 範囲外 → 中央障害を targetColHit 扱いで target-detour に昇格
-    const escRightBlocked = middleRowHits.some((obs) =>
-      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-    )
-    const escLeftBlocked = middleRowHits.some((obs) =>
-      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-    )
-    const escGoRight = !escRightBlocked || escLeftBlocked
-    const escDetourX = escGoRight
-      ? Math.max(...middleRowHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
-      : Math.min(...middleRowHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-    const escSign = Math.sign(e.y - my)
-    const escHalfDy = Math.abs(e.y - my) / 2
-    const escApproachY = e.y - escSign * Math.min(APPROACH_GAP, escHalfDy)
-    return { kind: 'target-detour', my, detourX: escDetourX, approachY: escApproachY }
+    const detourX = pickDetourX(middleRowHits, obstacles)
+    const approachY = clampOffset(e.y, my, APPROACH_GAP)
+    return { kind: 'target-detour', my, detourX, approachY }
   }
 
   return null
