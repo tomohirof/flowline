@@ -249,7 +249,9 @@ describe('calcArrowPath', () => {
 
   it('diamond の fromSide を尊重する（右下ターゲットでも fromSide=bottom なら下頂点から出る）', () => {
     const config = {
-      hw: 76, hh: 28, rh: 84,
+      hw: 76,
+      hh: 28,
+      rh: 84,
       fromShape: 'diamond' as const,
       fromSide: 'bottom' as const,
     }
@@ -261,7 +263,9 @@ describe('calcArrowPath', () => {
 
   it('diamond で fromSide 未指定なら従来の自動ロジック', () => {
     const config = {
-      hw: 76, hh: 28, rh: 84,
+      hw: 76,
+      hh: 28,
+      rh: 84,
       fromShape: 'diamond' as const,
     }
     const r = calcArrowPath({ x: 200, y: 200 }, { x: 500, y: 500 }, config)

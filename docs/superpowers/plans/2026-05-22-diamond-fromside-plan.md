@@ -16,9 +16,11 @@
 ## File Structure
 
 ### Created
+
 - `migrations/0013_arrow_from_side.sql` — DB column 追加
 
 ### Modified
+
 - `src/lib/types.ts` — `ArrowSide` 型 + `InternalArrow.fromSide`
 - `src/features/editor/types.ts` — `Arrow.fromSide`
 - `src/lib/arrow-routing.ts` — `deriveFromSide` 新設、`exitPt` 引数追加
@@ -34,6 +36,7 @@
 - `tests/api/routes/flows.test.ts` — round-trip テスト追加
 
 ### Verification only (no code change)
+
 - `src/features/editor/png-export.ts` — SVG クローン経由なので自動的に直る
 
 ---
@@ -41,6 +44,7 @@
 ## Task 1: 型定義に ArrowSide を追加
 
 **Files:**
+
 - Modify: `src/lib/types.ts`
 - Modify: `src/features/editor/types.ts`
 
@@ -115,6 +119,7 @@ git commit -m "feat(#349): add ArrowSide type and fromSide to arrow types"
 ## Task 2: deriveFromSide 純関数 + テスト
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Modify: `src/lib/arrow-routing.test.ts`
 
@@ -214,6 +219,7 @@ git commit -m "feat(#349): add deriveFromSide pure function"
 ## Task 3: exitPt に fromSide 引数を追加 + テスト
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Modify: `src/lib/arrow-routing.test.ts`
 
@@ -290,6 +296,7 @@ Expected: FAIL（既存の exitPt は fromSide 引数を受け取らない）
 シグネチャに `fromSide?: ArrowSide` を末尾追加。`shape === 'diamond'` 分岐の冒頭で fromSide があれば該当頂点を返す。
 
 冒頭の import に追加:
+
 ```ts
 import type { ArrowSide } from './types'
 ```
@@ -350,6 +357,7 @@ git commit -m "feat(#349): extend exitPt with fromSide arg for diamond nodes"
 ## Task 4: calcArrowPath / ArrowConfig に fromSide を追加
 
 **Files:**
+
 - Modify: `src/lib/flow-engine.ts`
 - Modify: `src/lib/flow-engine.test.ts`
 
@@ -358,27 +366,31 @@ git commit -m "feat(#349): extend exitPt with fromSide arg for diamond nodes"
 ファイル冒頭の既存 describe `calcArrowPath` の末尾 `})` の直前に以下を挿入:
 
 ```ts
-  it('diamond の fromSide を尊重する（右下ターゲットでも fromSide=bottom なら下頂点から出る）', () => {
-    const config = {
-      hw: 76, hh: 28, rh: 84,
-      fromShape: 'diamond' as const,
-      fromSide: 'bottom' as const,
-    }
-    const r = calcArrowPath({ x: 200, y: 200 }, { x: 500, y: 500 }, config)
-    // exitPt(diamond, 'bottom') → {200, 234}
-    // path の冒頭 M が始点
-    expect(r.d.startsWith('M200,234')).toBe(true)
-  })
+it('diamond の fromSide を尊重する（右下ターゲットでも fromSide=bottom なら下頂点から出る）', () => {
+  const config = {
+    hw: 76,
+    hh: 28,
+    rh: 84,
+    fromShape: 'diamond' as const,
+    fromSide: 'bottom' as const,
+  }
+  const r = calcArrowPath({ x: 200, y: 200 }, { x: 500, y: 500 }, config)
+  // exitPt(diamond, 'bottom') → {200, 234}
+  // path の冒頭 M が始点
+  expect(r.d.startsWith('M200,234')).toBe(true)
+})
 
-  it('diamond で fromSide 未指定なら従来の自動ロジック', () => {
-    const config = {
-      hw: 76, hh: 28, rh: 84,
-      fromShape: 'diamond' as const,
-    }
-    const r = calcArrowPath({ x: 200, y: 200 }, { x: 500, y: 500 }, config)
-    // dx>0 → right 頂点 {234, 200}
-    expect(r.d.startsWith('M234,200')).toBe(true)
-  })
+it('diamond で fromSide 未指定なら従来の自動ロジック', () => {
+  const config = {
+    hw: 76,
+    hh: 28,
+    rh: 84,
+    fromShape: 'diamond' as const,
+  }
+  const r = calcArrowPath({ x: 200, y: 200 }, { x: 500, y: 500 }, config)
+  // dx>0 → right 頂点 {234, 200}
+  expect(r.d.startsWith('M234,200')).toBe(true)
+})
 ```
 
 - [ ] **Step 2: テストを実行して失敗することを確認**
@@ -389,6 +401,7 @@ Expected: FAIL（`fromSide` プロパティが ArrowConfig にない）
 - [ ] **Step 3: `src/lib/flow-engine.ts` の `ArrowConfig` と `calcArrowPath` を拡張**
 
 冒頭の import に追加:
+
 ```ts
 import type { ArrowSide } from './types'
 ```
@@ -429,6 +442,7 @@ git commit -m "feat(#349): forward fromSide through calcArrowPath"
 ## Task 5: DB マイグレーションを追加
 
 **Files:**
+
 - Create: `migrations/0013_arrow_from_side.sql`
 
 - [ ] **Step 1: 既存のマイグレーション末尾を確認**
@@ -451,10 +465,12 @@ ALTER TABLE arrows ADD COLUMN from_side TEXT;
 Run: `sqlite3 ./local.sqlite3 ".schema arrows" 2>/dev/null | head -5 || echo "local db not present, skipping"`
 
 ローカル DB がある場合は手動適用:
+
 ```bash
 sqlite3 ./local.sqlite3 < migrations/0013_arrow_from_side.sql
 sqlite3 ./local.sqlite3 ".schema arrows" | grep from_side
 ```
+
 Expected: `from_side TEXT` が含まれる
 
 ローカル DB が無い場合はスキップ（CI で別途検証される）。
@@ -471,6 +487,7 @@ git commit -m "feat(#349): add from_side column to arrows table"
 ## Task 6: API 層に from_side のシリアライズを追加
 
 **Files:**
+
 - Modify: `api/lib/flow-transform.ts`
 - Modify: `api/routes/flows.ts`
 
@@ -562,6 +579,7 @@ git commit -m "feat(#349): persist arrow.fromSide via API"
 ## Task 7: API round-trip テスト
 
 **Files:**
+
 - Modify: `tests/api/routes/flows.test.ts`
 
 - [ ] **Step 1: テストを追加**
@@ -569,48 +587,53 @@ git commit -m "feat(#349): persist arrow.fromSide via API"
 `should round-trip bidirectional arrow flag` の it ブロックの直後（line 559 後）に新しい it を挿入:
 
 ```ts
-    it('should round-trip arrow fromSide field', async () => {
-      const payload = {
-        title: 'FromSide Flow',
-        themeId: 'cloud',
-        lanes: [{ id: 'lane-1', name: 'L', colorIndex: 0, position: 0 }],
-        nodes: [
-          {
-            id: 'node-1', laneId: 'lane-1', rowIndex: 0,
-            label: 'D', note: null, orderIndex: 0, shape: 'diamond',
-          },
-          { id: 'node-2', laneId: 'lane-1', rowIndex: 1, label: 'T', note: null, orderIndex: 1 },
-        ],
-        arrows: [
-          {
-            id: 'arrow-1',
-            fromNodeId: 'node-1',
-            toNodeId: 'node-2',
-            comment: null,
-            fromSide: 'bottom',
-          },
-          {
-            id: 'arrow-2',
-            fromNodeId: 'node-1',
-            toNodeId: 'node-2',
-            comment: null,
-          },
-        ],
-      }
-      const createRes = await postJson('/api/flows', payload, env, cookie)
-      expect(createRes.status).toBe(201)
-      const created = (await createRes.json()) as {
-        flow: { id: string; arrows: Array<{ id: string; fromSide?: string | null }> }
-      }
-      expect(created.flow.arrows.find((a) => a.id === 'arrow-1')?.fromSide).toBe('bottom')
-      expect(created.flow.arrows.find((a) => a.id === 'arrow-2')?.fromSide ?? null).toBe(null)
+it('should round-trip arrow fromSide field', async () => {
+  const payload = {
+    title: 'FromSide Flow',
+    themeId: 'cloud',
+    lanes: [{ id: 'lane-1', name: 'L', colorIndex: 0, position: 0 }],
+    nodes: [
+      {
+        id: 'node-1',
+        laneId: 'lane-1',
+        rowIndex: 0,
+        label: 'D',
+        note: null,
+        orderIndex: 0,
+        shape: 'diamond',
+      },
+      { id: 'node-2', laneId: 'lane-1', rowIndex: 1, label: 'T', note: null, orderIndex: 1 },
+    ],
+    arrows: [
+      {
+        id: 'arrow-1',
+        fromNodeId: 'node-1',
+        toNodeId: 'node-2',
+        comment: null,
+        fromSide: 'bottom',
+      },
+      {
+        id: 'arrow-2',
+        fromNodeId: 'node-1',
+        toNodeId: 'node-2',
+        comment: null,
+      },
+    ],
+  }
+  const createRes = await postJson('/api/flows', payload, env, cookie)
+  expect(createRes.status).toBe(201)
+  const created = (await createRes.json()) as {
+    flow: { id: string; arrows: Array<{ id: string; fromSide?: string | null }> }
+  }
+  expect(created.flow.arrows.find((a) => a.id === 'arrow-1')?.fromSide).toBe('bottom')
+  expect(created.flow.arrows.find((a) => a.id === 'arrow-2')?.fromSide ?? null).toBe(null)
 
-      const getRes = await getWithCookie(`/api/flows/${created.flow.id}`, env, cookie)
-      expect(getRes.status).toBe(200)
-      const got = (await getRes.json()) as typeof created
-      expect(got.flow.arrows.find((a) => a.id === 'arrow-1')?.fromSide).toBe('bottom')
-      expect(got.flow.arrows.find((a) => a.id === 'arrow-2')?.fromSide ?? null).toBe(null)
-    })
+  const getRes = await getWithCookie(`/api/flows/${created.flow.id}`, env, cookie)
+  expect(getRes.status).toBe(200)
+  const got = (await getRes.json()) as typeof created
+  expect(got.flow.arrows.find((a) => a.id === 'arrow-1')?.fromSide).toBe('bottom')
+  expect(got.flow.arrows.find((a) => a.id === 'arrow-2')?.fromSide ?? null).toBe(null)
+})
 ```
 
 - [ ] **Step 2: テストを実行して PASS を確認**
@@ -634,6 +657,7 @@ git commit -m "test(#349): round-trip arrow.fromSide via API"
 ## Task 8: FlowEditor で arrow.fromSide を描画に渡す
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 - [ ] **Step 1: `aPath` 関数の `calcArrowPath` 呼び出しに `fromSide` を渡す**
@@ -673,6 +697,7 @@ git commit -m "feat(#349): pass arrow.fromSide through aPath in FlowEditor"
 ## Task 9: ドラッグ完了時に fromSide を導出
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 - [ ] **Step 1: import を追加**
@@ -712,10 +737,7 @@ if (Math.abs(pt.x - c.x) < snapX && Math.abs(pt.y - c.y) < snapY && k !== connec
       fromSide = deriveFromSide(connectFromPt, sc)
     }
   }
-  setArrows((p) => [
-    ...p,
-    { id: uid(), from: connectFrom, to: k, comment: '', fromSide },
-  ])
+  setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '', fromSide }])
   break
 }
 ```
@@ -745,6 +767,7 @@ git commit -m "feat(#349): derive fromSide on connect drag completion"
 ## Task 10: SharedFlowViewer で fromSide を渡す
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`
 
 - [ ] **Step 1: `exitPt` の呼び出しに `arrow.fromSide` を渡す**
@@ -763,7 +786,11 @@ const s = exitPt(f, t, hw, hh, RH, fromNode.shape as 'diamond' | undefined)
 
 ```ts
 const s = exitPt(
-  f, t, hw, hh, RH,
+  f,
+  t,
+  hw,
+  hh,
+  RH,
   fromNode.shape as 'diamond' | undefined,
   arrow.fromSide ?? undefined,
 )
@@ -788,6 +815,7 @@ git commit -m "feat(#349): honor arrow.fromSide in SharedFlowViewer"
 ## Task 11: i18n キー追加
 
 **Files:**
+
 - Modify: `src/locales/ja/editor.json`
 - Modify: `src/locales/en/editor.json`
 
@@ -834,6 +862,7 @@ git commit -m "feat(#349): add i18n keys for arrow fromSide selector"
 ## Task 12: プロパティパネルに「出口側」UI を追加
 
 **Files:**
+
 - Modify: `src/features/editor/components/RightPanel.tsx`
 
 - [ ] **Step 1: 現在の arrow 編集パネルの該当位置を確認**
@@ -847,55 +876,51 @@ Run: `grep -n "rightPanel.arrowStyle\|rightPanel.operations" src/features/editor
 `<PanelSection label={t('rightPanel.arrowStyle')}>` のクローズタグ `</PanelSection>` の **直後**、`<PanelSection label={t('rightPanel.operations')}>` の **直前** に以下を挿入:
 
 ```tsx
-{tasks[selArrowData.from]?.shape === 'diamond' && (
-  <PanelSection label={t('rightPanel.arrowFromSide')}>
-    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-      {(
-        [
+{
+  tasks[selArrowData.from]?.shape === 'diamond' && (
+    <PanelSection label={t('rightPanel.arrowFromSide')}>
+      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+        {[
           { id: 'auto', value: undefined, label: t('rightPanel.arrowSideAuto') },
           { id: 'top', value: 'top' as const, label: t('rightPanel.arrowSideTop') },
           { id: 'right', value: 'right' as const, label: t('rightPanel.arrowSideRight') },
           { id: 'bottom', value: 'bottom' as const, label: t('rightPanel.arrowSideBottom') },
           { id: 'left', value: 'left' as const, label: t('rightPanel.arrowSideLeft') },
-        ]
-      ).map((opt) => {
-        const isActive =
-          opt.value === undefined
-            ? !selArrowData.fromSide
-            : selArrowData.fromSide === opt.value
-        return (
-          <div
-            key={opt.id}
-            onClick={() =>
-              setArrows((p) =>
-                p.map((a) =>
-                  a.id === selArrow ? { ...a, fromSide: opt.value } : a,
-                ),
-              )
-            }
-            style={{
-              flex: 1,
-              minWidth: 36,
-              height: 30,
-              borderRadius: 6,
-              cursor: 'pointer',
-              background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
-              border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 12,
-              color: isActive ? T.accent : T.panelText,
-              transition: 'all 0.1s',
-            }}
-          >
-            {opt.label}
-          </div>
-        )
-      })}
-    </div>
-  </PanelSection>
-)}
+        ].map((opt) => {
+          const isActive =
+            opt.value === undefined ? !selArrowData.fromSide : selArrowData.fromSide === opt.value
+          return (
+            <div
+              key={opt.id}
+              onClick={() =>
+                setArrows((p) =>
+                  p.map((a) => (a.id === selArrow ? { ...a, fromSide: opt.value } : a)),
+                )
+              }
+              style={{
+                flex: 1,
+                minWidth: 36,
+                height: 30,
+                borderRadius: 6,
+                cursor: 'pointer',
+                background: isActive ? (isDark ? '#333' : '#F0EBFF') : 'transparent',
+                border: `1px solid ${isActive ? T.accent : T.inputBorder}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                color: isActive ? T.accent : T.panelText,
+                transition: 'all 0.1s',
+              }}
+            >
+              {opt.label}
+            </div>
+          )
+        })}
+      </div>
+    </PanelSection>
+  )
+}
 ```
 
 注: `isDark`, `T` (theme) は既に同 `RightPanel.tsx` のスコープで使われている。使えない場合は周囲のコードを参考に同じ書き方で取り出す。
@@ -924,6 +949,7 @@ git commit -m "feat(#349): add fromSide selector to arrow property panel"
 ## Task 13: 実画面検証（Playwright / Chrome DevTools）
 
 **Files:**
+
 - (なし、目視検証のみ)
 
 - [ ] **Step 1: ローカル dev を起動**
@@ -984,6 +1010,7 @@ Expected: dev server 起動
 ## Task 14: 全テスト & ビルド最終確認
 
 **Files:**
+
 - (確認のみ)
 
 - [ ] **Step 1: 全テスト実行**
@@ -1013,6 +1040,7 @@ Expected: ビルド成功
 ## Task 15: 最新 main 同期 & PR
 
 **Files:**
+
 - (なし)
 
 - [ ] **Step 1: main を fetch & rebase**

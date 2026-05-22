@@ -252,16 +252,16 @@ GET /flows/:id
 
 ## 影響範囲
 
-| ファイル | 変更内容 |
-|---|---|
-| `src/lib/types.ts` | `ArrowSide` 型追加, `InternalArrow.fromSide` |
-| `src/features/editor/types.ts` | `Arrow.fromSide` |
-| `src/lib/arrow-routing.ts` | `exitPt` 引数追加, `deriveFromSide` 新設 |
-| `src/features/editor/FlowEditor.tsx` | ドラッグ完了時の `fromSide` 付与, 描画呼び出し更新, プロパティパネル UI |
-| `src/features/shared/SharedFlowViewer.tsx` | `exitPt` 呼び出しに `arrow.fromSide` を渡す |
-| `migrations/0013_arrow_from_side.sql` | 新規マイグレーション |
-| `api/routes/flows.ts` | INSERT/SELECT に `from_side` 追加 |
-| テスト各種 | 上記参照 |
+| ファイル                                   | 変更内容                                                                |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| `src/lib/types.ts`                         | `ArrowSide` 型追加, `InternalArrow.fromSide`                            |
+| `src/features/editor/types.ts`             | `Arrow.fromSide`                                                        |
+| `src/lib/arrow-routing.ts`                 | `exitPt` 引数追加, `deriveFromSide` 新設                                |
+| `src/features/editor/FlowEditor.tsx`       | ドラッグ完了時の `fromSide` 付与, 描画呼び出し更新, プロパティパネル UI |
+| `src/features/shared/SharedFlowViewer.tsx` | `exitPt` 呼び出しに `arrow.fromSide` を渡す                             |
+| `migrations/0013_arrow_from_side.sql`      | 新規マイグレーション                                                    |
+| `api/routes/flows.ts`                      | INSERT/SELECT に `from_side` 追加                                       |
+| テスト各種                                 | 上記参照                                                                |
 
 PNG エクスポート (`png-export.ts`) はクローン方式なのでコード変更なし、テストで確認のみ。
 

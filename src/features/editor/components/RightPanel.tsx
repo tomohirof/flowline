@@ -655,15 +655,13 @@ export const RightPanel = ({
         {tasks[selArrowData.from]?.shape === 'diamond' && (
           <PanelSection label={t('rightPanel.arrowFromSide')}>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {(
-                [
-                  { id: 'auto', value: undefined, label: t('rightPanel.arrowSideAuto') },
-                  { id: 'top', value: 'top' as const, label: t('rightPanel.arrowSideTop') },
-                  { id: 'right', value: 'right' as const, label: t('rightPanel.arrowSideRight') },
-                  { id: 'bottom', value: 'bottom' as const, label: t('rightPanel.arrowSideBottom') },
-                  { id: 'left', value: 'left' as const, label: t('rightPanel.arrowSideLeft') },
-                ]
-              ).map((opt) => {
+              {[
+                { id: 'auto', value: undefined, label: t('rightPanel.arrowSideAuto') },
+                { id: 'top', value: 'top' as const, label: t('rightPanel.arrowSideTop') },
+                { id: 'right', value: 'right' as const, label: t('rightPanel.arrowSideRight') },
+                { id: 'bottom', value: 'bottom' as const, label: t('rightPanel.arrowSideBottom') },
+                { id: 'left', value: 'left' as const, label: t('rightPanel.arrowSideLeft') },
+              ].map((opt) => {
                 const isActive =
                   opt.value === undefined
                     ? !selArrowData.fromSide
@@ -673,9 +671,7 @@ export const RightPanel = ({
                     key={opt.id}
                     onClick={() =>
                       setArrows((p) =>
-                        p.map((a) =>
-                          a.id === selArrow ? { ...a, fromSide: opt.value } : a,
-                        ),
+                        p.map((a) => (a.id === selArrow ? { ...a, fromSide: opt.value } : a)),
                       )
                     }
                     style={{

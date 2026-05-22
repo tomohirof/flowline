@@ -1052,10 +1052,7 @@ export default function FlowEditor({
               fromSide = deriveFromSide(connectFromPt, sc)
             }
           }
-          setArrows((p) => [
-            ...p,
-            { id: uid(), from: connectFrom, to: k, comment: '', fromSide },
-          ])
+          setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '', fromSide }])
           break
         }
       }
