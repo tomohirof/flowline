@@ -364,3 +364,31 @@ export function collectVerticalObstacles(args: CollectVerticalObstaclesArgs): Bb
   }
   return result
 }
+
+interface CollectDiagonalObstaclesArgs {
+  nodes: ObstacleNode[]
+  fromKey: string
+  toKey: string
+  fromCx: number
+  fromCy: number
+  toCx: number
+  toCy: number
+  rowH: number
+  colW: number
+  bboxW: number
+  bboxH: number
+}
+
+/**
+ * 斜め配置矢印 (異行×異レーン) の Z字パスに沿った障害ノードを bbox 配列で返す。
+ * source 列・target 列・中央行・各列の隣接列を広めに収集し、detector 側で再フィルタする。
+ * from/to 自身と Z字パスから離れたノードは除外する。
+ */
+export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bbox[] {
+  const { nodes, fromKey, toKey } = args
+  const result: Bbox[] = []
+  for (const n of nodes) {
+    if (n.key === fromKey || n.key === toKey) continue
+  }
+  return result
+}

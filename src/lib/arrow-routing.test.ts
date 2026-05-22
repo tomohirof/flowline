@@ -3,6 +3,7 @@ import {
   buildArrowPath,
   collectObstacles,
   collectVerticalObstacles,
+  collectDiagonalObstacles,
   type Bbox,
   type ObstacleNode,
 } from './arrow-routing'
@@ -565,5 +566,29 @@ describe('collectVerticalObstacles', () => {
       bboxH: TH,
     })
     expect(result).toEqual([])
+  })
+})
+
+describe('collectDiagonalObstacles', () => {
+  const baseArgs = {
+    fromKey: 'A',
+    toKey: 'C',
+    fromCx: 200,
+    fromCy: 100,
+    toCx: 600,
+    toCy: 400,
+    rowH: 84,
+    colW: 200,
+    bboxW: 152,
+    bboxH: 56,
+  }
+
+  it('should exclude from/to nodes themselves when only from/to exist', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([])
   })
 })
