@@ -228,7 +228,21 @@ export function detectDiagonalDetour(
     if (shiftedMy >= lo && shiftedMy <= hi) {
       return { kind: 'shift-my', my: shiftedMy }
     }
-    // 範囲外 → Task 11 で target-detour 昇格
+    // 範囲外 → 中央障害を targetColHit 扱いで target-detour に昇格
+    const escRightBlocked = middleRowHits.some((obs) =>
+      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+    )
+    const escLeftBlocked = middleRowHits.some((obs) =>
+      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+    )
+    const escGoRight = !escRightBlocked || escLeftBlocked
+    const escDetourX = escGoRight
+      ? Math.max(...middleRowHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+      : Math.min(...middleRowHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+    const escSign = Math.sign(e.y - my)
+    const escHalfDy = Math.abs(e.y - my) / 2
+    const escApproachY = e.y - escSign * Math.min(APPROACH_GAP, escHalfDy)
+    return { kind: 'target-detour', my, detourX: escDetourX, approachY: escApproachY }
   }
 
   return null

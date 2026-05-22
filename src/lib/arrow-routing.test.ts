@@ -787,4 +787,12 @@ describe('detectDiagonalDetour', () => {
       my: 250 + 28 + 14, // 292 (下優先: 障害下端 + DETOUR_MARGIN)
     })
   })
+
+  it('should escalate to target-detour when shift-my would exceed row bounds', () => {
+    const sNarrow = { x: 200, y: 128 }
+    const eNarrow = { x: 600, y: 172 }
+    const B: Bbox = { x: 400, y: 150, w: 152, h: 56 }
+    const r = detectDiagonalDetour(sNarrow, eNarrow, [B])
+    expect(r?.kind).toBe('target-detour')
+  })
 })
