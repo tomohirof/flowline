@@ -195,6 +195,42 @@ export function detectDiagonalDetour(
     return { kind: 'source-detour', departY, detourX, my }
   }
 
+  // 中央水平セグメント衝突: Y ≈ my で X が源-標的間
+  const middleRowHits = obstacles.filter((b) => {
+    const xLow = Math.min(s.x, e.x)
+    const xHigh = Math.max(s.x, e.x)
+    return (
+      Math.abs(b.y - my) < b.h / 2 + 2 &&
+      b.x - b.w / 2 < xHigh - 1 &&
+      b.x + b.w / 2 > xLow + 1
+    )
+  })
+
+  if (middleRowHits.length > 0 && sourceColHits.length === 0 && targetColHits.length === 0) {
+    const xOverlap = (a: Bbox, b: Bbox) => Math.abs(a.x - b.x) < (a.w + b.w) / 2
+    const downBlocked = middleRowHits.some((obs) =>
+      obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
+    )
+    const upBlocked = middleRowHits.some((obs) =>
+      obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)),
+    )
+    const goDown = !downBlocked || upBlocked
+    const shiftedMy = goDown
+      ? Math.max(...middleRowHits.map((o) => o.y + o.h / 2)) + DETOUR_MARGIN
+      : Math.min(...middleRowHits.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
+
+    // ガード: shiftedMy が source 行 / target 行を侵食しないこと
+    const yLow = Math.min(s.y, e.y)
+    const yHigh = Math.max(s.y, e.y)
+    const bboxHEst = middleRowHits[0].h
+    const lo = yLow + bboxHEst / 2 + 1
+    const hi = yHigh - bboxHEst / 2 - 1
+    if (shiftedMy >= lo && shiftedMy <= hi) {
+      return { kind: 'shift-my', my: shiftedMy }
+    }
+    // 範囲外 → Task 11 で target-detour 昇格
+  }
+
   return null
 }
 

@@ -778,4 +778,13 @@ describe('detectDiagonalDetour', () => {
       my: 250,
     })
   })
+
+  it('should return shift-my when only middle horizontal segment is blocked', () => {
+    const B: Bbox = { x: 400, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B])
+    expect(r).toEqual({
+      kind: 'shift-my',
+      my: 250 + 28 + 14, // 292 (下優先: 障害下端 + DETOUR_MARGIN)
+    })
+  })
 })
