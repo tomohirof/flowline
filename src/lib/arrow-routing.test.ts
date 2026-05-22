@@ -847,11 +847,13 @@ describe('detectDiagonalDetour', () => {
     const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
     const L: Bbox = { x: 400, y: 250, w: 152, h: 56 }
     const r = detectDiagonalDetour(s, e, [B, R, L])
+    // L は中央行 (y=my=250) 上にあり target-detour の中央水平セグメント [s.x=200, detourX=690]
+    // を貫通するため、my を shiftedMy=292 (#366 修正) にシフトする。direction (right) は detourX で検証。
     expect(r).toEqual({
       kind: 'target-detour',
-      my: 250,
+      my: 292, // 250 + 28 + 14 (障害下端 + DETOUR_MARGIN)
       detourX: 690, // 右優先
-      approachY: 358,
+      approachY: 358, // clampOffset(372, 292, 14) = 372 - 14 = 358 (偶然 unshift と同値)
     })
   })
 
