@@ -4,6 +4,7 @@ import {
   collectObstacles,
   collectVerticalObstacles,
   collectDiagonalObstacles,
+  detectDiagonalDetour,
   type Bbox,
   type ObstacleNode,
 } from './arrow-routing'
@@ -701,5 +702,33 @@ describe('collectDiagonalObstacles', () => {
     expect(r).toContainEqual({ x: 200, y: 250, w: 152, h: 56 })
     expect(r).toContainEqual({ x: 400, y: 250, w: 152, h: 56 })
     expect(r).toContainEqual({ x: 600, y: 250, w: 152, h: 56 })
+  })
+})
+
+describe('detectDiagonalDetour', () => {
+  const s = { x: 200, y: 128 }
+  const e = { x: 600, y: 372 }
+
+  it('should return null when arrow is horizontal (|dy| < 2)', () => {
+    const r = detectDiagonalDetour({ x: 200, y: 200 }, { x: 600, y: 201 }, [
+      { x: 400, y: 200, w: 152, h: 56 },
+    ])
+    expect(r).toBeNull()
+  })
+
+  it('should return null when arrow is vertical (|dx| < 2)', () => {
+    const r = detectDiagonalDetour({ x: 200, y: 100 }, { x: 201, y: 400 }, [
+      { x: 200, y: 250, w: 152, h: 56 },
+    ])
+    expect(r).toBeNull()
+  })
+
+  it('should return null with empty obstacles array', () => {
+    expect(detectDiagonalDetour(s, e, [])).toBeNull()
+  })
+
+  it('should return null when no obstacles intersect Z-path', () => {
+    const farAway: Bbox = { x: 50, y: 50, w: 152, h: 56 }
+    expect(detectDiagonalDetour(s, e, [farAway])).toBeNull()
   })
 })

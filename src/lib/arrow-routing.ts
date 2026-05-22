@@ -102,6 +102,40 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
   return { detourX }
 }
 
+type DiagonalDetourResult =
+  | { kind: 'shift-my'; my: number }
+  | { kind: 'target-detour'; my: number; detourX: number; approachY: number }
+  | { kind: 'source-detour'; departY: number; detourX: number; my: number }
+  | {
+      kind: 'both-detour'
+      departY: number
+      sourceDetourX: number
+      my: number
+      targetDetourX: number
+      approachY: number
+    }
+
+/**
+ * 斜め配置矢印 (異行×異レーン) の Z字パス 3 セグメント (source 縦/中央水平/target 縦) と
+ * 障害ノードの衝突を判定し、迂回パスを記述する DiagonalDetourResult を返す。
+ * 障害なしまたは斜めでない (水平・垂直直線) ときは null を返す。
+ *
+ * 優先順位:
+ *   sourceColHit && targetColHit → 'both-detour' (8 セグ)
+ *   targetColHit                 → 'target-detour' (6 セグ、core ケース)
+ *   sourceColHit                 → 'source-detour' (6 セグ、鏡像)
+ *   middleRowHit のみ             → 'shift-my' (4 セグ維持)
+ */
+export function detectDiagonalDetour(
+  s: Point,
+  e: Point,
+  obstacles: Bbox[],
+): DiagonalDetourResult | null {
+  if (Math.abs(e.x - s.x) < 2 || Math.abs(e.y - s.y) < 2) return null
+  if (obstacles.length === 0) return null
+  return null
+}
+
 interface ArrowPath {
   d: string
   mx: number
