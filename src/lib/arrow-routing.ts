@@ -180,9 +180,10 @@ function computeShiftedMy(
     : Math.min(...middleRowHits.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
 
   // range-check: source 行 / target 行を侵食しないこと
-  const bboxHEst = middleRowHits[0].h
-  const lo = yLow + bboxHEst / 2 + 1
-  const hi = yHigh - bboxHEst / 2 - 1
+  // 複数障害の高さが異なる場合に保守的な (最も厳しい) 余白を取るため max を使う。
+  const bboxHMax = Math.max(...middleRowHits.map((o) => o.h))
+  const lo = yLow + bboxHMax / 2 + 1
+  const hi = yHigh - bboxHMax / 2 - 1
   // 範囲外 → 元の my を返す。
   // 注意: 呼び出し元が source/target/both-detour を選択しており column detour が
   // 既に発生する場合、この経路では middleRowHits の障害は回避されない。これは
@@ -285,11 +286,12 @@ export function detectDiagonalDetour(
       : Math.min(...middleRowHits.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
 
     // ガード: shiftedMy が source 行 / target 行を侵食しないこと
+    // 複数障害の高さが異なる場合に保守的な (最も厳しい) 余白を取るため max を使う。
     const yLow = Math.min(s.y, e.y)
     const yHigh = Math.max(s.y, e.y)
-    const bboxHEst = middleRowHits[0].h
-    const lo = yLow + bboxHEst / 2 + 1
-    const hi = yHigh - bboxHEst / 2 - 1
+    const bboxHMax = Math.max(...middleRowHits.map((o) => o.h))
+    const lo = yLow + bboxHMax / 2 + 1
+    const hi = yHigh - bboxHMax / 2 - 1
     if (shiftedMy >= lo && shiftedMy <= hi) {
       return { kind: 'shift-my', my: shiftedMy }
     }
