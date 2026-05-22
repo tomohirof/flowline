@@ -19,6 +19,7 @@ import type {
   InternalArrow,
   DragState,
   ArrowPathResult,
+  ArrowSide,
   CellInfo,
   Point,
   ToolId,
@@ -35,7 +36,13 @@ import { toBlob } from 'html-to-image'
 import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
 import { NodeLabelText } from '../shared/NodeLabelText'
-import { DS, buildObstacles, type Bbox, type ObstacleNode } from '../../lib/arrow-routing'
+import {
+  DS,
+  buildObstacles,
+  deriveFromSide,
+  type Bbox,
+  type ObstacleNode,
+} from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { I, Ico } from './components/EditorIcons'
@@ -1035,7 +1042,20 @@ export default function FlowEditor({
         const snapX = isDia ? DS + 12 : TW / 2 + 12
         const snapY = isDia ? DS + 12 : TH / 2 + 12
         if (Math.abs(pt.x - c.x) < snapX && Math.abs(pt.y - c.y) < snapY && k !== connectFrom) {
-          setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
+          const srcTask = tasks[connectFrom]
+          let fromSide: ArrowSide | undefined
+          if (srcTask?.shape === 'diamond' && connectFromPt) {
+            const srcLi = liMap[srcTask.lid]
+            const srcRi = riMap[srcTask.rid]
+            if (srcLi !== undefined && srcRi !== undefined) {
+              const sc = ct(srcLi, srcRi)
+              fromSide = deriveFromSide(connectFromPt, sc)
+            }
+          }
+          setArrows((p) => [
+            ...p,
+            { id: uid(), from: connectFrom, to: k, comment: '', fromSide },
+          ])
           break
         }
       }
