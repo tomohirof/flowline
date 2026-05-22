@@ -591,4 +591,25 @@ describe('collectDiagonalObstacles', () => {
     const r = collectDiagonalObstacles({ nodes, ...baseArgs })
     expect(r).toEqual([])
   })
+
+  it('should collect source-column obstacle between source and target rows', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 200, cy: 250 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([{ x: 200, y: 250, w: 152, h: 56 }])
+  })
+
+  it('should not collect source-column nodes outside Z-path Y range', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 200, cy: 50 },
+      { key: 'D', cx: 200, cy: 450 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([])
+  })
 })

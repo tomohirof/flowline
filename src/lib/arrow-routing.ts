@@ -385,10 +385,18 @@ interface CollectDiagonalObstaclesArgs {
  * from/to 自身と Z字パスから離れたノードは除外する。
  */
 export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bbox[] {
-  const { nodes, fromKey, toKey } = args
+  const { nodes, fromKey, toKey, fromCx, fromCy, toCx, toCy, bboxW, bboxH } = args
+  const yLow = Math.min(fromCy, toCy)
+  const yHigh = Math.max(fromCy, toCy)
   const result: Bbox[] = []
   for (const n of nodes) {
     if (n.key === fromKey || n.key === toKey) continue
+    const onSourceCol = Math.abs(n.cx - fromCx) < bboxW / 2 + 2
+    const inZRangeY = n.cy > yLow + 1 && n.cy < yHigh - 1
+    if (onSourceCol && inZRangeY) {
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+      continue
+    }
   }
   return result
 }
