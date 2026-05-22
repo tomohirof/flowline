@@ -5,6 +5,7 @@ import {
   collectVerticalObstacles,
   collectDiagonalObstacles,
   detectDiagonalDetour,
+  deriveFromSide,
   type Bbox,
   type ObstacleNode,
 } from './arrow-routing'
@@ -889,5 +890,37 @@ describe('detectDiagonalDetour', () => {
       targetDetourX: 690,
       approachY: 358,
     })
+  })
+})
+
+describe('deriveFromSide', () => {
+  const c = { x: 100, y: 100 }
+
+  it('右側にドラッグ起点 → right', () => {
+    expect(deriveFromSide({ x: 134, y: 100 }, c)).toBe('right')
+  })
+
+  it('左側にドラッグ起点 → left', () => {
+    expect(deriveFromSide({ x: 66, y: 100 }, c)).toBe('left')
+  })
+
+  it('下側にドラッグ起点 → bottom', () => {
+    expect(deriveFromSide({ x: 100, y: 134 }, c)).toBe('bottom')
+  })
+
+  it('上側にドラッグ起点 → top', () => {
+    expect(deriveFromSide({ x: 100, y: 66 }, c)).toBe('top')
+  })
+
+  it('右下斜め（横優位）→ right', () => {
+    expect(deriveFromSide({ x: 130, y: 110 }, c)).toBe('right')
+  })
+
+  it('右下斜め（縦優位）→ bottom', () => {
+    expect(deriveFromSide({ x: 110, y: 130 }, c)).toBe('bottom')
+  })
+
+  it('中心と一致（dx=dy=0）→ bottom フォールバック', () => {
+    expect(deriveFromSide(c, c)).toBe('bottom')
   })
 })

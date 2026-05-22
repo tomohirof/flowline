@@ -256,6 +256,23 @@ interface ArrowPath {
 export const DS = 34
 
 /**
+ * ドラッグ起点座標 (origin) とノード中心 (center) の位置関係から
+ * どの side （頂点/辺）から線を出すかを判定する。
+ *
+ * |dx| > |dy| → 水平軸（left/right）、それ以外 → 垂直軸（top/bottom）。
+ * dx=dy=0 のエッジケースは 'bottom' に決定的にフォールバックする。
+ */
+export const deriveFromSide = (
+  origin: { x: number; y: number },
+  center: { x: number; y: number },
+): 'top' | 'right' | 'bottom' | 'left' => {
+  const dx = origin.x - center.x
+  const dy = origin.y - center.y
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left'
+  return dy >= 0 ? 'bottom' : 'top'
+}
+
+/**
  * ノード中心 c から相手ノード中心 o に向かう矢印の出口点を計算する。
  * FlowEditor の threshold ベースのロジックを共通化したもの。
  *
