@@ -288,7 +288,7 @@ flows.post('/', async (c) => {
     statements.push(
       db
         .prepare(
-          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash, bidirectional, from_side) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash, bidirectional, from_side, to_side) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         )
         .bind(
           arrow.id,
@@ -300,6 +300,7 @@ flows.post('/', async (c) => {
           arrow.dash ?? null,
           arrow.bidirectional ? 1 : 0,
           arrow.fromSide ?? null,
+          arrow.toSide ?? null,
         ),
     )
   }
@@ -444,7 +445,7 @@ flows.put('/:id', async (c) => {
         statements.push(
           db
             .prepare(
-              'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash, bidirectional, from_side) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+              'INSERT INTO arrows (id, flow_id, from_node_id, to_node_id, comment, color, dash, bidirectional, from_side, to_side) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             )
             .bind(
               arrow.id,
@@ -456,6 +457,7 @@ flows.put('/:id', async (c) => {
               arrow.dash ?? null,
               arrow.bidirectional ? 1 : 0,
               arrow.fromSide ?? null,
+              arrow.toSide ?? null,
             ),
         )
       }
