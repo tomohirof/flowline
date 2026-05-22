@@ -969,6 +969,24 @@ describe('ノードドラッグの activation distance (#347)', () => {
     // swap が発火しなければ tasks/order に変化なし → onSave は呼ばれない
     expect(onSave).not.toHaveBeenCalled()
   })
+
+  it('しきい値超え (6px 以上) の move で swap が発火する', () => {
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // mousedown を row 0 に、mousemove で row 1 まで明確に大きく動かす (84px = RH 分)。
+    // 距離 84 >> 6 のため gate を通過し、cellFromPos が row 1 セルを返す想定。
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 65 })
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 200 })
+    fireEvent.mouseUp(svg, { clientX: 100, clientY: 200 })
+
+    // swap が発火 → tasks の構造変化 → onSave が呼ばれる
+    expect(onSave).toHaveBeenCalled()
+  })
 })
 
 describe('logo navigation (#83)', () => {
