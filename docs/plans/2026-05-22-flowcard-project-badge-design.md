@@ -89,14 +89,14 @@ sharedProjects ─────┘
 
 ## エラーハンドリング / エッジケース
 
-| ケース                                                  | 挙動              |
-| ------------------------------------------------------- | ----------------- |
-| `flow.projectId === null`                               | バッジ非表示      |
-| `flow.projectId` が `projects` / `sharedProjects` 両方にない | バッジ非表示      |
-| `flow.projectId` が `sharedProjects` のみに存在         | 共有プロジェクト名を表示 |
-| `selectedNav.startsWith('project:')`                    | バッジ非表示（冗長のため） |
-| プロジェクト名が極端に長い                              | `ellipsis` + `title` 属性でフル名 |
-| `selectedNav === 'trash'`                               | バッジ非表示（trash は別ロジック） |
+| ケース                                                       | 挙動                               |
+| ------------------------------------------------------------ | ---------------------------------- |
+| `flow.projectId === null`                                    | バッジ非表示                       |
+| `flow.projectId` が `projects` / `sharedProjects` 両方にない | バッジ非表示                       |
+| `flow.projectId` が `sharedProjects` のみに存在              | 共有プロジェクト名を表示           |
+| `selectedNav.startsWith('project:')`                         | バッジ非表示（冗長のため）         |
+| プロジェクト名が極端に長い                                   | `ellipsis` + `title` 属性でフル名  |
+| `selectedNav === 'trash'`                                    | バッジ非表示（trash は別ロジック） |
 
 ## テスト戦略
 
