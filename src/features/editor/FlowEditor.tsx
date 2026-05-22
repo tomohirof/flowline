@@ -62,6 +62,7 @@ import {
   calcMultiDropTargets,
   cellFromPos as cellFromPosLib,
 } from '../../lib/flow-engine'
+import { routeAllArrows, type ArrowResolveContext } from '../../lib/edge-router'
 import { isGroupParent, isGroupSub, getGroupWidth } from '../../lib/lane-group-utils'
 
 // =============================================
@@ -1421,7 +1422,8 @@ export default function FlowEditor({
     obstacleNodes.push({ key: k, cx: c.x, cy: c.y })
   }
 
-  const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
+  // arrow → ArrowResolveContext 共通ロジック。routeAllArrows と fallback で共有
+  const resolveArrowContext = (arrow: InternalArrow): ArrowResolveContext | null => {
     const ft = tasks[arrow.from],
       tt = tasks[arrow.to]
     if (!ft || !tt) return null
@@ -1450,10 +1452,10 @@ export default function FlowEditor({
       bboxH: TH,
     })
 
-    return calcArrowPath(
+    return {
       from,
       to,
-      {
+      config: {
         hw: TW / 2,
         hh: TH / 2,
         rh: RH,
@@ -1462,8 +1464,25 @@ export default function FlowEditor({
         fromSide: arrow.fromSide,
         toSide: arrow.toSide,
       },
-      obstacles,
-    )
+      nodeObstacles: obstacles,
+    }
+  }
+
+  // routeAllArrows でマルチエッジ協調ルーティング（id 順で逐次計算し、先行 segments を後続 obstacles に含める）
+  const allArrowPaths = routeAllArrows(arrows, resolveArrowContext)
+
+  // arrows[i] に対応するパスを id ベースで引く Map（O(1) ルックアップ）
+  const pathByArrowId = new Map<string, ArrowPathResult | null>()
+  arrows.forEach((a, i) => pathByArrowId.set(a.id, allArrowPaths[i]))
+
+  // 既存 aPath インターフェース維持: arrows に含まれる id は Map から、合成プレビュー等
+  // arrows 外の id は単発計算でフォールバック（呼び出し側の互換のため）
+  const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
+    const cached = pathByArrowId.get(arrow.id)
+    if (cached !== undefined) return cached
+    const ctx = resolveArrowContext(arrow)
+    if (!ctx) return null
+    return calcArrowPath(ctx.from, ctx.to, ctx.config, ctx.nodeObstacles)
   }
 
   const exportMermaid = (): string => {

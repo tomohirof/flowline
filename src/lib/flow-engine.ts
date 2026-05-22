@@ -12,7 +12,7 @@ interface NodePos {
   y: number
 }
 
-interface ArrowConfig {
+export interface ArrowConfig {
   hw: number
   hh: number
   rh: number

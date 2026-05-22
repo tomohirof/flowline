@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Flow, ThemeId, Node as FlowNode, Arrow } from '../editor/types'
+import type { Flow, ThemeId, Node as FlowNode, Arrow, ArrowPathResult } from '../editor/types'
 import { BRAND } from '../../constants/brand'
 import { ARROW_MARKER } from '../../constants/arrowMarker'
 import { PALETTES, THEMES } from '../editor/theme-constants'
@@ -14,7 +14,8 @@ import {
   type Bbox,
   type ObstacleNode,
 } from '../../lib/arrow-routing'
-import { calcArrowPath } from '../../lib/flow-engine'
+import { routeAllArrows } from '../../lib/edge-router'
+import type { ArrowResolveContext } from '../../lib/edge-router'
 import { formatRelativeTime } from '../../lib/relative-time'
 import { isGroupSub, isGroupParent, getGroupWidth } from '../../lib/lane-group-utils'
 import { parseNote, measureMemoHeight, MEMO_W } from '../editor/memo-utils'
@@ -110,8 +111,18 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     obstacleNodes.push({ key: n.id, cx: c.x, cy: c.y })
   }
 
-  // Arrow path calculation
-  const computeArrowPath = (arrow: Arrow): { d: string; mx: number; my: number } | null => {
+  // 各 arrow を ArrowLike 形式（from = fromNodeId, to = toNodeId）に整形して
+  // routeAllArrows へ渡す。ArrowResolveContext 内では original から元の Arrow に
+  // アクセスし、fromSide/toSide などの追加情報を引き出す。
+  const arrowsForRouting = flow.arrows.map((a) => ({
+    id: a.id,
+    from: a.fromNodeId,
+    to: a.toNodeId,
+    original: a,
+  }))
+
+  const routedPaths = routeAllArrows(arrowsForRouting, (mapped): ArrowResolveContext | null => {
+    const arrow = mapped.original
     const fromNode = nodeById[arrow.fromNodeId]
     const toNode = nodeById[arrow.toNodeId]
     if (!fromNode || !toNode) return null
@@ -124,6 +135,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     const t = ct(tli, toNode.rowIndex)
     const hw = TW / 2,
       hh = TH / 2
+
     // 同一行/同一レーン/斜め配置に応じて obstacles を組み立てる（迂回判定用）
     const obstacles: Bbox[] = buildObstacles({
       nodes: obstacleNodes,
@@ -141,10 +153,10 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       bboxH: TH,
     })
 
-    return calcArrowPath(
-      f,
-      t,
-      {
+    return {
+      from: f,
+      to: t,
+      config: {
         hw,
         hh,
         rh: RH,
@@ -153,15 +165,13 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         fromSide: arrow.fromSide ?? undefined,
         toSide: arrow.toSide ?? undefined,
       },
-      obstacles,
-    )
-  }
+      nodeObstacles: obstacles,
+    }
+  })
 
   const arrowPaths = flow.arrows
-    .map((a) => ({ arrow: a, path: computeArrowPath(a) }))
-    .filter(
-      (x): x is { arrow: Arrow; path: { d: string; mx: number; my: number } } => x.path !== null,
-    )
+    .map((a, i) => ({ arrow: a, path: routedPaths[i] }))
+    .filter((x): x is { arrow: Arrow; path: ArrowPathResult } => x.path !== null)
 
   const logoGradient = `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`
 

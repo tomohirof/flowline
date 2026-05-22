@@ -1,4 +1,5 @@
 import type { ArrowSide } from '../../shared/types'
+import type { EdgeSegment } from './arrow-routing'
 export type { ArrowSide }
 
 /** 内部矢印データ（DOM/React非依存） */
@@ -21,4 +22,5 @@ export interface ArrowPathResult {
   d: string
   mx: number
   my: number
+  segments: EdgeSegment[]
 }
