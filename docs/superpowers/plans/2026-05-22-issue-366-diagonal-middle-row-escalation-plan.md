@@ -17,6 +17,7 @@
 ## File Structure
 
 **Modified files:**
+
 - `src/lib/arrow-routing.ts` — `detectDiagonalDetour` 内に `computeShiftedMy` ヘルパー追加、各 kind ブランチに適用
 - `src/lib/arrow-routing.test.ts` — 5 件の新規テスト追加
 
@@ -73,6 +74,7 @@ Expected: 既存テスト全 pass。
 ## Task 1: Test (Red) — source-detour + middle-row
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.test.ts` (`describe('detectDiagonalDetour', ...)` ブロック内に追加)
 
 - [ ] **Step 1: 既存 `describe('detectDiagonalDetour'` ブロック末尾の位置を確認**
@@ -88,22 +90,22 @@ grep -n "describe('detectDiagonalDetour'" src/lib/arrow-routing.test.ts
 `describe('detectDiagonalDetour', ...)` ブロックの末尾（最後の `})` の直前）に以下を挿入:
 
 ```ts
-  it('should shift my when source-detour selected AND middle-row obstacle exists', () => {
-    // s=(100, 100), e=(300, 300), my=200
-    // source col hit at (100, 200) → source-detour 確定
-    // middle row hit at (200, 200) → my を shiftedMy にシフトすべき
-    const obstacles: Bbox[] = [
-      { x: 100, y: 200, w: 80, h: 50 }, // source col & middle row
-      { x: 200, y: 200, w: 80, h: 50 }, // middle row のみ (target col=300 ではない)
-    ]
-    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
-    expect(r?.kind).toBe('source-detour')
-    // 障害下端 (200 + 25) + DETOUR_MARGIN (14) = 239
-    if (r?.kind === 'source-detour') {
-      expect(r.my).toBeGreaterThan(225) // shifted below middle-row obstacles
-      expect(r.my).toBeLessThan(300) // 範囲内
-    }
-  })
+it('should shift my when source-detour selected AND middle-row obstacle exists', () => {
+  // s=(100, 100), e=(300, 300), my=200
+  // source col hit at (100, 200) → source-detour 確定
+  // middle row hit at (200, 200) → my を shiftedMy にシフトすべき
+  const obstacles: Bbox[] = [
+    { x: 100, y: 200, w: 80, h: 50 }, // source col & middle row
+    { x: 200, y: 200, w: 80, h: 50 }, // middle row のみ (target col=300 ではない)
+  ]
+  const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+  expect(r?.kind).toBe('source-detour')
+  // 障害下端 (200 + 25) + DETOUR_MARGIN (14) = 239
+  if (r?.kind === 'source-detour') {
+    expect(r.my).toBeGreaterThan(225) // shifted below middle-row obstacles
+    expect(r.my).toBeLessThan(300) // 範囲内
+  }
+})
 ```
 
 - [ ] **Step 3: テスト実行で fail を確認**
@@ -134,6 +136,7 @@ EOF
 ## Task 2: Test (Red) — target-detour + middle-row (鏡像)
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: テスト追加**
@@ -141,21 +144,21 @@ EOF
 Task 1 で追加したテストの直後に挿入:
 
 ```ts
-  it('should shift my when target-detour selected AND middle-row obstacle exists', () => {
-    // s=(100, 100), e=(300, 300), my=200
-    // target col hit at (300, 200) → target-detour 確定
-    // middle row hit at (200, 200)
-    const obstacles: Bbox[] = [
-      { x: 300, y: 200, w: 80, h: 50 }, // target col & middle row
-      { x: 200, y: 200, w: 80, h: 50 }, // middle row のみ
-    ]
-    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
-    expect(r?.kind).toBe('target-detour')
-    if (r?.kind === 'target-detour') {
-      expect(r.my).toBeGreaterThan(225)
-      expect(r.my).toBeLessThan(300)
-    }
-  })
+it('should shift my when target-detour selected AND middle-row obstacle exists', () => {
+  // s=(100, 100), e=(300, 300), my=200
+  // target col hit at (300, 200) → target-detour 確定
+  // middle row hit at (200, 200)
+  const obstacles: Bbox[] = [
+    { x: 300, y: 200, w: 80, h: 50 }, // target col & middle row
+    { x: 200, y: 200, w: 80, h: 50 }, // middle row のみ
+  ]
+  const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+  expect(r?.kind).toBe('target-detour')
+  if (r?.kind === 'target-detour') {
+    expect(r.my).toBeGreaterThan(225)
+    expect(r.my).toBeLessThan(300)
+  }
+})
 ```
 
 - [ ] **Step 2: テスト実行で fail を確認**
@@ -183,6 +186,7 @@ EOF
 ## Task 3: Test (Red) — both-detour + middle-row
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: テスト追加**
@@ -190,21 +194,21 @@ EOF
 Task 2 のテスト直後に挿入:
 
 ```ts
-  it('should shift my when both-detour selected AND middle-row obstacle exists', () => {
-    // s=(100, 100), e=(300, 300), my=200
-    // 両列 hit + 中央行 hit
-    const obstacles: Bbox[] = [
-      { x: 100, y: 200, w: 80, h: 50 }, // source col & middle row
-      { x: 300, y: 200, w: 80, h: 50 }, // target col & middle row
-      { x: 200, y: 200, w: 80, h: 50 }, // 中央のみ
-    ]
-    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
-    expect(r?.kind).toBe('both-detour')
-    if (r?.kind === 'both-detour') {
-      expect(r.my).toBeGreaterThan(225)
-      expect(r.my).toBeLessThan(300)
-    }
-  })
+it('should shift my when both-detour selected AND middle-row obstacle exists', () => {
+  // s=(100, 100), e=(300, 300), my=200
+  // 両列 hit + 中央行 hit
+  const obstacles: Bbox[] = [
+    { x: 100, y: 200, w: 80, h: 50 }, // source col & middle row
+    { x: 300, y: 200, w: 80, h: 50 }, // target col & middle row
+    { x: 200, y: 200, w: 80, h: 50 }, // 中央のみ
+  ]
+  const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+  expect(r?.kind).toBe('both-detour')
+  if (r?.kind === 'both-detour') {
+    expect(r.my).toBeGreaterThan(225)
+    expect(r.my).toBeLessThan(300)
+  }
+})
 ```
 
 - [ ] **Step 2: テスト実行で fail を確認**
@@ -232,6 +236,7 @@ EOF
 ## Task 4: Test (Red) — issue #366 再現ケース
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: テスト追加**
@@ -239,26 +244,26 @@ EOF
 Task 3 のテスト直後に挿入:
 
 ```ts
-  it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
-    // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
-    // source 店舗/ステータス変更 (col0=100, row0=100)
-    // target グルプラ(2)/請求 (col2=300, row2=300)
-    // 障害①: 店舗/確認連絡(9) (col0=100, row1=200) — source 列・中央行
-    // 障害②: グルプラ/確認連絡(8) (col1=200, row1=200) — 中央行
-    // 障害③: グルプラ/請求 (col1=200, row2=300) — target 隣接列・target 行
-    const obstacles: Bbox[] = [
-      { x: 100, y: 200, w: 80, h: 50 },
-      { x: 200, y: 200, w: 80, h: 50 },
-      { x: 200, y: 300, w: 80, h: 50 },
-    ]
-    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
-    // source col に障害①、target col に障害無し、中央行に障害② → source-detour + shifted my
-    expect(r?.kind).toBe('source-detour')
-    if (r?.kind === 'source-detour') {
-      // middle horizontal が y=200 (row1) を回避するため my > 225 になるべき
-      expect(r.my).toBeGreaterThan(225)
-    }
-  })
+it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
+  // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
+  // source 店舗/ステータス変更 (col0=100, row0=100)
+  // target グルプラ(2)/請求 (col2=300, row2=300)
+  // 障害①: 店舗/確認連絡(9) (col0=100, row1=200) — source 列・中央行
+  // 障害②: グルプラ/確認連絡(8) (col1=200, row1=200) — 中央行
+  // 障害③: グルプラ/請求 (col1=200, row2=300) — target 隣接列・target 行
+  const obstacles: Bbox[] = [
+    { x: 100, y: 200, w: 80, h: 50 },
+    { x: 200, y: 200, w: 80, h: 50 },
+    { x: 200, y: 300, w: 80, h: 50 },
+  ]
+  const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+  // source col に障害①、target col に障害無し、中央行に障害② → source-detour + shifted my
+  expect(r?.kind).toBe('source-detour')
+  if (r?.kind === 'source-detour') {
+    // middle horizontal が y=200 (row1) を回避するため my > 225 になるべき
+    expect(r.my).toBeGreaterThan(225)
+  }
+})
 ```
 
 - [ ] **Step 2: テスト実行で fail を確認**
@@ -286,6 +291,7 @@ EOF
 ## Task 5: Test (Red) — range-check 失敗フォールバック
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: テスト追加**
@@ -293,21 +299,21 @@ EOF
 Task 4 のテスト直後に挿入:
 
 ```ts
-  it('should fall back to original my when shiftedMy exceeds row bounds', () => {
-    // 行間隔が狭く shiftedMy が source 行 / target 行を侵食するケース
-    // s=(100, 100), e=(300, 160), my=130 — 行差 60 で狭い
-    // 中央行に大きな障害があると shiftedMy が範囲外になる
-    const obstacles: Bbox[] = [
-      { x: 100, y: 130, w: 80, h: 50 }, // source col & middle row
-      { x: 200, y: 130, w: 80, h: 50 }, // 中央のみ — 下端 155, +14 = 169 > yHigh-25-1 = 134
-    ]
-    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 160 }, obstacles)
-    // range-check 失敗 → 従来の my (=130) で source-detour
-    expect(r?.kind).toBe('source-detour')
-    if (r?.kind === 'source-detour') {
-      expect(r.my).toBe(130) // unshifted
-    }
-  })
+it('should fall back to original my when shiftedMy exceeds row bounds', () => {
+  // 行間隔が狭く shiftedMy が source 行 / target 行を侵食するケース
+  // s=(100, 100), e=(300, 160), my=130 — 行差 60 で狭い
+  // 中央行に大きな障害があると shiftedMy が範囲外になる
+  const obstacles: Bbox[] = [
+    { x: 100, y: 130, w: 80, h: 50 }, // source col & middle row
+    { x: 200, y: 130, w: 80, h: 50 }, // 中央のみ — 下端 155, +14 = 169 > yHigh-25-1 = 134
+  ]
+  const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 160 }, obstacles)
+  // range-check 失敗 → 従来の my (=130) で source-detour
+  expect(r?.kind).toBe('source-detour')
+  if (r?.kind === 'source-detour') {
+    expect(r.my).toBe(130) // unshifted
+  }
+})
 ```
 
 - [ ] **Step 2: テスト実行で fail を確認**
@@ -335,6 +341,7 @@ EOF
 ## Task 6: Implementation (Green) — `computeShiftedMy` ヘルパー追加
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts:160-266` (`detectDiagonalDetour`)
 
 - [ ] **Step 1: `computeShiftedMy` ヘルパー関数を `pickDetourX` の直後に追加**
@@ -385,12 +392,12 @@ function computeShiftedMy(
 `detectDiagonalDetour` (L160-266) の `sourceColHits` / `targetColHits` 計算の **直後** に middleRowHits の計算を追加。L186 の `})` の直後 (= L187 の空行) に以下を挿入:
 
 ```ts
-  // 中央水平セグメント衝突: Y ≈ my で X が source-target 間 (早期計算で全 kind 分岐に提供)
-  const middleRowHits = obstacles.filter((b) => {
-    const xLow = Math.min(s.x, e.x)
-    const xHigh = Math.max(s.x, e.x)
-    return Math.abs(b.y - my) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1
-  })
+// 中央水平セグメント衝突: Y ≈ my で X が source-target 間 (早期計算で全 kind 分岐に提供)
+const middleRowHits = obstacles.filter((b) => {
+  const xLow = Math.min(s.x, e.x)
+  const xHigh = Math.max(s.x, e.x)
+  return Math.abs(b.y - my) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1
+})
 ```
 
 - [ ] **Step 3: `both-detour` ブランチに `shiftedMy` 適用**
@@ -398,19 +405,19 @@ function computeShiftedMy(
 L188-199 の `both-detour` ブロックを以下に置き換える:
 
 ```ts
-  if (sourceColHits.length > 0 && targetColHits.length > 0) {
-    // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
-    const targetIds = new Set(targetColHits)
-    const sourceIds = new Set(sourceColHits)
-    const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
-    const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
-    const sourceDetourX = pickDetourX(sourceColHits, srcBlockers)
-    const targetDetourX = pickDetourX(targetColHits, tgtBlockers)
-    const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
-    const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
-    const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
-    return { kind: 'both-detour', departY, sourceDetourX, my: shiftedMy, targetDetourX, approachY }
-  }
+if (sourceColHits.length > 0 && targetColHits.length > 0) {
+  // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
+  const targetIds = new Set(targetColHits)
+  const sourceIds = new Set(sourceColHits)
+  const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
+  const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
+  const sourceDetourX = pickDetourX(sourceColHits, srcBlockers)
+  const targetDetourX = pickDetourX(targetColHits, tgtBlockers)
+  const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
+  const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
+  const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
+  return { kind: 'both-detour', departY, sourceDetourX, my: shiftedMy, targetDetourX, approachY }
+}
 ```
 
 - [ ] **Step 4: `target-detour` ブランチに `shiftedMy` 適用**
@@ -418,12 +425,12 @@ L188-199 の `both-detour` ブロックを以下に置き換える:
 L201-205 の `target-detour` ブロックを以下に置き換える:
 
 ```ts
-  if (targetColHits.length > 0 && sourceColHits.length === 0) {
-    const detourX = pickDetourX(targetColHits, obstacles)
-    const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
-    const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
-    return { kind: 'target-detour', my: shiftedMy, detourX, approachY }
-  }
+if (targetColHits.length > 0 && sourceColHits.length === 0) {
+  const detourX = pickDetourX(targetColHits, obstacles)
+  const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
+  const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
+  return { kind: 'target-detour', my: shiftedMy, detourX, approachY }
+}
 ```
 
 - [ ] **Step 5: `source-detour` ブランチに `shiftedMy` 適用**
@@ -431,12 +438,12 @@ L201-205 の `target-detour` ブロックを以下に置き換える:
 L207-211 の `source-detour` ブロックを以下に置き換える:
 
 ```ts
-  if (sourceColHits.length > 0 && targetColHits.length === 0) {
-    const detourX = pickDetourX(sourceColHits, obstacles)
-    const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
-    const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
-    return { kind: 'source-detour', departY, detourX, my: shiftedMy }
-  }
+if (sourceColHits.length > 0 && targetColHits.length === 0) {
+  const detourX = pickDetourX(sourceColHits, obstacles)
+  const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
+  const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
+  return { kind: 'source-detour', departY, detourX, my: shiftedMy }
+}
 ```
 
 - [ ] **Step 6: 既存の middleRowHits 専用ブロック (L213-263) から重複定義を削除**
@@ -535,6 +542,7 @@ URL: https://flowline.six1.jp/flows/ee90cded-221c-40f9-bea6-fea19f66931f
 該当矢印 ID: `5e634294-8d72-4a82-bd24-591af9878944`
 
 確認観点:
+
 - 矢印が 店舗/確認連絡(9) を貫通していないこと
 - 矢印が グルプラ/確認連絡(8) を貫通していないこと
 - 矢印が グルプラ(2)/請求 に正しく接続していること
