@@ -387,6 +387,15 @@ export const buildArrowPath = (
       const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
       return { d, mx: detourX, my: (s.y + e.y) / 2 }
     }
+
+    const dDetour = detectDiagonalDetour(s, e, obstacles)
+    if (dDetour) {
+      if (dDetour.kind === 'target-detour') {
+        const { my, detourX, approachY } = dDetour
+        const d = `M${s.x},${s.y} L${s.x},${my} L${detourX},${my} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+        return { d, mx: (s.x + detourX) / 2, my }
+      }
+    }
   }
 
   let d: string

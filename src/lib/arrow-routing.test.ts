@@ -570,6 +570,26 @@ describe('collectVerticalObstacles', () => {
   })
 })
 
+describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
+  const s = { x: 200, y: 128 }
+  const e = { x: 600, y: 372 }
+  const fc = { x: 200, y: 100 }
+  const tc = { x: 600, y: 400 }
+
+  it('should produce 6-segment target-detour path when obstacle in target column (core bug case)', () => {
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.d).toBe('M200,128 L200,250 L690,250 L690,358 L600,358 L600,372')
+    expect(r.mx).toBe((200 + 690) / 2)
+    expect(r.my).toBe(250)
+  })
+
+  it('should produce default Z-path when no obstacles intersect (diagonal)', () => {
+    const r = buildArrowPath(s, e, fc, tc, [])
+    expect(r.d).toBe('M200,128 L200,250 L600,250 L600,372')
+  })
+})
+
 describe('collectDiagonalObstacles', () => {
   const baseArgs = {
     fromKey: 'A',
