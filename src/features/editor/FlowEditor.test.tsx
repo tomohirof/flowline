@@ -987,6 +987,24 @@ describe('ノードドラッグの activation distance (#347)', () => {
     // swap が発火 → tasks の構造変化 → onSave が呼ばれる
     expect(onSave).toHaveBeenCalled()
   })
+
+  it('累積で 6px を超えた時点で gate が通過する', () => {
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // 3px の小さな move（gate 未達）の後、さらに大きく動かす。
+    // 最終位置は mousedown 位置から十分離れているため累計 distance は明確に 6 超え。
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 65 })
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 68 }) // 距離 3 → gate ブロック
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 200 }) // 距離 135 → gate 通過
+    fireEvent.mouseUp(svg, { clientX: 100, clientY: 200 })
+
+    expect(onSave).toHaveBeenCalled()
+  })
 })
 
 describe('logo navigation (#83)', () => {
