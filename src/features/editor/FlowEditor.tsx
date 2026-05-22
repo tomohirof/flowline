@@ -19,6 +19,7 @@ import type {
   InternalArrow,
   DragState,
   ArrowPathResult,
+  ArrowSide,
   CellInfo,
   Point,
   ToolId,
@@ -35,7 +36,13 @@ import { toBlob } from 'html-to-image'
 import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
 import { NodeLabelText } from '../shared/NodeLabelText'
-import { DS, buildObstacles, type Bbox, type ObstacleNode } from '../../lib/arrow-routing'
+import {
+  DS,
+  buildObstacles,
+  deriveFromSide,
+  type Bbox,
+  type ObstacleNode,
+} from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { I, Ico } from './components/EditorIcons'
@@ -60,7 +67,7 @@ import { isGroupParent, isGroupSub, getGroupWidth } from '../../lib/lane-group-u
 // Helpers: convert API data <-> internal state
 // =============================================
 
-function flowToInternalState(flow: Flow): {
+export function flowToInternalState(flow: Flow): {
   lanes: InternalLane[]
   rows: RowData[]
   tasks: Record<string, TaskData>
@@ -134,6 +141,7 @@ function flowToInternalState(flow: Flow): {
       if (a.color) arr.color = a.color
       if (a.dash) arr.dash = a.dash
       if (a.bidirectional) arr.bidirectional = true
+      if (a.fromSide) arr.fromSide = a.fromSide
       return arr
     })
     .filter((a): a is InternalArrow => a !== null)
@@ -143,7 +151,7 @@ function flowToInternalState(flow: Flow): {
   return { lanes, rows, tasks, order, arrows, memos, title: flow.title, themeId }
 }
 
-function internalStateToPayload(
+export function internalStateToPayload(
   lanes: InternalLane[],
   rows: RowData[],
   tasks: Record<string, TaskData>,
@@ -204,6 +212,7 @@ function internalStateToPayload(
         color: a.color || null,
         dash: a.dash || null,
         bidirectional: a.bidirectional ?? false,
+        fromSide: a.fromSide ?? null,
       }
     })
     .filter((a): a is NonNullable<typeof a> => a !== null)
@@ -1035,7 +1044,17 @@ export default function FlowEditor({
         const snapX = isDia ? DS + 12 : TW / 2 + 12
         const snapY = isDia ? DS + 12 : TH / 2 + 12
         if (Math.abs(pt.x - c.x) < snapX && Math.abs(pt.y - c.y) < snapY && k !== connectFrom) {
-          setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
+          const srcTask = tasks[connectFrom]
+          let fromSide: ArrowSide | undefined
+          if (srcTask?.shape === 'diamond' && connectFromPt) {
+            const srcLi = liMap[srcTask.lid]
+            const srcRi = riMap[srcTask.rid]
+            if (srcLi !== undefined && srcRi !== undefined) {
+              const sc = ct(srcLi, srcRi)
+              fromSide = deriveFromSide(connectFromPt, sc)
+            }
+          }
+          setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '', fromSide }])
           break
         }
       }
@@ -1414,6 +1433,7 @@ export default function FlowEditor({
         rh: RH,
         fromShape: ft.shape ?? undefined,
         toShape: tt.shape ?? undefined,
+        fromSide: arrow.fromSide,
       },
       obstacles,
     )

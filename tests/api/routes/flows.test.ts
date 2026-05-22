@@ -557,6 +557,54 @@ describe('Flows API', () => {
       expect(got.flow.arrows.find((a) => a.id === 'arrow-1')?.bidirectional).toBe(true)
       expect(got.flow.arrows.find((a) => a.id === 'arrow-2')?.bidirectional ?? false).toBe(false)
     })
+
+    it('should round-trip arrow fromSide field', async () => {
+      const payload = {
+        title: 'FromSide Flow',
+        themeId: 'cloud',
+        lanes: [{ id: 'lane-1', name: 'L', colorIndex: 0, position: 0 }],
+        nodes: [
+          {
+            id: 'node-1',
+            laneId: 'lane-1',
+            rowIndex: 0,
+            label: 'D',
+            note: null,
+            orderIndex: 0,
+            shape: 'diamond',
+          },
+          { id: 'node-2', laneId: 'lane-1', rowIndex: 1, label: 'T', note: null, orderIndex: 1 },
+        ],
+        arrows: [
+          {
+            id: 'arrow-1',
+            fromNodeId: 'node-1',
+            toNodeId: 'node-2',
+            comment: null,
+            fromSide: 'bottom',
+          },
+          {
+            id: 'arrow-2',
+            fromNodeId: 'node-1',
+            toNodeId: 'node-2',
+            comment: null,
+          },
+        ],
+      }
+      const createRes = await postJson('/api/flows', payload, env, cookie)
+      expect(createRes.status).toBe(201)
+      const created = (await createRes.json()) as {
+        flow: { id: string; arrows: Array<{ id: string; fromSide?: string | null }> }
+      }
+      expect(created.flow.arrows.find((a) => a.id === 'arrow-1')?.fromSide).toBe('bottom')
+      expect(created.flow.arrows.find((a) => a.id === 'arrow-2')?.fromSide ?? null).toBe(null)
+
+      const getRes = await getWithCookie(`/api/flows/${created.flow.id}`, env, cookie)
+      expect(getRes.status).toBe(200)
+      const got = (await getRes.json()) as typeof created
+      expect(got.flow.arrows.find((a) => a.id === 'arrow-1')?.fromSide).toBe('bottom')
+      expect(got.flow.arrows.find((a) => a.id === 'arrow-2')?.fromSide ?? null).toBe(null)
+    })
   })
 
   // ========================================

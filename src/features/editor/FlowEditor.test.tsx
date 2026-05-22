@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import FlowEditor from './FlowEditor'
+import FlowEditor, { flowToInternalState, internalStateToPayload } from './FlowEditor'
 import type { Flow } from './types'
 import { BRAND } from '../../constants/brand'
 import { NODE_COLORS, NODE_COLORS_DARK, LINE_COLORS, STROKE_STYLES } from './theme-constants'
@@ -3450,5 +3450,70 @@ describe('copyLabelOnSameRow distance-based selection (#337)', () => {
       (r) => r.getAttribute('width') === '152' && r.getAttribute('height') === '56',
     )
     expect(nodeCards.length).toBe(2) // original n1 + newly created default-label node
+  })
+})
+
+describe('arrow fromSide round-trip (#349)', () => {
+  const baseFlow: Flow = {
+    id: 'f1',
+    title: 'Test',
+    themeId: 'cloud',
+    shareToken: null,
+    projectId: null,
+    createdAt: '',
+    updatedAt: '',
+    lanes: [{ id: 'L1', name: 'L', colorIndex: 0, position: 0 }],
+    nodes: [
+      {
+        id: 'n1',
+        laneId: 'L1',
+        rowIndex: 0,
+        label: 'D',
+        note: null,
+        orderIndex: 0,
+        shape: 'diamond',
+      },
+      { id: 'n2', laneId: 'L1', rowIndex: 1, label: 'T', note: null, orderIndex: 1 },
+    ],
+    arrows: [],
+  }
+
+  it('flowToInternalState preserves fromSide on load', () => {
+    const flow: Flow = {
+      ...baseFlow,
+      arrows: [
+        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, fromSide: 'bottom' },
+        { id: 'a2', fromNodeId: 'n1', toNodeId: 'n2', comment: null, fromSide: null },
+      ],
+    }
+    const state = flowToInternalState(flow)
+    const a1 = state.arrows.find((a) => a.id === 'a1')
+    const a2 = state.arrows.find((a) => a.id === 'a2')
+    expect(a1?.fromSide).toBe('bottom')
+    expect(a2?.fromSide).toBeUndefined()
+  })
+
+  it('internalStateToPayload preserves fromSide on save', () => {
+    const state = flowToInternalState({
+      ...baseFlow,
+      arrows: [
+        { id: 'a1', fromNodeId: 'n1', toNodeId: 'n2', comment: null, fromSide: 'bottom' },
+        { id: 'a2', fromNodeId: 'n1', toNodeId: 'n2', comment: null },
+      ],
+    })
+    const payload = internalStateToPayload(
+      state.lanes,
+      state.rows,
+      state.tasks,
+      state.order,
+      state.arrows,
+      state.memos,
+      state.title,
+      state.themeId,
+    )
+    const a1 = payload.arrows?.find((a) => a.id === 'a1')
+    const a2 = payload.arrows?.find((a) => a.id === 'a2')
+    expect(a1?.fromSide).toBe('bottom')
+    expect(a2?.fromSide).toBeNull()
   })
 })

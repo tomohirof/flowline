@@ -34,6 +34,7 @@ const arrowSchema = z.object({
   color: z.string().nullable().optional(),
   dash: z.string().nullable().optional(),
   bidirectional: z.boolean().optional(),
+  fromSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(),
 })
 
 export const createFlowSchema = z.object({

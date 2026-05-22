@@ -3,6 +3,8 @@
 // Shared between flows.ts and shared.ts routes
 // =============================================
 
+export type ArrowSide = 'top' | 'right' | 'bottom' | 'left'
+
 export interface FlowRow {
   id: string
   user_id: string
@@ -52,6 +54,7 @@ export interface ArrowRow {
   color: string | null
   dash: string | null
   bidirectional: number | null
+  from_side: ArrowSide | null
   created_at: string
   updated_at: string
 }
@@ -109,6 +112,7 @@ export function toArrow(row: ArrowRow) {
     color: row.color,
     dash: row.dash,
     bidirectional: row.bidirectional === 1,
+    fromSide: row.from_side,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

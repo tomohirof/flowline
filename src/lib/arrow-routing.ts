@@ -1,3 +1,5 @@
+import type { ArrowSide } from './types'
+
 export interface Point {
   x: number
   y: number
@@ -256,6 +258,23 @@ interface ArrowPath {
 export const DS = 34
 
 /**
+ * ドラッグ起点座標 (origin) とノード中心 (center) の位置関係から
+ * どの side （頂点/辺）から線を出すかを判定する。
+ *
+ * |dx| > |dy| → 水平軸（left/right）、それ以外 → 垂直軸（top/bottom）。
+ * dx=dy=0 のエッジケースは 'bottom' に決定的にフォールバックする。
+ */
+export const deriveFromSide = (
+  origin: { x: number; y: number },
+  center: { x: number; y: number },
+): ArrowSide => {
+  const dx = origin.x - center.x
+  const dy = origin.y - center.y
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left'
+  return dy >= 0 ? 'bottom' : 'top'
+}
+
+/**
  * ノード中心 c から相手ノード中心 o に向かう矢印の出口点を計算する。
  * FlowEditor の threshold ベースのロジックを共通化したもの。
  *
@@ -269,11 +288,16 @@ export const exitPt = (
   hh: number,
   rh: number,
   shape?: 'diamond',
+  fromSide?: ArrowSide,
 ): Point => {
   const dx = o.x - c.x,
     dy = o.y - c.y
 
   if (shape === 'diamond') {
+    if (fromSide === 'top') return { x: c.x, y: c.y - DS }
+    if (fromSide === 'right') return { x: c.x + DS, y: c.y }
+    if (fromSide === 'bottom') return { x: c.x, y: c.y + DS }
+    if (fromSide === 'left') return { x: c.x - DS, y: c.y }
     if (Math.abs(dx) < 1 && dy > 0) return { x: c.x, y: c.y + DS }
     if (Math.abs(dx) < 1 && dy <= 0) return { x: c.x, y: c.y - DS }
     if (dx >= 0) return { x: c.x + DS, y: c.y }
