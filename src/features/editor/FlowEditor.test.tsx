@@ -932,6 +932,45 @@ describe('Multi-select (#76)', () => {
   })
 })
 
+describe('ノードドラッグの activation distance (#347)', () => {
+  // 同一レーン内に縦に並ぶ2ノード（row 0 と row 1）。
+  // 1px の手ブレで意図せず swap してしまうバグを再現するための最小フロー。
+  const createFlowWith2VerticalNodes = (): Flow => {
+    const flow = createMinimalFlow()
+    flow.lanes = [{ id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 }]
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'タスクA', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'タスクB', note: null, orderIndex: 1 },
+    ]
+    return flow
+  }
+
+  const findNodeRects = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('rect[rx="10"]')).filter(
+      (r) => r.getAttribute('width') === '152',
+    )
+
+  it('しきい値未達 (5px) の move では swap が発火しない', () => {
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    expect(rects.length).toBe(2)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // mousedown は row 0 セル内 (clientY=149: TM+HH=70, RH=84 → row 0 の下端境界手前)、
+    // mousemove で 5px だけ下に移動 (clientY=154 で row 1 セルに入る)。
+    // 距離 5 < 6 のため activation gate がブロックする想定。
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 149 })
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 154 })
+    fireEvent.mouseUp(svg, { clientX: 100, clientY: 154 })
+
+    // swap が発火しなければ tasks/order に変化なし → onSave は呼ばれない
+    expect(onSave).not.toHaveBeenCalled()
+  })
+})
+
 describe('logo navigation (#83)', () => {
   beforeEach(() => {
     mockNavigate.mockClear()
