@@ -14,12 +14,12 @@
 
 ## File Structure
 
-| File | Action | Responsibility |
-| --- | --- | --- |
-| `src/lib/arrow-routing.ts` | Modify | 新規 `collectDiagonalObstacles` / `detectDiagonalDetour` 追加、`buildArrowPath` の斜め分岐拡張 |
-| `src/lib/arrow-routing.test.ts` | Modify | 新規 detector / collector の単体テスト、`buildArrowPath` 統合テスト、regression テスト |
-| `src/features/editor/FlowEditor.tsx` | Modify | `aPath` の obstacles 組み立てに diagonal 分岐追加 (1 箇所) |
-| `src/features/shared/SharedFlowViewer.tsx` | Modify | `computeArrowPath` の obstacles 組み立てに diagonal 分岐追加 (1 箇所) |
+| File                                       | Action | Responsibility                                                                                 |
+| ------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------- |
+| `src/lib/arrow-routing.ts`                 | Modify | 新規 `collectDiagonalObstacles` / `detectDiagonalDetour` 追加、`buildArrowPath` の斜め分岐拡張 |
+| `src/lib/arrow-routing.test.ts`            | Modify | 新規 detector / collector の単体テスト、`buildArrowPath` 統合テスト、regression テスト         |
+| `src/features/editor/FlowEditor.tsx`       | Modify | `aPath` の obstacles 組み立てに diagonal 分岐追加 (1 箇所)                                     |
+| `src/features/shared/SharedFlowViewer.tsx` | Modify | `computeArrowPath` の obstacles 組み立てに diagonal 分岐追加 (1 箇所)                          |
 
 ---
 
@@ -44,6 +44,7 @@
 ### Task 1: `collectDiagonalObstacles` の skeleton + from/to 除外
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -147,6 +148,7 @@ git commit -m "feat(#346): add collectDiagonalObstacles skeleton with from/to ex
 ### Task 2: `collectDiagonalObstacles` - source 列ストリップ収集
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -168,7 +170,7 @@ it('should collect source-column obstacle between source and target rows', () =>
 it('should not collect source-column nodes outside Z-path Y range', () => {
   const nodes: ObstacleNode[] = [
     { key: 'A', cx: 200, cy: 100 },
-    { key: 'B', cx: 200, cy: 50 },  // source 行より上 (out of range)
+    { key: 'B', cx: 200, cy: 50 }, // source 行より上 (out of range)
     { key: 'D', cx: 200, cy: 450 }, // target 行より下 (out of range)
     { key: 'C', cx: 600, cy: 400 },
   ]
@@ -222,6 +224,7 @@ git commit -m "feat(#346): collectDiagonalObstacles picks up source-column obsta
 ### Task 3: `collectDiagonalObstacles` - target 列ストリップ収集
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -249,13 +252,13 @@ Expected: FAIL — `[]` returned, expected `[{ x: 600, ... }]`
 `collectDiagonalObstacles` ループ内に分岐追加:
 
 ```ts
-    const onSourceCol = Math.abs(n.cx - fromCx) < bboxW / 2 + 2
-    const onTargetCol = Math.abs(n.cx - toCx) < bboxW / 2 + 2
-    const inZRangeY = n.cy > yLow + 1 && n.cy < yHigh - 1
-    if ((onSourceCol || onTargetCol) && inZRangeY) {
-      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
-      continue
-    }
+const onSourceCol = Math.abs(n.cx - fromCx) < bboxW / 2 + 2
+const onTargetCol = Math.abs(n.cx - toCx) < bboxW / 2 + 2
+const inZRangeY = n.cy > yLow + 1 && n.cy < yHigh - 1
+if ((onSourceCol || onTargetCol) && inZRangeY) {
+  result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+  continue
+}
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -275,6 +278,7 @@ git commit -m "feat(#346): collectDiagonalObstacles picks up target-column obsta
 ### Task 4: `collectDiagonalObstacles` - 中央行ストリップ収集
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -294,7 +298,7 @@ it('should collect middle-row obstacle between source and target X', () => {
 it('should not collect nodes outside Z-path X range at middle row', () => {
   const nodes: ObstacleNode[] = [
     { key: 'A', cx: 200, cy: 100 },
-    { key: 'B', cx: 50, cy: 250 },  // source の左 (out of range)
+    { key: 'B', cx: 50, cy: 250 }, // source の左 (out of range)
     { key: 'D', cx: 750, cy: 250 }, // target の右 (out of range, 隣接列でもない)
     { key: 'C', cx: 600, cy: 400 },
   ]
@@ -311,22 +315,22 @@ Expected: FAIL — middle row node not collected
 - [ ] **Step 3: Update implementation**
 
 ```ts
-    const onSourceCol = Math.abs(n.cx - fromCx) < bboxW / 2 + 2
-    const onTargetCol = Math.abs(n.cx - toCx) < bboxW / 2 + 2
-    const inZRangeY = n.cy > yLow + 1 && n.cy < yHigh - 1
-    if ((onSourceCol || onTargetCol) && inZRangeY) {
-      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
-      continue
-    }
-    const midY = (fromCy + toCy) / 2
-    const onMiddleRow = Math.abs(n.cy - midY) < bboxH / 2 + 2
-    const xLow = Math.min(fromCx, toCx)
-    const xHigh = Math.max(fromCx, toCx)
-    const inZRangeX = n.cx > xLow + 1 && n.cx < xHigh - 1
-    if (onMiddleRow && inZRangeX) {
-      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
-      continue
-    }
+const onSourceCol = Math.abs(n.cx - fromCx) < bboxW / 2 + 2
+const onTargetCol = Math.abs(n.cx - toCx) < bboxW / 2 + 2
+const inZRangeY = n.cy > yLow + 1 && n.cy < yHigh - 1
+if ((onSourceCol || onTargetCol) && inZRangeY) {
+  result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+  continue
+}
+const midY = (fromCy + toCy) / 2
+const onMiddleRow = Math.abs(n.cy - midY) < bboxH / 2 + 2
+const xLow = Math.min(fromCx, toCx)
+const xHigh = Math.max(fromCx, toCx)
+const inZRangeX = n.cx > xLow + 1 && n.cx < xHigh - 1
+if (onMiddleRow && inZRangeX) {
+  result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+  continue
+}
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -346,6 +350,7 @@ git commit -m "feat(#346): collectDiagonalObstacles picks up middle-row obstacle
 ### Task 5: `collectDiagonalObstacles` - 隣接列 (左右1列) 収集
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -393,18 +398,18 @@ Expected: FAIL — adjacent column nodes not collected
 `collectDiagonalObstacles` 内のループに分岐追加:
 
 ```ts
-    const { nodes, fromKey, toKey, fromCx, fromCy, toCx, toCy, rowH, colW, bboxW, bboxH } = args
-    // ... 既存収集ロジックの後 ...
+const { nodes, fromKey, toKey, fromCx, fromCy, toCx, toCy, rowH, colW, bboxW, bboxH } = args
+// ... 既存収集ロジックの後 ...
 
-    const onSourceAdjacentCol =
-      Math.abs(n.cx - fromCx) > colW - bboxW / 2 && Math.abs(n.cx - fromCx) < colW + bboxW / 2
-    const onTargetAdjacentCol =
-      Math.abs(n.cx - toCx) > colW - bboxW / 2 && Math.abs(n.cx - toCx) < colW + bboxW / 2
-    const inExtendedY = n.cy >= yLow - rowH / 2 && n.cy <= yHigh + rowH / 2
-    if ((onSourceAdjacentCol || onTargetAdjacentCol) && inExtendedY) {
-      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
-      continue
-    }
+const onSourceAdjacentCol =
+  Math.abs(n.cx - fromCx) > colW - bboxW / 2 && Math.abs(n.cx - fromCx) < colW + bboxW / 2
+const onTargetAdjacentCol =
+  Math.abs(n.cx - toCx) > colW - bboxW / 2 && Math.abs(n.cx - toCx) < colW + bboxW / 2
+const inExtendedY = n.cy >= yLow - rowH / 2 && n.cy <= yHigh + rowH / 2
+if ((onSourceAdjacentCol || onTargetAdjacentCol) && inExtendedY) {
+  result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+  continue
+}
 ```
 
 注: `rowH` と `colW` を関数先頭の destructure に追加すること。
@@ -426,6 +431,7 @@ git commit -m "feat(#346): collectDiagonalObstacles picks up adjacent-column obs
 ### Task 6: `detectDiagonalDetour` - null ガード (水平・垂直・空配列)
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -541,6 +547,7 @@ git commit -m "feat(#346): add detectDiagonalDetour skeleton with null guards"
 ### Task 7: `detectDiagonalDetour` - target-detour (右優先) を返す
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -558,7 +565,7 @@ it('should return target-detour when obstacle is in target column between my and
     kind: 'target-detour',
     my: 250,
     detourX: 600 + 76 + 14, // 690 (右迂回: 障害右端 + DETOUR_MARGIN)
-    approachY: 372 - 14,    // 358
+    approachY: 372 - 14, // 358
   })
 })
 ```
@@ -588,9 +595,7 @@ export function detectDiagonalDetour(
     const yLow = Math.min(s.y, my)
     const yHigh = Math.max(s.y, my)
     return (
-      Math.abs(b.x - s.x) < b.w / 2 + 2 &&
-      b.y - b.h / 2 < yHigh - 1 &&
-      b.y + b.h / 2 > yLow + 1
+      Math.abs(b.x - s.x) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1
     )
   })
 
@@ -599,9 +604,7 @@ export function detectDiagonalDetour(
     const yLow = Math.min(my, e.y)
     const yHigh = Math.max(my, e.y)
     return (
-      Math.abs(b.x - e.x) < b.w / 2 + 2 &&
-      b.y - b.h / 2 < yHigh - 1 &&
-      b.y + b.h / 2 > yLow + 1
+      Math.abs(b.x - e.x) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1
     )
   })
 
@@ -645,6 +648,7 @@ git commit -m "feat(#346): detectDiagonalDetour returns target-detour for target
 ### Task 8: `detectDiagonalDetour` - target-detour 左迂回 (右塞がり時)
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -685,6 +689,7 @@ Expected: 1個目 (左迂回) FAIL、2個目 (両塞がり右優先) PASS (既�
 - [ ] **Step 3: Verify left detour logic works (no code change needed)**
 
 Task 7 で実装した左右判定ロジックは既に正しく左迂回を返すはず。失敗テストの原因が `detourX` 計算式の符号ミスでないか確認:
+
 - `goRight = !rightBlocked || leftBlocked` → 右塞がり&左空きで `false`
 - `detourX = goRight ? max(右端)+14 : min(左端)-14` → 左迂回時は `600 - 76 - 14 = 510` ✓
 
@@ -707,6 +712,7 @@ git commit -m "test(#346): cover target-detour direction (left side, both-blocke
 ### Task 9: `detectDiagonalDetour` - source-detour (鏡像)
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -735,23 +741,23 @@ Expected: FAIL — `null` returned
 `detectDiagonalDetour` の `target-detour` 分岐の後に追加:
 
 ```ts
-  if (sourceColHits.length > 0 && targetColHits.length === 0) {
-    const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
-    const rightBlocked = sourceColHits.some((obs) =>
-      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-    )
-    const leftBlocked = sourceColHits.some((obs) =>
-      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-    )
-    const goRight = !rightBlocked || leftBlocked
-    const detourX = goRight
-      ? Math.max(...sourceColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
-      : Math.min(...sourceColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-    const sign = Math.sign(my - s.y)
-    const halfDy = Math.abs(my - s.y) / 2
-    const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
-    return { kind: 'source-detour', departY, detourX, my }
-  }
+if (sourceColHits.length > 0 && targetColHits.length === 0) {
+  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+  const rightBlocked = sourceColHits.some((obs) =>
+    obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+  )
+  const leftBlocked = sourceColHits.some((obs) =>
+    obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+  )
+  const goRight = !rightBlocked || leftBlocked
+  const detourX = goRight
+    ? Math.max(...sourceColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+    : Math.min(...sourceColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+  const sign = Math.sign(my - s.y)
+  const halfDy = Math.abs(my - s.y) / 2
+  const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
+  return { kind: 'source-detour', departY, detourX, my }
+}
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -771,6 +777,7 @@ git commit -m "feat(#346): detectDiagonalDetour returns source-detour for source
 ### Task 10: `detectDiagonalDetour` - shift-my (中央水平のみ衝突)
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -856,6 +863,7 @@ git commit -m "feat(#346): detectDiagonalDetour returns shift-my for middle-row 
 ### Task 11: `detectDiagonalDetour` - shift-my エスカレーション → target-detour
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -920,6 +928,7 @@ git commit -m "feat(#346): detectDiagonalDetour escalates shift-my to target-det
 ### Task 12: `detectDiagonalDetour` - both-detour (両列衝突)
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -951,40 +960,40 @@ Expected: FAIL — 現状は `target-detour` が返る (sourceColHits も target
 `detectDiagonalDetour` の最初に `both-detour` 分岐を追加。`source-detour` / `target-detour` 分岐の **前** に挿入:
 
 ```ts
-  // 両列衝突 → 8 セグメント二重迂回
-  if (sourceColHits.length > 0 && targetColHits.length > 0) {
-    const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
-    // source 列の方向決定
-    const srcRightBlocked = sourceColHits.some((obs) =>
-      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-    )
-    const srcLeftBlocked = sourceColHits.some((obs) =>
-      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-    )
-    const srcGoRight = !srcRightBlocked || srcLeftBlocked
-    const sourceDetourX = srcGoRight
-      ? Math.max(...sourceColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
-      : Math.min(...sourceColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-    // target 列の方向決定
-    const tgtRightBlocked = targetColHits.some((obs) =>
-      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-    )
-    const tgtLeftBlocked = targetColHits.some((obs) =>
-      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-    )
-    const tgtGoRight = !tgtRightBlocked || tgtLeftBlocked
-    const targetDetourX = tgtGoRight
-      ? Math.max(...targetColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
-      : Math.min(...targetColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-    // depart / approach Y
-    const signS = Math.sign(my - s.y)
-    const halfDyS = Math.abs(my - s.y) / 2
-    const departY = s.y + signS * Math.min(DEPART_GAP, halfDyS)
-    const signE = Math.sign(e.y - my)
-    const halfDyE = Math.abs(e.y - my) / 2
-    const approachY = e.y - signE * Math.min(APPROACH_GAP, halfDyE)
-    return { kind: 'both-detour', departY, sourceDetourX, my, targetDetourX, approachY }
-  }
+// 両列衝突 → 8 セグメント二重迂回
+if (sourceColHits.length > 0 && targetColHits.length > 0) {
+  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+  // source 列の方向決定
+  const srcRightBlocked = sourceColHits.some((obs) =>
+    obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+  )
+  const srcLeftBlocked = sourceColHits.some((obs) =>
+    obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+  )
+  const srcGoRight = !srcRightBlocked || srcLeftBlocked
+  const sourceDetourX = srcGoRight
+    ? Math.max(...sourceColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+    : Math.min(...sourceColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+  // target 列の方向決定
+  const tgtRightBlocked = targetColHits.some((obs) =>
+    obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+  )
+  const tgtLeftBlocked = targetColHits.some((obs) =>
+    obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+  )
+  const tgtGoRight = !tgtRightBlocked || tgtLeftBlocked
+  const targetDetourX = tgtGoRight
+    ? Math.max(...targetColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+    : Math.min(...targetColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+  // depart / approach Y
+  const signS = Math.sign(my - s.y)
+  const halfDyS = Math.abs(my - s.y) / 2
+  const departY = s.y + signS * Math.min(DEPART_GAP, halfDyS)
+  const signE = Math.sign(e.y - my)
+  const halfDyE = Math.abs(e.y - my) / 2
+  const approachY = e.y - signE * Math.min(APPROACH_GAP, halfDyE)
+  return { kind: 'both-detour', departY, sourceDetourX, my, targetDetourX, approachY }
+}
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -1004,6 +1013,7 @@ git commit -m "feat(#346): detectDiagonalDetour returns both-detour for both-col
 ### Task 13: `buildArrowPath` - 斜め分岐に target-detour を統合
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -1045,15 +1055,15 @@ Expected: 1個目 FAIL (target-detour 未統合)、2個目 PASS
 `src/lib/arrow-routing.ts` の `buildArrowPath` 内、`detectVerticalDetour` 分岐 (line 221-235) の **後** に追加:
 
 ```ts
-    const dDetour = detectDiagonalDetour(s, e, obstacles)
-    if (dDetour) {
-      if (dDetour.kind === 'target-detour') {
-        const { my, detourX, approachY } = dDetour
-        const d = `M${s.x},${s.y} L${s.x},${my} L${detourX},${my} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
-        return { d, mx: (s.x + detourX) / 2, my }
-      }
-      // 後続タスクで source-detour / both-detour / shift-my 分岐を追加
-    }
+const dDetour = detectDiagonalDetour(s, e, obstacles)
+if (dDetour) {
+  if (dDetour.kind === 'target-detour') {
+    const { my, detourX, approachY } = dDetour
+    const d = `M${s.x},${s.y} L${s.x},${my} L${detourX},${my} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+    return { d, mx: (s.x + detourX) / 2, my }
+  }
+  // 後続タスクで source-detour / both-detour / shift-my 分岐を追加
+}
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -1073,6 +1083,7 @@ git commit -m "feat(#346): buildArrowPath emits target-detour 6-segment path"
 ### Task 14: `buildArrowPath` - source-detour / both-detour / shift-my 統合
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts`
 - Test: `src/lib/arrow-routing.test.ts`
 
@@ -1093,9 +1104,7 @@ it('should produce 8-segment both-detour path when both columns blocked', () => 
   const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 }
   const Bt: Bbox = { x: 600, y: 250, w: 152, h: 56 }
   const r = buildArrowPath(s, e, fc, tc, [Bs, Bt])
-  expect(r.d).toBe(
-    'M200,128 L200,142 L290,142 L290,250 L690,250 L690,358 L600,358 L600,372',
-  )
+  expect(r.d).toBe('M200,128 L200,142 L290,142 L290,250 L690,250 L690,358 L600,358 L600,372')
   expect(r.mx).toBe((290 + 690) / 2)
   expect(r.my).toBe(250)
 })
@@ -1119,29 +1128,29 @@ Expected: 3 件 FAIL — 各 kind の分岐が未実装
 Task 13 で追加した `if (dDetour) { ... }` ブロックを以下に置き換え:
 
 ```ts
-    const dDetour = detectDiagonalDetour(s, e, obstacles)
-    if (dDetour) {
-      if (dDetour.kind === 'target-detour') {
-        const { my, detourX, approachY } = dDetour
-        const d = `M${s.x},${s.y} L${s.x},${my} L${detourX},${my} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
-        return { d, mx: (s.x + detourX) / 2, my }
-      }
-      if (dDetour.kind === 'source-detour') {
-        const { departY, detourX, my } = dDetour
-        const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${my} L${e.x},${my} L${e.x},${e.y}`
-        return { d, mx: (detourX + e.x) / 2, my }
-      }
-      if (dDetour.kind === 'both-detour') {
-        const { departY, sourceDetourX, my, targetDetourX, approachY } = dDetour
-        const d = `M${s.x},${s.y} L${s.x},${departY} L${sourceDetourX},${departY} L${sourceDetourX},${my} L${targetDetourX},${my} L${targetDetourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
-        return { d, mx: (sourceDetourX + targetDetourX) / 2, my }
-      }
-      if (dDetour.kind === 'shift-my') {
-        const { my } = dDetour
-        const d = `M${s.x},${s.y} L${s.x},${my} L${e.x},${my} L${e.x},${e.y}`
-        return { d, mx: (s.x + e.x) / 2, my }
-      }
-    }
+const dDetour = detectDiagonalDetour(s, e, obstacles)
+if (dDetour) {
+  if (dDetour.kind === 'target-detour') {
+    const { my, detourX, approachY } = dDetour
+    const d = `M${s.x},${s.y} L${s.x},${my} L${detourX},${my} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+    return { d, mx: (s.x + detourX) / 2, my }
+  }
+  if (dDetour.kind === 'source-detour') {
+    const { departY, detourX, my } = dDetour
+    const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${my} L${e.x},${my} L${e.x},${e.y}`
+    return { d, mx: (detourX + e.x) / 2, my }
+  }
+  if (dDetour.kind === 'both-detour') {
+    const { departY, sourceDetourX, my, targetDetourX, approachY } = dDetour
+    const d = `M${s.x},${s.y} L${s.x},${departY} L${sourceDetourX},${departY} L${sourceDetourX},${my} L${targetDetourX},${my} L${targetDetourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+    return { d, mx: (sourceDetourX + targetDetourX) / 2, my }
+  }
+  if (dDetour.kind === 'shift-my') {
+    const { my } = dDetour
+    const d = `M${s.x},${s.y} L${s.x},${my} L${e.x},${my} L${e.x},${e.y}`
+    return { d, mx: (s.x + e.x) / 2, my }
+  }
+}
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -1161,6 +1170,7 @@ git commit -m "feat(#346): buildArrowPath emits source/both/shift-my diagonal de
 ### Task 15: regression guard - 既存横方向/縦方向迂回への影響なし
 
 **Files:**
+
 - Test: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -1213,6 +1223,7 @@ git commit -m "test(#346): add regression guards for #314 / #333 / undefined obs
 ### Task 16: Diamond ノードでの diagonal detour 動作確認
 
 **Files:**
+
 - Test: `src/lib/arrow-routing.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -1247,6 +1258,7 @@ git commit -m "test(#346): diagonal detour works with diamond-shape exit/entry p
 ### Task 17: `FlowEditor.aPath` に diagonal 分岐を追加
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx`
 
 - [ ] **Step 1: Locate and update the obstacles assembly block**
@@ -1254,47 +1266,47 @@ git commit -m "test(#346): diagonal detour works with diamond-shape exit/entry p
 `src/features/editor/FlowEditor.tsx` の `aPath` 関数内、現 1397-1423 行付近の `obstacles` 組み立て分岐に `else` 節を追加:
 
 ```ts
-    // 同一行/同一レーン/斜め配置のときに obstacles を組み立てる（迂回判定用）
-    let obstacles: Bbox[] | undefined
-    if (fri === tri) {
-      obstacles = collectObstacles({
-        nodes: obstacleNodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCx: from.x,
-        toCx: to.x,
-        rowY: from.y,
-        rowH: RH,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    } else if (fli === tli) {
-      obstacles = collectVerticalObstacles({
-        nodes: obstacleNodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCy: from.y,
-        toCy: to.y,
-        colX: from.x,
-        colW: LW + G,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    } else {
-      obstacles = collectDiagonalObstacles({
-        nodes: obstacleNodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCx: from.x,
-        fromCy: from.y,
-        toCx: to.x,
-        toCy: to.y,
-        rowH: RH,
-        colW: LW + G,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    }
+// 同一行/同一レーン/斜め配置のときに obstacles を組み立てる（迂回判定用）
+let obstacles: Bbox[] | undefined
+if (fri === tri) {
+  obstacles = collectObstacles({
+    nodes: obstacleNodes,
+    fromKey: arrow.from,
+    toKey: arrow.to,
+    fromCx: from.x,
+    toCx: to.x,
+    rowY: from.y,
+    rowH: RH,
+    bboxW: TW,
+    bboxH: TH,
+  })
+} else if (fli === tli) {
+  obstacles = collectVerticalObstacles({
+    nodes: obstacleNodes,
+    fromKey: arrow.from,
+    toKey: arrow.to,
+    fromCy: from.y,
+    toCy: to.y,
+    colX: from.x,
+    colW: LW + G,
+    bboxW: TW,
+    bboxH: TH,
+  })
+} else {
+  obstacles = collectDiagonalObstacles({
+    nodes: obstacleNodes,
+    fromKey: arrow.from,
+    toKey: arrow.to,
+    fromCx: from.x,
+    fromCy: from.y,
+    toCx: to.x,
+    toCy: to.y,
+    rowH: RH,
+    colW: LW + G,
+    bboxW: TW,
+    bboxH: TH,
+  })
+}
 ```
 
 ファイル先頭の import に `collectDiagonalObstacles` を追加:
@@ -1328,6 +1340,7 @@ git commit -m "feat(#346): wire collectDiagonalObstacles into FlowEditor.aPath"
 ### Task 18: `SharedFlowViewer.computeArrowPath` に diagonal 分岐を追加
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx`
 
 - [ ] **Step 1: Locate and update the obstacles assembly block**
@@ -1386,6 +1399,7 @@ git commit -m "feat(#346): wire collectDiagonalObstacles into SharedFlowViewer"
 ### Task 19: 実画面検証 (Playwright / 目視)
 
 **Files:**
+
 - スクリーンショット保存: `.screenshots/issue-346-after.png`
 
 - [ ] **Step 1: 開発サーバー起動**
@@ -1419,6 +1433,7 @@ Chrome DevTools の Performance タブで LCP < 1秒 を確認。超過してい
 ### Task 20: 最終チェックと PR 作成準備
 
 **Files:**
+
 - なし (CI/CD と git 操作のみ)
 
 - [ ] **Step 1: 最新 main と同期**
