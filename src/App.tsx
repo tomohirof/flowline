@@ -12,6 +12,8 @@ import { VerifyPage } from './features/auth/VerifyPage'
 import { DemoEditorPage } from './features/editor/pages/DemoEditorPage'
 import { JoinProjectPage } from './features/projects/JoinProjectPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
+import { DevRenderPage } from './dev/DevRenderPage'
+import { fixtures as devFixtures } from './dev/fixtures'
 
 function Header() {
   const { t } = useTranslation()
@@ -28,7 +30,8 @@ function Header() {
     location.pathname === '/try' ||
     location.pathname.match(/^\/flows\/[^/]+$/) ||
     location.pathname.match(/^\/shared\/[^/]+$/) ||
-    location.pathname.match(/^\/join\/[^/]+$/)
+    location.pathname.match(/^\/join\/[^/]+$/) ||
+    location.pathname.startsWith('/dev/')
   ) {
     return null
   }
@@ -122,6 +125,9 @@ function App() {
             <Route path="/shared/:token" element={<SharedFlowPage />} />
             <Route path="/join/:token" element={<JoinProjectPage />} />
             <Route path="/try" element={<DemoEditorPage />} />
+            {import.meta.env.DEV && (
+              <Route path="/dev/render" element={<DevRenderPage fixtures={devFixtures} />} />
+            )}
           </Routes>
         </main>
       </AuthProvider>

@@ -1,0 +1,73 @@
+{
+  "id": "fixture-cross-lane",
+  "title": "Cross-lane — arrows routing across obstacles",
+  "themeId": "cloud",
+  "shareToken": null,
+  "projectId": null,
+  "createdAt": "2026-01-01T00:00:00Z",
+  "updatedAt": "2026-01-01T00:00:00Z",
+  "lanes": [
+    { "id": "lane-1", "name": "Frontend", "colorIndex": 0, "position": 0 },
+    { "id": "lane-2", "name": "API", "colorIndex": 1, "position": 1 },
+    { "id": "lane-3", "name": "Worker", "colorIndex": 2, "position": 2 },
+    { "id": "lane-4", "name": "DB", "colorIndex": 3, "position": 3 }
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "laneId": "lane-1",
+      "rowIndex": 0,
+      "label": "Click",
+      "note": null,
+      "orderIndex": 0
+    },
+    {
+      "id": "n2",
+      "laneId": "lane-2",
+      "rowIndex": 1,
+      "label": "POST /jobs",
+      "note": null,
+      "orderIndex": 1
+    },
+    {
+      "id": "n3",
+      "laneId": "lane-3",
+      "rowIndex": 2,
+      "label": "Process",
+      "note": null,
+      "orderIndex": 2
+    },
+    {
+      "id": "n4",
+      "laneId": "lane-4",
+      "rowIndex": 3,
+      "label": "Insert",
+      "note": null,
+      "orderIndex": 3
+    },
+    {
+      "id": "n5",
+      "laneId": "lane-2",
+      "rowIndex": 4,
+      "label": "Notify",
+      "note": null,
+      "orderIndex": 4
+    },
+    {
+      "id": "n6",
+      "laneId": "lane-1",
+      "rowIndex": 5,
+      "label": "Toast",
+      "note": null,
+      "orderIndex": 5
+    }
+  ],
+  "arrows": [
+    { "id": "a1", "fromNodeId": "n1", "toNodeId": "n2", "comment": null },
+    { "id": "a2", "fromNodeId": "n2", "toNodeId": "n3", "comment": null },
+    { "id": "a3", "fromNodeId": "n3", "toNodeId": "n4", "comment": null },
+    { "id": "a4", "fromNodeId": "n4", "toNodeId": "n5", "comment": null },
+    { "id": "a5", "fromNodeId": "n5", "toNodeId": "n6", "comment": "done" },
+    { "id": "a6", "fromNodeId": "n1", "toNodeId": "n4", "comment": "shortcut", "dash": "4 4" }
+  ]
+}
