@@ -35,14 +35,7 @@ import { toBlob } from 'html-to-image'
 import { pickPixelRatio, buildExportSvg } from './png-export'
 import { calcLaneWidth } from './calcLaneWidth'
 import { NodeLabelText } from '../shared/NodeLabelText'
-import {
-  DS,
-  collectObstacles,
-  collectVerticalObstacles,
-  collectDiagonalObstacles,
-  type Bbox,
-  type ObstacleNode,
-} from '../../lib/arrow-routing'
+import { DS, buildObstacles, type Bbox, type ObstacleNode } from '../../lib/arrow-routing'
 import { useToast } from './hooks/useToast'
 import { ToastList } from './components/Toast'
 import { I, Ico } from './components/EditorIcons'
@@ -1396,46 +1389,21 @@ export default function FlowEditor({
     const to = ct(tli, tri)
 
     // 同一行/同一レーン/斜め配置に応じて obstacles を組み立てる（迂回判定用）
-    let obstacles: Bbox[] | undefined
-    if (fri === tri) {
-      obstacles = collectObstacles({
-        nodes: obstacleNodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCx: from.x,
-        toCx: to.x,
-        rowY: from.y,
-        rowH: RH,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    } else if (fli === tli) {
-      obstacles = collectVerticalObstacles({
-        nodes: obstacleNodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCy: from.y,
-        toCy: to.y,
-        colX: from.x,
-        colW: LW + G,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    } else {
-      obstacles = collectDiagonalObstacles({
-        nodes: obstacleNodes,
-        fromKey: arrow.from,
-        toKey: arrow.to,
-        fromCx: from.x,
-        fromCy: from.y,
-        toCx: to.x,
-        toCy: to.y,
-        rowH: RH,
-        colW: LW + G,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    }
+    const obstacles: Bbox[] = buildObstacles({
+      nodes: obstacleNodes,
+      fromKey: arrow.from,
+      toKey: arrow.to,
+      fromCx: from.x,
+      fromCy: from.y,
+      toCx: to.x,
+      toCy: to.y,
+      sameRow: fri === tri,
+      sameLane: fli === tli,
+      rowH: RH,
+      colW: LW + G,
+      bboxW: TW,
+      bboxH: TH,
+    })
 
     return calcArrowPath(
       from,

@@ -600,3 +600,81 @@ export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bb
   }
   return result
 }
+
+interface BuildObstaclesArgs {
+  nodes: ObstacleNode[]
+  fromKey: string
+  toKey: string
+  fromCx: number
+  fromCy: number
+  toCx: number
+  toCy: number
+  sameRow: boolean
+  sameLane: boolean
+  rowH: number
+  colW: number
+  bboxW: number
+  bboxH: number
+}
+
+/**
+ * 矢印の幾何状態 (同一行 / 同一レーン / 斜め配置) に応じて obstacles を組み立てる。
+ * FlowEditor / SharedFlowViewer の重複を吸収。返り値は detectDetour / detectVerticalDetour /
+ * detectDiagonalDetour にそのまま渡せる Bbox 配列。
+ */
+export function buildObstacles(args: BuildObstaclesArgs): Bbox[] {
+  const {
+    nodes,
+    fromKey,
+    toKey,
+    fromCx,
+    fromCy,
+    toCx,
+    toCy,
+    sameRow,
+    sameLane,
+    rowH,
+    colW,
+    bboxW,
+    bboxH,
+  } = args
+  if (sameRow) {
+    return collectObstacles({
+      nodes,
+      fromKey,
+      toKey,
+      fromCx,
+      toCx,
+      rowY: fromCy,
+      rowH,
+      bboxW,
+      bboxH,
+    })
+  }
+  if (sameLane) {
+    return collectVerticalObstacles({
+      nodes,
+      fromKey,
+      toKey,
+      fromCy,
+      toCy,
+      colX: fromCx,
+      colW,
+      bboxW,
+      bboxH,
+    })
+  }
+  return collectDiagonalObstacles({
+    nodes,
+    fromKey,
+    toKey,
+    fromCx,
+    fromCy,
+    toCx,
+    toCy,
+    rowH,
+    colW,
+    bboxW,
+    bboxH,
+  })
+}
