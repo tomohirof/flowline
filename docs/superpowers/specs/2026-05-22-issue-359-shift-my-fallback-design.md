@@ -77,14 +77,17 @@ M(s.x, s.y) → L(s.x, my) → L(detourX, my) → L(detourX, approachY) → L(e.
 | `target-detour` | 長い                  | `s.x → detourX` |
 | `source-detour` | 短い                  | `detourX → e.x` |
 
-中間行障害が `s.x < obstacle.x < e.x` に位置する場合:
+中間行障害が `min(s.x, e.x) < obstacle.x < max(s.x, e.x)` に位置する場合、
+detourX は障害の左右どちらかに `DETOUR_MARGIN` 取られる。判定は
+**「`[detourX, e.x]` 区間（source-detour 中央水平）が障害区間
+`[obsLeft, obsRight]` と重ならないか」** で行う。`s.x` と `e.x` の前後関係には依存しない:
 
-- **右迂回** (`detourX > obstacle.right`):
-  - `source-detour` 水平 = `[detourX, e.x]` → 障害の**右側のみ** → 衝突なし ✓
-  - `target-detour` 水平 = `[s.x, detourX]` → 障害を横断 → 衝突あり ✗
-- **左迂回** (`detourX < obstacle.left`):
-  - `source-detour` 水平 = `[detourX, e.x]` → 障害を横断 → 衝突あり ✗
-  - `target-detour` 水平 = `[s.x, detourX]` → 障害の**左側のみ** → 衝突なし ✓
+- 左→右 (`s.x < e.x`) + 右迂回: `[detourX, e.x]` が障害右側 → `source-detour` ✓
+- 左→右 (`s.x < e.x`) + 左迂回: `[detourX, e.x]` が障害を横断 → `target-detour` ✓
+- 右→左 (`s.x > e.x`) + 右迂回: `[detourX, e.x]`（= `[e.x, detourX]`）が障害を横断 → `target-detour` ✓
+- 右→左 (`s.x > e.x`) + 左迂回: `[detourX, e.x]` が障害左側 → `source-detour` ✓
+
+幾何ベースの直接判定なので方向に関わらず一貫した結果が得られる。
 
 ## 設計
 
@@ -95,17 +98,19 @@ M(s.x, s.y) → L(s.x, my) → L(detourX, my) → L(detourX, approachY) → L(e.
 ### 2. 修正後ロジック
 
 ```ts
-// 範囲外 → 中央障害を中央水平セグメントで迂回するため
-// detour 方向に応じて source-detour / target-detour を選択
+// 範囲外 → 中央水平セグメントが中間行障害を避けるよう kind を決める。
+// source-detour 中央水平 [detourX, e.x] が障害区間と重ならなければ source-detour、
+// そうでなければ target-detour 中央水平 [s.x, detourX] が片側に収まる。
 const detourX = pickDetourX(middleRowHits, obstacles)
-const obstacleMaxX = Math.max(...middleRowHits.map((o) => o.x))
-const goRight = detourX > obstacleMaxX
-if (goRight) {
-  // 右迂回: source-detour の短い水平セグメント [detourX, e.x] は障害の右側
+const obsRight = Math.max(...middleRowHits.map((o) => o.x + o.w / 2))
+const obsLeft = Math.min(...middleRowHits.map((o) => o.x - o.w / 2))
+const sourceLow = Math.min(detourX, e.x)
+const sourceHigh = Math.max(detourX, e.x)
+const sourceDetourClear = sourceLow >= obsRight || sourceHigh <= obsLeft
+if (sourceDetourClear) {
   const departY = clampOffset(s.y, my, DEPART_GAP)
   return { kind: 'source-detour', departY, detourX, my }
 }
-// 左迂回: target-detour の短い水平セグメント [s.x, detourX] は障害の左側
 const approachY = clampOffset(e.y, my, APPROACH_GAP)
 return { kind: 'target-detour', my, detourX, approachY }
 ```
@@ -135,10 +140,12 @@ detectDiagonalDetour(s, e, obstacles)
         │
         └─ 範囲外 (本 issue で修正):
              detourX = pickDetourX(middleRowHits, obstacles)
-             goRight = detourX > max(middleRowHits.x)
+             [obsLeft, obsRight] = 障害群の左右端
+             sourceDetourClear = [min(detourX, e.x), max(detourX, e.x)] が
+                                  [obsLeft, obsRight] と重ならない
               │
-              ├─ goRight=true  → 'source-detour' { departY, detourX, my }
-              └─ goRight=false → 'target-detour' { my, detourX, approachY }
+              ├─ sourceDetourClear=true  → 'source-detour' { departY, detourX, my }
+              └─ sourceDetourClear=false → 'target-detour' { my, detourX, approachY }
 ```
 
 ## エッジケースと考慮事項
@@ -150,7 +157,11 @@ detectDiagonalDetour(s, e, obstacles)
 - 右迂回: `max(o.x + o.w/2) + DETOUR_MARGIN`
 - 左迂回: `min(o.x - o.w/2) - DETOUR_MARGIN`
 
-`goRight` 判定は `detourX > max(middleRowHits.x)` (中心 X の最大値) で行う。右迂回の detourX (最右障害の右端+margin) は最大中心 X より大きいため `goRight=true` に確実に判定される。左迂回も同様。
+`sourceDetourClear` 判定では障害群の左右端 (`obsLeft = min(o.x - o.w/2)`, `obsRight = max(o.x + o.w/2)`) を使う。`pickDetourX` 内のロジックと整合し、複数障害でも正しく判定できる。
+
+### A2. 右→左対角線 (`s.x > e.x`)
+
+`detectDiagonalDetour` は `|e.x - s.x| >= 2` であれば方向を問わず到達するため、右→左対角線でも本フォールバックが起動しうる。判定は `[min(detourX, e.x), max(detourX, e.x)]` を `[obsLeft, obsRight]` と比較する形で行うため、`s.x` と `e.x` の前後関係に依存せず正しく動作する。テストケース C / D （新規追加）で網羅。
 
 ### B. `clampOffset` の degenerate ケース
 
@@ -182,6 +193,11 @@ it('should escalate to target-detour when shift-my would exceed row bounds', () 
 ### E. 新規テスト追加
 
 `src/lib/arrow-routing.test.ts` の `describe('detectDiagonalDetour')` ブロックに以下を追加:
+
+- A: 左→右 + 右迂回 → `source-detour`
+- B: 左→右 + 左迂回 → `target-detour`
+- C: 右→左 + 右迂回 → `target-detour`
+- D: 右→左 + 左迂回 → `source-detour`
 
 ```ts
 it('should escalate to source-detour when shift-my exceeds row bounds and right detour is chosen', () => {
