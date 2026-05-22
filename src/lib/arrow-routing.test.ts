@@ -972,6 +972,22 @@ describe('detectDiagonalDetour', () => {
       expect(r.my).toBeLessThan(300) // 範囲内
     }
   })
+
+  it('should shift my when target-detour selected AND middle-row obstacle exists', () => {
+    // s=(100, 100), e=(300, 300), my=200
+    // target col hit at (300, 200) → target-detour 確定
+    // middle row hit at (200, 200)
+    const obstacles: Bbox[] = [
+      { x: 300, y: 200, w: 80, h: 50 }, // target col & middle row
+      { x: 200, y: 200, w: 80, h: 50 }, // middle row のみ
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('target-detour')
+    if (r?.kind === 'target-detour') {
+      expect(r.my).toBeGreaterThan(225)
+      expect(r.my).toBeLessThan(300)
+    }
+  })
 })
 
 describe('deriveFromSide', () => {
