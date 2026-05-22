@@ -1004,6 +1004,27 @@ describe('detectDiagonalDetour', () => {
       expect(r.my).toBeLessThan(300)
     }
   })
+
+  it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
+    // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
+    // source 店舗/ステータス変更 (col0=100, row0=100)
+    // target グルプラ(2)/請求 (col2=300, row2=300)
+    // 障害①: 店舗/確認連絡(9) (col0=100, row1=200) — source 列・中央行
+    // 障害②: グルプラ/確認連絡(8) (col1=200, row1=200) — 中央行
+    // 障害③: グルプラ/請求 (col1=200, row2=300) — target 隣接列・target 行
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 50 },
+      { x: 200, y: 200, w: 80, h: 50 },
+      { x: 200, y: 300, w: 80, h: 50 },
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    // source col に障害①、target col に障害無し、中央行に障害② → source-detour + shifted my
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      // middle horizontal が y=200 (row1) を回避するため my > 225 になるべき
+      expect(r.my).toBeGreaterThan(225)
+    }
+  })
 })
 
 describe('deriveFromSide', () => {
