@@ -1,17 +1,8 @@
-import { calcArrowPath } from '../../lib/flow-engine'
-import { segmentsToBboxes } from '../../lib/arrow-routing'
-import type { Point, Bbox, EdgeSegment } from '../../lib/arrow-routing'
-import type { ArrowPathResult, ArrowSide } from '../../lib/types'
-
-export interface ArrowConfig {
-  hw: number
-  hh: number
-  rh: number
-  fromShape?: 'diamond'
-  toShape?: 'diamond'
-  fromSide?: ArrowSide
-  toSide?: ArrowSide
-}
+import { calcArrowPath } from './flow-engine'
+import type { ArrowConfig } from './flow-engine'
+import { segmentsToBboxes } from './arrow-routing'
+import type { Point, Bbox, EdgeSegment } from './arrow-routing'
+import type { ArrowPathResult } from './types'
 
 export interface ArrowResolveContext {
   from: Point

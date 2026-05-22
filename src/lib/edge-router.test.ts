@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { routeAllArrows } from './edge-router'
 import type { ArrowResolveContext } from './edge-router'
-import type { Bbox } from '../../lib/arrow-routing'
+import type { Bbox } from './arrow-routing'
 
 const makeCtx = (
   fx: number,
@@ -54,7 +54,15 @@ describe('routeAllArrows', () => {
         ? makeCtx(0, 100, 300, 100)
         : makeCtx(50, 100, 250, 100),
     )
-    expect(result[1]?.d.match(/L/g)?.length).toBeGreaterThan(1)
+
+    // The same a2 routed alone (without a1 as obstacle)
+    const arrowsAlone = [{ id: 'a2', from: 'C', to: 'D' }]
+    const alone = routeAllArrows(arrowsAlone, () => makeCtx(50, 100, 250, 100))
+
+    // With a1 present, a2's route must differ from routing alone
+    expect(result[1]?.d).not.toBe(alone[0]?.d)
+    // And still produce a valid result
+    expect(result[1]).not.toBeNull()
   })
 
   it('arrows sharing from-endpoint do NOT treat each other as obstacles', () => {
