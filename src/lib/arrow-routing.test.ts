@@ -9,8 +9,10 @@ import {
   deriveToSide,
   exitPt,
   entryPt,
+  segmentsToBboxes,
   DS,
   type Bbox,
+  type EdgeSegment,
   type ObstacleNode,
 } from './arrow-routing'
 import type { ArrowSide } from './types'
@@ -1314,5 +1316,199 @@ describe('buildArrowPath - L字パスのラベル座標 (#358)', () => {
       expect(r.mx).toBe(250)
       expect(r.my).toBe(200)
     })
+  })
+})
+
+describe('segmentsToBboxes', () => {
+  it('converts horizontal segment to thin Bbox with h=1', () => {
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 100, range: [50, 200] }]
+    expect(segmentsToBboxes(segs)).toEqual([{ x: 125, y: 100, w: 150, h: 1 }])
+  })
+
+  it('converts vertical segment to thin Bbox with w=1', () => {
+    const segs: EdgeSegment[] = [{ orientation: 'v', fixed: 100, range: [50, 200] }]
+    expect(segmentsToBboxes(segs)).toEqual([{ x: 100, y: 125, w: 1, h: 150 }])
+  })
+
+  it('handles negative range (max < min) by taking absolute width', () => {
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 100, range: [200, 50] }]
+    expect(segmentsToBboxes(segs)).toEqual([{ x: 125, y: 100, w: 150, h: 1 }])
+  })
+
+  it('converts empty array to empty array', () => {
+    expect(segmentsToBboxes([])).toEqual([])
+  })
+
+  it('converts multiple mixed orientations', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'h', fixed: 0, range: [0, 100] },
+      { orientation: 'v', fixed: 100, range: [0, 50] },
+    ]
+    expect(segmentsToBboxes(segs)).toEqual([
+      { x: 50, y: 0, w: 100, h: 1 },
+      { x: 100, y: 25, w: 1, h: 50 },
+    ])
+  })
+})
+
+describe('buildArrowPath segments — straight & L-shape', () => {
+  it('straight horizontal: 1 horizontal segment', () => {
+    const result = buildArrowPath(
+      { x: 0, y: 100 },
+      { x: 200, y: 100 },
+      { x: 0, y: 100 },
+      { x: 200, y: 100 },
+    )
+    expect(result.segments).toEqual([{ orientation: 'h', fixed: 100, range: [0, 200] }])
+  })
+
+  it('straight vertical: 1 vertical segment', () => {
+    const result = buildArrowPath(
+      { x: 100, y: 0 },
+      { x: 100, y: 200 },
+      { x: 100, y: 0 },
+      { x: 100, y: 200 },
+    )
+    expect(result.segments).toEqual([{ orientation: 'v', fixed: 100, range: [0, 200] }])
+  })
+
+  it('L-shape (vertical exit → horizontal entry): vertical then horizontal', () => {
+    const result = buildArrowPath(
+      { x: 100, y: 50 },
+      { x: 250, y: 200 },
+      { x: 100, y: 0 },
+      { x: 300, y: 200 },
+    )
+    expect(result.segments).toEqual([
+      { orientation: 'v', fixed: 100, range: [50, 200] },
+      { orientation: 'h', fixed: 200, range: [100, 250] },
+    ])
+  })
+
+  it('L-shape (horizontal exit → vertical entry): horizontal then vertical', () => {
+    const result = buildArrowPath(
+      { x: 50, y: 100 },
+      { x: 200, y: 250 },
+      { x: 0, y: 100 },
+      { x: 200, y: 300 },
+    )
+    expect(result.segments).toEqual([
+      { orientation: 'h', fixed: 100, range: [50, 200] },
+      { orientation: 'v', fixed: 200, range: [100, 250] },
+    ])
+  })
+})
+
+describe('buildArrowPath segments — Z-shape', () => {
+  it('Z-shape (both vertical exits): vert, horiz, vert', () => {
+    const result = buildArrowPath(
+      { x: 100, y: 50 },
+      { x: 300, y: 250 },
+      { x: 100, y: 0 },
+      { x: 300, y: 300 },
+    )
+    expect(result.segments).toEqual([
+      { orientation: 'v', fixed: 100, range: [50, 150] },
+      { orientation: 'h', fixed: 150, range: [100, 300] },
+      { orientation: 'v', fixed: 300, range: [150, 250] },
+    ])
+  })
+
+  it('Z-shape (both horizontal exits): horiz, vert, horiz', () => {
+    const result = buildArrowPath(
+      { x: 50, y: 100 },
+      { x: 250, y: 300 },
+      { x: 0, y: 100 },
+      { x: 300, y: 300 },
+    )
+    expect(result.segments).toEqual([
+      { orientation: 'h', fixed: 100, range: [50, 150] },
+      { orientation: 'v', fixed: 150, range: [100, 300] },
+      { orientation: 'h', fixed: 300, range: [150, 250] },
+    ])
+  })
+})
+
+describe('buildArrowPath segments — horizontal/vertical detour', () => {
+  it('horizontal detour: 5 segments alternating h/v/h/v/h', () => {
+    const obstacles: Bbox[] = [{ x: 150, y: 100, w: 40, h: 40 }]
+    const result = buildArrowPath(
+      { x: 50, y: 100 },
+      { x: 250, y: 100 },
+      { x: 50, y: 100 },
+      { x: 250, y: 100 },
+      obstacles,
+    )
+    expect(result.segments).toHaveLength(5)
+    expect(result.segments[0].orientation).toBe('h')
+    expect(result.segments[1].orientation).toBe('v')
+    expect(result.segments[2].orientation).toBe('h')
+    expect(result.segments[3].orientation).toBe('v')
+    expect(result.segments[4].orientation).toBe('h')
+    expect(result.segments[2].fixed).toBe(134) // detourY = 100 + 20 + 14
+  })
+
+  it('vertical detour: 5 segments alternating v/h/v/h/v', () => {
+    const obstacles: Bbox[] = [{ x: 100, y: 150, w: 40, h: 40 }]
+    const result = buildArrowPath(
+      { x: 100, y: 50 },
+      { x: 100, y: 250 },
+      { x: 100, y: 50 },
+      { x: 100, y: 250 },
+      obstacles,
+    )
+    expect(result.segments).toHaveLength(5)
+    expect(result.segments[0].orientation).toBe('v')
+    expect(result.segments[1].orientation).toBe('h')
+    expect(result.segments[2].orientation).toBe('v')
+    expect(result.segments[3].orientation).toBe('h')
+    expect(result.segments[4].orientation).toBe('v')
+  })
+})
+
+describe('buildArrowPath segments — diagonal detour (4 kinds)', () => {
+  // 共通の s/e は detectDiagonalDetour テストブロックと合わせる
+  const s = { x: 200, y: 128 }
+  const e = { x: 600, y: 372 }
+  const fc = { x: 200, y: 128 }
+  const tc = { x: 600, y: 372 }
+
+  it('shift-my: v, h, v (3 segments)', () => {
+    const obstacles: Bbox[] = [{ x: 400, y: 250, w: 152, h: 56 }]
+    const result = buildArrowPath(s, e, fc, tc, obstacles)
+    expect(result.segments).toHaveLength(3)
+    expect(result.segments.map((sg) => sg.orientation)).toEqual(['v', 'h', 'v'])
+  })
+
+  it('target-detour: v, h, v, h, v (5 segments)', () => {
+    const obstacles: Bbox[] = [{ x: 600, y: 250, w: 152, h: 56 }]
+    const result = buildArrowPath(s, e, fc, tc, obstacles)
+    expect(result.segments).toHaveLength(5)
+    expect(result.segments.map((sg) => sg.orientation)).toEqual(['v', 'h', 'v', 'h', 'v'])
+  })
+
+  it('source-detour: v, h, v, h, v (5 segments)', () => {
+    const obstacles: Bbox[] = [{ x: 200, y: 250, w: 152, h: 56 }]
+    const result = buildArrowPath(s, e, fc, tc, obstacles)
+    expect(result.segments).toHaveLength(5)
+    expect(result.segments.map((sg) => sg.orientation)).toEqual(['v', 'h', 'v', 'h', 'v'])
+  })
+
+  it('both-detour: v, h, v, h, v, h, v (7 segments)', () => {
+    const obstacles: Bbox[] = [
+      { x: 200, y: 250, w: 152, h: 56 },
+      { x: 600, y: 250, w: 152, h: 56 },
+    ]
+    const result = buildArrowPath(s, e, fc, tc, obstacles)
+    expect(result.segments).toHaveLength(7)
+    expect(result.segments.map((sg) => sg.orientation)).toEqual([
+      'v',
+      'h',
+      'v',
+      'h',
+      'v',
+      'h',
+      'v',
+    ])
   })
 })

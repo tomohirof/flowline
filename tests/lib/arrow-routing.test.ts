@@ -149,7 +149,7 @@ describe('buildArrowPath', () => {
       e = { x: 100, y: 172 }
     const fc = { x: 100, y: 100 },
       tc = { x: 100, y: 200 }
-    expect(buildArrowPath(s, e, fc, tc)).toEqual({
+    expect(buildArrowPath(s, e, fc, tc)).toMatchObject({
       d: 'M100,128 L100,172',
       mx: 100,
       my: 150,
@@ -161,7 +161,7 @@ describe('buildArrowPath', () => {
       e = { x: 224, y: 100 }
     const fc = { x: 100, y: 100 },
       tc = { x: 300, y: 100 }
-    expect(buildArrowPath(s, e, fc, tc)).toEqual({
+    expect(buildArrowPath(s, e, fc, tc)).toMatchObject({
       d: 'M176,100 L224,100',
       mx: 200,
       my: 100,
@@ -173,7 +173,7 @@ describe('buildArrowPath', () => {
       e = { x: 300, y: 172 }
     const fc = { x: 100, y: 100 },
       tc = { x: 300, y: 200 }
-    expect(buildArrowPath(s, e, fc, tc)).toEqual({
+    expect(buildArrowPath(s, e, fc, tc)).toMatchObject({
       d: 'M100,128 L100,150 L300,150 L300,172',
       mx: 200,
       my: 150,
@@ -185,7 +185,7 @@ describe('buildArrowPath', () => {
       e = { x: 224, y: 200 }
     const fc = { x: 100, y: 100 },
       tc = { x: 300, y: 200 }
-    expect(buildArrowPath(s, e, fc, tc)).toEqual({
+    expect(buildArrowPath(s, e, fc, tc)).toMatchObject({
       d: 'M176,100 L200,100 L200,200 L224,200',
       mx: 200,
       my: 150,
@@ -199,7 +199,7 @@ describe('buildArrowPath', () => {
       e = { x: 224, y: 200 }
     const fc = { x: 100, y: 100 },
       tc = { x: 300, y: 200 }
-    expect(buildArrowPath(s, e, fc, tc)).toEqual({
+    expect(buildArrowPath(s, e, fc, tc)).toMatchObject({
       d: 'M100,128 L100,200 L224,200',
       mx: 162, // (s.x + e.x) / 2
       my: 200, // e.y
@@ -213,7 +213,7 @@ describe('buildArrowPath', () => {
       e = { x: 300, y: 172 }
     const fc = { x: 100, y: 100 },
       tc = { x: 300, y: 200 }
-    expect(buildArrowPath(s, e, fc, tc)).toEqual({
+    expect(buildArrowPath(s, e, fc, tc)).toMatchObject({
       d: 'M176,100 L300,100 L300,172',
       mx: 238, // (s.x + e.x) / 2
       my: 100, // s.y
@@ -226,7 +226,7 @@ describe('buildArrowPath', () => {
       e = { x: 100, y: 100 }
     const fc = { x: 100, y: 80 },
       tc = { x: 100, y: 120 }
-    expect(buildArrowPath(s, e, fc, tc)).toEqual({
+    expect(buildArrowPath(s, e, fc, tc)).toMatchObject({
       d: 'M100,100 L100,100',
       mx: 100,
       my: 100,
@@ -238,7 +238,7 @@ describe('buildArrowPath', () => {
       e = { x: -100, y: -172 }
     const fc = { x: -100, y: -100 },
       tc = { x: -100, y: -200 }
-    expect(buildArrowPath(s, e, fc, tc)).toEqual({
+    expect(buildArrowPath(s, e, fc, tc)).toMatchObject({
       d: 'M-100,-128 L-100,-172',
       mx: -100,
       my: -150,
