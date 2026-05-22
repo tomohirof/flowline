@@ -1,3 +1,5 @@
+import type { ArrowSide } from './types'
+
 export interface Point {
   x: number
   y: number
@@ -286,11 +288,16 @@ export const exitPt = (
   hh: number,
   rh: number,
   shape?: 'diamond',
+  fromSide?: ArrowSide,
 ): Point => {
   const dx = o.x - c.x,
     dy = o.y - c.y
 
   if (shape === 'diamond') {
+    if (fromSide === 'top') return { x: c.x, y: c.y - DS }
+    if (fromSide === 'right') return { x: c.x + DS, y: c.y }
+    if (fromSide === 'bottom') return { x: c.x, y: c.y + DS }
+    if (fromSide === 'left') return { x: c.x - DS, y: c.y }
     if (Math.abs(dx) < 1 && dy > 0) return { x: c.x, y: c.y + DS }
     if (Math.abs(dx) < 1 && dy <= 0) return { x: c.x, y: c.y - DS }
     if (dx >= 0) return { x: c.x + DS, y: c.y }

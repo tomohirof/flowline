@@ -6,9 +6,12 @@ import {
   collectDiagonalObstacles,
   detectDiagonalDetour,
   deriveFromSide,
+  exitPt,
+  DS,
   type Bbox,
   type ObstacleNode,
 } from './arrow-routing'
+import type { ArrowSide } from './types'
 
 describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
   // 共通の始終点（A→C 同一行、A=(200,200), C=(600,200) のときの exitPt/entryPt 後の値）
@@ -922,5 +925,41 @@ describe('deriveFromSide', () => {
 
   it('中心と一致（dx=dy=0）→ bottom フォールバック', () => {
     expect(deriveFromSide(c, c)).toBe('bottom')
+  })
+})
+
+describe('exitPt with explicit fromSide (diamond)', () => {
+  const c = { x: 200, y: 200 }
+  const o = { x: 500, y: 500 } // ターゲット（自動ロジックなら dx>0 で 'right' になる位置）
+  const hw = 76
+  const hh = 28
+  const rh = 84
+
+  it('fromSide=top → 上頂点', () => {
+    expect(exitPt(c, o, hw, hh, rh, 'diamond', 'top')).toEqual({ x: 200, y: 200 - DS })
+  })
+
+  it('fromSide=right → 右頂点', () => {
+    expect(exitPt(c, o, hw, hh, rh, 'diamond', 'right')).toEqual({ x: 200 + DS, y: 200 })
+  })
+
+  it('fromSide=bottom → 下頂点（dxに関係なく）', () => {
+    expect(exitPt(c, o, hw, hh, rh, 'diamond', 'bottom')).toEqual({ x: 200, y: 200 + DS })
+  })
+
+  it('fromSide=left → 左頂点', () => {
+    expect(exitPt(c, o, hw, hh, rh, 'diamond', 'left')).toEqual({ x: 200 - DS, y: 200 })
+  })
+
+  it('fromSide 未指定 → 既存の自動ロジック（後方互換）', () => {
+    // dx>0, dy>0 → right
+    expect(exitPt(c, o, hw, hh, rh, 'diamond')).toEqual({ x: 200 + DS, y: 200 })
+  })
+
+  it('shape が diamond でないとき fromSide は無視される', () => {
+    // 通常ノードは fromSide を受けてもサイド出口の自動ロジックに従う
+    const result = exitPt(c, o, hw, hh, rh, undefined, 'top' as ArrowSide)
+    // dx>0, dy>0 → サイド出口（上方向）→ 下方向出口（dy>rh*0.3）
+    expect(result).toEqual({ x: 200, y: 200 + hh })
   })
 })
