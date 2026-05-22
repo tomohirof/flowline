@@ -52,6 +52,7 @@ describe('FlowCard', () => {
     isHovered: false,
     onHover: vi.fn(),
     renamingId: null as string | null,
+    projectName: undefined as string | undefined,
   }
 
   function renderCard(overrides: Partial<typeof defaultProps> = {}) {
@@ -101,6 +102,40 @@ describe('FlowCard', () => {
   it('should not show share badge when flow has no shareToken', () => {
     renderCard()
     expect(screen.queryByTestId('share-badge-flow-1')).not.toBeInTheDocument()
+  })
+
+  // --- プロジェクトバッジ (#354) ---
+
+  it('should show project badge when projectName is provided', () => {
+    renderCard({ projectName: 'プロジェクトA' })
+    expect(screen.getByTestId('project-badge')).toBeInTheDocument()
+    expect(screen.getByText('プロジェクトA')).toBeInTheDocument()
+  })
+
+  it('should not show project badge when projectName is undefined', () => {
+    renderCard()
+    expect(screen.queryByTestId('project-badge')).not.toBeInTheDocument()
+  })
+
+  it('should not show project badge when projectName is empty string', () => {
+    renderCard({ projectName: '' })
+    expect(screen.queryByTestId('project-badge')).not.toBeInTheDocument()
+  })
+
+  it('should render project badge before share badge in DOM order', () => {
+    const flowWithShare: FlowSummary = { ...baseFlow, shareToken: 'token-abc' }
+    renderCard({
+      flow: flowWithShare,
+      projectName: 'プロジェクトA',
+    })
+    const card = screen.getByTestId('flow-card-flow-1')
+    const projectBadge = card.querySelector('[data-testid="project-badge"]')
+    const shareBadge = card.querySelector('[data-testid="share-badge-flow-1"]')
+    expect(projectBadge).not.toBeNull()
+    expect(shareBadge).not.toBeNull()
+    const pos =
+      projectBadge!.compareDocumentPosition(shareBadge!) & Node.DOCUMENT_POSITION_FOLLOWING
+    expect(pos).toBeTruthy()
   })
 
   // --- 削除 ---

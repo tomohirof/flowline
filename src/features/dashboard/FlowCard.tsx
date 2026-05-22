@@ -5,6 +5,7 @@ import type { FlowSummary } from '../editor/types'
 import { PALETTES } from '../editor/theme-constants'
 import { formatRelativeTime } from '../../utils/formatRelativeTime'
 import { FlowThumbnail } from './FlowThumbnail'
+import { ProjectBadge } from './ProjectBadge'
 import styles from './FlowCard.module.css'
 
 interface FlowCardProps {
@@ -18,6 +19,7 @@ interface FlowCardProps {
   renamingId: string | null
   isTrash?: boolean
   onRestore?: (id: string) => void
+  projectName?: string
 }
 
 const DEFAULT_LANE_COUNT = 3
@@ -34,6 +36,7 @@ export function FlowCard({
   renamingId,
   isTrash = false,
   onRestore,
+  projectName,
 }: FlowCardProps) {
   const { t, i18n } = useTranslation(['dashboard', 'common'])
   const isRenaming = renamingId === flow.id
@@ -198,6 +201,7 @@ export function FlowCard({
                   time: formatRelativeTime(flow.updatedAt, i18n.language),
                 })}
           </span>
+          <ProjectBadge name={projectName} />
           {flow.shareToken && (
             <span data-testid={`share-badge-${flow.id}`} className={styles.shareBadge}>
               {t('dashboard:action.shared')}
