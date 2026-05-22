@@ -304,6 +304,12 @@ export const exitPt = (
     return { x: c.x - DS, y: c.y }
   }
 
+  // 四角形でも fromSide があれば優先（#355）
+  if (fromSide === 'top') return { x: c.x, y: c.y - hh }
+  if (fromSide === 'right') return { x: c.x + hw, y: c.y }
+  if (fromSide === 'bottom') return { x: c.x, y: c.y + hh }
+  if (fromSide === 'left') return { x: c.x - hw, y: c.y }
+
   // 同位置
   if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y + hh }
   // 下方向: 下部から出る
@@ -328,16 +334,27 @@ export const entryPt = (
   hh: number,
   rh: number,
   shape?: 'diamond',
+  toSide?: ArrowSide,
 ): Point => {
   const dx = o.x - c.x,
     dy = o.y - c.y
 
   if (shape === 'diamond') {
+    if (toSide === 'top') return { x: c.x, y: c.y - DS }
+    if (toSide === 'right') return { x: c.x + DS, y: c.y }
+    if (toSide === 'bottom') return { x: c.x, y: c.y + DS }
+    if (toSide === 'left') return { x: c.x - DS, y: c.y }
     if (dy < -rh * 0.3) return { x: c.x, y: c.y - DS }
     if (dy > rh * 0.3) return { x: c.x, y: c.y + DS }
     if (dx > 0) return { x: c.x + DS, y: c.y }
     return { x: c.x - DS, y: c.y }
   }
+
+  // 四角形でも toSide があれば優先（#355）
+  if (toSide === 'top') return { x: c.x, y: c.y - hh }
+  if (toSide === 'right') return { x: c.x + hw, y: c.y }
+  if (toSide === 'bottom') return { x: c.x, y: c.y + hh }
+  if (toSide === 'left') return { x: c.x - hw, y: c.y }
 
   // 同位置
   if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: c.x, y: c.y - hh }
@@ -350,6 +367,10 @@ export const entryPt = (
   // フォールバック
   return { x: c.x, y: c.y - hh }
 }
+
+/** ドロップ点とターゲットノード中心から接続先 side を判定する。
+ *  deriveFromSide と同一ロジック（dx/dy の符号と絶対値比較）。 */
+export const deriveToSide = deriveFromSide
 
 /**
  * 始点 s から終点 e への矢印パス(SVG path d属性)を生成する。

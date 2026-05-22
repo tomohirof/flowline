@@ -6,7 +6,9 @@ import {
   collectDiagonalObstacles,
   detectDiagonalDetour,
   deriveFromSide,
+  deriveToSide,
   exitPt,
+  entryPt,
   DS,
   type Bbox,
   type ObstacleNode,
@@ -956,11 +958,109 @@ describe('exitPt with explicit fromSide (diamond)', () => {
     expect(exitPt(c, o, hw, hh, rh, 'diamond')).toEqual({ x: 200 + DS, y: 200 })
   })
 
-  it('shape が diamond でないとき fromSide は無視される', () => {
-    // 通常ノードは fromSide を受けてもサイド出口の自動ロジックに従う
+  it('shape が diamond でない四角形ノードでも fromSide=top を honor する', () => {
+    // #355: 四角形ノードでも fromSide があれば優先（上辺中央）
     const result = exitPt(c, o, hw, hh, rh, undefined, 'top' as ArrowSide)
-    // dx>0, dy>0 → サイド出口（上方向）→ 下方向出口（dy>rh*0.3）
-    expect(result).toEqual({ x: 200, y: 200 + hh })
+    expect(result).toEqual({ x: 200, y: 200 - hh })
+  })
+})
+
+describe('exitPt 四角形ノードの fromSide honor (#355)', () => {
+  const c = { x: 100, y: 100 }
+  const o = { x: 200, y: 100 } // dx>0 で自動ロジックなら 'right'
+  const hw = 50
+  const hh = 25
+  const rh = 84
+
+  it('四角形 + fromSide=top → 上辺中央', () => {
+    expect(exitPt(c, o, hw, hh, rh, undefined, 'top')).toEqual({ x: 100, y: 75 })
+  })
+
+  it('四角形 + fromSide=right → 右辺中央', () => {
+    expect(exitPt(c, o, hw, hh, rh, undefined, 'right')).toEqual({ x: 150, y: 100 })
+  })
+
+  it('四角形 + fromSide=bottom → 下辺中央', () => {
+    expect(exitPt(c, o, hw, hh, rh, undefined, 'bottom')).toEqual({ x: 100, y: 125 })
+  })
+
+  it('四角形 + fromSide=left → 左辺中央', () => {
+    expect(exitPt(c, o, hw, hh, rh, undefined, 'left')).toEqual({ x: 50, y: 100 })
+  })
+
+  it('四角形 + fromSide=undefined → 既存の auto ロジック（後方互換）', () => {
+    // dx>0, dy=0 → 水平方向 → 右辺
+    expect(exitPt(c, o, hw, hh, rh, undefined, undefined)).toEqual({ x: 150, y: 100 })
+  })
+})
+
+describe('entryPt with explicit toSide (#355)', () => {
+  const c = { x: 100, y: 100 }
+  const o = { x: 200, y: 100 }
+  const hw = 50
+  const hh = 25
+  const rh = 84
+
+  it('四角形 + toSide=top → 上辺中央', () => {
+    expect(entryPt(c, o, hw, hh, rh, undefined, 'top')).toEqual({ x: 100, y: 75 })
+  })
+
+  it('四角形 + toSide=right → 右辺中央', () => {
+    expect(entryPt(c, o, hw, hh, rh, undefined, 'right')).toEqual({ x: 150, y: 100 })
+  })
+
+  it('四角形 + toSide=bottom → 下辺中央', () => {
+    expect(entryPt(c, o, hw, hh, rh, undefined, 'bottom')).toEqual({ x: 100, y: 125 })
+  })
+
+  it('四角形 + toSide=left → 左辺中央', () => {
+    expect(entryPt(c, o, hw, hh, rh, undefined, 'left')).toEqual({ x: 50, y: 100 })
+  })
+
+  it('diamond + toSide=top → 上頂点 (DS)', () => {
+    expect(entryPt(c, o, hw, hh, rh, 'diamond', 'top')).toEqual({ x: 100, y: 100 - DS })
+  })
+
+  it('diamond + toSide=right → 右頂点 (DS)', () => {
+    expect(entryPt(c, o, hw, hh, rh, 'diamond', 'right')).toEqual({ x: 100 + DS, y: 100 })
+  })
+
+  it('diamond + toSide=bottom → 下頂点 (DS)', () => {
+    expect(entryPt(c, o, hw, hh, rh, 'diamond', 'bottom')).toEqual({ x: 100, y: 100 + DS })
+  })
+
+  it('diamond + toSide=left → 左頂点 (DS)', () => {
+    expect(entryPt(c, o, hw, hh, rh, 'diamond', 'left')).toEqual({ x: 100 - DS, y: 100 })
+  })
+
+  it('toSide=undefined → 既存 auto ロジック（後方互換）', () => {
+    // o.x > c.x, dy=0 → 水平方向 → 右辺
+    expect(entryPt(c, o, hw, hh, rh, undefined, undefined)).toEqual({ x: 150, y: 100 })
+  })
+})
+
+describe('deriveToSide (#355)', () => {
+  const c = { x: 100, y: 100 }
+
+  it('deriveFromSide と同一ロジック', () => {
+    const point = { x: 110, y: 90 }
+    expect(deriveToSide(point, c)).toBe(deriveFromSide(point, c))
+  })
+
+  it('右にドロップ → "right"', () => {
+    expect(deriveToSide({ x: 140, y: 100 }, c)).toBe('right')
+  })
+
+  it('上にドロップ → "top"', () => {
+    expect(deriveToSide({ x: 100, y: 60 }, c)).toBe('top')
+  })
+
+  it('下にドロップ → "bottom"', () => {
+    expect(deriveToSide({ x: 100, y: 140 }, c)).toBe('bottom')
+  })
+
+  it('左にドロップ → "left"', () => {
+    expect(deriveToSide({ x: 60, y: 100 }, c)).toBe('left')
   })
 })
 
