@@ -85,6 +85,31 @@ describe('routeAllArrows', () => {
     expect(result[1]?.d).toBe(alone[0]?.d)
   })
 
+  it('thin edge segments do not corrupt blocked-direction detection', () => {
+    // a1 (id 小: 先行ルート) は長い水平直線 y=100 を通る → 薄い水平セグメント Bbox を生成
+    // a2 は y=300 で水平移動し、X=400 のノード障害 + 直下 (y=380) に塞ぐノードを置く
+    // → a2 の迂回方向は本来 "上 (y を上方向にずらす)" になるべき
+    // バグ時: a1 の薄い線分 (y=100, w 大) が xOverlap で誤マッチし、upBlocked=true となり
+    //   迂回方向が下に反転してしまう可能性がある。修正後はそうならない。
+    const blockerNode: Bbox = { x: 400, y: 300, w: 40, h: 40 } // 経路上の障害
+    const belowBlocker: Bbox = { x: 400, y: 380, w: 40, h: 40 } // 下が塞がっている
+    const resolveCtx = (id: string): ArrowResolveContext | null => {
+      if (id === 'a1') return makeCtx(0, 100, 1000, 100)
+      if (id === 'a2') return makeCtx(200, 300, 600, 300, [blockerNode, belowBlocker])
+      return null
+    }
+    const withA1 = routeAllArrows(
+      [
+        { id: 'a1', from: 'X', to: 'Y' },
+        { id: 'a2', from: 'P', to: 'Q' },
+      ],
+      (a) => resolveCtx(a.id),
+    )
+    const withoutA1 = routeAllArrows([{ id: 'a2', from: 'P', to: 'Q' }], (a) => resolveCtx(a.id))
+    // a2 の迂回方向は a1 の有無で変わらない（薄い線分が判定を汚染しない）
+    expect(withA1[1]?.d).toBe(withoutA1[0]?.d)
+  })
+
   it('deterministic ordering by id.localeCompare', () => {
     const arrows1 = [
       { id: 'z1', from: 'A', to: 'B' },

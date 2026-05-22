@@ -31,11 +31,11 @@ export function routeAllArrows<T extends ArrowLike>(
   arrows: T[],
   resolveContext: (arrow: T) => ArrowResolveContext | null,
 ): Array<ArrowPathResult | null> {
-  const indexedArrows = arrows.map((a, i) => ({ arrow: a, originalIndex: i }))
-  const sorted = [...indexedArrows].sort((a, b) => a.arrow.id.localeCompare(b.arrow.id))
+  const sorted = arrows
+    .map((a, i) => ({ arrow: a, originalIndex: i }))
+    .sort((a, b) => a.arrow.id.localeCompare(b.arrow.id))
 
-  const priorSegmentsByEdge = new Map<string, EdgeSegment[]>()
-  const edgeEndpoints = new Map<string, { from: string; to: string }>()
+  const priorEdges = new Map<string, { segments: EdgeSegment[]; from: string; to: string }>()
   const results = new Array<ArrowPathResult | null>(arrows.length)
 
   for (const { arrow, originalIndex } of sorted) {
@@ -46,17 +46,16 @@ export function routeAllArrows<T extends ArrowLike>(
     }
 
     const foreignSegments: EdgeSegment[] = []
-    for (const [eid, segs] of priorSegmentsByEdge) {
-      const ep = edgeEndpoints.get(eid)!
+    for (const prior of priorEdges.values()) {
       if (
-        ep.from === arrow.from ||
-        ep.from === arrow.to ||
-        ep.to === arrow.from ||
-        ep.to === arrow.to
+        prior.from === arrow.from ||
+        prior.from === arrow.to ||
+        prior.to === arrow.from ||
+        prior.to === arrow.to
       ) {
         continue
       }
-      foreignSegments.push(...segs)
+      foreignSegments.push(...prior.segments)
     }
 
     const edgeObstacles = segmentsToBboxes(foreignSegments)
@@ -66,8 +65,11 @@ export function routeAllArrows<T extends ArrowLike>(
     results[originalIndex] = result
 
     if (result) {
-      priorSegmentsByEdge.set(arrow.id, result.segments)
-      edgeEndpoints.set(arrow.id, { from: arrow.from, to: arrow.to })
+      priorEdges.set(arrow.id, {
+        segments: result.segments,
+        from: arrow.from,
+        to: arrow.to,
+      })
     }
   }
 

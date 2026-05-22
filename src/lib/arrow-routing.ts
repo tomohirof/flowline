@@ -32,6 +32,12 @@ const xOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.x - b.x) < (a.w + b.w
 // Bbox 同士の Y 軸重なり判定 (中心間距離が半径合計より小)
 const yOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.y - b.y) < (a.h + b.h) / 2
 
+// エッジセグメント由来の薄い線分 Bbox かどうか判定する。
+// `segmentsToBboxes` は水平セグメントを `h=1`、垂直セグメントを `w=1` で生成するため
+// `h < 3 || w < 3` で識別できる。塞がり判定（up/down/left/right blocked）でこの種の
+// 線分を除外する用途で使う。経路上の障害物判定（inRow/inCol）には引き続き使う。
+const isThinSegment = (b: Bbox): boolean => b.h < 3 || b.w < 3
+
 function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
   // 水平直線でなければ迂回しない
   if (Math.abs(e.y - s.y) >= 2) return null
@@ -54,10 +60,15 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   // 前提: obstacles 配列には呼び出し側で「同一行＋直上行＋直下行のみ」をフィルタ済み
   // のノードが入っていること（collectObstacles ヘルパーがこれを保証する）。Y 距離の
   // 厳密チェックを省略しているのはこの前提のため。
+  // 注: routeAllArrows がエッジセグメント由来の薄い Bbox を obstacles に追加する場合がある。
+  // それら（h<3 または w<3）は別行を遠くで通っていても xOverlap で誤って塞がり判定を
+  // 引き起こすため、塞がり判定からは除外する（経路上の障害物判定 inRow には残す）。
   const downBlocked = inRow.some((obs) =>
-    obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
+    obstacles.some((b) => !isThinSegment(b) && b.y > obs.y + 1 && xOverlap(obs, b)),
   )
-  const upBlocked = inRow.some((obs) => obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)))
+  const upBlocked = inRow.some((obs) =>
+    obstacles.some((b) => !isThinSegment(b) && b.y < obs.y - 1 && xOverlap(obs, b)),
+  )
 
   // 方向決定: 下空きなら下、下塞がり＆上空きなら上、両塞がりは下優先
   const goDown = !downBlocked || upBlocked
@@ -95,11 +106,14 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
 
   // 左右塞がり判定（Y 重なりするノードが直左/直右に存在するか）
   // 前提: obstacles 配列には呼び出し側で「同一列＋直左列＋直右列のみ」をフィルタ済み
+  // 注: routeAllArrows がエッジセグメント由来の薄い Bbox を obstacles に追加する場合がある。
+  // それら（h<3 または w<3）は別列を遠くで通っていても yOverlap で誤って塞がり判定を
+  // 引き起こすため、塞がり判定からは除外する（経路上の障害物判定 inCol には残す）。
   const rightBlocked = inCol.some((obs) =>
-    obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+    obstacles.some((b) => !isThinSegment(b) && b.x > obs.x + 1 && yOverlap(obs, b)),
   )
   const leftBlocked = inCol.some((obs) =>
-    obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+    obstacles.some((b) => !isThinSegment(b) && b.x < obs.x - 1 && yOverlap(obs, b)),
   )
 
   // 方向決定: 右空きなら右、右塞がり＆左空きなら左、両塞がりは右優先
@@ -134,8 +148,14 @@ type DiagonalDetourResult =
  * ため、both-detour では呼び出し側が反対側列の hits を除外した blockers を渡す。
  */
 function pickDetourX(hits: Bbox[], blockers: Bbox[]): number {
-  const rightBlocked = hits.some((obs) => blockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)))
-  const leftBlocked = hits.some((obs) => blockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)))
+  // 薄い線分 (エッジセグメント由来 Bbox) は方向判定から除外。
+  // detectDetour / detectVerticalDetour と同じ理由 (yOverlap 誤判定を防ぐ)。
+  const rightBlocked = hits.some((obs) =>
+    blockers.some((b) => !isThinSegment(b) && b.x > obs.x + 1 && yOverlap(obs, b)),
+  )
+  const leftBlocked = hits.some((obs) =>
+    blockers.some((b) => !isThinSegment(b) && b.x < obs.x - 1 && yOverlap(obs, b)),
+  )
   const goRight = !rightBlocked || leftBlocked
   return goRight
     ? Math.max(...hits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
@@ -174,11 +194,13 @@ function computeShiftedMy(
   const yLow = Math.min(s.y, e.y)
   const yHigh = Math.max(s.y, e.y)
   const inBetween = (b: Bbox) => b.y > yLow + b.h / 2 + 1 && b.y < yHigh - b.h / 2 - 1
+  // 薄い線分 (エッジセグメント由来 Bbox) は塞がり判定から除外。
+  // detectDetour / detectVerticalDetour と同じ理由 (xOverlap 誤判定を防ぐ)。
   const downBlocked = middleRowHits.some((obs) =>
-    obstacles.some((b) => b.y > obs.y + 1 && inBetween(b) && xOverlap(obs, b)),
+    obstacles.some((b) => !isThinSegment(b) && b.y > obs.y + 1 && inBetween(b) && xOverlap(obs, b)),
   )
   const upBlocked = middleRowHits.some((obs) =>
-    obstacles.some((b) => b.y < obs.y - 1 && inBetween(b) && xOverlap(obs, b)),
+    obstacles.some((b) => !isThinSegment(b) && b.y < obs.y - 1 && inBetween(b) && xOverlap(obs, b)),
   )
   const goDown = !downBlocked || upBlocked
   const shiftedMy = goDown
@@ -280,11 +302,13 @@ export function detectDiagonalDetour(
 
   // 到達条件: sourceColHits / targetColHits は共に空 (上方の if ブロックが早期 return している)
   if (middleRowHits.length > 0) {
+    // 薄い線分 (エッジセグメント由来 Bbox) は方向判定から除外。
+    // detectDetour / detectVerticalDetour と同じ理由 (xOverlap 誤判定を防ぐ)。
     const downBlocked = middleRowHits.some((obs) =>
-      obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
+      obstacles.some((b) => !isThinSegment(b) && b.y > obs.y + 1 && xOverlap(obs, b)),
     )
     const upBlocked = middleRowHits.some((obs) =>
-      obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)),
+      obstacles.some((b) => !isThinSegment(b) && b.y < obs.y - 1 && xOverlap(obs, b)),
     )
     const goDown = !downBlocked || upBlocked
     const shiftedMy = goDown
