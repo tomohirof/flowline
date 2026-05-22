@@ -398,6 +398,15 @@ export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bb
       result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
       continue
     }
+    const midY = (fromCy + toCy) / 2
+    const onMiddleRow = Math.abs(n.cy - midY) < bboxH / 2 + 2
+    const xLow = Math.min(fromCx, toCx)
+    const xHigh = Math.max(fromCx, toCx)
+    const inZRangeX = n.cx > xLow + 1 && n.cx < xHigh - 1
+    if (onMiddleRow && inZRangeX) {
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+      continue
+    }
   }
   return result
 }
