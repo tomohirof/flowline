@@ -385,7 +385,7 @@ interface CollectDiagonalObstaclesArgs {
  * from/to 自身と Z字パスから離れたノードは除外する。
  */
 export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bbox[] {
-  const { nodes, fromKey, toKey, fromCx, fromCy, toCx, toCy, bboxW, bboxH } = args
+  const { nodes, fromKey, toKey, fromCx, fromCy, toCx, toCy, rowH, colW, bboxW, bboxH } = args
   const yLow = Math.min(fromCy, toCy)
   const yHigh = Math.max(fromCy, toCy)
   const result: Bbox[] = []
@@ -404,6 +404,15 @@ export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bb
     const xHigh = Math.max(fromCx, toCx)
     const inZRangeX = n.cx > xLow + 1 && n.cx < xHigh - 1
     if (onMiddleRow && inZRangeX) {
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+      continue
+    }
+    const onSourceAdjacentCol =
+      Math.abs(n.cx - fromCx) > colW - bboxW / 2 && Math.abs(n.cx - fromCx) < colW + bboxW / 2
+    const onTargetAdjacentCol =
+      Math.abs(n.cx - toCx) > colW - bboxW / 2 && Math.abs(n.cx - toCx) < colW + bboxW / 2
+    const inExtendedY = n.cy >= yLow - rowH / 2 && n.cy <= yHigh + rowH / 2
+    if ((onSourceAdjacentCol || onTargetAdjacentCol) && inExtendedY) {
       result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
       continue
     }

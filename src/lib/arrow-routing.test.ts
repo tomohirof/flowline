@@ -634,10 +634,49 @@ describe('collectDiagonalObstacles', () => {
   })
 
   it('should not collect nodes outside Z-path X range at middle row', () => {
+    // 中央行 Y (=250) だが、source 列・target 列・隣接列のいずれにも該当しない X 位置
+    // (fromCx=200, toCx=600, colW=200, bboxW=152)
+    //   source col:        cx in (122, 278)
+    //   target col:        cx in (522, 678)
+    //   source adjacent:   |cx-200| in (124, 276) → cx in (-76, 76) ∪ (324, 476)
+    //   target adjacent:   |cx-600| in (124, 276) → cx in (324, 476) ∪ (724, 876)
+    //   middle-row Z(X):   cx in (201, 599)
+    // cx=100: 隣接列バンド外 (76 < 100 < 122)、source 列外、middle-row Z 範囲外
+    // cx=700: 隣接列バンド外 (678 < 700 < 724)、target 列外、middle-row Z 範囲外
     const nodes: ObstacleNode[] = [
       { key: 'A', cx: 200, cy: 100 },
-      { key: 'B', cx: 50, cy: 250 },
-      { key: 'D', cx: 750, cy: 250 },
+      { key: 'B', cx: 100, cy: 250 },
+      { key: 'D', cx: 700, cy: 250 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([])
+  })
+
+  it('should collect source-adjacent-column obstacle within extended Y range', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 400, cy: 100 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toContainEqual({ x: 400, y: 100, w: 152, h: 56 })
+  })
+
+  it('should collect target-adjacent-column obstacle for direction decision', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 800, cy: 400 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toContainEqual({ x: 800, y: 400, w: 152, h: 56 })
+  })
+
+  it('should not collect adjacent-column nodes outside extended Y range', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 400, cy: 800 },
       { key: 'C', cx: 600, cy: 400 },
     ]
     const r = collectDiagonalObstacles({ nodes, ...baseArgs })
