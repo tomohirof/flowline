@@ -1478,9 +1478,8 @@ export default function FlowEditor({
   // 既存 aPath インターフェース維持: arrows に含まれる id は Map から、合成プレビュー等
   // arrows 外の id は単発計算でフォールバック（呼び出し側の互換のため）
   const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
-    if (pathByArrowId.has(arrow.id)) {
-      return pathByArrowId.get(arrow.id) ?? null
-    }
+    const cached = pathByArrowId.get(arrow.id)
+    if (cached !== undefined) return cached
     const ctx = resolveArrowContext(arrow)
     if (!ctx) return null
     return calcArrowPath(ctx.from, ctx.to, ctx.config, ctx.nodeObstacles)
