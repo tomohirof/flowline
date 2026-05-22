@@ -8,15 +8,13 @@ import styles from './SharedFlowViewer.module.css'
 import { NodeLabelText } from './NodeLabelText'
 import { calcLaneWidth } from '../editor/calcLaneWidth'
 import {
-  exitPt,
-  entryPt,
-  buildArrowPath,
   buildObstacles,
   DS,
   type Point,
   type Bbox,
   type ObstacleNode,
 } from '../../lib/arrow-routing'
+import { calcArrowPath } from '../../lib/flow-engine'
 import { formatRelativeTime } from '../../lib/relative-time'
 import { isGroupSub, isGroupParent, getGroupWidth } from '../../lib/lane-group-utils'
 import { parseNote, measureMemoHeight, MEMO_W } from '../editor/memo-utils'
@@ -126,17 +124,6 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     const t = ct(tli, toNode.rowIndex)
     const hw = TW / 2,
       hh = TH / 2
-    const s = exitPt(
-      f,
-      t,
-      hw,
-      hh,
-      RH,
-      fromNode.shape as 'diamond' | undefined,
-      arrow.fromSide ?? undefined,
-    )
-    const e = entryPt(t, f, hw, hh, RH, toNode.shape as 'diamond' | undefined)
-
     // 同一行/同一レーン/斜め配置に応じて obstacles を組み立てる（迂回判定用）
     const obstacles: Bbox[] = buildObstacles({
       nodes: obstacleNodes,
@@ -154,7 +141,19 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
       bboxH: TH,
     })
 
-    return buildArrowPath(s, e, f, t, obstacles)
+    return calcArrowPath(
+      f,
+      t,
+      {
+        hw,
+        hh,
+        rh: RH,
+        fromShape: fromNode.shape as 'diamond' | undefined,
+        toShape: toNode.shape as 'diamond' | undefined,
+        fromSide: arrow.fromSide ?? undefined,
+      },
+      obstacles,
+    )
   }
 
   const arrowPaths = flow.arrows
