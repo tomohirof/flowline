@@ -67,7 +67,7 @@ import { isGroupParent, isGroupSub, getGroupWidth } from '../../lib/lane-group-u
 // Helpers: convert API data <-> internal state
 // =============================================
 
-function flowToInternalState(flow: Flow): {
+export function flowToInternalState(flow: Flow): {
   lanes: InternalLane[]
   rows: RowData[]
   tasks: Record<string, TaskData>
@@ -141,6 +141,7 @@ function flowToInternalState(flow: Flow): {
       if (a.color) arr.color = a.color
       if (a.dash) arr.dash = a.dash
       if (a.bidirectional) arr.bidirectional = true
+      if (a.fromSide) arr.fromSide = a.fromSide
       return arr
     })
     .filter((a): a is InternalArrow => a !== null)
@@ -150,7 +151,7 @@ function flowToInternalState(flow: Flow): {
   return { lanes, rows, tasks, order, arrows, memos, title: flow.title, themeId }
 }
 
-function internalStateToPayload(
+export function internalStateToPayload(
   lanes: InternalLane[],
   rows: RowData[],
   tasks: Record<string, TaskData>,
@@ -211,6 +212,7 @@ function internalStateToPayload(
         color: a.color || null,
         dash: a.dash || null,
         bidirectional: a.bidirectional ?? false,
+        fromSide: a.fromSide ?? null,
       }
     })
     .filter((a): a is NonNullable<typeof a> => a !== null)
