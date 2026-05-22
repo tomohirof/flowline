@@ -1414,6 +1414,7 @@ export default function FlowEditor({
         rh: RH,
         fromShape: ft.shape ?? undefined,
         toShape: tt.shape ?? undefined,
+        fromSide: arrow.fromSide,
       },
       obstacles,
     )
