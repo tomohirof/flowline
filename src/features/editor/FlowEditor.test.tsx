@@ -932,6 +932,142 @@ describe('Multi-select (#76)', () => {
   })
 })
 
+describe('ノードドラッグの activation distance (#347)', () => {
+  // 同一レーン内に縦に並ぶ2ノード（row 0 と row 1）。
+  // 1px の手ブレで意図せず swap してしまうバグを再現するための最小フロー。
+  const createFlowWith2VerticalNodes = (): Flow => {
+    const flow = createMinimalFlow()
+    flow.lanes = [{ id: 'lane-1', name: 'レーン1', colorIndex: 0, position: 0 }]
+    flow.nodes = [
+      { id: 'n1', laneId: 'lane-1', rowIndex: 0, label: 'タスクA', note: null, orderIndex: 0 },
+      { id: 'n2', laneId: 'lane-1', rowIndex: 1, label: 'タスクB', note: null, orderIndex: 1 },
+    ]
+    return flow
+  }
+
+  const findNodeRects = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('rect[rx="10"]')).filter(
+      (r) => r.getAttribute('width') === '152',
+    )
+
+  it('しきい値未達 (5px) の move では swap が発火しない', () => {
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    expect(rects.length).toBe(2)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // mousedown は row 0 セル内 (clientY=149: TM+HH=70, RH=84 → row 0 の下端境界手前)、
+    // mousemove で 5px だけ下に移動 (clientY=154 で row 1 セルに入る)。
+    // 距離 5 < 6 のため activation gate がブロックする想定。
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 149 })
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 154 })
+    fireEvent.mouseUp(svg, { clientX: 100, clientY: 154 })
+
+    // swap が発火しなければ tasks/order に変化なし → onSave は呼ばれない
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('しきい値超え (6px 以上) の move で swap が発火する', () => {
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // mousedown を row 0 に、mousemove で row 1 まで明確に大きく動かす (84px = RH 分)。
+    // 距離 84 >> 6 のため gate を通過し、cellFromPos が row 1 セルを返す想定。
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 65 })
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 200 })
+    fireEvent.mouseUp(svg, { clientX: 100, clientY: 200 })
+
+    // swap が発火 → tasks の構造変化 → onSave が呼ばれる
+    expect(onSave).toHaveBeenCalled()
+  })
+
+  it('累積で 6px を超えた時点で gate が通過する', () => {
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // 3px の小さな move（gate 未達）の後、さらに大きく動かす。
+    // 最終位置は mousedown 位置から十分離れているため累計 distance は明確に 6 超え。
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 65 })
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 68 }) // 距離 3 → gate ブロック
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 200 }) // 距離 135 → gate 通過
+    fireEvent.mouseUp(svg, { clientX: 100, clientY: 200 })
+
+    expect(onSave).toHaveBeenCalled()
+  })
+
+  it('対角方向の move は Euclidean 距離で評価される', () => {
+    // dx=5, dy=5 → 距離 √50 ≈ 7.07 > 6 → gate 通過
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // 軸単位ではどちらも 5px だが Euclidean では √50 ≈ 7.07 > 6。
+    // mousedown は row 0 (clientY=149)、移動先は row 1 (clientY=154)。
+    // dx=5, dy=5 で距離 √50 ≈ 7.07 → gate 通過、row 0 → row 1 で swap 発火。
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 149 })
+    fireEvent.mouseMove(svg, { clientX: 105, clientY: 154 }) // dx=5, dy=5
+    fireEvent.mouseUp(svg, { clientX: 105, clientY: 154 })
+
+    expect(onSave).toHaveBeenCalled()
+  })
+
+  it('マルチドラッグでもしきい値未達 (5px) の move では位置変更が発火しない', () => {
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // Shift+click で 2 ノードを multi-select。onSave は呼ばれない（multiSel は struct ではない）。
+    fireEvent.click(rects[0], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    // multi-select 中の rect[0] をドラッグ開始（multi 経路）。
+    // ここからの mousedown/mousemove/mouseup は gate でブロックされるはず。
+    onSave.mockClear()
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 149 })
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 154 }) // 5px
+    fireEvent.mouseUp(svg, { clientX: 100, clientY: 154 })
+
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('マルチドラッグでもしきい値超え (6px 以上) の move で位置変更が発火する', () => {
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    fireEvent.click(rects[0], { shiftKey: true })
+    fireEvent.click(rects[1], { shiftKey: true })
+
+    onSave.mockClear()
+    // multi で row 0 → row 1 まで明確に動かす → gate 通過 → cellFromPos が別行を返す
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 149 })
+    fireEvent.mouseMove(svg, { clientX: 100, clientY: 200 })
+    fireEvent.mouseUp(svg, { clientX: 100, clientY: 200 })
+
+    expect(onSave).toHaveBeenCalled()
+  })
+})
+
 describe('logo navigation (#83)', () => {
   beforeEach(() => {
     mockNavigate.mockClear()

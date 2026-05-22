@@ -207,6 +207,9 @@ export interface InternalLane {
 export interface DragState {
   key: string
   multi?: boolean
+  startClientX: number
+  startClientY: number
+  activated: boolean
 }
 
 export interface CellInfo {

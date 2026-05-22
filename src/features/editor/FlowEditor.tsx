@@ -315,6 +315,8 @@ const IconReverse = () => (
 // FlowEditor Component
 // =============================================
 
+const DRAG_ACTIVATION_DISTANCE = 6
+
 export default function FlowEditor({
   flow,
   onSave,
@@ -945,10 +947,15 @@ export default function FlowEditor({
     e.stopPropagation()
     e.preventDefault()
     if (connectFrom || editing) return
+    const base = {
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      activated: false,
+    }
     if (multiSel.size > 0 && multiSel.has(k)) {
-      setDragging({ key: k, multi: true })
+      setDragging({ key: k, multi: true, ...base })
     } else {
-      setDragging({ key: k })
+      setDragging({ key: k, ...base })
       setMultiSel(new Set())
     }
     setSelTask(null)
@@ -983,6 +990,14 @@ export default function FlowEditor({
       return
     }
     if (!dragging) return
+    if (!dragging.activated) {
+      const dx = e.clientX - dragging.startClientX
+      const dy = e.clientY - dragging.startClientY
+      if (Math.hypot(dx, dy) < DRAG_ACTIVATION_DISTANCE) {
+        return
+      }
+      setDragging({ ...dragging, activated: true })
+    }
     const cell = cellFromPos(pt.x, pt.y)
     if (dragging.multi) {
       if (!cell || cell.key === dragging.key) {
