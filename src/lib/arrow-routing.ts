@@ -407,14 +407,19 @@ export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bb
       result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
       continue
     }
+    // 隣接列は同一列を除外 (colW <= bboxW の縮退ケース防御。
+    // collectObstacles / collectVerticalObstacles と同じ防御パターン)
     const onSourceAdjacentCol =
-      Math.abs(n.cx - fromCx) > colW - bboxW / 2 && Math.abs(n.cx - fromCx) < colW + bboxW / 2
+      !onSourceCol &&
+      Math.abs(n.cx - fromCx) > colW - bboxW / 2 &&
+      Math.abs(n.cx - fromCx) < colW + bboxW / 2
     const onTargetAdjacentCol =
-      Math.abs(n.cx - toCx) > colW - bboxW / 2 && Math.abs(n.cx - toCx) < colW + bboxW / 2
+      !onTargetCol &&
+      Math.abs(n.cx - toCx) > colW - bboxW / 2 &&
+      Math.abs(n.cx - toCx) < colW + bboxW / 2
     const inExtendedY = n.cy >= yLow - rowH / 2 && n.cy <= yHigh + rowH / 2
     if ((onSourceAdjacentCol || onTargetAdjacentCol) && inExtendedY) {
       result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
-      continue
     }
   }
   return result

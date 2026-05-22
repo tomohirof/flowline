@@ -682,4 +682,24 @@ describe('collectDiagonalObstacles', () => {
     const r = collectDiagonalObstacles({ nodes, ...baseArgs })
     expect(r).toEqual([])
   })
+
+  it('should return empty array when nodes is empty', () => {
+    const r = collectDiagonalObstacles({ nodes: [], ...baseArgs })
+    expect(r).toEqual([])
+  })
+
+  it('should collect multiple obstacles matching different rules simultaneously', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'C', cx: 600, cy: 400 },
+      { key: 'Bs', cx: 200, cy: 250 }, // source 列 ストリップ
+      { key: 'Bm', cx: 400, cy: 250 }, // 中央行 ストリップ
+      { key: 'Bt', cx: 600, cy: 250 }, // target 列 ストリップ
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toHaveLength(3)
+    expect(r).toContainEqual({ x: 200, y: 250, w: 152, h: 56 })
+    expect(r).toContainEqual({ x: 400, y: 250, w: 152, h: 56 })
+    expect(r).toContainEqual({ x: 600, y: 250, w: 152, h: 56 })
+  })
 })
