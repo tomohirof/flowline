@@ -1025,7 +1025,7 @@ describe('ノードドラッグの activation distance (#347)', () => {
     expect(onSave).toHaveBeenCalled()
   })
 
-  it('マルチドラッグでも 5px 未満の move では位置変更が発火しない', () => {
+  it('マルチドラッグでもしきい値未達 (5px) の move では位置変更が発火しない', () => {
     const onSave = vi.fn()
     const { container } = render(
       <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
@@ -1047,7 +1047,7 @@ describe('ノードドラッグの activation distance (#347)', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
-  it('マルチドラッグでも 6px 以上の move で位置変更が発火する', () => {
+  it('マルチドラッグでもしきい値超え (6px 以上) の move で位置変更が発火する', () => {
     const onSave = vi.fn()
     const { container } = render(
       <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
