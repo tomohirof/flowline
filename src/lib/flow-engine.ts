@@ -19,6 +19,7 @@ interface ArrowConfig {
   fromShape?: 'diamond'
   toShape?: 'diamond'
   fromSide?: ArrowSide
+  toSide?: ArrowSide
 }
 
 /* --------------------------------------------------------- */
@@ -41,7 +42,7 @@ export function calcArrowPath(
   const f: Point = { x: from.x, y: from.y }
   const t: Point = { x: to.x, y: to.y }
   const s = exitPt(f, t, config.hw, config.hh, config.rh, config.fromShape, config.fromSide)
-  const e = entryPt(t, f, config.hw, config.hh, config.rh, config.toShape)
+  const e = entryPt(t, f, config.hw, config.hh, config.rh, config.toShape, config.toSide)
   return buildArrowPath(s, e, f, t, obstacles)
 }
 

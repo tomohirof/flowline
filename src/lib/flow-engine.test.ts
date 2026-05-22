@@ -272,6 +272,43 @@ describe('calcArrowPath', () => {
     // dx>0 → right 頂点 {234, 200}
     expect(r.d.startsWith('M234,200')).toBe(true)
   })
+
+  it('toSide=top で四角形ターゲットの上辺に入る (#355)', () => {
+    // from=(100, 50), to=(200, 200), hw=50, hh=25
+    // entryPt(to, from, toSide='top') → 上辺中央 (200, 175)
+    const r = calcArrowPath(
+      { x: 100, y: 50 },
+      { x: 200, y: 200 },
+      { hw: 50, hh: 25, rh: 84, toSide: 'top' as const },
+    )
+    expect(r.d).toContain('200,175')
+  })
+
+  it('diamond の toSide=left を尊重する (#355)', () => {
+    // to=(200, 100), DS=34, toSide='left' → 左頂点 (166, 100)
+    const r = calcArrowPath(
+      { x: 100, y: 50 },
+      { x: 200, y: 100 },
+      {
+        hw: 76,
+        hh: 28,
+        rh: 84,
+        toShape: 'diamond' as const,
+        toSide: 'left' as const,
+      },
+    )
+    expect(r.d).toContain('166,100')
+  })
+
+  it('toSide 未指定なら従来の auto ロジック (#355 後方互換)', () => {
+    // 既存テスト「cross-lane horizontal」と同じ条件で結果が変わらないこと
+    const r = calcArrowPath(
+      { x: 100, y: 200 },
+      { x: 400, y: 200 },
+      { hw: 76, hh: 28, rh: 84 },
+    )
+    expect(r.d).toBe('M176,200 L324,200')
+  })
 })
 
 /* ========================================================= */
