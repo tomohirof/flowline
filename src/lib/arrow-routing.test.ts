@@ -605,9 +605,7 @@ describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
     const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 }
     const Bt: Bbox = { x: 600, y: 250, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [Bs, Bt])
-    expect(r.d).toBe(
-      'M200,128 L200,142 L290,142 L290,250 L690,250 L690,358 L600,358 L600,372',
-    )
+    expect(r.d).toBe('M200,128 L200,142 L290,142 L290,250 L690,250 L690,358 L600,358 L600,372')
     expect(r.mx).toBe((290 + 690) / 2)
     expect(r.my).toBe(250)
   })

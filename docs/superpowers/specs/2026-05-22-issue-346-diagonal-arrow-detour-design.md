@@ -328,14 +328,14 @@ if (obstacles && obstacles.length > 0) {
 
 ## 10. 既知の懸念と対応
 
-| 懸念 | 対応 |
-| --- | --- |
-| Z字パス 3 セグメント全てに衝突判定 | 優先順位ベースで 1〜2 セグメントの修正に集約。最悪 8 セグの `both-detour` で全カバー |
-| my シフトの上下限ガード | source/target 行を侵食しないよう `[s.y+bboxH/2, e.y-bboxH/2]` で clamp、超過時は target-detour 昇格 |
-| 既存 collector のスコープ拡張 | 既存関数は触らず、新規 `collectDiagonalObstacles` で独立カバー |
-| Diamond / bidirectional 対応 | テスト追加で検証。bbox は既存と同じ `TW × TH` |
-| 共有ビューアとの整合 | `arrow-routing.ts` に判定を寄せ、呼び出し側 (`FlowEditor.aPath` / `SharedFlowViewer.computeArrowPath`) は collector 呼び出しのみ差し替え |
-| パフォーマンス | `obstacleNodes` は既に 1 回収集済。collector は O(N)、detector は O(M) (M = 候補障害数)、全体 O(N + arrows × M) で実用上問題なし |
+| 懸念                               | 対応                                                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Z字パス 3 セグメント全てに衝突判定 | 優先順位ベースで 1〜2 セグメントの修正に集約。最悪 8 セグの `both-detour` で全カバー                                                     |
+| my シフトの上下限ガード            | source/target 行を侵食しないよう `[s.y+bboxH/2, e.y-bboxH/2]` で clamp、超過時は target-detour 昇格                                      |
+| 既存 collector のスコープ拡張      | 既存関数は触らず、新規 `collectDiagonalObstacles` で独立カバー                                                                           |
+| Diamond / bidirectional 対応       | テスト追加で検証。bbox は既存と同じ `TW × TH`                                                                                            |
+| 共有ビューアとの整合               | `arrow-routing.ts` に判定を寄せ、呼び出し側 (`FlowEditor.aPath` / `SharedFlowViewer.computeArrowPath`) は collector 呼び出しのみ差し替え |
+| パフォーマンス                     | `obstacleNodes` は既に 1 回収集済。collector は O(N)、detector は O(M) (M = 候補障害数)、全体 O(N + arrows × M) で実用上問題なし         |
 
 ## 11. 関連 issue
 

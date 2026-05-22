@@ -124,12 +124,8 @@ type DiagonalDetourResult =
  */
 function pickDetourX(hits: Bbox[], blockers: Bbox[]): number {
   const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
-  const rightBlocked = hits.some((obs) =>
-    blockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
-  )
-  const leftBlocked = hits.some((obs) =>
-    blockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
-  )
+  const rightBlocked = hits.some((obs) => blockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)))
+  const leftBlocked = hits.some((obs) => blockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)))
   const goRight = !rightBlocked || leftBlocked
   return goRight
     ? Math.max(...hits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
@@ -172,9 +168,7 @@ export function detectDiagonalDetour(
     const yLow = Math.min(s.y, my)
     const yHigh = Math.max(s.y, my)
     return (
-      Math.abs(b.x - s.x) < b.w / 2 + 2 &&
-      b.y - b.h / 2 < yHigh - 1 &&
-      b.y + b.h / 2 > yLow + 1
+      Math.abs(b.x - s.x) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1
     )
   })
 
@@ -183,9 +177,7 @@ export function detectDiagonalDetour(
     const yLow = Math.min(my, e.y)
     const yHigh = Math.max(my, e.y)
     return (
-      Math.abs(b.x - e.x) < b.w / 2 + 2 &&
-      b.y - b.h / 2 < yHigh - 1 &&
-      b.y + b.h / 2 > yLow + 1
+      Math.abs(b.x - e.x) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1
     )
   })
 
@@ -218,11 +210,7 @@ export function detectDiagonalDetour(
   const middleRowHits = obstacles.filter((b) => {
     const xLow = Math.min(s.x, e.x)
     const xHigh = Math.max(s.x, e.x)
-    return (
-      Math.abs(b.y - my) < b.h / 2 + 2 &&
-      b.x - b.w / 2 < xHigh - 1 &&
-      b.x + b.w / 2 > xLow + 1
-    )
+    return Math.abs(b.y - my) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1
   })
 
   if (middleRowHits.length > 0 && sourceColHits.length === 0 && targetColHits.length === 0) {
@@ -413,7 +401,9 @@ export const buildArrowPath = (
         }
         default: {
           const _exhaustive: never = dDetour
-          throw new Error(`Unhandled DiagonalDetourResult kind: ${(_exhaustive as { kind: string }).kind}`)
+          throw new Error(
+            `Unhandled DiagonalDetourResult kind: ${(_exhaustive as { kind: string }).kind}`,
+          )
         }
       }
     }
