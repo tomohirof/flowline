@@ -302,11 +302,7 @@ describe('calcArrowPath', () => {
 
   it('toSide 未指定なら従来の auto ロジック (#355 後方互換)', () => {
     // 既存テスト「cross-lane horizontal」と同じ条件で結果が変わらないこと
-    const r = calcArrowPath(
-      { x: 100, y: 200 },
-      { x: 400, y: 200 },
-      { hw: 76, hh: 28, rh: 84 },
-    )
+    const r = calcArrowPath({ x: 100, y: 200 }, { x: 400, y: 200 }, { hw: 76, hh: 28, rh: 84 })
     expect(r.d).toBe('M176,200 L324,200')
   })
 })
