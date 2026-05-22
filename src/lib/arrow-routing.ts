@@ -239,8 +239,25 @@ export function detectDiagonalDetour(
     if (shiftedMy >= lo && shiftedMy <= hi) {
       return { kind: 'shift-my', my: shiftedMy }
     }
-    // 範囲外 → 中央障害を targetColHit 扱いで target-detour に昇格
+    // 範囲外 → 中央水平セグメントが中間行障害を避けるよう kind を決める。
+    //
+    // target-detour の中央水平は [s.x, detourX]、source-detour は [detourX, e.x]。
+    // detourX は障害の左右どちらかに DETOUR_MARGIN 取られているため、s.x と e.x の
+    // どちらが detourX と同じ側にあるかで衝突しない kind が決まる。
+    // 左→右 (s.x < e.x) でも右→左 (s.x > e.x) でも幾何学的に正しく判定できる (#359)。
     const detourX = pickDetourX(middleRowHits, obstacles)
+    const obsRight = Math.max(...middleRowHits.map((o) => o.x + o.w / 2))
+    const obsLeft = Math.min(...middleRowHits.map((o) => o.x - o.w / 2))
+    // source-detour 中央水平 = [min(detourX, e.x), max(detourX, e.x)]
+    // 障害区間 [obsLeft, obsRight] と重ならなければ source-detour が安全
+    const sourceLow = Math.min(detourX, e.x)
+    const sourceHigh = Math.max(detourX, e.x)
+    const sourceDetourClear = sourceLow >= obsRight || sourceHigh <= obsLeft
+    if (sourceDetourClear) {
+      const departY = clampOffset(s.y, my, DEPART_GAP)
+      return { kind: 'source-detour', departY, detourX, my }
+    }
+    // source-detour が衝突する場合は target-detour 中央水平 [s.x, detourX] が片側に収まる
     const approachY = clampOffset(e.y, my, APPROACH_GAP)
     return { kind: 'target-detour', my, detourX, approachY }
   }

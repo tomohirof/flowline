@@ -875,12 +875,71 @@ describe('detectDiagonalDetour', () => {
     })
   })
 
-  it('should escalate to target-detour when shift-my would exceed row bounds', () => {
+  it('should escalate to source-detour when shift-my exceeds row bounds and right detour is chosen', () => {
+    // 中間行に障害 + 行間隔が狭く shift-my の range check が失敗するケース。
+    // 右迂回時は target-detour の中央水平セグメント [s.x, detourX] が障害を横断するため、
+    // 短い中央水平 [detourX, e.x] を持つ source-detour に escalate する必要がある (#359)。
     const sNarrow = { x: 200, y: 128 }
     const eNarrow = { x: 600, y: 172 }
     const B: Bbox = { x: 400, y: 150, w: 152, h: 56 }
     const r = detectDiagonalDetour(sNarrow, eNarrow, [B])
-    expect(r?.kind).toBe('target-detour')
+    expect(r).toEqual({
+      kind: 'source-detour',
+      departY: 139, // clampOffset(128, 150, 14) = 128 + min(14, 11) = 139
+      detourX: 490, // 400 + 76 + 14
+      my: 150,
+    })
+  })
+
+  it('should escalate to target-detour when shift-my exceeds row bounds and left detour is chosen', () => {
+    // 中間行障害の右側に blocker があり pickDetourX が左迂回を選ぶケース。
+    // 左迂回時は target-detour の中央水平 [s.x, detourX] が障害の左側のみを通るため衝突なし (#359)。
+    const sNarrow = { x: 200, y: 128 }
+    const eNarrow = { x: 600, y: 172 }
+    const B: Bbox = { x: 400, y: 150, w: 152, h: 56 }
+    // 障害の右側に位置するが source 列・target 列・中間行いずれでもない blocker。
+    // pickDetourX の rightBlocked 判定にだけ寄与する。
+    const rightBlocker: Bbox = { x: 450, y: 100, w: 152, h: 56 }
+    const r = detectDiagonalDetour(sNarrow, eNarrow, [B, rightBlocker])
+    expect(r).toEqual({
+      kind: 'target-detour',
+      my: 150,
+      detourX: 310, // 400 - 76 - 14
+      approachY: 161, // clampOffset(172, 150, 14) = 172 - min(14, 11) = 161
+    })
+  })
+
+  it('should escalate to target-detour for right-to-left diagonal with right detour', () => {
+    // 右→左対角線 (s.x > e.x) でも幾何ベースで正しく kind を選べることを検証 (#359)。
+    // 右迂回 (detourX > 障害) のとき source-detour 中央水平 [detourX, e.x] は障害を横断するため
+    // target-detour を選ぶ。
+    const sRTL = { x: 600, y: 128 }
+    const eRTL = { x: 200, y: 172 }
+    const B: Bbox = { x: 400, y: 150, w: 152, h: 56 }
+    const r = detectDiagonalDetour(sRTL, eRTL, [B])
+    expect(r).toEqual({
+      kind: 'target-detour',
+      my: 150,
+      detourX: 490, // 400 + 76 + 14 (右迂回 default)
+      approachY: 161, // clampOffset(172, 150, 14)
+    })
+  })
+
+  it('should escalate to source-detour for right-to-left diagonal with left detour', () => {
+    // 右→左対角線で左迂回。左迂回時は target-detour 中央水平 [s.x, detourX]=[600, 310] が障害を
+    // 横断するため source-detour を選ぶ (#359)。
+    const sRTL = { x: 600, y: 128 }
+    const eRTL = { x: 200, y: 172 }
+    const B: Bbox = { x: 400, y: 150, w: 152, h: 56 }
+    // 障害の右に blocker → pickDetourX 左迂回
+    const rightBlocker: Bbox = { x: 450, y: 100, w: 152, h: 56 }
+    const r = detectDiagonalDetour(sRTL, eRTL, [B, rightBlocker])
+    expect(r).toEqual({
+      kind: 'source-detour',
+      departY: 139, // clampOffset(128, 150, 14)
+      detourX: 310, // 400 - 76 - 14
+      my: 150,
+    })
   })
 
   it('should return both-detour when source and target columns both have obstacles', () => {
