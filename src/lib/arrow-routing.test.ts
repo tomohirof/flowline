@@ -1511,14 +1511,6 @@ describe('buildArrowPath segments — diagonal detour (4 kinds)', () => {
     ]
     const result = buildArrowPath(s, e, fc, tc, obstacles)
     expect(result.segments).toHaveLength(7)
-    expect(result.segments.map((sg) => sg.orientation)).toEqual([
-      'v',
-      'h',
-      'v',
-      'h',
-      'v',
-      'h',
-      'v',
-    ])
+    expect(result.segments.map((sg) => sg.orientation)).toEqual(['v', 'h', 'v', 'h', 'v', 'h', 'v'])
   })
 })

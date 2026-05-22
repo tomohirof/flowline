@@ -171,9 +171,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
 
   const arrowPaths = flow.arrows
     .map((a, i) => ({ arrow: a, path: routedPaths[i] }))
-    .filter(
-      (x): x is { arrow: Arrow; path: ArrowPathResult } => x.path !== null,
-    )
+    .filter((x): x is { arrow: Arrow; path: ArrowPathResult } => x.path !== null)
 
   const logoGradient = `linear-gradient(135deg,${T.accent},${isDark ? '#6E59CF' : '#5B8DEF'})`
 

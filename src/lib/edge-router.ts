@@ -32,9 +32,7 @@ export function routeAllArrows<T extends ArrowLike>(
   resolveContext: (arrow: T) => ArrowResolveContext | null,
 ): Array<ArrowPathResult | null> {
   const indexedArrows = arrows.map((a, i) => ({ arrow: a, originalIndex: i }))
-  const sorted = [...indexedArrows].sort((a, b) =>
-    a.arrow.id.localeCompare(b.arrow.id),
-  )
+  const sorted = [...indexedArrows].sort((a, b) => a.arrow.id.localeCompare(b.arrow.id))
 
   const priorSegmentsByEdge = new Map<string, EdgeSegment[]>()
   const edgeEndpoints = new Map<string, { from: string; to: string }>()

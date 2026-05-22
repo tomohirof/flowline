@@ -693,14 +693,10 @@ export const buildArrowPath = (
     my = (s.y + e.y) / 2
     if (Math.abs(dx) < 2) {
       // 垂直直線
-      segments = [
-        { orientation: 'v', fixed: s.x, range: [Math.min(s.y, e.y), Math.max(s.y, e.y)] },
-      ]
+      segments = [{ orientation: 'v', fixed: s.x, range: [Math.min(s.y, e.y), Math.max(s.y, e.y)] }]
     } else {
       // 水平直線
-      segments = [
-        { orientation: 'h', fixed: s.y, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] },
-      ]
+      segments = [{ orientation: 'h', fixed: s.y, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] }]
     }
   } else {
     // 出口が縦方向かどうかを判定（ノード中心との差で判別）

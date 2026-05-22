@@ -15,6 +15,7 @@
 ## File Structure
 
 ### Modify
+
 - `src/lib/types.ts` — `ArrowPathResult` に `segments: EdgeSegment[]` 追加
 - `src/lib/arrow-routing.ts` — `EdgeSegment` 型・`segmentsToBboxes`・`buildArrowPath` の各分岐で segments 構築
 - `src/lib/arrow-routing.test.ts` — segments 出力の網羅テスト追加（既存テストは破壊しない）
@@ -22,6 +23,7 @@
 - `src/features/shared/SharedFlowViewer.tsx:114` — `computeArrowPath` ループを `routeAllArrows` 呼び出しに置換
 
 ### Create
+
 - `src/features/editor/edge-router.ts` — `routeAllArrows` ヘルパー
 - `src/features/editor/edge-router.test.ts` — マルチエッジ協調シナリオの新規テスト
 - `src/features/editor/edge-router.bench.ts` — パフォーマンスベンチマーク（vitest bench）
@@ -32,21 +34,25 @@
 ## Task 1: GitHub Issue 作成 + ワークツリー準備
 
 **Files:**
+
 - Create: `.worktrees/multi-edge-routing/`
 
 - [ ] **Step 1: ローカル main 最新化**
 
 Run:
+
 ```bash
 git checkout main
 git fetch origin
 git merge --ff-only origin/main
 ```
+
 Expected: main が origin/main と一致。失敗時は人間に報告して中断。
 
 - [ ] **Step 2: GitHub Issue 作成**
 
 Run:
+
 ```bash
 gh issue create --title "マルチエッジ協調ルーティング 段階1（エッジを障害物に昇格）" \
   --body "$(cat <<'EOF'
@@ -65,11 +71,13 @@ docs/plans/2026-05-22-multi-edge-routing-plan.md
 EOF
 )" --label "作業開始"
 ```
+
 Expected: Issue 番号が出力される。番号を控えて以降の commit message で参照。
 
 - [ ] **Step 3: ワークツリー作成**
 
 Run:
+
 ```bash
 ISSUE_NUM=<上記で得た Issue 番号>
 git worktree add .worktrees/multi-edge-routing -b feat/multi-edge-routing-stage1-issue-$ISSUE_NUM
@@ -77,14 +85,17 @@ cd .worktrees/multi-edge-routing
 MAIN=$(git worktree list --porcelain | awk '/^worktree / {print $2; exit}')
 for f in "$MAIN"/.env*; do [ -f "$f" ] && ln -sf "$f" .; done
 ```
+
 Expected: ワークツリーが作成され、.env がシンボリックリンクされる。
 
 - [ ] **Step 4: 依存パッケージ確認**
 
 Run:
+
 ```bash
 npm install
 ```
+
 Expected: 既存の node_modules がそのまま使える（ワークツリーで共有）または再インストール完了。
 
 ---
@@ -92,6 +103,7 @@ Expected: 既存の node_modules がそのまま使える（ワークツリー�
 ## Task 2: EdgeSegment 型追加 + 型拡張
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts:1-13` (型定義エリア)
 - Modify: `src/lib/types.ts:19-24`
 
@@ -112,6 +124,7 @@ export interface EdgeSegment {
 - [ ] **Step 2: `ArrowPath` インターフェースに `segments` を追加**
 
 `arrow-routing.ts` 内の `ArrowPath` 型定義を見つけて拡張。grep で見つける：
+
 ```bash
 grep -n "interface ArrowPath" src/lib/arrow-routing.ts
 ```
@@ -146,9 +159,11 @@ export interface ArrowPathResult {
 - [ ] **Step 4: TypeScript コンパイル確認**
 
 Run:
+
 ```bash
 npx tsc --noEmit
 ```
+
 Expected: `buildArrowPath` 内で `segments` を返していないため、 TS エラーが出る。これは想定通り。次のタスクで解消する。
 
 - [ ] **Step 5: 一旦コミット保留**
@@ -160,6 +175,7 @@ Expected: `buildArrowPath` 内で `segments` を返していないため、 TS �
 ## Task 3: `segmentsToBboxes` ヘルパー実装（TDD）
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts` (末尾に追加)
 - Modify: `src/lib/arrow-routing.test.ts` (末尾に追加)
 
@@ -207,9 +223,11 @@ describe('segmentsToBboxes', () => {
 - [ ] **Step 2: テストを実行して失敗確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "segmentsToBboxes"
 ```
+
 Expected: FAIL with "segmentsToBboxes is not a function" または import エラー。
 
 - [ ] **Step 3: 最小実装を追加**
@@ -232,9 +250,11 @@ export function segmentsToBboxes(segments: EdgeSegment[]): Bbox[] {
 - [ ] **Step 4: テストを実行して pass 確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "segmentsToBboxes"
 ```
+
 Expected: PASS（5 件すべて）。
 
 - [ ] **Step 5: コミット保留**
@@ -246,10 +266,12 @@ Task 4 と一緒にコミット。
 ## Task 4: `buildArrowPath` 直線・L字パスで segments 出力（TDD）
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts:532-583` (直線・L字・Z字パス分岐)
 - Modify: `src/lib/arrow-routing.test.ts` (segments 出力テスト追加)
 
 対象分岐:
+
 1. 直線パス (line 538, `M${s.x},${s.y} L${e.x},${e.y}`)
 2. L字 縦出→横入 (line 560, `M${s.x},${s.y} L${s.x},${e.y} L${e.x},${e.y}`)
 3. L字 横出→縦入 (line 572, `M${s.x},${s.y} L${e.x},${s.y} L${e.x},${e.y}`)
@@ -261,22 +283,32 @@ Edit `src/lib/arrow-routing.test.ts` の末尾に追加：
 ```ts
 describe('buildArrowPath segments — straight & L-shape', () => {
   it('straight horizontal: 1 horizontal segment', () => {
-    const result = buildArrowPath({ x: 0, y: 100 }, { x: 200, y: 100 }, { x: 0, y: 100 }, { x: 200, y: 100 })
+    const result = buildArrowPath(
+      { x: 0, y: 100 },
+      { x: 200, y: 100 },
+      { x: 0, y: 100 },
+      { x: 200, y: 100 },
+    )
     expect(result.segments).toEqual([{ orientation: 'h', fixed: 100, range: [0, 200] }])
   })
 
   it('straight vertical: 1 vertical segment', () => {
-    const result = buildArrowPath({ x: 100, y: 0 }, { x: 100, y: 200 }, { x: 100, y: 0 }, { x: 100, y: 200 })
+    const result = buildArrowPath(
+      { x: 100, y: 0 },
+      { x: 100, y: 200 },
+      { x: 100, y: 0 },
+      { x: 100, y: 200 },
+    )
     expect(result.segments).toEqual([{ orientation: 'v', fixed: 100, range: [0, 200] }])
   })
 
   it('L-shape (vertical exit → horizontal entry): vertical then horizontal', () => {
     // fc に対して s が縦方向（y 差 > x 差）、tc に対して e が横方向（x 差 > y 差）
     const result = buildArrowPath(
-      { x: 100, y: 50 },   // s: 縦に出る
-      { x: 250, y: 200 },  // e: 横から入る
-      { x: 100, y: 0 },    // fc: 上に中心
-      { x: 300, y: 200 }   // tc: 右に中心
+      { x: 100, y: 50 }, // s: 縦に出る
+      { x: 250, y: 200 }, // e: 横から入る
+      { x: 100, y: 0 }, // fc: 上に中心
+      { x: 300, y: 200 }, // tc: 右に中心
     )
     expect(result.segments).toEqual([
       { orientation: 'v', fixed: 100, range: [50, 200] },
@@ -286,10 +318,10 @@ describe('buildArrowPath segments — straight & L-shape', () => {
 
   it('L-shape (horizontal exit → vertical entry): horizontal then vertical', () => {
     const result = buildArrowPath(
-      { x: 50, y: 100 },   // s: 横に出る
-      { x: 200, y: 250 },  // e: 縦から入る
-      { x: 0, y: 100 },    // fc: 左に中心
-      { x: 200, y: 300 }   // tc: 下に中心
+      { x: 50, y: 100 }, // s: 横に出る
+      { x: 200, y: 250 }, // e: 縦から入る
+      { x: 0, y: 100 }, // fc: 左に中心
+      { x: 200, y: 300 }, // tc: 下に中心
     )
     expect(result.segments).toEqual([
       { orientation: 'h', fixed: 100, range: [50, 200] },
@@ -302,9 +334,11 @@ describe('buildArrowPath segments — straight & L-shape', () => {
 - [ ] **Step 2: テスト失敗を確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "buildArrowPath segments — straight"
 ```
+
 Expected: FAIL (`result.segments` が undefined または期待値と不一致)。
 
 - [ ] **Step 3: 実装 — 直線パス分岐 (line 538)**
@@ -312,18 +346,18 @@ Expected: FAIL (`result.segments` が undefined または期待値と不一致)�
 Edit `src/lib/arrow-routing.ts:537-540`:
 
 ```ts
-  // 直線パス: ほぼ垂直またはほぼ水平
-  if (Math.abs(dx) < 2 || Math.abs(dy) < 2) {
-    d = `M${s.x},${s.y} L${e.x},${e.y}`
-    mx = (s.x + e.x) / 2
-    my = (s.y + e.y) / 2
-    // segments: ほぼ垂直なら垂直、ほぼ水平なら水平
-    if (Math.abs(dx) < 2) {
-      segments = [{ orientation: 'v', fixed: s.x, range: [Math.min(s.y, e.y), Math.max(s.y, e.y)] }]
-    } else {
-      segments = [{ orientation: 'h', fixed: s.y, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] }]
-    }
+// 直線パス: ほぼ垂直またはほぼ水平
+if (Math.abs(dx) < 2 || Math.abs(dy) < 2) {
+  d = `M${s.x},${s.y} L${e.x},${e.y}`
+  mx = (s.x + e.x) / 2
+  my = (s.y + e.y) / 2
+  // segments: ほぼ垂直なら垂直、ほぼ水平なら水平
+  if (Math.abs(dx) < 2) {
+    segments = [{ orientation: 'v', fixed: s.x, range: [Math.min(s.y, e.y), Math.max(s.y, e.y)] }]
+  } else {
+    segments = [{ orientation: 'h', fixed: s.y, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] }]
   }
+}
 ```
 
 `segments` 変数を関数冒頭で宣言する必要があるので、`let d, mx, my` 付近に `let segments: EdgeSegment[]` を追加。
@@ -375,9 +409,11 @@ Edit `src/lib/arrow-routing.ts:570-582`:
 - [ ] **Step 6: テストを pass まで確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "buildArrowPath segments — straight"
 ```
+
 Expected: PASS（4 件）。
 
 - [ ] **Step 7: コミット保留**
@@ -389,10 +425,12 @@ Task 5/6/7 と合わせてコミット（buildArrowPath の改修は一気に終
 ## Task 5: `buildArrowPath` Z字パスで segments 出力（TDD）
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts:546-557` (Z字分岐)
 - Modify: `src/lib/arrow-routing.test.ts` (segments テスト追加)
 
 対象分岐:
+
 1. Z字 両縦出口 (line 549, `M L L L L`)
 2. Z字 両横出口 (line 555, `M L L L L`)
 
@@ -404,10 +442,10 @@ Edit `src/lib/arrow-routing.test.ts` の末尾に追加：
 describe('buildArrowPath segments — Z-shape', () => {
   it('Z-shape (both vertical exits): vert, horiz, vert', () => {
     const result = buildArrowPath(
-      { x: 100, y: 50 },   // s: 縦に出る
-      { x: 300, y: 250 },  // e: 縦に入る
-      { x: 100, y: 0 },    // fc: 上に中心
-      { x: 300, y: 300 }   // tc: 下に中心
+      { x: 100, y: 50 }, // s: 縦に出る
+      { x: 300, y: 250 }, // e: 縦に入る
+      { x: 100, y: 0 }, // fc: 上に中心
+      { x: 300, y: 300 }, // tc: 下に中心
     )
     // cmy = (50 + 250) / 2 = 150
     expect(result.segments).toEqual([
@@ -419,10 +457,10 @@ describe('buildArrowPath segments — Z-shape', () => {
 
   it('Z-shape (both horizontal exits): horiz, vert, horiz', () => {
     const result = buildArrowPath(
-      { x: 50, y: 100 },   // s: 横に出る
-      { x: 250, y: 300 },  // e: 横に入る
-      { x: 0, y: 100 },    // fc: 左に中心
-      { x: 300, y: 300 }   // tc: 右に中心
+      { x: 50, y: 100 }, // s: 横に出る
+      { x: 250, y: 300 }, // e: 横に入る
+      { x: 0, y: 100 }, // fc: 左に中心
+      { x: 300, y: 300 }, // tc: 右に中心
     )
     // cmx = (50 + 250) / 2 = 150
     expect(result.segments).toEqual([
@@ -437,9 +475,11 @@ describe('buildArrowPath segments — Z-shape', () => {
 - [ ] **Step 2: テスト失敗を確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "buildArrowPath segments — Z-shape"
 ```
+
 Expected: FAIL.
 
 - [ ] **Step 3: 実装 — Z字 両縦出口 (line 546-552)**
@@ -447,18 +487,18 @@ Expected: FAIL.
 Edit `src/lib/arrow-routing.ts:546-552`:
 
 ```ts
-    if (sV && eV) {
-      // 両方縦出口: Z字パス（横方向に折り返す）→ ラベルは中央水平セグメント上
-      const cmy = (s.y + e.y) / 2
-      d = `M${s.x},${s.y} L${s.x},${cmy} L${e.x},${cmy} L${e.x},${e.y}`
-      segments = [
-        { orientation: 'v', fixed: s.x, range: [Math.min(s.y, cmy), Math.max(s.y, cmy)] },
-        { orientation: 'h', fixed: cmy, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] },
-        { orientation: 'v', fixed: e.x, range: [Math.min(cmy, e.y), Math.max(cmy, e.y)] },
-      ]
-      mx = (s.x + e.x) / 2
-      my = cmy
-    }
+if (sV && eV) {
+  // 両方縦出口: Z字パス（横方向に折り返す）→ ラベルは中央水平セグメント上
+  const cmy = (s.y + e.y) / 2
+  d = `M${s.x},${s.y} L${s.x},${cmy} L${e.x},${cmy} L${e.x},${e.y}`
+  segments = [
+    { orientation: 'v', fixed: s.x, range: [Math.min(s.y, cmy), Math.max(s.y, cmy)] },
+    { orientation: 'h', fixed: cmy, range: [Math.min(s.x, e.x), Math.max(s.x, e.x)] },
+    { orientation: 'v', fixed: e.x, range: [Math.min(cmy, e.y), Math.max(cmy, e.y)] },
+  ]
+  mx = (s.x + e.x) / 2
+  my = cmy
+}
 ```
 
 - [ ] **Step 4: 実装 — Z字 両横出口 (line 552-557)**
@@ -483,9 +523,11 @@ Edit `src/lib/arrow-routing.ts:552-557`:
 - [ ] **Step 5: テストを pass まで確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "buildArrowPath segments — Z-shape"
 ```
+
 Expected: PASS。
 
 ---
@@ -493,10 +535,12 @@ Expected: PASS。
 ## Task 6: `buildArrowPath` 水平・垂直迂回で segments 出力（TDD）
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts:465-497` (水平・垂直迂回)
 - Modify: `src/lib/arrow-routing.test.ts`
 
 対象分岐:
+
 1. 水平迂回 6 セグ (line 479)
 2. 垂直迂回 6 セグ (line 495)
 
@@ -550,9 +594,11 @@ describe('buildArrowPath segments — horizontal/vertical detour', () => {
 - [ ] **Step 2: テスト失敗を確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "buildArrowPath segments — horizontal/vertical detour"
 ```
+
 Expected: FAIL.
 
 - [ ] **Step 3: 実装 — 水平迂回 (line 466-481)**
@@ -560,23 +606,27 @@ Expected: FAIL.
 Edit `src/lib/arrow-routing.ts:466-481`:
 
 ```ts
-    const detour = detectDetour(s, e, obstacles)
-    if (detour) {
-      const { detourY } = detour
-      const sign = Math.sign(dx)
-      const halfDx = Math.abs(dx) / 2
-      const departX = s.x + sign * Math.min(DEPART_GAP, halfDx)
-      const approachX = e.x - sign * Math.min(APPROACH_GAP, halfDx)
-      const d = `M${s.x},${s.y} L${departX},${s.y} L${departX},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
-      const segments: EdgeSegment[] = [
-        { orientation: 'h', fixed: s.y, range: [Math.min(s.x, departX), Math.max(s.x, departX)] },
-        { orientation: 'v', fixed: departX, range: [Math.min(s.y, detourY), Math.max(s.y, detourY)] },
-        { orientation: 'h', fixed: detourY, range: [Math.min(departX, approachX), Math.max(departX, approachX)] },
-        { orientation: 'v', fixed: approachX, range: [Math.min(detourY, e.y), Math.max(detourY, e.y)] },
-        { orientation: 'h', fixed: e.y, range: [Math.min(approachX, e.x), Math.max(approachX, e.x)] },
-      ]
-      return { d, mx: (s.x + e.x) / 2, my: detourY, segments }
-    }
+const detour = detectDetour(s, e, obstacles)
+if (detour) {
+  const { detourY } = detour
+  const sign = Math.sign(dx)
+  const halfDx = Math.abs(dx) / 2
+  const departX = s.x + sign * Math.min(DEPART_GAP, halfDx)
+  const approachX = e.x - sign * Math.min(APPROACH_GAP, halfDx)
+  const d = `M${s.x},${s.y} L${departX},${s.y} L${departX},${detourY} L${approachX},${detourY} L${approachX},${e.y} L${e.x},${e.y}`
+  const segments: EdgeSegment[] = [
+    { orientation: 'h', fixed: s.y, range: [Math.min(s.x, departX), Math.max(s.x, departX)] },
+    { orientation: 'v', fixed: departX, range: [Math.min(s.y, detourY), Math.max(s.y, detourY)] },
+    {
+      orientation: 'h',
+      fixed: detourY,
+      range: [Math.min(departX, approachX), Math.max(departX, approachX)],
+    },
+    { orientation: 'v', fixed: approachX, range: [Math.min(detourY, e.y), Math.max(detourY, e.y)] },
+    { orientation: 'h', fixed: e.y, range: [Math.min(approachX, e.x), Math.max(approachX, e.x)] },
+  ]
+  return { d, mx: (s.x + e.x) / 2, my: detourY, segments }
+}
 ```
 
 - [ ] **Step 4: 実装 — 垂直迂回 (line 483-497)**
@@ -584,31 +634,37 @@ Edit `src/lib/arrow-routing.ts:466-481`:
 Edit `src/lib/arrow-routing.ts:483-497`:
 
 ```ts
-    const vDetour = detectVerticalDetour(s, e, obstacles)
-    if (vDetour) {
-      const { detourX } = vDetour
-      const sign = Math.sign(dy)
-      const halfDy = Math.abs(dy) / 2
-      const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
-      const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
-      const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
-      const segments: EdgeSegment[] = [
-        { orientation: 'v', fixed: s.x, range: [Math.min(s.y, departY), Math.max(s.y, departY)] },
-        { orientation: 'h', fixed: departY, range: [Math.min(s.x, detourX), Math.max(s.x, detourX)] },
-        { orientation: 'v', fixed: detourX, range: [Math.min(departY, approachY), Math.max(departY, approachY)] },
-        { orientation: 'h', fixed: approachY, range: [Math.min(detourX, e.x), Math.max(detourX, e.x)] },
-        { orientation: 'v', fixed: e.x, range: [Math.min(approachY, e.y), Math.max(approachY, e.y)] },
-      ]
-      return { d, mx: detourX, my: (s.y + e.y) / 2, segments }
-    }
+const vDetour = detectVerticalDetour(s, e, obstacles)
+if (vDetour) {
+  const { detourX } = vDetour
+  const sign = Math.sign(dy)
+  const halfDy = Math.abs(dy) / 2
+  const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
+  const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
+  const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+  const segments: EdgeSegment[] = [
+    { orientation: 'v', fixed: s.x, range: [Math.min(s.y, departY), Math.max(s.y, departY)] },
+    { orientation: 'h', fixed: departY, range: [Math.min(s.x, detourX), Math.max(s.x, detourX)] },
+    {
+      orientation: 'v',
+      fixed: detourX,
+      range: [Math.min(departY, approachY), Math.max(departY, approachY)],
+    },
+    { orientation: 'h', fixed: approachY, range: [Math.min(detourX, e.x), Math.max(detourX, e.x)] },
+    { orientation: 'v', fixed: e.x, range: [Math.min(approachY, e.y), Math.max(approachY, e.y)] },
+  ]
+  return { d, mx: detourX, my: (s.y + e.y) / 2, segments }
+}
 ```
 
 - [ ] **Step 5: テストを pass まで確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "buildArrowPath segments — horizontal/vertical detour"
 ```
+
 Expected: PASS。
 
 ---
@@ -616,10 +672,12 @@ Expected: PASS。
 ## Task 7: `buildArrowPath` 斜め迂回 4 種で segments 出力（TDD）
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts:499-529` (斜め迂回 switch 文)
 - Modify: `src/lib/arrow-routing.test.ts`
 
 対象分岐:
+
 1. `target-detour` (line 504, 5 segments)
 2. `source-detour` (line 509, 5 segments)
 3. `both-detour` (line 514, 7 segments)
@@ -628,9 +686,11 @@ Expected: PASS。
 - [ ] **Step 1: 既存テストデータから 4 kind の発生座標を抽出**
 
 Run:
+
 ```bash
 grep -n "'target-detour'\|'source-detour'\|'both-detour'\|'shift-my'" src/lib/arrow-routing.test.ts | head -20
 ```
+
 Expected: 4 kind それぞれを発生させる既存テストの位置が出力される。各位置の近傍にある `detectDiagonalDetour(s, e, obstacles)` 呼び出しの引数（s, e, obstacles）を 1 ケースずつ抜き出して、次の Step のテスト座標に流用する。
 
 - [ ] **Step 2: 失敗するテストを書く（shift-my を完全実装、他 3 kind は同じパターン）**
@@ -647,7 +707,9 @@ describe('buildArrowPath segments — diagonal detour', () => {
     // (このプランのコミット時点では実値が確定していないため、Step 1 の結果で置き換える)
     const s = { x: 100, y: 100 }
     const e = { x: 200, y: 200 }
-    const obstacles: Bbox[] = [/* Step 1 の抽出結果から */]
+    const obstacles: Bbox[] = [
+      /* Step 1 の抽出結果から */
+    ]
     const result = buildArrowPath(s, e, s, e, obstacles)
     // shift-my の d 文字列: M${s.x},${s.y} L${s.x},${my} L${e.x},${my} L${e.x},${e.y}
     expect(result.segments).toHaveLength(3)
@@ -682,9 +744,11 @@ describe('buildArrowPath segments — diagonal detour', () => {
 - [ ] **Step 3: テスト失敗を確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts -t "buildArrowPath segments — diagonal detour"
 ```
+
 Expected: FAIL（`result.segments` が undefined）。
 
 - [ ] **Step 5: 実装 — target-detour (line 502-506)**
@@ -770,17 +834,21 @@ Edit `src/lib/arrow-routing.ts:517-521`:
 - [ ] **Step 10: 全テストを pass まで確認**
 
 Run:
+
 ```bash
 npm test -- src/lib/arrow-routing.test.ts
 ```
+
 Expected: 全 PASS（既存 1318 行 + 新規追加分）。
 
 - [ ] **Step 11: TypeScript チェック**
 
 Run:
+
 ```bash
 npx tsc --noEmit
 ```
+
 Expected: エラーなし。
 
 - [ ] **Step 12: コミット**
@@ -808,6 +876,7 @@ EOF
 ## Task 8: `routeAllArrows` ヘルパー実装（TDD）
 
 **Files:**
+
 - Create: `src/features/editor/edge-router.ts`
 - Create: `src/features/editor/edge-router.test.ts`
 
@@ -822,7 +891,13 @@ import type { ArrowResolveContext } from './edge-router'
 import type { Bbox } from '../../lib/arrow-routing'
 
 // テスト用ヘルパー: シンプルな ArrowResolveContext を生成
-const makeCtx = (fx: number, fy: number, tx: number, ty: number, nodeObstacles: Bbox[] = []): ArrowResolveContext => ({
+const makeCtx = (
+  fx: number,
+  fy: number,
+  tx: number,
+  ty: number,
+  nodeObstacles: Bbox[] = [],
+): ArrowResolveContext => ({
   from: { x: fx, y: fy },
   to: { x: tx, y: ty },
   config: { hw: 50, hh: 25, rh: 100 },
@@ -836,9 +911,7 @@ describe('routeAllArrows', () => {
 
   it('returns single ArrowPathResult for single arrow', () => {
     const arrows = [{ id: 'a1', from: 'A', to: 'B' }]
-    const result = routeAllArrows(arrows, (a) =>
-      a.id === 'a1' ? makeCtx(0, 100, 200, 100) : null,
-    )
+    const result = routeAllArrows(arrows, (a) => (a.id === 'a1' ? makeCtx(0, 100, 200, 100) : null))
     expect(result).toHaveLength(1)
     expect(result[0]).not.toBeNull()
     expect(result[0]?.d).toContain('M0,100')
@@ -849,9 +922,7 @@ describe('routeAllArrows', () => {
       { id: 'a1', from: 'A', to: 'B' },
       { id: 'a2', from: 'C', to: 'D' },
     ]
-    const result = routeAllArrows(arrows, (a) =>
-      a.id === 'a2' ? makeCtx(0, 100, 200, 100) : null,
-    )
+    const result = routeAllArrows(arrows, (a) => (a.id === 'a2' ? makeCtx(0, 100, 200, 100) : null))
     expect(result[0]).toBeNull()
     expect(result[1]).not.toBeNull()
   })
@@ -863,10 +934,12 @@ describe('routeAllArrows', () => {
       { id: 'a1', from: 'A', to: 'B' },
       { id: 'a2', from: 'C', to: 'D' },
     ]
-    const result = routeAllArrows(arrows, (a) =>
-      a.id === 'a1'
-        ? makeCtx(0, 100, 300, 100)   // A→B 水平
-        : makeCtx(50, 100, 250, 100), // C→D 水平 (A→B の上にある同じ y)
+    const result = routeAllArrows(
+      arrows,
+      (a) =>
+        a.id === 'a1'
+          ? makeCtx(0, 100, 300, 100) // A→B 水平
+          : makeCtx(50, 100, 250, 100), // C→D 水平 (A→B の上にある同じ y)
     )
     // 第 2 エッジは水平直線ではなく、何らかの迂回経路を取るはず
     // (d 文字列が L コマンド 1 つだけの単純直線ではない)
@@ -880,9 +953,7 @@ describe('routeAllArrows', () => {
       { id: 'a2', from: 'A', to: 'C' },
     ]
     const result = routeAllArrows(arrows, (a) =>
-      a.id === 'a1'
-        ? makeCtx(0, 100, 200, 100)
-        : makeCtx(0, 100, 200, 200),
+      a.id === 'a1' ? makeCtx(0, 100, 200, 100) : makeCtx(0, 100, 200, 200),
     )
     // a2 は a1 の segments を obstacle として認識しない (共有エッジ除外)
     // この場合は迂回が発生せず、L字または Z字パスのまま
@@ -899,9 +970,7 @@ describe('routeAllArrows', () => {
       { id: 'a2', from: 'B', to: 'C' },
     ]
     const result = routeAllArrows(arrows, (a) =>
-      a.id === 'a1'
-        ? makeCtx(0, 100, 200, 100)
-        : makeCtx(0, 200, 200, 100),
+      a.id === 'a1' ? makeCtx(0, 100, 200, 100) : makeCtx(0, 200, 200, 100),
     )
     const arrowsAlone = [{ id: 'a2', from: 'B', to: 'C' }]
     const alone = routeAllArrows(arrowsAlone, () => makeCtx(0, 200, 200, 100))
@@ -933,9 +1002,11 @@ describe('routeAllArrows', () => {
 - [ ] **Step 2: テスト失敗を確認**
 
 Run:
+
 ```bash
 npm test -- src/features/editor/edge-router.test.ts
 ```
+
 Expected: FAIL with module not found.
 
 - [ ] **Step 3: `routeAllArrows` を実装**
@@ -1024,9 +1095,11 @@ export function routeAllArrows<T extends ArrowLike>(
 - [ ] **Step 4: テスト pass まで確認**
 
 Run:
+
 ```bash
 npm test -- src/features/editor/edge-router.test.ts
 ```
+
 Expected: PASS（全 7 件）。
 
 - [ ] **Step 5: コミット**
@@ -1053,15 +1126,18 @@ EOF
 ## Task 9: `FlowEditor.aPath` を `routeAllArrows` に置き換え
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.tsx:1424-1467` (aPath 定義)
 - Modify: `src/features/editor/FlowEditor.tsx` (aPath 呼び出し箇所)
 
 - [ ] **Step 1: 呼び出し箇所を grep**
 
 Run:
+
 ```bash
 grep -n "aPath(" src/features/editor/FlowEditor.tsx
 ```
+
 Expected: 定義箇所 + 呼び出し箇所が全部表示される。複数あれば全て改修対象。
 
 - [ ] **Step 2: import を追加**
@@ -1080,73 +1156,76 @@ Edit `src/features/editor/FlowEditor.tsx:1424-1467`:
 旧 `aPath` 関数を以下に置き換える：
 
 ```ts
-  // routeAllArrows でマルチエッジ協調ルーティング
-  const allArrowPaths = routeAllArrows(arrows, (arrow): ArrowResolveContext | null => {
-    const ft = tasks[arrow.from],
-      tt = tasks[arrow.to]
-    if (!ft || !tt) return null
-    const fli = liMap[ft.lid],
-      fri = riMap[ft.rid],
-      tli = liMap[tt.lid],
-      tri = riMap[tt.rid]
-    if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
-    const from = ct(fli, fri)
-    const to = ct(tli, tri)
+// routeAllArrows でマルチエッジ協調ルーティング
+const allArrowPaths = routeAllArrows(arrows, (arrow): ArrowResolveContext | null => {
+  const ft = tasks[arrow.from],
+    tt = tasks[arrow.to]
+  if (!ft || !tt) return null
+  const fli = liMap[ft.lid],
+    fri = riMap[ft.rid],
+    tli = liMap[tt.lid],
+    tri = riMap[tt.rid]
+  if ([fli, fri, tli, tri].some((v) => v === undefined)) return null
+  const from = ct(fli, fri)
+  const to = ct(tli, tri)
 
-    const obstacles: Bbox[] = buildObstacles({
-      nodes: obstacleNodes,
-      fromKey: arrow.from,
-      toKey: arrow.to,
-      fromCx: from.x,
-      fromCy: from.y,
-      toCx: to.x,
-      toCy: to.y,
-      sameRow: fri === tri,
-      sameLane: fli === tli,
-      rowH: RH,
-      colW: LW + G,
-      bboxW: TW,
-      bboxH: TH,
-    })
-
-    return {
-      from,
-      to,
-      config: {
-        hw: TW / 2,
-        hh: TH / 2,
-        rh: RH,
-        fromShape: ft.shape ?? undefined,
-        toShape: tt.shape ?? undefined,
-        fromSide: arrow.fromSide,
-        toSide: arrow.toSide,
-      },
-      nodeObstacles: obstacles,
-    }
+  const obstacles: Bbox[] = buildObstacles({
+    nodes: obstacleNodes,
+    fromKey: arrow.from,
+    toKey: arrow.to,
+    fromCx: from.x,
+    fromCy: from.y,
+    toCx: to.x,
+    toCy: to.y,
+    sameRow: fri === tri,
+    sameLane: fli === tli,
+    rowH: RH,
+    colW: LW + G,
+    bboxW: TW,
+    bboxH: TH,
   })
 
-  // arrows[i] に対応するパスを引く既存ヘルパー（既存コードとの互換のため残す）
-  // O(1) lookup のため Map で索引化
-  const pathByArrowId = new Map<string, ArrowPathResult | null>()
-  arrows.forEach((a, i) => pathByArrowId.set(a.id, allArrowPaths[i]))
-  const aPath = (arrow: InternalArrow): ArrowPathResult | null =>
-    pathByArrowId.get(arrow.id) ?? null
+  return {
+    from,
+    to,
+    config: {
+      hw: TW / 2,
+      hh: TH / 2,
+      rh: RH,
+      fromShape: ft.shape ?? undefined,
+      toShape: tt.shape ?? undefined,
+      fromSide: arrow.fromSide,
+      toSide: arrow.toSide,
+    },
+    nodeObstacles: obstacles,
+  }
+})
+
+// arrows[i] に対応するパスを引く既存ヘルパー（既存コードとの互換のため残す）
+// O(1) lookup のため Map で索引化
+const pathByArrowId = new Map<string, ArrowPathResult | null>()
+arrows.forEach((a, i) => pathByArrowId.set(a.id, allArrowPaths[i]))
+const aPath = (arrow: InternalArrow): ArrowPathResult | null => pathByArrowId.get(arrow.id) ?? null
 ```
 
 - [ ] **Step 4: TypeScript チェック**
 
 Run:
+
 ```bash
 npx tsc --noEmit
 ```
+
 Expected: エラーなし。
 
 - [ ] **Step 5: 既存テストを実行**
 
 Run:
+
 ```bash
 npm test
 ```
+
 Expected: 全 PASS。FlowEditor 関連のテスト・スナップショットが壊れていないことを確認。
 
 - [ ] **Step 6: コミット**
@@ -1169,6 +1248,7 @@ EOF
 ## Task 10: `SharedFlowViewer.computeArrowPath` を `routeAllArrows` に置き換え
 
 **Files:**
+
 - Modify: `src/features/shared/SharedFlowViewer.tsx:114-164`
 
 - [ ] **Step 1: import を追加**
@@ -1187,66 +1267,64 @@ SharedFlowViewer の Arrow は `fromNodeId / toNodeId` を持つ。`ArrowLike` �
 Edit `src/features/shared/SharedFlowViewer.tsx:114-164` の `computeArrowPath` ループ部分を置き換え：
 
 ```ts
-  // 各 arrow を ArrowLike に整形（from/to は ArrowLike の意味論で fromNodeId/toNodeId にマップ）
-  const arrowsForRouting = flow.arrows.map((a) => ({
-    id: a.id,
-    from: a.fromNodeId,
-    to: a.toNodeId,
-    original: a,
-  }))
+// 各 arrow を ArrowLike に整形（from/to は ArrowLike の意味論で fromNodeId/toNodeId にマップ）
+const arrowsForRouting = flow.arrows.map((a) => ({
+  id: a.id,
+  from: a.fromNodeId,
+  to: a.toNodeId,
+  original: a,
+}))
 
-  const routedPaths = routeAllArrows(arrowsForRouting, (mapped): ArrowResolveContext | null => {
-    const arrow = mapped.original
-    const fromNode = nodeById[arrow.fromNodeId]
-    const toNode = nodeById[arrow.toNodeId]
-    if (!fromNode || !toNode) return null
+const routedPaths = routeAllArrows(arrowsForRouting, (mapped): ArrowResolveContext | null => {
+  const arrow = mapped.original
+  const fromNode = nodeById[arrow.fromNodeId]
+  const toNode = nodeById[arrow.toNodeId]
+  if (!fromNode || !toNode) return null
 
-    const fli = laneIdToIndex[fromNode.laneId]
-    const tli = laneIdToIndex[toNode.laneId]
-    if (fli === undefined || tli === undefined) return null
+  const fli = laneIdToIndex[fromNode.laneId]
+  const tli = laneIdToIndex[toNode.laneId]
+  if (fli === undefined || tli === undefined) return null
 
-    const f = ct(fli, fromNode.rowIndex)
-    const t = ct(tli, toNode.rowIndex)
-    const hw = TW / 2,
-      hh = TH / 2
-    const obstacles: Bbox[] = buildObstacles({
-      nodes: obstacleNodes,
-      fromKey: fromNode.id,
-      toKey: toNode.id,
-      fromCx: f.x,
-      fromCy: f.y,
-      toCx: t.x,
-      toCy: t.y,
-      sameRow: fromNode.rowIndex === toNode.rowIndex,
-      sameLane: fromNode.laneId === toNode.laneId,
-      rowH: RH,
-      colW: LW + G,
-      bboxW: TW,
-      bboxH: TH,
-    })
-
-    return {
-      from: f,
-      to: t,
-      config: {
-        hw,
-        hh,
-        rh: RH,
-        fromShape: fromNode.shape as 'diamond' | undefined,
-        toShape: toNode.shape as 'diamond' | undefined,
-        fromSide: arrow.fromSide ?? undefined,
-        toSide: arrow.toSide ?? undefined,
-      },
-      nodeObstacles: obstacles,
-    }
+  const f = ct(fli, fromNode.rowIndex)
+  const t = ct(tli, toNode.rowIndex)
+  const hw = TW / 2,
+    hh = TH / 2
+  const obstacles: Bbox[] = buildObstacles({
+    nodes: obstacleNodes,
+    fromKey: fromNode.id,
+    toKey: toNode.id,
+    fromCx: f.x,
+    fromCy: f.y,
+    toCx: t.x,
+    toCy: t.y,
+    sameRow: fromNode.rowIndex === toNode.rowIndex,
+    sameLane: fromNode.laneId === toNode.laneId,
+    rowH: RH,
+    colW: LW + G,
+    bboxW: TW,
+    bboxH: TH,
   })
 
-  // 既存の computeArrowPath 互換: indexed lookup
-  const arrowPaths = flow.arrows
-    .map((a, i) => ({ arrow: a, path: routedPaths[i] }))
-    .filter(
-      (x): x is { arrow: Arrow; path: ArrowPathResult } => x.path !== null,
-    )
+  return {
+    from: f,
+    to: t,
+    config: {
+      hw,
+      hh,
+      rh: RH,
+      fromShape: fromNode.shape as 'diamond' | undefined,
+      toShape: toNode.shape as 'diamond' | undefined,
+      fromSide: arrow.fromSide ?? undefined,
+      toSide: arrow.toSide ?? undefined,
+    },
+    nodeObstacles: obstacles,
+  }
+})
+
+// 既存の computeArrowPath 互換: indexed lookup
+const arrowPaths = flow.arrows
+  .map((a, i) => ({ arrow: a, path: routedPaths[i] }))
+  .filter((x): x is { arrow: Arrow; path: ArrowPathResult } => x.path !== null)
 ```
 
 旧 `computeArrowPath` 関数定義は削除する。
@@ -1254,25 +1332,31 @@ Edit `src/features/shared/SharedFlowViewer.tsx:114-164` の `computeArrowPath` �
 - [ ] **Step 3: 旧ヘルパー削除確認**
 
 Run:
+
 ```bash
 grep -n "computeArrowPath" src/features/shared/SharedFlowViewer.tsx
 ```
+
 Expected: 0 件（または変数名が新規ロジック内に出ない）。
 
 - [ ] **Step 4: TypeScript チェック**
 
 Run:
+
 ```bash
 npx tsc --noEmit
 ```
+
 Expected: エラーなし。
 
 - [ ] **Step 5: 既存テスト実行**
 
 Run:
+
 ```bash
 npm test
 ```
+
 Expected: 全 PASS。SharedFlowViewer 関連のテスト・スナップショットが壊れていないことを確認。
 
 - [ ] **Step 6: コミット**
@@ -1295,6 +1379,7 @@ EOF
 ## Task 11: Playwright マルチエッジ視覚検証
 
 **Files:**
+
 - Create: `e2e/edge-routing-multi-edge.spec.ts`
 - Optional Create: `.screenshots/multi-edge-{before,after}.png` (手動撮影 or テスト出力)
 
@@ -1376,23 +1461,28 @@ test.describe('multi-edge routing', () => {
 ```
 
 **注意**:
+
 - Playwright e2e のフロー作成 UI 操作は既存 e2e テストのパターンを参照（`grep -rn "新規フロー作成" e2e/` 等）して合わせる。
 - `countCrossings` は水平・垂直セグメントのみ対象。斜めセグメントが現れた場合は誤検出するが、本プロジェクトの直交ルータでは斜めセグメントは出ない。
 
 - [ ] **Step 2: 既存 e2e テストパターンを確認**
 
 Run:
+
 ```bash
 ls e2e/ && grep -l "calcArrowPath\|arrow-routing\|新規フロー" e2e/ 2>/dev/null
 ```
+
 Expected: 既存 e2e テストの構成が把握できる。新規 spec のフロー作成手順を実装。
 
 - [ ] **Step 3: テスト実行（修正済みの状態で）**
 
 Run:
+
 ```bash
 npx playwright test e2e/edge-routing-multi-edge.spec.ts --headed
 ```
+
 Expected: 視覚確認できる。線が交差していないことを目視で確認 + assert pass。
 
 - [ ] **Step 4: コミット**
@@ -1414,6 +1504,7 @@ EOF
 ## Task 12: ベンチマーク追加
 
 **Files:**
+
 - Create: `src/features/editor/edge-router.bench.ts`
 
 - [ ] **Step 1: vitest bench スクリプト作成**
@@ -1456,9 +1547,11 @@ describe('routeAllArrows benchmark', () => {
 - [ ] **Step 2: ベンチ実行**
 
 Run:
+
 ```bash
 npx vitest bench src/features/editor/edge-router.bench.ts --run
 ```
+
 Expected: 各 N の ops/sec が出力される。
 
 - [ ] **Step 3: 結果を設計ドキュメントに反映**
@@ -1501,10 +1594,12 @@ EOF
 - [ ] **Step 1: main 同期**
 
 Run:
+
 ```bash
 git pull origin main --rebase
 npm test
 ```
+
 Expected: 全 PASS。失敗があれば修正してから次へ。
 
 - [ ] **Step 2: 本番ビルド確認**
@@ -1514,6 +1609,7 @@ Expected: 全 PASS。失敗があれば修正してから次へ。
 - [ ] **Step 3: push + PR 作成**
 
 Run:
+
 ```bash
 git push -u origin feat/multi-edge-routing-stage1-issue-<ISSUE_NUM>
 gh pr create --title "feat(#<ISSUE_NUM>): マルチエッジ協調ルーティング 段階1" --body "$(cat <<'EOF'
@@ -1544,9 +1640,11 @@ EOF
 - [ ] **Step 4: CI watch**
 
 Run:
+
 ```bash
 gh pr checks --watch
 ```
+
 Expected: 全 PASS。失敗があれば修正して push、再 watch。
 
 - [ ] **Step 5: レビュー依頼コメント**

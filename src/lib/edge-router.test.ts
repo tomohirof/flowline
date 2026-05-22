@@ -23,9 +23,7 @@ describe('routeAllArrows', () => {
 
   it('returns single ArrowPathResult for single arrow', () => {
     const arrows = [{ id: 'a1', from: 'A', to: 'B' }]
-    const result = routeAllArrows(arrows, (a) =>
-      a.id === 'a1' ? makeCtx(0, 100, 200, 100) : null,
-    )
+    const result = routeAllArrows(arrows, (a) => (a.id === 'a1' ? makeCtx(0, 100, 200, 100) : null))
     expect(result).toHaveLength(1)
     expect(result[0]).not.toBeNull()
     // exitPt shifts start to node boundary (from.x + hw = 0 + 50 = 50)
@@ -37,9 +35,7 @@ describe('routeAllArrows', () => {
       { id: 'a1', from: 'A', to: 'B' },
       { id: 'a2', from: 'C', to: 'D' },
     ]
-    const result = routeAllArrows(arrows, (a) =>
-      a.id === 'a2' ? makeCtx(0, 100, 200, 100) : null,
-    )
+    const result = routeAllArrows(arrows, (a) => (a.id === 'a2' ? makeCtx(0, 100, 200, 100) : null))
     expect(result[0]).toBeNull()
     expect(result[1]).not.toBeNull()
   })
@@ -50,9 +46,7 @@ describe('routeAllArrows', () => {
       { id: 'a2', from: 'C', to: 'D' },
     ]
     const result = routeAllArrows(arrows, (a) =>
-      a.id === 'a1'
-        ? makeCtx(0, 100, 300, 100)
-        : makeCtx(50, 100, 250, 100),
+      a.id === 'a1' ? makeCtx(0, 100, 300, 100) : makeCtx(50, 100, 250, 100),
     )
 
     // The same a2 routed alone (without a1 as obstacle)

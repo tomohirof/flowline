@@ -71,13 +71,13 @@
 
 ### 責務分担
 
-| レイヤ                                  | 責務                                                                                          |
-| --------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `routeAllArrows` (新規ヘルパー)         | arrows 配列を順次処理、Map による segments 累積、共有ノード除外、SharedViewer/Editor 共通化   |
-| `FlowEditor.aPath` / `SharedFlowViewer` | `routeAllArrows` を呼ぶだけの薄い呼び出し側                                                   |
-| `arrow-routing.ts: buildArrowPath`      | 既存ロジック + 各分岐で segments を並走計算                                                   |
-| `arrow-routing.ts: detect*`             | 変更なし。`obstacles` の中身がノード由来かエッジ由来かは知らない                              |
-| `arrow-routing.ts: segmentsToBboxes`    | EdgeSegment[] → Bbox[] 変換ヘルパー                                                            |
+| レイヤ                                  | 責務                                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `routeAllArrows` (新規ヘルパー)         | arrows 配列を順次処理、Map による segments 累積、共有ノード除外、SharedViewer/Editor 共通化 |
+| `FlowEditor.aPath` / `SharedFlowViewer` | `routeAllArrows` を呼ぶだけの薄い呼び出し側                                                 |
+| `arrow-routing.ts: buildArrowPath`      | 既存ロジック + 各分岐で segments を並走計算                                                 |
+| `arrow-routing.ts: detect*`             | 変更なし。`obstacles` の中身がノード由来かエッジ由来かは知らない                            |
+| `arrow-routing.ts: segmentsToBboxes`    | EdgeSegment[] → Bbox[] 変換ヘルパー                                                         |
 
 ## 型定義と API
 
@@ -85,8 +85,8 @@
 
 ```ts
 export interface EdgeSegment {
-  orientation: 'h' | 'v'  // 水平 or 垂直
-  fixed: number           // 水平なら y、垂直なら x
+  orientation: 'h' | 'v' // 水平 or 垂直
+  fixed: number // 水平なら y、垂直なら x
   range: [number, number] // 開始と終了の座標（min/max 正規化）
 }
 ```
@@ -104,7 +104,7 @@ export interface ArrowPath {
   d: string
   mx: number
   my: number
-  segments: EdgeSegment[]  // ← 追加
+  segments: EdgeSegment[] // ← 追加
 }
 ```
 
@@ -115,7 +115,7 @@ export interface ArrowPathResult {
   d: string
   mx: number
   my: number
-  segments: EdgeSegment[]  // ← 追加
+  segments: EdgeSegment[] // ← 追加
 }
 ```
 
@@ -140,11 +140,12 @@ export interface ArrowResolveContext {
 
 export function routeAllArrows(
   arrows: InternalArrow[],
-  resolveContext: (arrow: InternalArrow) => ArrowResolveContext | null
+  resolveContext: (arrow: InternalArrow) => ArrowResolveContext | null,
 ): Array<ArrowPathResult | null>
 ```
 
 `FlowEditor` と `SharedFlowViewer` の重複ロジックを集約。内部で:
+
 - `priorSegmentsByEdge: Map<edgeId, EdgeSegment[]>`
 - `edgeEndpoints: Map<edgeId, { from: string; to: string }>`
 - 共有ノード除外と segments → Bbox 変換と calcArrowPath 呼び出し
@@ -176,7 +177,8 @@ const aPath = (arrow: InternalArrow): ArrowPathResult | null => {
 
 ```ts
 const arrowPaths = routeAllArrows(arrows, (arrow) => {
-  const ft = tasks[arrow.from], tt = tasks[arrow.to]
+  const ft = tasks[arrow.from],
+    tt = tasks[arrow.to]
   if (!ft || !tt) return null
   // ... fli/fri/tli/tri チェック、from/to 計算、buildObstacles 呼び出し
   return { from, to, config, nodeObstacles }
@@ -201,8 +203,13 @@ export function routeAllArrows(arrows, resolveContext) {
     const foreignSegments: EdgeSegment[] = []
     for (const [eid, segs] of priorSegmentsByEdge) {
       const ep = edgeEndpoints.get(eid)!
-      if (ep.from === arrow.from || ep.from === arrow.to ||
-          ep.to === arrow.from || ep.to === arrow.to) continue
+      if (
+        ep.from === arrow.from ||
+        ep.from === arrow.to ||
+        ep.to === arrow.from ||
+        ep.to === arrow.to
+      )
+        continue
       foreignSegments.push(...segs)
     }
 
@@ -260,34 +267,43 @@ E² 増加（10→200 で 217×）はおおむね理論通りで、段階1 の�
 ## エラー処理 / エッジケース
 
 ### ケース1: `calcArrowPath` が `null` を返す
+
 `priorSegmentsByEdge` に登録しない。次のエッジには影響なし。
 
 ### ケース2: 循環するエッジ参照 (A→B→A)
+
 純粋に配列順で処理。共有ノード除外により A と B は相互に obstacle にならない。
 
 ### ケース3: 同一 from/to のエッジ（重複矢印）
+
 共有ノード除外で互いを obstacle 扱いせず、完全一致した経路。現状と同じ挙動。
 
 ### ケース4: `priorSegments` が空（最初のエッジ）
+
 `foreignSegments` も空配列。従来通り node 障害物だけで経路計算。**最初のエッジの挙動は変わらない**。
 
 ### ケース5: エッジ Bbox が `collectObstacles` のスコープ制限で落ちる
+
 エッジ Bbox は行 grid に整列していないので、`collectObstacles` の隣接行/列フィルタで落ちる可能性。
 
 **対応**: エッジ Bbox は `collectObstacles` を経由せず、`buildObstacles` の戻り値に直接 append（`[...nodeObstacles, ...edgeObstacles]`）。
 
 ### ケース6: 上下塞がり判定がエッジ Bbox で誤動作する可能性
+
 `detectDetour` の `downBlocked`/`upBlocked` は obstacles 全体を見るため、薄いエッジ Bbox が誤判定要因になり得る。
 
 **対応（オプション）**: 必要なら `detectDetour` 側で「`Bbox.h < 3` の障害物は塞がり判定に使わない」フィルタを追加。段階1 ではまず素朴に実装し、テストで顕在化させてから対応判断。
 
 ### ケース7: 自己交差
+
 既存の `clampOffset` / `halfDx`-clamp は座標ベースなのでエッジ Bbox にも適用される想定。テストで検証必須。
 
 ### ケース8: arrows の順序が変わるケース
+
 ルーティング順は `routeAllArrows` 内で `id.localeCompare` でソートする（ケース9 参照）。元の `arrows` 配列の順序が変動しても、ソート後の順序は安定。
 
 ### ケース9: SharedFlowViewer で arrows 順序がエディタと一致しない
+
 両側で同じデータソース（DB）から取得しているため、配列順は通常一致する。万が一の divergence に備え、`routeAllArrows` 内で `arrows.sort((a, b) => a.id.localeCompare(b.id))` を実施し、id 辞書順で決定論性を保証する。
 
 **注意**: これは「作成順」とは限らない（id が UUID なら実質ランダムな決定論順）。重要なのは「同じ入力に対して同じ結果」であって、「最古のエッジが優先」という意味論は保証しない。将来「作成順」が必要になったら `createdAt` フィールドの導入とソートキー変更で対応。
@@ -301,6 +317,7 @@ E² 増加（10→200 で 217×）はおおむね理論通りで、段階1 の�
 **新規テストファイル**: `src/features/editor/edge-router.test.ts`
 
 シナリオ:
+
 1. 2 エッジが同一通路に集中（A: P0→P2、B: P1→P2）→ B が A を避ける
 2. 3 エッジが同一ターゲットに到着（混線カウントが減ることを確認）
 3. 共有 from のエッジ → 互いを obstacle 扱いしない
@@ -311,6 +328,7 @@ E² 増加（10→200 で 217×）はおおむね理論通りで、段階1 の�
 #### Green Phase
 
 順序:
+
 1. `EdgeSegment` 型追加 + `segmentsToBboxes` ヘルパー
 2. `buildArrowPath` 各分岐で segments を構築（既存テストは破壊しない、追加のみ）
 3. `arrow-routing.test.ts` に segments 出力の網羅テスト追加
@@ -337,6 +355,7 @@ E² 増加（10→200 で 217×）はおおむね理論通りで、段階1 の�
 ### Playwright 視覚検証（成功基準）
 
 新規シナリオ:
+
 - `e2e/edge-routing-multi-edge.spec.ts`（新規）
 - ユーザー提供のスクショ相当のフロー（複数エッジが同一ターゲット）を再現
 - **判定方法**: 修正前後でスクリーンショットを取得し `.screenshots/multi-edge-{before,after}.png` として保存。before の SVG 経路 (`<path>` の `d` 属性) を全エッジ分パースし、ペアごとの線分交差数をカウント。after で **交差数が strict に減少**することを assert
@@ -345,6 +364,7 @@ E² 増加（10→200 で 217×）はおおむね理論通りで、段階1 の�
 ### 段階1 完了時のベンチマーク（必須）
 
 `edge-router.bench.ts` を新規追加:
+
 - E = 10 / 50 / 100 / 200 の合成シナリオを用意
 - `routeAllArrows` 単独の実行時間を計測し、設計ドキュメントの「計算量」セクションに実測値を追記
 - 200 本で 16ms（1 フレーム）を超えるなら段階2 への昇格を検討
