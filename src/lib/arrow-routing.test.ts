@@ -767,4 +767,15 @@ describe('detectDiagonalDetour', () => {
       approachY: 358,
     })
   })
+
+  it('should return source-detour when obstacle is in source column between s.y and my', () => {
+    const B: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B])
+    expect(r).toEqual({
+      kind: 'source-detour',
+      departY: 128 + 14, // 142
+      detourX: 200 + 76 + 14, // 290 (右優先)
+      my: 250,
+    })
+  })
 })

@@ -158,9 +158,10 @@ export function detectDiagonalDetour(
     )
   })
 
+  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+
   if (targetColHits.length > 0 && sourceColHits.length === 0) {
     // 方向決定: target 列障害の左右塞がり判定
-    const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
     const rightBlocked = targetColHits.some((obs) =>
       obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
     )
@@ -175,6 +176,23 @@ export function detectDiagonalDetour(
     const halfDy = Math.abs(e.y - my) / 2
     const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
     return { kind: 'target-detour', my, detourX, approachY }
+  }
+
+  if (sourceColHits.length > 0 && targetColHits.length === 0) {
+    const rightBlocked = sourceColHits.some((obs) =>
+      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+    )
+    const leftBlocked = sourceColHits.some((obs) =>
+      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+    )
+    const goRight = !rightBlocked || leftBlocked
+    const detourX = goRight
+      ? Math.max(...sourceColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+      : Math.min(...sourceColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+    const sign = Math.sign(my - s.y)
+    const halfDy = Math.abs(my - s.y) / 2
+    const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
+    return { kind: 'source-detour', departY, detourX, my }
   }
 
   return null
