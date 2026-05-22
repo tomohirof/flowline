@@ -22,5 +22,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["api/**/*.ts", "functions/**/*.ts", "workers/**/*.ts"]
+  "include": ["api/**/*.ts", "functions/**/*.ts", "workers/**/*.ts", "shared/**/*.ts"]
 }

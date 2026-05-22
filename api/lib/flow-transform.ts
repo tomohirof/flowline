@@ -3,7 +3,7 @@
 // Shared between flows.ts and shared.ts routes
 // =============================================
 
-export type ArrowSide = 'top' | 'right' | 'bottom' | 'left'
+import type { ArrowSide } from '../../shared/types'
 
 export interface FlowRow {
   id: string
