@@ -362,12 +362,16 @@ describe('buildArrowPath - 縦方向迂回（同一レーン）', () => {
     expect(r.d).toBe('M200,228 L200,572')
   })
 
-  it('斜め方向（dx >= 2）→ 既存の Z/L 字ロジック（縦迂回しない）', () => {
+  it('斜め方向（dx >= 2）→ detectVerticalDetour は発火せず detectDiagonalDetour 経路へ', () => {
     const sDiag = { x: 200, y: 228 }
     const eDiag = { x: 300, y: 572 }
     const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
     const r = buildArrowPath(sDiag, eDiag, { x: 200, y: 200 }, { x: 300, y: 600 }, [B])
-    expect(r.d).not.toContain('L290,242')
+    // detectVerticalDetour は |dx| >= 2 で null を返す → 縦迂回固有の my=(s.y+e.y)/2 と
+    // detourX 同値の 6 セグ縦迂回パターンにはならない。
+    // detectDiagonalDetour による source-detour に流れる（B は source 列 (200) 上、target 列 (300)
+    // は障害なし）。
+    expect(r.d).toBe('M200,228 L200,242 L290,242 L290,400 L300,400 L300,572')
   })
 
   it('始終点が同じ Y（自己参照） → inCol 空 → 直線', () => {
@@ -587,6 +591,33 @@ describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
   it('should produce default Z-path when no obstacles intersect (diagonal)', () => {
     const r = buildArrowPath(s, e, fc, tc, [])
     expect(r.d).toBe('M200,128 L200,250 L600,250 L600,372')
+  })
+
+  it('should produce 6-segment source-detour path (mirror)', () => {
+    const B: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.d).toBe('M200,128 L200,142 L290,142 L290,250 L600,250 L600,372')
+    expect(r.mx).toBe((290 + 600) / 2)
+    expect(r.my).toBe(250)
+  })
+
+  it('should produce 8-segment both-detour path when both columns blocked', () => {
+    const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const Bt: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [Bs, Bt])
+    expect(r.d).toBe(
+      'M200,128 L200,142 L290,142 L290,250 L690,250 L690,358 L600,358 L600,372',
+    )
+    expect(r.mx).toBe((290 + 690) / 2)
+    expect(r.my).toBe(250)
+  })
+
+  it('should produce 4-segment shift-my path when only middle horizontal segment is blocked', () => {
+    const B: Bbox = { x: 400, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.d).toBe('M200,128 L200,292 L600,292 L600,372')
+    expect(r.mx).toBe(400)
+    expect(r.my).toBe(292)
   })
 })
 

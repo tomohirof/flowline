@@ -395,6 +395,21 @@ export const buildArrowPath = (
         const d = `M${s.x},${s.y} L${s.x},${my} L${detourX},${my} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
         return { d, mx: (s.x + detourX) / 2, my }
       }
+      if (dDetour.kind === 'source-detour') {
+        const { departY, detourX, my } = dDetour
+        const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${my} L${e.x},${my} L${e.x},${e.y}`
+        return { d, mx: (detourX + e.x) / 2, my }
+      }
+      if (dDetour.kind === 'both-detour') {
+        const { departY, sourceDetourX, my, targetDetourX, approachY } = dDetour
+        const d = `M${s.x},${s.y} L${s.x},${departY} L${sourceDetourX},${departY} L${sourceDetourX},${my} L${targetDetourX},${my} L${targetDetourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+        return { d, mx: (sourceDetourX + targetDetourX) / 2, my }
+      }
+      if (dDetour.kind === 'shift-my') {
+        const { my } = dDetour
+        const d = `M${s.x},${s.y} L${s.x},${my} L${e.x},${my} L${e.x},${e.y}`
+        return { d, mx: (s.x + e.x) / 2, my }
+      }
     }
   }
 
