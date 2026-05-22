@@ -213,7 +213,8 @@ export function detectDiagonalDetour(
     return Math.abs(b.y - my) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1
   })
 
-  if (middleRowHits.length > 0 && sourceColHits.length === 0 && targetColHits.length === 0) {
+  // 到達条件: sourceColHits / targetColHits は共に空 (上方の if ブロックが早期 return している)
+  if (middleRowHits.length > 0) {
     const xOverlap = (a: Bbox, b: Bbox) => Math.abs(a.x - b.x) < (a.w + b.w) / 2
     const downBlocked = middleRowHits.some((obs) =>
       obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
