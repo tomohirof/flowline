@@ -963,3 +963,108 @@ describe('exitPt with explicit fromSide (diamond)', () => {
     expect(result).toEqual({ x: 200, y: 200 + hh })
   })
 })
+
+describe('buildArrowPath - L字パスのラベル座標 (#358)', () => {
+  describe('L字 縦→横 (sV && !eV)', () => {
+    it('縦辺が長い場合、縦辺の中点を返す', () => {
+      const s = { x: 100, y: 100 }
+      const e = { x: 200, y: 400 }
+      const fc = { x: 100, y: 80 } // sV: |20| > |0|
+      const tc = { x: 180, y: 400 } // eV: |0| < |20|
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.d).toBe('M100,100 L100,400 L200,400')
+      expect(r.mx).toBe(100) // s.x
+      expect(r.my).toBe(250) // (s.y+e.y)/2
+    })
+
+    it('横辺が長い場合、横辺の中点を返す', () => {
+      const s = { x: 100, y: 100 }
+      const e = { x: 500, y: 200 }
+      const fc = { x: 100, y: 80 }
+      const tc = { x: 480, y: 200 }
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.d).toBe('M100,100 L100,200 L500,200')
+      expect(r.mx).toBe(300) // (s.x+e.x)/2
+      expect(r.my).toBe(200) // e.y
+    })
+
+    it('等長の場合、縦辺優先（>=）', () => {
+      const s = { x: 100, y: 100 }
+      const e = { x: 300, y: 300 }
+      const fc = { x: 100, y: 80 }
+      const tc = { x: 280, y: 300 }
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.d).toBe('M100,100 L100,300 L300,300')
+      expect(r.mx).toBe(100)
+      expect(r.my).toBe(200)
+    })
+  })
+
+  describe('L字 横→縦 (!sV && eV)', () => {
+    it('横辺が長い場合、横辺の中点を返す', () => {
+      const s = { x: 100, y: 100 }
+      const e = { x: 500, y: 300 }
+      const fc = { x: 80, y: 100 } // sV: |0| < |20|
+      const tc = { x: 500, y: 280 } // eV: |20| > |0|
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.d).toBe('M100,100 L500,100 L500,300')
+      expect(r.mx).toBe(300) // (s.x+e.x)/2
+      expect(r.my).toBe(100) // s.y
+    })
+
+    it('縦辺が長い場合、縦辺の中点を返す', () => {
+      const s = { x: 100, y: 100 }
+      const e = { x: 200, y: 500 }
+      const fc = { x: 80, y: 100 }
+      const tc = { x: 200, y: 480 }
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.d).toBe('M100,100 L200,100 L200,500')
+      expect(r.mx).toBe(200) // e.x
+      expect(r.my).toBe(300) // (s.y+e.y)/2
+    })
+
+    it('等長の場合、横辺優先（>=）', () => {
+      const s = { x: 100, y: 100 }
+      const e = { x: 300, y: 300 }
+      const fc = { x: 80, y: 100 }
+      const tc = { x: 300, y: 280 }
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.d).toBe('M100,100 L300,100 L300,300')
+      expect(r.mx).toBe(200)
+      expect(r.my).toBe(100)
+    })
+  })
+
+  describe('リグレッションガード', () => {
+    it('Z字 縦→縦: mx, my は既存の対角線中点を維持', () => {
+      const s = { x: 100, y: 100 }
+      const e = { x: 300, y: 400 }
+      const fc = { x: 100, y: 80 }
+      const tc = { x: 300, y: 380 }
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.mx).toBe(200) // (s.x+e.x)/2
+      expect(r.my).toBe(250) // (s.y+e.y)/2
+    })
+
+    it('Z字 横→横: mx, my は既存の対角線中点を維持', () => {
+      const s = { x: 100, y: 100 }
+      const e = { x: 400, y: 300 }
+      const fc = { x: 80, y: 100 }
+      const tc = { x: 420, y: 300 }
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.mx).toBe(250)
+      expect(r.my).toBe(200)
+    })
+
+    it('直線パス: mx, my は線分中点', () => {
+      const s = { x: 100, y: 200 }
+      const e = { x: 400, y: 200 }
+      const fc = { x: 80, y: 200 }
+      const tc = { x: 420, y: 200 }
+      const r = buildArrowPath(s, e, fc, tc)
+      expect(r.d).toBe('M100,200 L400,200')
+      expect(r.mx).toBe(250)
+      expect(r.my).toBe(200)
+    })
+  })
+})

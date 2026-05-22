@@ -436,33 +436,59 @@ export const buildArrowPath = (
   }
 
   let d: string
+  let mx: number
+  let my: number
 
   // 直線パス: ほぼ垂直またはほぼ水平
   if (Math.abs(dx) < 2 || Math.abs(dy) < 2) {
     d = `M${s.x},${s.y} L${e.x},${e.y}`
+    mx = (s.x + e.x) / 2
+    my = (s.y + e.y) / 2
   } else {
     // 出口が縦方向かどうかを判定（ノード中心との差で判別）
     const sV = Math.abs(s.y - fc.y) > Math.abs(s.x - fc.x)
     const eV = Math.abs(e.y - tc.y) > Math.abs(e.x - tc.x)
 
     if (sV && eV) {
-      // 両方縦出口: Z字パス（横方向に折り返す）
-      const my = (s.y + e.y) / 2
-      d = `M${s.x},${s.y} L${s.x},${my} L${e.x},${my} L${e.x},${e.y}`
+      // 両方縦出口: Z字パス（横方向に折り返す）→ ラベルは中央水平セグメント上
+      const cmy = (s.y + e.y) / 2
+      d = `M${s.x},${s.y} L${s.x},${cmy} L${e.x},${cmy} L${e.x},${e.y}`
+      mx = (s.x + e.x) / 2
+      my = cmy
     } else if (!sV && !eV) {
-      // 両方横出口: Z字パス（縦方向に折り返す）
-      const mx = (s.x + e.x) / 2
-      d = `M${s.x},${s.y} L${mx},${s.y} L${mx},${e.y} L${e.x},${e.y}`
+      // 両方横出口: Z字パス（縦方向に折り返す）→ ラベルは中央垂直セグメント上
+      const cmx = (s.x + e.x) / 2
+      d = `M${s.x},${s.y} L${cmx},${s.y} L${cmx},${e.y} L${e.x},${e.y}`
+      mx = cmx
+      my = (s.y + e.y) / 2
     } else if (sV) {
-      // 縦出口→横入口: L字パス
+      // 縦出口→横入口: L字パス → ラベルは長辺の中点
       d = `M${s.x},${s.y} L${s.x},${e.y} L${e.x},${e.y}`
+      if (Math.abs(e.y - s.y) >= Math.abs(e.x - s.x)) {
+        // 縦辺が長い（または等長）: 縦辺の中点
+        mx = s.x
+        my = (s.y + e.y) / 2
+      } else {
+        // 横辺が長い: 横辺の中点
+        mx = (s.x + e.x) / 2
+        my = e.y
+      }
     } else {
-      // 横出口→縦入口: L字パス
+      // 横出口→縦入口: L字パス → ラベルは長辺の中点
       d = `M${s.x},${s.y} L${e.x},${s.y} L${e.x},${e.y}`
+      if (Math.abs(e.x - s.x) >= Math.abs(e.y - s.y)) {
+        // 横辺が長い（または等長）: 横辺の中点
+        mx = (s.x + e.x) / 2
+        my = s.y
+      } else {
+        // 縦辺が長い: 縦辺の中点
+        mx = e.x
+        my = (s.y + e.y) / 2
+      }
     }
   }
 
-  return { d, mx: (s.x + e.x) / 2, my: (s.y + e.y) / 2 }
+  return { d, mx, my }
 }
 
 export interface ObstacleNode {
