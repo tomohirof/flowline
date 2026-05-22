@@ -1005,6 +1005,25 @@ describe('ノードドラッグの activation distance (#347)', () => {
 
     expect(onSave).toHaveBeenCalled()
   })
+
+  it('対角方向の move は Euclidean 距離で評価される', () => {
+    // dx=5, dy=5 → 距離 √50 ≈ 7.07 > 6 → gate 通過
+    const onSave = vi.fn()
+    const { container } = render(
+      <FlowEditor flow={createFlowWith2VerticalNodes()} onSave={onSave} saveStatus="saved" />,
+    )
+    const rects = findNodeRects(container)
+    const svg = container.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement
+
+    // 軸単位ではどちらも 5px だが Euclidean では √50 ≈ 7.07 > 6。
+    // mousedown は row 0 (clientY=149)、移動先は row 1 (clientY=154)。
+    // dx=5, dy=5 で距離 √50 ≈ 7.07 → gate 通過、row 0 → row 1 で swap 発火。
+    fireEvent.mouseDown(rects[0], { clientX: 100, clientY: 149 })
+    fireEvent.mouseMove(svg, { clientX: 105, clientY: 154 }) // dx=5, dy=5
+    fireEvent.mouseUp(svg, { clientX: 105, clientY: 154 })
+
+    expect(onSave).toHaveBeenCalled()
+  })
 })
 
 describe('logo navigation (#83)', () => {
