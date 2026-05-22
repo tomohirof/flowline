@@ -267,7 +267,7 @@ export const DS = 34
 export const deriveFromSide = (
   origin: { x: number; y: number },
   center: { x: number; y: number },
-): 'top' | 'right' | 'bottom' | 'left' => {
+): ArrowSide => {
   const dx = origin.x - center.x
   const dy = origin.y - center.y
   if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left'
