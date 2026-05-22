@@ -16,11 +16,11 @@
 
 ## File Structure
 
-| ファイル | 役割 | 変更種別 |
-|---|---|---|
-| `src/features/editor/types.ts` | `DragState` 拡張（`startClientX`, `startClientY`, `activated`） | Modify |
-| `src/features/editor/FlowEditor.tsx` | `DRAG_ACTIVATION_DISTANCE` 定数追加、`onDragStart` で座標捕捉、`onSvgMouseMove` 冒頭に activation gate 追加 | Modify |
-| `src/features/editor/FlowEditor.test.tsx` | 6px しきい値の振る舞いテスト追加 | Modify |
+| ファイル                                  | 役割                                                                                                        | 変更種別 |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------- |
+| `src/features/editor/types.ts`            | `DragState` 拡張（`startClientX`, `startClientY`, `activated`）                                             | Modify   |
+| `src/features/editor/FlowEditor.tsx`      | `DRAG_ACTIVATION_DISTANCE` 定数追加、`onDragStart` で座標捕捉、`onSvgMouseMove` 冒頭に activation gate 追加 | Modify   |
+| `src/features/editor/FlowEditor.test.tsx` | 6px しきい値の振る舞いテスト追加                                                                            | Modify   |
 
 新規ファイル追加なし。pure function 化はしない（spec 通り、ロジックがシンプルで再利用予定もないため）。
 
@@ -31,10 +31,12 @@
 ### 主要な座標系・定数（読み取り専用、変更不要）
 
 `FlowEditor.tsx:679-685` で定義:
+
 - `RH = 84` (row height), `HH = 46` (header height), `TM = 24` (top margin)
 - `LM = 28` (left margin)
 
 `cellFromPos`（`src/lib/flow-engine.ts:198`）の挙動:
+
 - `riRaw = Math.floor((sy - (TM + HH)) / RH)` → 行は上端踏み込みで切替
 - 範囲外は clamp で端のセルにスナップ
 
@@ -64,6 +66,7 @@ const findNodeRects = (container: HTMLElement) =>
 ## Task 1: 5px move では swap しないテスト (RED) → 実装 (GREEN)
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx` — 新規 describe ブロック追加
 - Modify: `src/features/editor/types.ts:205-208` — `DragState` 拡張
 - Modify: `src/features/editor/FlowEditor.tsx` — 定数追加、`onDragStart` 更新、`onSvgMouseMove` 冒頭に gate 追加
@@ -118,6 +121,7 @@ describe('ノードドラッグの activation distance (#347)', () => {
 - [ ] **Step 2: テストを実行して fail を確認**
 
 Run:
+
 ```bash
 npx vitest run src/features/editor/FlowEditor.test.tsx -t "しきい値未達"
 ```
@@ -181,23 +185,23 @@ const onDragStart = (k: string, e: React.MouseEvent): void => {
 `src/features/editor/FlowEditor.tsx:982-983` の以下の行:
 
 ```tsx
-    if (!dragging) return
-    const cell = cellFromPos(pt.x, pt.y)
+if (!dragging) return
+const cell = cellFromPos(pt.x, pt.y)
 ```
 
 を以下に置換:
 
 ```tsx
-    if (!dragging) return
-    if (!dragging.activated) {
-      const dx = e.clientX - dragging.startClientX
-      const dy = e.clientY - dragging.startClientY
-      if (Math.hypot(dx, dy) < DRAG_ACTIVATION_DISTANCE) {
-        return
-      }
-      setDragging({ ...dragging, activated: true })
-    }
-    const cell = cellFromPos(pt.x, pt.y)
+if (!dragging) return
+if (!dragging.activated) {
+  const dx = e.clientX - dragging.startClientX
+  const dy = e.clientY - dragging.startClientY
+  if (Math.hypot(dx, dy) < DRAG_ACTIVATION_DISTANCE) {
+    return
+  }
+  setDragging({ ...dragging, activated: true })
+}
+const cell = cellFromPos(pt.x, pt.y)
 ```
 
 ポイント: gate は `dragging.multi` 分岐の**前**に置くため single/multi 両方に適用される。同じ event 内で gate を通過した直後の `cellFromPos`→`setDragOver` も継続実行する。
@@ -205,6 +209,7 @@ const onDragStart = (k: string, e: React.MouseEvent): void => {
 - [ ] **Step 7: テストを再実行して PASS を確認**
 
 Run:
+
 ```bash
 npx vitest run src/features/editor/FlowEditor.test.tsx -t "しきい値未達"
 ```
@@ -214,6 +219,7 @@ Expected: PASS。
 - [ ] **Step 8: TypeScript の型エラーがないか確認**
 
 Run:
+
 ```bash
 npx tsc --noEmit
 ```
@@ -225,6 +231,7 @@ Expected: エラーなし。
 - [ ] **Step 9: 全テストを実行**
 
 Run:
+
 ```bash
 npm test -- --run
 ```
@@ -252,6 +259,7 @@ EOF
 ## Task 2: 6px 超え move で swap が発火するテスト（正常系の確認）
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx` — 既存 `describe('ノードドラッグの activation distance (#347)', ...)` 内に追加
 
 しきい値超過時の正常な swap 動作を保証する回帰防止テスト。
@@ -283,6 +291,7 @@ it('しきい値超え (6px 以上) の move で swap が発火する', () => {
 - [ ] **Step 2: テストを実行して PASS を確認**
 
 Run:
+
 ```bash
 npx vitest run src/features/editor/FlowEditor.test.tsx -t "しきい値超え"
 ```
@@ -308,6 +317,7 @@ EOF
 ## Task 3: 累積移動でしきい値を超えるとゲート通過するテスト
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx`
 
 `activated` フラグの不可逆性（一度 true になったら同じドラッグ中はずっと true）を保証。
@@ -339,6 +349,7 @@ it('累積で 6px を超えた時点で gate が通過する', () => {
 - [ ] **Step 2: テストを実行**
 
 Run:
+
 ```bash
 npx vitest run src/features/editor/FlowEditor.test.tsx -t "累積で 6px"
 ```
@@ -362,6 +373,7 @@ EOF
 ## Task 4: 対角方向 (Euclidean) のしきい値判定テスト
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx`
 
 軸別ではなくユークリッド円形しきい値であることを保証。
@@ -393,6 +405,7 @@ it('対角方向の move は Euclidean 距離で評価される', () => {
 - [ ] **Step 2: テストを実行**
 
 Run:
+
 ```bash
 npx vitest run src/features/editor/FlowEditor.test.tsx -t "対角方向"
 ```
@@ -418,6 +431,7 @@ EOF
 ## Task 5: マルチドラッグでも同じしきい値が適用されるテスト
 
 **Files:**
+
 - Modify: `src/features/editor/FlowEditor.test.tsx`
 
 `onSvgMouseMove` で gate を `dragging.multi` 分岐の前に置いたため、multi でも同じ閾値が効くことを確認。
@@ -475,6 +489,7 @@ it('マルチドラッグでも 6px 以上の move で位置変更が発火す�
 - [ ] **Step 3: 両テストを実行**
 
 Run:
+
 ```bash
 npx vitest run src/features/editor/FlowEditor.test.tsx -t "マルチドラッグでも"
 ```
@@ -506,6 +521,7 @@ EOF
 - [ ] **Step 1: 既存のドラッグ関連テストを検索**
 
 Run:
+
 ```bash
 grep -n "fireEvent\.mouseMove\|fireEvent\.mouseDown\|onDragStart\|setDragging" src/features/editor/FlowEditor.test.tsx
 ```
@@ -550,6 +566,7 @@ npm run dev
 ログインは `.env.local` の `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` を使用。
 
 シナリオ:
+
 1. ログインしてフローエディタを開く（既存の任意のフローか新規作成）。
 2. 同一レーン内に縦に並ぶノードを 2 つ以上配置。
 3. いずれかのノードをクリックして 1〜3mm 程度ブレさせて mouseUp する。
@@ -641,6 +658,7 @@ gh pr comment --body '@claude PRをレビューして。
 ## Self-Review チェック（実装者向けではなく計画作成者によるセルフレビュー）
 
 ✅ **Spec coverage:**
+
 - 受け入れ条件 #1 (微小ブレで順序維持) → Task 1
 - #2 (6px 超で従来通り swap) → Task 2
 - #3 (zoom 非依存) → Task 1 で `clientX/Y` を使用、設計レベルで保証
