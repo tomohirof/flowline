@@ -19,6 +19,11 @@ const APPROACH_GAP = 14
 // APPROACH_GAP と対称設計（同値）で、始点側もノード端から少し横に進んでから下降させる。
 const DEPART_GAP = 14
 
+// Bbox 同士の X 軸重なり判定 (中心間距離が半径合計より小)
+const xOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.x - b.x) < (a.w + b.w) / 2
+// Bbox 同士の Y 軸重なり判定 (中心間距離が半径合計より小)
+const yOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+
 function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
   // 水平直線でなければ迂回しない
   if (Math.abs(e.y - s.y) >= 2) return null
@@ -41,7 +46,6 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   // 前提: obstacles 配列には呼び出し側で「同一行＋直上行＋直下行のみ」をフィルタ済み
   // のノードが入っていること（collectObstacles ヘルパーがこれを保証する）。Y 距離の
   // 厳密チェックを省略しているのはこの前提のため。
-  const xOverlap = (a: Bbox, b: Bbox) => Math.abs(a.x - b.x) < (a.w + b.w) / 2
   const downBlocked = inRow.some((obs) =>
     obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
   )
@@ -83,7 +87,6 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
 
   // 左右塞がり判定（Y 重なりするノードが直左/直右に存在するか）
   // 前提: obstacles 配列には呼び出し側で「同一列＋直左列＋直右列のみ」をフィルタ済み
-  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
   const rightBlocked = inCol.some((obs) =>
     obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
   )
@@ -123,7 +126,6 @@ type DiagonalDetourResult =
  * ため、both-detour では呼び出し側が反対側列の hits を除外した blockers を渡す。
  */
 function pickDetourX(hits: Bbox[], blockers: Bbox[]): number {
-  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
   const rightBlocked = hits.some((obs) => blockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)))
   const leftBlocked = hits.some((obs) => blockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)))
   const goRight = !rightBlocked || leftBlocked
@@ -215,7 +217,6 @@ export function detectDiagonalDetour(
 
   // 到達条件: sourceColHits / targetColHits は共に空 (上方の if ブロックが早期 return している)
   if (middleRowHits.length > 0) {
-    const xOverlap = (a: Bbox, b: Bbox) => Math.abs(a.x - b.x) < (a.w + b.w) / 2
     const downBlocked = middleRowHits.some((obs) =>
       obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
     )
