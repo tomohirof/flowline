@@ -3,6 +3,8 @@ import {
   buildArrowPath,
   collectObstacles,
   collectVerticalObstacles,
+  collectDiagonalObstacles,
+  detectDiagonalDetour,
   type Bbox,
   type ObstacleNode,
 } from './arrow-routing'
@@ -360,12 +362,16 @@ describe('buildArrowPath - 縦方向迂回（同一レーン）', () => {
     expect(r.d).toBe('M200,228 L200,572')
   })
 
-  it('斜め方向（dx >= 2）→ 既存の Z/L 字ロジック（縦迂回しない）', () => {
+  it('斜め方向（dx >= 2）→ detectVerticalDetour は発火せず detectDiagonalDetour 経路へ', () => {
     const sDiag = { x: 200, y: 228 }
     const eDiag = { x: 300, y: 572 }
     const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
     const r = buildArrowPath(sDiag, eDiag, { x: 200, y: 200 }, { x: 300, y: 600 }, [B])
-    expect(r.d).not.toContain('L290,242')
+    // detectVerticalDetour は |dx| >= 2 で null を返す → 縦迂回固有の my=(s.y+e.y)/2 と
+    // detourX 同値の 6 セグ縦迂回パターンにはならない。
+    // detectDiagonalDetour による source-detour に流れる（B は source 列 (200) 上、target 列 (300)
+    // は障害なし）。
+    expect(r.d).toBe('M200,228 L200,242 L290,242 L290,400 L300,400 L300,572')
   })
 
   it('始終点が同じ Y（自己参照） → inCol 空 → 直線', () => {
@@ -565,5 +571,323 @@ describe('collectVerticalObstacles', () => {
       bboxH: TH,
     })
     expect(result).toEqual([])
+  })
+})
+
+describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
+  const s = { x: 200, y: 128 }
+  const e = { x: 600, y: 372 }
+  const fc = { x: 200, y: 100 }
+  const tc = { x: 600, y: 400 }
+
+  it('should produce 6-segment target-detour path when obstacle in target column (core bug case)', () => {
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.d).toBe('M200,128 L200,250 L690,250 L690,358 L600,358 L600,372')
+    expect(r.mx).toBe((200 + 690) / 2)
+    expect(r.my).toBe(250)
+  })
+
+  it('should produce default Z-path when no obstacles intersect (diagonal)', () => {
+    const r = buildArrowPath(s, e, fc, tc, [])
+    expect(r.d).toBe('M200,128 L200,250 L600,250 L600,372')
+  })
+
+  it('should produce 6-segment source-detour path (mirror)', () => {
+    const B: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.d).toBe('M200,128 L200,142 L290,142 L290,250 L600,250 L600,372')
+    expect(r.mx).toBe((290 + 600) / 2)
+    expect(r.my).toBe(250)
+  })
+
+  it('should produce 8-segment both-detour path when both columns blocked', () => {
+    const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const Bt: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [Bs, Bt])
+    expect(r.d).toBe('M200,128 L200,142 L290,142 L290,250 L690,250 L690,358 L600,358 L600,372')
+    expect(r.mx).toBe((290 + 690) / 2)
+    expect(r.my).toBe(250)
+  })
+
+  it('should produce 4-segment shift-my path when only middle horizontal segment is blocked', () => {
+    const B: Bbox = { x: 400, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.d).toBe('M200,128 L200,292 L600,292 L600,372')
+    expect(r.mx).toBe(400)
+    expect(r.my).toBe(292)
+  })
+
+  it('should not affect horizontal arrow detour (regression guard for #314)', () => {
+    const sH = { x: 276, y: 200 }
+    const eH = { x: 524, y: 200 }
+    const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(sH, eH, { x: 200, y: 200 }, { x: 600, y: 200 }, [B])
+    expect(r.d).toBe('M276,200 L290,200 L290,242 L510,242 L510,200 L524,200')
+  })
+
+  it('should not affect vertical arrow detour (regression guard for #333)', () => {
+    const sV = { x: 200, y: 128 }
+    const eV = { x: 200, y: 372 }
+    const B: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(sV, eV, { x: 200, y: 100 }, { x: 200, y: 400 }, [B])
+    // 既存 detectVerticalDetour による 6 セグ右迂回
+    expect(r.d).toContain('M200,128')
+    expect(r.d).toContain('L200,372')
+    expect(r.d).toMatch(/L290,\d+/) // 右迂回 detourX = 200+76+14 = 290
+  })
+
+  it('should produce default Z-path when obstacles array is undefined (diagonal)', () => {
+    const r = buildArrowPath(s, e, fc, tc)
+    expect(r.d).toBe('M200,128 L200,250 L600,250 L600,372')
+  })
+
+  it('should handle diagonal detour when source/target points come from diamond shape', () => {
+    const sDia = { x: 200, y: 134 } // approx 中心 (200,100) + DS(34) 下
+    const eDia = { x: 600, y: 366 } // approx 中心 (600,400) - DS(34) 上
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 } // target 列障害
+    const r = buildArrowPath(sDia, eDia, { x: 200, y: 100 }, { x: 600, y: 400 }, [B])
+    expect(r.d).toBe('M200,134 L200,250 L690,250 L690,352 L600,352 L600,366')
+  })
+})
+
+describe('collectDiagonalObstacles', () => {
+  const baseArgs = {
+    fromKey: 'A',
+    toKey: 'C',
+    fromCx: 200,
+    fromCy: 100,
+    toCx: 600,
+    toCy: 400,
+    rowH: 84,
+    colW: 200,
+    bboxW: 152,
+    bboxH: 56,
+  }
+
+  it('should exclude from/to nodes themselves when only from/to exist', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([])
+  })
+
+  it('should collect source-column obstacle between source and target rows', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 200, cy: 250 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([{ x: 200, y: 250, w: 152, h: 56 }])
+  })
+
+  it('should not collect source-column nodes outside Z-path Y range', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 200, cy: 50 },
+      { key: 'D', cx: 200, cy: 450 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([])
+  })
+
+  it('should collect target-column obstacle between source and target rows', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 600, cy: 250 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([{ x: 600, y: 250, w: 152, h: 56 }])
+  })
+
+  it('should collect middle-row obstacle between source and target X', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 400, cy: 250 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([{ x: 400, y: 250, w: 152, h: 56 }])
+  })
+
+  it('should not collect nodes outside Z-path X range at middle row', () => {
+    // 中央行 Y (=250) だが、source 列・target 列・隣接列のいずれにも該当しない X 位置
+    // (fromCx=200, toCx=600, colW=200, bboxW=152)
+    //   source col:        cx in (122, 278)
+    //   target col:        cx in (522, 678)
+    //   source adjacent:   |cx-200| in (124, 276) → cx in (-76, 76) ∪ (324, 476)
+    //   target adjacent:   |cx-600| in (124, 276) → cx in (324, 476) ∪ (724, 876)
+    //   middle-row Z(X):   cx in (201, 599)
+    // cx=100: 隣接列バンド外 (76 < 100 < 122)、source 列外、middle-row Z 範囲外
+    // cx=700: 隣接列バンド外 (678 < 700 < 724)、target 列外、middle-row Z 範囲外
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 100, cy: 250 },
+      { key: 'D', cx: 700, cy: 250 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([])
+  })
+
+  it('should collect source-adjacent-column obstacle within extended Y range', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 400, cy: 100 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toContainEqual({ x: 400, y: 100, w: 152, h: 56 })
+  })
+
+  it('should collect target-adjacent-column obstacle for direction decision', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 800, cy: 400 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toContainEqual({ x: 800, y: 400, w: 152, h: 56 })
+  })
+
+  it('should not collect adjacent-column nodes outside extended Y range', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'B', cx: 400, cy: 800 },
+      { key: 'C', cx: 600, cy: 400 },
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toEqual([])
+  })
+
+  it('should return empty array when nodes is empty', () => {
+    const r = collectDiagonalObstacles({ nodes: [], ...baseArgs })
+    expect(r).toEqual([])
+  })
+
+  it('should collect multiple obstacles matching different rules simultaneously', () => {
+    const nodes: ObstacleNode[] = [
+      { key: 'A', cx: 200, cy: 100 },
+      { key: 'C', cx: 600, cy: 400 },
+      { key: 'Bs', cx: 200, cy: 250 }, // source 列 ストリップ
+      { key: 'Bm', cx: 400, cy: 250 }, // 中央行 ストリップ
+      { key: 'Bt', cx: 600, cy: 250 }, // target 列 ストリップ
+    ]
+    const r = collectDiagonalObstacles({ nodes, ...baseArgs })
+    expect(r).toHaveLength(3)
+    expect(r).toContainEqual({ x: 200, y: 250, w: 152, h: 56 })
+    expect(r).toContainEqual({ x: 400, y: 250, w: 152, h: 56 })
+    expect(r).toContainEqual({ x: 600, y: 250, w: 152, h: 56 })
+  })
+})
+
+describe('detectDiagonalDetour', () => {
+  const s = { x: 200, y: 128 }
+  const e = { x: 600, y: 372 }
+
+  it('should return null when arrow is horizontal (|dy| < 2)', () => {
+    const r = detectDiagonalDetour({ x: 200, y: 200 }, { x: 600, y: 201 }, [
+      { x: 400, y: 200, w: 152, h: 56 },
+    ])
+    expect(r).toBeNull()
+  })
+
+  it('should return null when arrow is vertical (|dx| < 2)', () => {
+    const r = detectDiagonalDetour({ x: 200, y: 100 }, { x: 201, y: 400 }, [
+      { x: 200, y: 250, w: 152, h: 56 },
+    ])
+    expect(r).toBeNull()
+  })
+
+  it('should return null with empty obstacles array', () => {
+    expect(detectDiagonalDetour(s, e, [])).toBeNull()
+  })
+
+  it('should return null when no obstacles intersect Z-path', () => {
+    const farAway: Bbox = { x: 50, y: 50, w: 152, h: 56 }
+    expect(detectDiagonalDetour(s, e, [farAway])).toBeNull()
+  })
+
+  it('should return target-detour when obstacle is in target column between my and e.y', () => {
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B])
+    expect(r).toEqual({
+      kind: 'target-detour',
+      my: 250,
+      detourX: 600 + 76 + 14, // 690 (右迂回: 障害右端 + DETOUR_MARGIN)
+      approachY: 372 - 14, // 358
+    })
+  })
+
+  it('should return target-detour with left-side detourX when target column is right-blocked', () => {
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B, R])
+    expect(r).toEqual({
+      kind: 'target-detour',
+      my: 250,
+      detourX: 600 - 76 - 14, // 510 (左迂回)
+      approachY: 358,
+    })
+  })
+
+  it('should prefer right detour when both sides of target column are blocked', () => {
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
+    const L: Bbox = { x: 400, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B, R, L])
+    expect(r).toEqual({
+      kind: 'target-detour',
+      my: 250,
+      detourX: 690, // 右優先
+      approachY: 358,
+    })
+  })
+
+  it('should return source-detour when obstacle is in source column between s.y and my', () => {
+    const B: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B])
+    expect(r).toEqual({
+      kind: 'source-detour',
+      departY: 128 + 14, // 142
+      detourX: 200 + 76 + 14, // 290 (右優先)
+      my: 250,
+    })
+  })
+
+  it('should return shift-my when only middle horizontal segment is blocked', () => {
+    const B: Bbox = { x: 400, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B])
+    expect(r).toEqual({
+      kind: 'shift-my',
+      my: 250 + 28 + 14, // 292 (下優先: 障害下端 + DETOUR_MARGIN)
+    })
+  })
+
+  it('should escalate to target-detour when shift-my would exceed row bounds', () => {
+    const sNarrow = { x: 200, y: 128 }
+    const eNarrow = { x: 600, y: 172 }
+    const B: Bbox = { x: 400, y: 150, w: 152, h: 56 }
+    const r = detectDiagonalDetour(sNarrow, eNarrow, [B])
+    expect(r?.kind).toBe('target-detour')
+  })
+
+  it('should return both-detour when source and target columns both have obstacles', () => {
+    const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const Bt: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [Bs, Bt])
+    expect(r).toEqual({
+      kind: 'both-detour',
+      departY: 142,
+      sourceDetourX: 290,
+      my: 250,
+      targetDetourX: 690,
+      approachY: 358,
+    })
   })
 })

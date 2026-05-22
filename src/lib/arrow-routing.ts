@@ -19,6 +19,11 @@ const APPROACH_GAP = 14
 // APPROACH_GAP と対称設計（同値）で、始点側もノード端から少し横に進んでから下降させる。
 const DEPART_GAP = 14
 
+// Bbox 同士の X 軸重なり判定 (中心間距離が半径合計より小)
+const xOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.x - b.x) < (a.w + b.w) / 2
+// Bbox 同士の Y 軸重なり判定 (中心間距離が半径合計より小)
+const yOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+
 function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
   // 水平直線でなければ迂回しない
   if (Math.abs(e.y - s.y) >= 2) return null
@@ -41,7 +46,6 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   // 前提: obstacles 配列には呼び出し側で「同一行＋直上行＋直下行のみ」をフィルタ済み
   // のノードが入っていること（collectObstacles ヘルパーがこれを保証する）。Y 距離の
   // 厳密チェックを省略しているのはこの前提のため。
-  const xOverlap = (a: Bbox, b: Bbox) => Math.abs(a.x - b.x) < (a.w + b.w) / 2
   const downBlocked = inRow.some((obs) =>
     obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
   )
@@ -83,7 +87,6 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
 
   // 左右塞がり判定（Y 重なりするノードが直左/直右に存在するか）
   // 前提: obstacles 配列には呼び出し側で「同一列＋直左列＋直右列のみ」をフィルタ済み
-  const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
   const rightBlocked = inCol.some((obs) =>
     obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
   )
@@ -100,6 +103,147 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
     : Math.min(...inCol.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
 
   return { detourX }
+}
+
+type DiagonalDetourResult =
+  | { kind: 'shift-my'; my: number }
+  | { kind: 'target-detour'; my: number; detourX: number; approachY: number }
+  | { kind: 'source-detour'; departY: number; detourX: number; my: number }
+  | {
+      kind: 'both-detour'
+      departY: number
+      sourceDetourX: number
+      my: number
+      targetDetourX: number
+      approachY: number
+    }
+
+/**
+ * 右優先で迂回 X を決定する。hits 中のいずれかが Y 重なりするブロッカーを直右に持てば右塞がり、
+ * 直左に持てば左塞がり。両塞がりなら右優先 (#333 と整合)。
+ *
+ * blockers は方向判定対象のブロッカー候補。target/source 列同士の相互ブロッキングを防ぐ
+ * ため、both-detour では呼び出し側が反対側列の hits を除外した blockers を渡す。
+ */
+function pickDetourX(hits: Bbox[], blockers: Bbox[]): number {
+  const rightBlocked = hits.some((obs) => blockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)))
+  const leftBlocked = hits.some((obs) => blockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)))
+  const goRight = !rightBlocked || leftBlocked
+  return goRight
+    ? Math.max(...hits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+    : Math.min(...hits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+}
+
+/**
+ * 始点 from から終点 to に向けて gap 分だけオフセットした値を返す。
+ * 自己交差防止のため |to - from| / 2 で clamp。depart Y / approach Y / X の計算で共通化。
+ */
+function clampOffset(from: number, to: number, gap: number): number {
+  const sign = Math.sign(to - from)
+  const halfDist = Math.abs(to - from) / 2
+  return from + sign * Math.min(gap, halfDist)
+}
+
+/**
+ * 斜め配置矢印 (異行×異レーン) の Z字パス 3 セグメント (source 縦/中央水平/target 縦) と
+ * 障害ノードの衝突を判定し、迂回パスを記述する DiagonalDetourResult を返す。
+ * 障害なしまたは斜めでない (水平・垂直直線) ときは null を返す。
+ *
+ * 優先順位:
+ *   sourceColHit && targetColHit → 'both-detour' (8 セグ)
+ *   targetColHit                 → 'target-detour' (6 セグ、core ケース)
+ *   sourceColHit                 → 'source-detour' (6 セグ、鏡像)
+ *   middleRowHit のみ             → 'shift-my' (4 セグ維持)
+ */
+export function detectDiagonalDetour(
+  s: Point,
+  e: Point,
+  obstacles: Bbox[],
+): DiagonalDetourResult | null {
+  if (Math.abs(e.x - s.x) < 2 || Math.abs(e.y - s.y) < 2) return null
+  if (obstacles.length === 0) return null
+
+  const my = (s.y + e.y) / 2
+
+  // source 列衝突: source 縦セグメント (s.y → my) と重なる障害
+  const sourceColHits = obstacles.filter((b) => {
+    const yLow = Math.min(s.y, my)
+    const yHigh = Math.max(s.y, my)
+    return (
+      Math.abs(b.x - s.x) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1
+    )
+  })
+
+  // target 列衝突: target 縦セグメント (my → e.y) と重なる障害
+  const targetColHits = obstacles.filter((b) => {
+    const yLow = Math.min(my, e.y)
+    const yHigh = Math.max(my, e.y)
+    return (
+      Math.abs(b.x - e.x) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1
+    )
+  })
+
+  if (sourceColHits.length > 0 && targetColHits.length > 0) {
+    // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
+    const targetIds = new Set(targetColHits)
+    const sourceIds = new Set(sourceColHits)
+    const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
+    const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
+    const sourceDetourX = pickDetourX(sourceColHits, srcBlockers)
+    const targetDetourX = pickDetourX(targetColHits, tgtBlockers)
+    const departY = clampOffset(s.y, my, DEPART_GAP)
+    const approachY = clampOffset(e.y, my, APPROACH_GAP)
+    return { kind: 'both-detour', departY, sourceDetourX, my, targetDetourX, approachY }
+  }
+
+  if (targetColHits.length > 0 && sourceColHits.length === 0) {
+    const detourX = pickDetourX(targetColHits, obstacles)
+    const approachY = clampOffset(e.y, my, APPROACH_GAP)
+    return { kind: 'target-detour', my, detourX, approachY }
+  }
+
+  if (sourceColHits.length > 0 && targetColHits.length === 0) {
+    const detourX = pickDetourX(sourceColHits, obstacles)
+    const departY = clampOffset(s.y, my, DEPART_GAP)
+    return { kind: 'source-detour', departY, detourX, my }
+  }
+
+  // 中央水平セグメント衝突: Y ≈ my で X が源-標的間
+  const middleRowHits = obstacles.filter((b) => {
+    const xLow = Math.min(s.x, e.x)
+    const xHigh = Math.max(s.x, e.x)
+    return Math.abs(b.y - my) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1
+  })
+
+  // 到達条件: sourceColHits / targetColHits は共に空 (上方の if ブロックが早期 return している)
+  if (middleRowHits.length > 0) {
+    const downBlocked = middleRowHits.some((obs) =>
+      obstacles.some((b) => b.y > obs.y + 1 && xOverlap(obs, b)),
+    )
+    const upBlocked = middleRowHits.some((obs) =>
+      obstacles.some((b) => b.y < obs.y - 1 && xOverlap(obs, b)),
+    )
+    const goDown = !downBlocked || upBlocked
+    const shiftedMy = goDown
+      ? Math.max(...middleRowHits.map((o) => o.y + o.h / 2)) + DETOUR_MARGIN
+      : Math.min(...middleRowHits.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
+
+    // ガード: shiftedMy が source 行 / target 行を侵食しないこと
+    const yLow = Math.min(s.y, e.y)
+    const yHigh = Math.max(s.y, e.y)
+    const bboxHEst = middleRowHits[0].h
+    const lo = yLow + bboxHEst / 2 + 1
+    const hi = yHigh - bboxHEst / 2 - 1
+    if (shiftedMy >= lo && shiftedMy <= hi) {
+      return { kind: 'shift-my', my: shiftedMy }
+    }
+    // 範囲外 → 中央障害を targetColHit 扱いで target-detour に昇格
+    const detourX = pickDetourX(middleRowHits, obstacles)
+    const approachY = clampOffset(e.y, my, APPROACH_GAP)
+    return { kind: 'target-detour', my, detourX, approachY }
+  }
+
+  return null
 }
 
 interface ArrowPath {
@@ -233,6 +377,38 @@ export const buildArrowPath = (
       const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
       return { d, mx: detourX, my: (s.y + e.y) / 2 }
     }
+
+    const dDetour = detectDiagonalDetour(s, e, obstacles)
+    if (dDetour) {
+      switch (dDetour.kind) {
+        case 'target-detour': {
+          const { my, detourX, approachY } = dDetour
+          const d = `M${s.x},${s.y} L${s.x},${my} L${detourX},${my} L${detourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+          return { d, mx: (s.x + detourX) / 2, my }
+        }
+        case 'source-detour': {
+          const { departY, detourX, my } = dDetour
+          const d = `M${s.x},${s.y} L${s.x},${departY} L${detourX},${departY} L${detourX},${my} L${e.x},${my} L${e.x},${e.y}`
+          return { d, mx: (detourX + e.x) / 2, my }
+        }
+        case 'both-detour': {
+          const { departY, sourceDetourX, my, targetDetourX, approachY } = dDetour
+          const d = `M${s.x},${s.y} L${s.x},${departY} L${sourceDetourX},${departY} L${sourceDetourX},${my} L${targetDetourX},${my} L${targetDetourX},${approachY} L${e.x},${approachY} L${e.x},${e.y}`
+          return { d, mx: (sourceDetourX + targetDetourX) / 2, my }
+        }
+        case 'shift-my': {
+          const { my } = dDetour
+          const d = `M${s.x},${s.y} L${s.x},${my} L${e.x},${my} L${e.x},${e.y}`
+          return { d, mx: (s.x + e.x) / 2, my }
+        }
+        default: {
+          const _exhaustive: never = dDetour
+          throw new Error(
+            `Unhandled DiagonalDetourResult kind: ${(_exhaustive as { kind: string }).kind}`,
+          )
+        }
+      }
+    }
   }
 
   let d: string
@@ -363,4 +539,142 @@ export function collectVerticalObstacles(args: CollectVerticalObstaclesArgs): Bb
     }
   }
   return result
+}
+
+interface CollectDiagonalObstaclesArgs {
+  nodes: ObstacleNode[]
+  fromKey: string
+  toKey: string
+  fromCx: number
+  fromCy: number
+  toCx: number
+  toCy: number
+  rowH: number
+  colW: number
+  bboxW: number
+  bboxH: number
+}
+
+/**
+ * 斜め配置矢印 (異行×異レーン) の Z字パスに沿った障害ノードを bbox 配列で返す。
+ * source 列・target 列・中央行・各列の隣接列を広めに収集し、detector 側で再フィルタする。
+ * from/to 自身と Z字パスから離れたノードは除外する。
+ */
+export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bbox[] {
+  const { nodes, fromKey, toKey, fromCx, fromCy, toCx, toCy, rowH, colW, bboxW, bboxH } = args
+  const yLow = Math.min(fromCy, toCy)
+  const yHigh = Math.max(fromCy, toCy)
+  const result: Bbox[] = []
+  for (const n of nodes) {
+    if (n.key === fromKey || n.key === toKey) continue
+    const onSourceCol = Math.abs(n.cx - fromCx) < bboxW / 2 + 2
+    const onTargetCol = Math.abs(n.cx - toCx) < bboxW / 2 + 2
+    const inZRangeY = n.cy > yLow + 1 && n.cy < yHigh - 1
+    if ((onSourceCol || onTargetCol) && inZRangeY) {
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+      continue
+    }
+    const midY = (fromCy + toCy) / 2
+    const onMiddleRow = Math.abs(n.cy - midY) < bboxH / 2 + 2
+    const xLow = Math.min(fromCx, toCx)
+    const xHigh = Math.max(fromCx, toCx)
+    const inZRangeX = n.cx > xLow + 1 && n.cx < xHigh - 1
+    if (onMiddleRow && inZRangeX) {
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+      continue
+    }
+    // 隣接列は同一列を除外 (colW <= bboxW の縮退ケース防御。
+    // collectObstacles / collectVerticalObstacles と同じ防御パターン)
+    const onSourceAdjacentCol =
+      !onSourceCol &&
+      Math.abs(n.cx - fromCx) > colW - bboxW / 2 &&
+      Math.abs(n.cx - fromCx) < colW + bboxW / 2
+    const onTargetAdjacentCol =
+      !onTargetCol &&
+      Math.abs(n.cx - toCx) > colW - bboxW / 2 &&
+      Math.abs(n.cx - toCx) < colW + bboxW / 2
+    const inExtendedY = n.cy >= yLow - rowH / 2 && n.cy <= yHigh + rowH / 2
+    if ((onSourceAdjacentCol || onTargetAdjacentCol) && inExtendedY) {
+      result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
+    }
+  }
+  return result
+}
+
+interface BuildObstaclesArgs {
+  nodes: ObstacleNode[]
+  fromKey: string
+  toKey: string
+  fromCx: number
+  fromCy: number
+  toCx: number
+  toCy: number
+  sameRow: boolean
+  sameLane: boolean
+  rowH: number
+  colW: number
+  bboxW: number
+  bboxH: number
+}
+
+/**
+ * 矢印の幾何状態 (同一行 / 同一レーン / 斜め配置) に応じて obstacles を組み立てる。
+ * FlowEditor / SharedFlowViewer の重複を吸収。返り値は detectDetour / detectVerticalDetour /
+ * detectDiagonalDetour にそのまま渡せる Bbox 配列。
+ */
+export function buildObstacles(args: BuildObstaclesArgs): Bbox[] {
+  const {
+    nodes,
+    fromKey,
+    toKey,
+    fromCx,
+    fromCy,
+    toCx,
+    toCy,
+    sameRow,
+    sameLane,
+    rowH,
+    colW,
+    bboxW,
+    bboxH,
+  } = args
+  if (sameRow) {
+    return collectObstacles({
+      nodes,
+      fromKey,
+      toKey,
+      fromCx,
+      toCx,
+      rowY: fromCy,
+      rowH,
+      bboxW,
+      bboxH,
+    })
+  }
+  if (sameLane) {
+    return collectVerticalObstacles({
+      nodes,
+      fromKey,
+      toKey,
+      fromCy,
+      toCy,
+      colX: fromCx,
+      colW,
+      bboxW,
+      bboxH,
+    })
+  }
+  return collectDiagonalObstacles({
+    nodes,
+    fromKey,
+    toKey,
+    fromCx,
+    fromCy,
+    toCx,
+    toCy,
+    rowH,
+    colW,
+    bboxW,
+    bboxH,
+  })
 }

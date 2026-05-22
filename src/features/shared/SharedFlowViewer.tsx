@@ -11,8 +11,7 @@ import {
   exitPt,
   entryPt,
   buildArrowPath,
-  collectObstacles,
-  collectVerticalObstacles,
+  buildObstacles,
   DS,
   type Point,
   type Bbox,
@@ -130,33 +129,22 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     const s = exitPt(f, t, hw, hh, RH, fromNode.shape as 'diamond' | undefined)
     const e = entryPt(t, f, hw, hh, RH, toNode.shape as 'diamond' | undefined)
 
-    // 同一行/同一レーンのときに obstacles を組み立てる（迂回判定用）
-    let obstacles: Bbox[] | undefined
-    if (fromNode.rowIndex === toNode.rowIndex) {
-      obstacles = collectObstacles({
-        nodes: obstacleNodes,
-        fromKey: fromNode.id,
-        toKey: toNode.id,
-        fromCx: f.x,
-        toCx: t.x,
-        rowY: f.y,
-        rowH: RH,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    } else if (fromNode.laneId === toNode.laneId) {
-      obstacles = collectVerticalObstacles({
-        nodes: obstacleNodes,
-        fromKey: fromNode.id,
-        toKey: toNode.id,
-        fromCy: f.y,
-        toCy: t.y,
-        colX: f.x,
-        colW: LW + G,
-        bboxW: TW,
-        bboxH: TH,
-      })
-    }
+    // 同一行/同一レーン/斜め配置に応じて obstacles を組み立てる（迂回判定用）
+    const obstacles: Bbox[] = buildObstacles({
+      nodes: obstacleNodes,
+      fromKey: fromNode.id,
+      toKey: toNode.id,
+      fromCx: f.x,
+      fromCy: f.y,
+      toCx: t.x,
+      toCy: t.y,
+      sameRow: fromNode.rowIndex === toNode.rowIndex,
+      sameLane: fromNode.laneId === toNode.laneId,
+      rowH: RH,
+      colW: LW + G,
+      bboxW: TW,
+      bboxH: TH,
+    })
 
     return buildArrowPath(s, e, f, t, obstacles)
   }
