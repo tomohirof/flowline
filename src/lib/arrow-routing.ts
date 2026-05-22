@@ -133,6 +133,50 @@ export function detectDiagonalDetour(
 ): DiagonalDetourResult | null {
   if (Math.abs(e.x - s.x) < 2 || Math.abs(e.y - s.y) < 2) return null
   if (obstacles.length === 0) return null
+
+  const my = (s.y + e.y) / 2
+
+  // source 列衝突: source 縦セグメント (s.y → my) と重なる障害
+  const sourceColHits = obstacles.filter((b) => {
+    const yLow = Math.min(s.y, my)
+    const yHigh = Math.max(s.y, my)
+    return (
+      Math.abs(b.x - s.x) < b.w / 2 + 2 &&
+      b.y - b.h / 2 < yHigh - 1 &&
+      b.y + b.h / 2 > yLow + 1
+    )
+  })
+
+  // target 列衝突: target 縦セグメント (my → e.y) と重なる障害
+  const targetColHits = obstacles.filter((b) => {
+    const yLow = Math.min(my, e.y)
+    const yHigh = Math.max(my, e.y)
+    return (
+      Math.abs(b.x - e.x) < b.w / 2 + 2 &&
+      b.y - b.h / 2 < yHigh - 1 &&
+      b.y + b.h / 2 > yLow + 1
+    )
+  })
+
+  if (targetColHits.length > 0 && sourceColHits.length === 0) {
+    // 方向決定: target 列障害の左右塞がり判定
+    const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
+    const rightBlocked = targetColHits.some((obs) =>
+      obstacles.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+    )
+    const leftBlocked = targetColHits.some((obs) =>
+      obstacles.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+    )
+    const goRight = !rightBlocked || leftBlocked
+    const detourX = goRight
+      ? Math.max(...targetColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+      : Math.min(...targetColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+    const sign = Math.sign(e.y - my)
+    const halfDy = Math.abs(e.y - my) / 2
+    const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
+    return { kind: 'target-detour', my, detourX, approachY }
+  }
+
   return null
 }
 

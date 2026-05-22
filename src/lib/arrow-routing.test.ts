@@ -731,4 +731,15 @@ describe('detectDiagonalDetour', () => {
     const farAway: Bbox = { x: 50, y: 50, w: 152, h: 56 }
     expect(detectDiagonalDetour(s, e, [farAway])).toBeNull()
   })
+
+  it('should return target-detour when obstacle is in target column between my and e.y', () => {
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [B])
+    expect(r).toEqual({
+      kind: 'target-detour',
+      my: 250,
+      detourX: 600 + 76 + 14, // 690 (右迂回: 障害右端 + DETOUR_MARGIN)
+      approachY: 372 - 14, // 358
+    })
+  })
 })
