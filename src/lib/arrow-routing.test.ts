@@ -955,6 +955,23 @@ describe('detectDiagonalDetour', () => {
       approachY: 358,
     })
   })
+
+  it('should shift my when source-detour selected AND middle-row obstacle exists', () => {
+    // s=(100, 100), e=(300, 300), my=200
+    // source col hit at (100, 200) → source-detour 確定
+    // middle row hit at (200, 200) → my を shiftedMy にシフトすべき
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 50 }, // source col & middle row
+      { x: 200, y: 200, w: 80, h: 50 }, // middle row のみ (target col=300 ではない)
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('source-detour')
+    // 障害下端 (200 + 25) + DETOUR_MARGIN (14) = 239
+    if (r?.kind === 'source-detour') {
+      expect(r.my).toBeGreaterThan(225) // shifted below middle-row obstacles
+      expect(r.my).toBeLessThan(300) // 範囲内
+    }
+  })
 })
 
 describe('deriveFromSide', () => {
