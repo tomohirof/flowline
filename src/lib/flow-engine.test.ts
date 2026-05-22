@@ -246,6 +246,28 @@ describe('calcArrowPath', () => {
     // 縦パスなので obstacles 無視 → 既存の直線
     expect(r.d).toBe('M100,128 L100,272')
   })
+
+  it('diamond の fromSide を尊重する（右下ターゲットでも fromSide=bottom なら下頂点から出る）', () => {
+    const config = {
+      hw: 76, hh: 28, rh: 84,
+      fromShape: 'diamond' as const,
+      fromSide: 'bottom' as const,
+    }
+    const r = calcArrowPath({ x: 200, y: 200 }, { x: 500, y: 500 }, config)
+    // exitPt(diamond, 'bottom') → {200, 234}
+    // path の冒頭 M が始点
+    expect(r.d.startsWith('M200,234')).toBe(true)
+  })
+
+  it('diamond で fromSide 未指定なら従来の自動ロジック', () => {
+    const config = {
+      hw: 76, hh: 28, rh: 84,
+      fromShape: 'diamond' as const,
+    }
+    const r = calcArrowPath({ x: 200, y: 200 }, { x: 500, y: 500 }, config)
+    // dx>0 → right 頂点 {234, 200}
+    expect(r.d.startsWith('M234,200')).toBe(true)
+  })
 })
 
 /* ========================================================= */

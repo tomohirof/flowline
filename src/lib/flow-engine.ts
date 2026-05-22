@@ -1,4 +1,4 @@
-import type { InternalArrow, ArrowPathResult } from './types'
+import type { InternalArrow, ArrowPathResult, ArrowSide } from './types'
 import type { TaskData, MemoData, CellInfo } from '../features/editor/types'
 import { exitPt, entryPt, buildArrowPath } from './arrow-routing'
 import type { Point, Bbox } from './arrow-routing'
@@ -18,6 +18,7 @@ interface ArrowConfig {
   rh: number
   fromShape?: 'diamond'
   toShape?: 'diamond'
+  fromSide?: ArrowSide
 }
 
 /* --------------------------------------------------------- */
@@ -39,7 +40,7 @@ export function calcArrowPath(
 ): ArrowPathResult {
   const f: Point = { x: from.x, y: from.y }
   const t: Point = { x: to.x, y: to.y }
-  const s = exitPt(f, t, config.hw, config.hh, config.rh, config.fromShape)
+  const s = exitPt(f, t, config.hw, config.hh, config.rh, config.fromShape, config.fromSide)
   const e = entryPt(t, f, config.hw, config.hh, config.rh, config.toShape)
   return buildArrowPath(s, e, f, t, obstacles)
 }
