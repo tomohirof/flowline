@@ -151,6 +151,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
         fromShape: fromNode.shape as 'diamond' | undefined,
         toShape: toNode.shape as 'diamond' | undefined,
         fromSide: arrow.fromSide ?? undefined,
+        toSide: arrow.toSide ?? undefined,
       },
       obstacles,
     )

@@ -99,8 +99,10 @@ export interface Arrow {
   color?: string | null
   dash?: string | null
   bidirectional?: boolean
-  /** 接続元 diamond ノードの出口頂点。null/undefined なら自動。 */
+  /** 接続元ノードの出口側（頂点/辺）。null/undefined なら自動。 */
   fromSide?: ArrowSide | null
+  /** 接続先ノードの入口側（頂点/辺）。null/undefined なら自動。 */
+  toSide?: ArrowSide | null
 }
 
 export interface Flow {

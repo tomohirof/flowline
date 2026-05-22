@@ -55,6 +55,7 @@ export interface ArrowRow {
   dash: string | null
   bidirectional: number | null
   from_side: ArrowSide | null
+  to_side: ArrowSide | null
   created_at: string
   updated_at: string
 }
@@ -113,6 +114,7 @@ export function toArrow(row: ArrowRow) {
     dash: row.dash,
     bidirectional: row.bidirectional === 1,
     fromSide: row.from_side,
+    toSide: row.to_side,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

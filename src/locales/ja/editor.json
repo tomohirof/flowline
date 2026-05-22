@@ -53,6 +53,7 @@
     "arrowColor": "線の色",
     "arrowStyle": "線の種類",
     "arrowFromSide": "出口側",
+    "arrowToSide": "入口側",
     "arrowSideAuto": "自動",
     "arrowSideTop": "上",
     "arrowSideRight": "右",

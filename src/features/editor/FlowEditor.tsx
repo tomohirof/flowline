@@ -40,6 +40,7 @@ import {
   DS,
   buildObstacles,
   deriveFromSide,
+  deriveToSide,
   type Bbox,
   type ObstacleNode,
 } from '../../lib/arrow-routing'
@@ -142,6 +143,7 @@ export function flowToInternalState(flow: Flow): {
       if (a.dash) arr.dash = a.dash
       if (a.bidirectional) arr.bidirectional = true
       if (a.fromSide) arr.fromSide = a.fromSide
+      if (a.toSide) arr.toSide = a.toSide
       return arr
     })
     .filter((a): a is InternalArrow => a !== null)
@@ -213,6 +215,7 @@ export function internalStateToPayload(
         dash: a.dash || null,
         bidirectional: a.bidirectional ?? false,
         fromSide: a.fromSide ?? null,
+        toSide: a.toSide ?? null,
       }
     })
     .filter((a): a is NonNullable<typeof a> => a !== null)
@@ -1060,8 +1063,9 @@ export default function FlowEditor({
         const snapY = isDia ? DS + 12 : TH / 2 + 12
         if (Math.abs(pt.x - c.x) < snapX && Math.abs(pt.y - c.y) < snapY && k !== connectFrom) {
           const srcTask = tasks[connectFrom]
+          // 接続元 fromSide: shape を問わず derive（#355: 四角形ノードも対応）
           let fromSide: ArrowSide | undefined
-          if (srcTask?.shape === 'diamond' && connectFromPt) {
+          if (connectFromPt && srcTask) {
             const srcLi = liMap[srcTask.lid]
             const srcRi = riMap[srcTask.rid]
             if (srcLi !== undefined && srcRi !== undefined) {
@@ -1069,7 +1073,12 @@ export default function FlowEditor({
               fromSide = deriveFromSide(connectFromPt, sc)
             }
           }
-          setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '', fromSide }])
+          // 接続先 toSide: ドロップ点とターゲットノード中心から derive
+          const toSide: ArrowSide = deriveToSide(pt, c)
+          setArrows((p) => [
+            ...p,
+            { id: uid(), from: connectFrom, to: k, comment: '', fromSide, toSide },
+          ])
           break
         }
       }
@@ -1215,6 +1224,7 @@ export default function FlowEditor({
     }
     const k = ky(lid, rid)
     if (connectFrom) {
+      // クリック接続経路: ドロップ座標が無いため fromSide/toSide は派生せず auto routing に委ねる
       if (k !== connectFrom && tasks[k])
         setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
       setConnectFrom(null)
@@ -1279,6 +1289,7 @@ export default function FlowEditor({
   const taskClick = (k: string, e: React.MouseEvent): void => {
     e.stopPropagation()
     if (connectFrom) {
+      // クリック接続経路: ドロップ座標が無いため fromSide/toSide は派生せず auto routing に委ねる
       if (k !== connectFrom)
         setArrows((p) => [...p, { id: uid(), from: connectFrom, to: k, comment: '' }])
       setConnectFrom(null)
@@ -1449,6 +1460,7 @@ export default function FlowEditor({
         fromShape: ft.shape ?? undefined,
         toShape: tt.shape ?? undefined,
         fromSide: arrow.fromSide,
+        toSide: arrow.toSide,
       },
       obstacles,
     )
