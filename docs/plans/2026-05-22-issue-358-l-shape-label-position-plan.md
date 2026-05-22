@@ -23,6 +23,7 @@
 ## Task 1: L字パスラベル座標テストを追加（Red）
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.test.ts` (末尾に describe ブロック追加)
 
 - [ ] **Step 1: 失敗するテスト群を追加**
@@ -160,6 +161,7 @@ Red 状態のままで Task 2 に進む。
 ## Task 2: buildArrowPath を修正（Green）
 
 **Files:**
+
 - Modify: `src/lib/arrow-routing.ts:438-465`
 
 - [ ] **Step 1: buildArrowPath の末尾 (line 438-465) を書き換える**
@@ -297,6 +299,7 @@ EOF
 ## Task 3: 型チェック・Lint
 
 **Files:**
+
 - なし（チェックのみ）
 
 - [ ] **Step 1: 型チェック**
@@ -316,6 +319,7 @@ Expected: エラーなし。エラーがあれば修正してコミット。
 ## Task 4: 実画面検証（受入れ確認）
 
 **Files:**
+
 - なし（手動確認）
 
 issue の添付 JSON（`R_ALLFIT-電話` フローの矢印データ）を実環境で読み込み、「繋がらず」ラベルが L字経路上に正しく表示されることを目視確認する。
@@ -355,6 +359,7 @@ DevTools の Performance タブで LCP（Largest Contentful Paint）が 1 秒以
 ## Task 5: main 同期 & PR 作成
 
 **Files:**
+
 - なし（git 操作）
 
 - [ ] **Step 1: main を fetch & rebase**
@@ -425,6 +430,7 @@ gh pr comment --body '@claude PRをレビューして。
 ## Task 6: 本番ビルド確認
 
 **Files:**
+
 - なし
 
 - [ ] **Step 1: `~/.claude/skills/preview/SKILL.md` の手順に従って本番ビルドをローカル実行・目視確認**
