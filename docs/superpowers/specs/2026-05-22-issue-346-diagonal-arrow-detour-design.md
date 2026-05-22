@@ -145,6 +145,8 @@ M(s.x, s.y)
  → L(e.x, e.y)
 ```
 
+- **左右塞がり判定の相互排除**: `sourceDetourX` の方向判定 (`pickDetourX`) では `targetColHits` をブロッカー候補から除外し、`targetDetourX` の判定では `sourceColHits` を除外する。反対側列の障害は対応する迂回パスで既に回避済みであり、Y 重なりによる相互ブロッキング (誤った全方向左偏向) を防ぐため。
+
 ### `shift-my` の幾何 (4 セグ維持)
 
 ```
