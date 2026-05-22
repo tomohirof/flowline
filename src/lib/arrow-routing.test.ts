@@ -619,6 +619,30 @@ describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
     expect(r.mx).toBe(400)
     expect(r.my).toBe(292)
   })
+
+  it('should not affect horizontal arrow detour (regression guard for #314)', () => {
+    const sH = { x: 276, y: 200 }
+    const eH = { x: 524, y: 200 }
+    const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(sH, eH, { x: 200, y: 200 }, { x: 600, y: 200 }, [B])
+    expect(r.d).toBe('M276,200 L290,200 L290,242 L510,242 L510,200 L524,200')
+  })
+
+  it('should not affect vertical arrow detour (regression guard for #333)', () => {
+    const sV = { x: 200, y: 128 }
+    const eV = { x: 200, y: 372 }
+    const B: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const r = buildArrowPath(sV, eV, { x: 200, y: 100 }, { x: 200, y: 400 }, [B])
+    // 既存 detectVerticalDetour による 6 セグ右迂回
+    expect(r.d).toContain('M200,128')
+    expect(r.d).toContain('L200,372')
+    expect(r.d).toMatch(/L290,\d+/) // 右迂回 detourX = 200+76+14 = 290
+  })
+
+  it('should produce default Z-path when obstacles array is undefined (diagonal)', () => {
+    const r = buildArrowPath(s, e, fc, tc)
+    expect(r.d).toBe('M200,128 L200,250 L600,250 L600,372')
+  })
 })
 
 describe('collectDiagonalObstacles', () => {
