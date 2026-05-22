@@ -160,6 +160,46 @@ export function detectDiagonalDetour(
 
   const yOverlap = (a: Bbox, b: Bbox) => Math.abs(a.y - b.y) < (a.h + b.h) / 2
 
+  if (sourceColHits.length > 0 && targetColHits.length > 0) {
+    // both-detour では source / target 列それぞれの迂回方向を独立に判定する。
+    // 反対側列の障害（既に対応する迂回で回避済み）を blocking に含めると
+    // 誤った方向選択が発生するため、相互に除外する。
+    const sourceIds = new Set(sourceColHits)
+    const targetIds = new Set(targetColHits)
+    const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
+    const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
+
+    const srcRightBlocked = sourceColHits.some((obs) =>
+      srcBlockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+    )
+    const srcLeftBlocked = sourceColHits.some((obs) =>
+      srcBlockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+    )
+    const srcGoRight = !srcRightBlocked || srcLeftBlocked
+    const sourceDetourX = srcGoRight
+      ? Math.max(...sourceColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+      : Math.min(...sourceColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+
+    const tgtRightBlocked = targetColHits.some((obs) =>
+      tgtBlockers.some((b) => b.x > obs.x + 1 && yOverlap(obs, b)),
+    )
+    const tgtLeftBlocked = targetColHits.some((obs) =>
+      tgtBlockers.some((b) => b.x < obs.x - 1 && yOverlap(obs, b)),
+    )
+    const tgtGoRight = !tgtRightBlocked || tgtLeftBlocked
+    const targetDetourX = tgtGoRight
+      ? Math.max(...targetColHits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+      : Math.min(...targetColHits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+
+    const signS = Math.sign(my - s.y)
+    const halfDyS = Math.abs(my - s.y) / 2
+    const departY = s.y + signS * Math.min(DEPART_GAP, halfDyS)
+    const signE = Math.sign(e.y - my)
+    const halfDyE = Math.abs(e.y - my) / 2
+    const approachY = e.y - signE * Math.min(APPROACH_GAP, halfDyE)
+    return { kind: 'both-detour', departY, sourceDetourX, my, targetDetourX, approachY }
+  }
+
   if (targetColHits.length > 0 && sourceColHits.length === 0) {
     // 方向決定: target 列障害の左右塞がり判定
     const rightBlocked = targetColHits.some((obs) =>

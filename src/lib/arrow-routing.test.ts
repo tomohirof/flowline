@@ -795,4 +795,18 @@ describe('detectDiagonalDetour', () => {
     const r = detectDiagonalDetour(sNarrow, eNarrow, [B])
     expect(r?.kind).toBe('target-detour')
   })
+
+  it('should return both-detour when source and target columns both have obstacles', () => {
+    const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 }
+    const Bt: Bbox = { x: 600, y: 250, w: 152, h: 56 }
+    const r = detectDiagonalDetour(s, e, [Bs, Bt])
+    expect(r).toEqual({
+      kind: 'both-detour',
+      departY: 142,
+      sourceDetourX: 290,
+      my: 250,
+      targetDetourX: 690,
+      approachY: 358,
+    })
+  })
 })
