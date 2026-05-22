@@ -392,8 +392,9 @@ export function collectDiagonalObstacles(args: CollectDiagonalObstaclesArgs): Bb
   for (const n of nodes) {
     if (n.key === fromKey || n.key === toKey) continue
     const onSourceCol = Math.abs(n.cx - fromCx) < bboxW / 2 + 2
+    const onTargetCol = Math.abs(n.cx - toCx) < bboxW / 2 + 2
     const inZRangeY = n.cy > yLow + 1 && n.cy < yHigh - 1
-    if (onSourceCol && inZRangeY) {
+    if ((onSourceCol || onTargetCol) && inZRangeY) {
       result.push({ x: n.cx, y: n.cy, w: bboxW, h: bboxH })
       continue
     }
