@@ -1025,6 +1025,22 @@ describe('detectDiagonalDetour', () => {
       expect(r.my).toBeGreaterThan(225)
     }
   })
+
+  it('should fall back to original my when shiftedMy exceeds row bounds', () => {
+    // 行間隔が狭く shiftedMy が source 行 / target 行を侵食するケース
+    // s=(100, 100), e=(300, 160), my=130 — 行差 60 で狭い
+    // 中央行に大きな障害があると shiftedMy が範囲外になる
+    const obstacles: Bbox[] = [
+      { x: 100, y: 130, w: 80, h: 50 }, // source col & middle row
+      { x: 200, y: 130, w: 80, h: 50 }, // 中央のみ — 下端 155, +14 = 169 > yHigh-25-1 = 134
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 160 }, obstacles)
+    // range-check 失敗 → 従来の my (=130) で source-detour
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      expect(r.my).toBe(130) // unshifted
+    }
+  })
 })
 
 describe('deriveFromSide', () => {
