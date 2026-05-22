@@ -53,6 +53,7 @@
     "arrowColor": "Line color",
     "arrowStyle": "Line style",
     "arrowFromSide": "Exit side",
+    "arrowToSide": "Entry side",
     "arrowSideAuto": "Auto",
     "arrowSideTop": "Top",
     "arrowSideRight": "Right",
