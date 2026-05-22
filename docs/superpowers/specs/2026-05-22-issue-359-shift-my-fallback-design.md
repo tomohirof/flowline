@@ -51,6 +51,7 @@ ALLFIT-電話 flow (https://flowline.six1.jp/flows/ee90cded-221c-40f9-bea6-fea19
 ```
 
 行配置:
+
 - ステータス変更 行 (source)
 - 確認連絡 行 (middle, 障害: グルプラ確認連絡 node 11)
 - 請求 行 (target)
@@ -71,12 +72,13 @@ M(s.x, s.y) → L(s.x, my) → L(detourX, my) → L(detourX, approachY) → L(e.
 
 中央水平セグメントの長さが kind ごとに異なる:
 
-| kind | Y=my の水平セグメント | 区間 |
-|---|---|---|
-| `target-detour` | 長い | `s.x → detourX` |
-| `source-detour` | 短い | `detourX → e.x` |
+| kind            | Y=my の水平セグメント | 区間            |
+| --------------- | --------------------- | --------------- |
+| `target-detour` | 長い                  | `s.x → detourX` |
+| `source-detour` | 短い                  | `detourX → e.x` |
 
 中間行障害が `s.x < obstacle.x < e.x` に位置する場合:
+
 - **右迂回** (`detourX > obstacle.right`):
   - `source-detour` 水平 = `[detourX, e.x]` → 障害の**右側のみ** → 衝突なし ✓
   - `target-detour` 水平 = `[s.x, detourX]` → 障害を横断 → 衝突あり ✗
@@ -144,6 +146,7 @@ detectDiagonalDetour(s, e, obstacles)
 ### A. `middleRowHits.length > 1`
 
 複数障害が中間行にある場合、`pickDetourX` は障害群の最右端 / 最左端を採用する:
+
 - 右迂回: `max(o.x + o.w/2) + DETOUR_MARGIN`
 - 左迂回: `min(o.x - o.w/2) - DETOUR_MARGIN`
 
@@ -222,6 +225,7 @@ it('should escalate to target-detour when shift-my exceeds row bounds and left d
 ### 視覚検証
 
 ALLFIT-電話 flow を本番デプロイ後に確認:
+
 - ステータス変更 → 13 請求 矢印がノード 11 (グルプラ確認連絡) を貫通しない
 - 既存 #346 case (ALLFIT-コンシェルジュ flow: ガイド → 店舗詳細) で regression なし
 
