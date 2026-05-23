@@ -112,10 +112,16 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   // 水平移動がなければ迂回対象なし
   if (xLow >= xHigh - 1) return null
 
-  // 経路上の障害ノード = 同一行（rowY と Y が重なる）かつ X が始終点の間
+  // 経路上の障害ノード = 同一行（rowY と Y が重なる）かつ X が始終点の間。
+  // 薄いセグメント（他エッジの直交線）は迂回対象から除外する。
+  // 理由: エッジ同士の H × V 交差は段階4 のジャンパー弧で表現すべきであり、
+  // ここで迂回すると不自然な U字パスが生成され、jumper も描画されない。
   const inRow = obstacles.filter(
     (b) =>
-      Math.abs(b.y - rowY) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1,
+      !isThinSegment(b) &&
+      Math.abs(b.y - rowY) < b.h / 2 + 2 &&
+      b.x - b.w / 2 < xHigh - 1 &&
+      b.x + b.w / 2 > xLow + 1,
   )
   if (inRow.length === 0) return null
 
@@ -162,10 +168,14 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
   // 垂直移動がなければ迂回対象なし
   if (yLow >= yHigh - 1) return null
 
-  // 経路上の障害ノード = 同一列（colX と X が重なる）かつ Y が始終点の間
+  // 経路上の障害ノード = 同一列（colX と X が重なる）かつ Y が始終点の間。
+  // 薄いセグメント（他エッジの直交線）は迂回対象から除外（段階4 ジャンパー弧で表現）。
   const inCol = obstacles.filter(
     (b) =>
-      Math.abs(b.x - colX) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1,
+      !isThinSegment(b) &&
+      Math.abs(b.x - colX) < b.w / 2 + 2 &&
+      b.y - b.h / 2 < yHigh - 1 &&
+      b.y + b.h / 2 > yLow + 1,
   )
   if (inCol.length === 0) return null
 
@@ -314,8 +324,9 @@ export function detectDiagonalDetour(
 
   const my = (s.y + e.y) / 2
 
-  // source 列衝突: source 縦セグメント (s.y → my) と重なる障害
+  // source 列衝突: source 縦セグメント (s.y → my) と重なる障害ノード（薄いセグメントは除外）
   const sourceColHits = obstacles.filter((b) => {
+    if (isThinSegment(b)) return false
     const yLow = Math.min(s.y, my)
     const yHigh = Math.max(s.y, my)
     return (
@@ -323,8 +334,9 @@ export function detectDiagonalDetour(
     )
   })
 
-  // target 列衝突: target 縦セグメント (my → e.y) と重なる障害
+  // target 列衝突: target 縦セグメント (my → e.y) と重なる障害ノード（薄いセグメントは除外）
   const targetColHits = obstacles.filter((b) => {
+    if (isThinSegment(b)) return false
     const yLow = Math.min(my, e.y)
     const yHigh = Math.max(my, e.y)
     return (
@@ -334,10 +346,12 @@ export function detectDiagonalDetour(
 
   // 中央水平セグメント衝突: Y ≈ my で X が source-target 間 (早期計算で全 kind 分岐に提供)
   // source/target 列の hit は対応する column detour で既に回避済みのため除外し、
-  // 純粋に中央水平セグメント上のみに存在する障害だけを評価対象にする。
+  // 純粋に中央水平セグメント上のみに存在する障害ノードだけを評価対象にする。
+  // 薄いセグメント（他エッジ）はジャンパー側で扱うためここでも除外。
   const sourceColSet = new Set(sourceColHits)
   const targetColSet = new Set(targetColHits)
   const middleRowHits = obstacles.filter((b) => {
+    if (isThinSegment(b)) return false
     if (sourceColSet.has(b) || targetColSet.has(b)) return false
     const xLow = Math.min(s.x, e.x)
     const xHigh = Math.max(s.x, e.x)

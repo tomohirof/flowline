@@ -40,7 +40,10 @@ describe('routeAllArrows', () => {
     expect(result[1]).not.toBeNull()
   })
 
-  it('second arrow with no shared endpoint sees first arrow segments as obstacles', () => {
+  it('second arrow does NOT detour around first arrow thin segments (jumper-side handles crossings)', () => {
+    // 段階4 (ジャンパー) 導入後、薄いエッジセグメントは迂回判定の障害物に含めない。
+    // a1 と a2 が H × V 交差する位置関係でも、a2 は alone と同一ルートを取り、
+    // 交差点は routeAllArrowsWithJumpers の 2nd pass で弧表現される。
     const arrows = [
       { id: 'a1', from: 'A', to: 'B' },
       { id: 'a2', from: 'C', to: 'D' },
@@ -53,9 +56,8 @@ describe('routeAllArrows', () => {
     const arrowsAlone = [{ id: 'a2', from: 'C', to: 'D' }]
     const alone = routeAllArrows(arrowsAlone, () => makeCtx(50, 100, 250, 100))
 
-    // With a1 present, a2's route must differ from routing alone
-    expect(result[1]?.d).not.toBe(alone[0]?.d)
-    // And still produce a valid result
+    // a1 の薄いセグメントは a2 の迂回判定に影響しないので、ルートは同一
+    expect(result[1]?.d).toBe(alone[0]?.d)
     expect(result[1]).not.toBeNull()
   })
 
@@ -144,7 +146,7 @@ describe('routeAllArrows', () => {
       [
         "M50,100 L750,100",
         "M100,225 L100,250 L700,250 L700,275",
-        "M250,100 L264,100 L264,114.5 L536,114.5 L536,100 L550,100",
+        "M250,100 L550,100",
       ]
     `)
   })
