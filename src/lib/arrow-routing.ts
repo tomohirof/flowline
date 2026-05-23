@@ -388,7 +388,12 @@ export function detectDiagonalDetour(
     const sourceIds = new Set(sourceColHits)
     const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
     const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
-    const sourceDetourX = pickDetourX(sourceColHits, srcBlockers, [s.y, my], obstacles)
+    // sourceDetourX: 新ロジック (issue #374) で middleRowHits も extent に含める。
+    const sourceDetourX = pickDetourX(sourceColHits, srcBlockers, [s.y, my], obstacles, {
+      targetDirection: e.x > s.x ? 1 : -1,
+      middleHitsToClear: middleRowHits,
+    })
+    // targetDetourX: 旧ロジック維持。target-detour 系の対称対応は issue #375 で別途。
     const targetDetourX = pickDetourX(targetColHits, tgtBlockers, [my, e.y], obstacles)
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
@@ -396,6 +401,9 @@ export function detectDiagonalDetour(
     return { kind: 'both-detour', departY, sourceDetourX, my: shiftedMy, targetDetourX, approachY }
   }
 
+  // 注: target-detour の detourX 計算は対称的に opts { targetDirection, middleHitsToClear } を
+  // 渡せる API を持つが、本 PR (issue #374) では source-detour のみに適用してリグレッションリスクを
+  // 抑える。target-detour / both-detour.tgtDetourX の対称対応は issue #375 でフォローアップ予定。
   if (targetColHits.length > 0 && sourceColHits.length === 0) {
     const detourX = pickDetourX(targetColHits, obstacles, [my, e.y], obstacles)
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
@@ -404,7 +412,10 @@ export function detectDiagonalDetour(
   }
 
   if (sourceColHits.length > 0 && targetColHits.length === 0) {
-    const detourX = pickDetourX(sourceColHits, obstacles, [s.y, my], obstacles)
+    const detourX = pickDetourX(sourceColHits, obstacles, [s.y, my], obstacles, {
+      targetDirection: e.x > s.x ? 1 : -1,
+      middleHitsToClear: middleRowHits,
+    })
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
     return { kind: 'source-detour', departY, detourX, my: shiftedMy }
