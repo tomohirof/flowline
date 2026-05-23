@@ -1107,8 +1107,8 @@ describe('detectDiagonalDetour', () => {
     const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
     expect(r?.kind).toBe('both-detour')
     if (r?.kind === 'both-detour') {
-      expect(r.sourceDetourX).toBe(254) // 新ロジック適用
-      expect(r.targetDetourX).toBe(354) // 旧ロジック維持 (issue #375 で対応)
+      expect(r.sourceDetourX).toBe(254) // 新ロジック適用 (source-detour, +targetDirection)
+      expect(r.targetDetourX).toBe(146) // 新ロジック適用 (target-detour, -targetDirection, issue #375)
     }
   })
 
