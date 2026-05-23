@@ -1695,6 +1695,30 @@ describe('buildArrowPath segments — diagonal detour (4 kinds)', () => {
     expect(result.segments).toHaveLength(7)
     expect(result.segments.map((sg) => sg.orientation)).toEqual(['v', 'h', 'v', 'h', 'v', 'h', 'v'])
   })
+
+  it('should not cross middle-row obstacles in target-detour central H (issue #375)', () => {
+    // target-detour で中央 H が middleRowHit を貫通しない構成。
+    // s=(100, 100), e=(300, 300), my=200
+    // targetColHit (300, 200, w=80) + middleRowHit (200, 200, w=80)
+    // 期待 path: 中央 H = [s.x=100, detourX=146] at y=shiftedMy=234
+    const obstacles: Bbox[] = [
+      { x: 300, y: 200, w: 80, h: 40 }, // targetColHit
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit
+    ]
+    const result = buildArrowPath(
+      { x: 100, y: 100 },
+      { x: 300, y: 300 },
+      { x: 100, y: 100 },
+      { x: 300, y: 300 },
+      obstacles,
+    )
+    // 中央 H が x=200 (middleRowHit center) を貫通しないこと。
+    // SVG path: M100,100 L100,234 L146,234 L146,... なら 中央 H range [100, 146] で x=200 を跨がない。
+    expect(result.d).toContain('L146,234') // 中央 H の終点 (detourX, shiftedMy)
+    // mx は中央 H 中点 = (s.x + detourX) / 2 = (100 + 146) / 2 = 123
+    expect(result.mx).toBe(123)
+    expect(result.my).toBe(234)
+  })
 })
 
 describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
