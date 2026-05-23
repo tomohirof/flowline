@@ -46,9 +46,10 @@ target 方向 (target が source の右なら +1) が明示された時のみ、
 ### 例 (本ケース)
 
 - sourceColHits: `[9 (x=597.5, w=152)]` → right edge = 673.5
-- middleRowHits: `[9, 8]` のうち中央 H が通過する 8 → right edge = 902.5
+- middleRowHits: `[8 (x=826.5, w=152)]` (9 は `sourceColSet` 経由で除外) → right edge = 902.5
+- extent = sourceColHits ∪ middleRowHits = `[9, 8]`
 - targetDirection: +1 (target.x=1055.5 > source.x=597.5)
-- 新ロジック: `detourX = max(673.5, 902.5) + 14 = 916.5`
+- 新ロジック: `detourX = max(extent.right edges) + 14 = max(673.5, 902.5) + 14 = 916.5`
 - 中央 H: `(916.5, 1456) → (1055.5, 1456)` ← row 16 を横切らない
 
 ## 変更内容
