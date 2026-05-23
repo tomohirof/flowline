@@ -35,8 +35,11 @@ const yOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.y - b.y) < (a.h + b.h
 
 // エッジセグメント由来の薄い線分 Bbox かどうか判定する。
 // `segmentsToBboxes` は水平セグメントを `h=1`、垂直セグメントを `w=1` で生成するため
-// `h < 3 || w < 3` で識別できる。塞がり判定（up/down/left/right blocked）でこの種の
-// 線分を除外する用途で使う。経路上の障害物判定（inRow/inCol）には引き続き使う。
+// `h < 3 || w < 3` で識別できる。
+// 用途: 段階4 (ジャンパー) 導入以降、エッジ同士の交差は弧で表現するため、
+// detectDetour / detectVerticalDetour / detectDiagonalDetour の経路上障害物判定
+// (inRow / inCol / sourceColHits / targetColHits / middleRowHits) と
+// 塞がり判定 (up/down/left/right blocked) の両方からこの種の線分を除外する。
 const isThinSegment = (b: Bbox): boolean => b.h < 3 || b.w < 3
 
 const TRACK_GAP = 8
@@ -130,8 +133,8 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   // のノードが入っていること（collectObstacles ヘルパーがこれを保証する）。Y 距離の
   // 厳密チェックを省略しているのはこの前提のため。
   // 注: routeAllArrows がエッジセグメント由来の薄い Bbox を obstacles に追加する場合がある。
-  // それら（h<3 または w<3）は別行を遠くで通っていても xOverlap で誤って塞がり判定を
-  // 引き起こすため、塞がり判定からは除外する（経路上の障害物判定 inRow には残す）。
+  // それら（h<3 または w<3）は inRow フィルタ側で既に除外済み (段階4 ジャンパー対応) だが、
+  // 塞がり判定でも xOverlap 誤判定を防ぐため明示的に除外する。
   const downBlocked = inRow.some((obs) =>
     obstacles.some((b) => !isThinSegment(b) && b.y > obs.y + 1 && xOverlap(obs, b)),
   )
@@ -182,8 +185,8 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
   // 左右塞がり判定（Y 重なりするノードが直左/直右に存在するか）
   // 前提: obstacles 配列には呼び出し側で「同一列＋直左列＋直右列のみ」をフィルタ済み
   // 注: routeAllArrows がエッジセグメント由来の薄い Bbox を obstacles に追加する場合がある。
-  // それら（h<3 または w<3）は別列を遠くで通っていても yOverlap で誤って塞がり判定を
-  // 引き起こすため、塞がり判定からは除外する（経路上の障害物判定 inCol には残す）。
+  // それら（h<3 または w<3）は inCol フィルタ側で既に除外済み (段階4 ジャンパー対応) だが、
+  // 塞がり判定でも yOverlap 誤判定を防ぐため明示的に除外する。
   const rightBlocked = inCol.some((obs) =>
     obstacles.some((b) => !isThinSegment(b) && b.x > obs.x + 1 && yOverlap(obs, b)),
   )
