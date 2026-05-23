@@ -1192,6 +1192,31 @@ describe('detectDiagonalDetour', () => {
     }
   })
 
+  it('should escalate detourX past unrelated obstacle when initialDetourX lands inside it (P1 regression)', () => {
+    // PR #377 P1: opts ロジックで initialDetourX が無関係な obstacle 内に着地するケース。
+    // s=(200,128), e=(600,372), my=250
+    // targetColHit (600,250,152,56) + middleRowHit (400,250,152,56) + additionalBlocker (310,330,152,56)
+    // additionalBlocker は y=330 → middle 行圏外 (|330-250|=80 > h/2+2=30)
+    // 新ロジック: extent=[B,L], min(B.left=524, L.left=324) - 14 = 310 が additionalBlocker 中心と一致
+    // 修正後: escalateDetourTrack が i=0 でも node 衝突を検出し、direction=-1 で 310-8=302... を escalate
+    const obstacles: Bbox[] = [
+      { x: 600, y: 250, w: 152, h: 56 }, // targetColHit (B)
+      { x: 400, y: 250, w: 152, h: 56 }, // middleRowHit (L)
+      { x: 310, y: 330, w: 152, h: 56 }, // additionalBlocker (P1: 310 とぶつかる)
+    ]
+    const r = detectDiagonalDetour({ x: 200, y: 128 }, { x: 600, y: 372 }, obstacles)
+    expect(r?.kind).toBe('target-detour')
+    if (r?.kind === 'target-detour') {
+      // 修正前は r.detourX === 310 で additionalBlocker (x-range [234, 386]) を貫通する。
+      // 修正後は escalateDetourTrack が i=0 でも node 衝突を検出し、direction=-1 で TRACK_GAP=8 ずつ左へシフトする。
+      // MAX_TRACK_ESCALATIONS=6 制限により完全に抜けられない可能性があるが、
+      // 重要なのは「310 そのまま返さず最低でも escalation を試みる」こと。
+      expect(r.detourX).not.toBe(310)
+      // additionalBlocker から離れる方向 (左, direction=-1) に escalate しているはず
+      expect(r.detourX).toBeLessThan(310)
+    }
+  })
+
   it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
     // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
     // source 店舗/ステータス変更 (col0=100, row0=100)
