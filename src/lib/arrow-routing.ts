@@ -413,11 +413,23 @@ export function detectDiagonalDetour(
     return { kind: 'both-detour', departY, sourceDetourX, my: shiftedMy, targetDetourX, approachY }
   }
 
-  // 注: target-detour の detourX 計算は対称的に opts { targetDirection, middleHitsToClear } を
-  // 渡せる API を持つが、本 PR (issue #374) では source-detour のみに適用してリグレッションリスクを
-  // 抑える。target-detour / both-detour.tgtDetourX の対称対応は issue #375 でフォローアップ予定。
+  // target-detour の opts.targetDirection は source-detour とは符号が逆。
+  // 中央 H = [s.x, detourX] を middleRowHits の source 側に通すため detourX を -targetDirection
+  // (= source) 方向に push する。middleRowHits 空時は旧ロジック (binary blocker) に fallback
+  // して隣接列 blocker 貫通リグレッションを防ぐ (issue #374 と同パターン)。
   if (targetColHits.length > 0 && sourceColHits.length === 0) {
-    const detourX = pickDetourX(targetColHits, obstacles, [my, e.y], obstacles)
+    const detourX = pickDetourX(
+      targetColHits,
+      obstacles,
+      [my, e.y],
+      obstacles,
+      middleRowHits.length > 0
+        ? {
+            targetDirection: (e.x > s.x ? -1 : 1) as 1 | -1,
+            middleHitsToClear: middleRowHits,
+          }
+        : undefined,
+    )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
     return { kind: 'target-detour', my: shiftedMy, detourX, approachY }
