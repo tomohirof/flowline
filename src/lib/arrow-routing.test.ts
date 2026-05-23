@@ -1135,6 +1135,24 @@ describe('detectDiagonalDetour', () => {
     }
   })
 
+  it('should mirror correctly for right-to-left diagonal target-detour with middle-row hit on right', () => {
+    // source.x > target.x: target は左 (targetDirection_normal=-1 → 渡す値は +1)。
+    // s=(300, 100), e=(100, 300), my=200
+    // targetColHit: (100, 200) → target col=100
+    // middleRowHit: (200, 200) → middle col
+    // 期待: detourX = max(targetCol.right=140, middleRow.right=240) + 14 = 254 (右 = source 方向 push)
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 40 }, // targetColHit, right=140
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit, right=240
+    ]
+    const r = detectDiagonalDetour({ x: 300, y: 100 }, { x: 100, y: 300 }, obstacles)
+    expect(r?.kind).toBe('target-detour')
+    if (r?.kind === 'target-detour') {
+      // detourX = max(140, 240) + 14 = 254
+      expect(r.detourX).toBe(254)
+    }
+  })
+
   it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
     // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
     // source 店舗/ステータス変更 (col0=100, row0=100)
