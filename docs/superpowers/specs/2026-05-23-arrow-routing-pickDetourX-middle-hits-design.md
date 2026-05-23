@@ -130,7 +130,7 @@ const sourceDetourX = pickDetourX(sourceColHits, srcBlockers, [s.y, my], obstacl
 1. **`should pick detourX past middle-row hit when source-col blocker exists on opposite side`**
    issue #374 の症状: sourceColHits は target 方向 (右) と反対 (左) に blocker を持つが、middle-row 障害が右にある。期待: `detourX = middleRowHits 最遠端 + DETOUR_MARGIN`、左迂回を選ばない。
 
-2. **`should pick detourX past middle-row hit even when source-col blocker is closer`** *(ユーザー追記要望)*
+2. **`should pick detourX past middle-row hit even when source-col blocker is closer`** _(ユーザー追記要望)_
    sourceColHits の最遠端 < middleRowHits の最遠端 のケース。「sourceColHits だけ見ていた旧ロジックでは middleRowHits を見落とす」リグレッション防止。期待: `detourX = max(sourceColHits 最遠端, middleRowHits 最遠端) + DETOUR_MARGIN`。
 
 3. **`should still respect leftBlocked/rightBlocked when opts is not given`**
