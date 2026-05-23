@@ -35,8 +35,11 @@ const yOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.y - b.y) < (a.h + b.h
 
 // エッジセグメント由来の薄い線分 Bbox かどうか判定する。
 // `segmentsToBboxes` は水平セグメントを `h=1`、垂直セグメントを `w=1` で生成するため
-// `h < 3 || w < 3` で識別できる。塞がり判定（up/down/left/right blocked）でこの種の
-// 線分を除外する用途で使う。経路上の障害物判定（inRow/inCol）には引き続き使う。
+// `h < 3 || w < 3` で識別できる。
+// 用途: 段階4 (ジャンパー) 導入以降、エッジ同士の交差は弧で表現するため、
+// detectDetour / detectVerticalDetour / detectDiagonalDetour の経路上障害物判定
+// (inRow / inCol / sourceColHits / targetColHits / middleRowHits) と
+// 塞がり判定 (up/down/left/right blocked) の両方からこの種の線分を除外する。
 const isThinSegment = (b: Bbox): boolean => b.h < 3 || b.w < 3
 
 const TRACK_GAP = 8
@@ -112,10 +115,16 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   // 水平移動がなければ迂回対象なし
   if (xLow >= xHigh - 1) return null
 
-  // 経路上の障害ノード = 同一行（rowY と Y が重なる）かつ X が始終点の間
+  // 経路上の障害ノード = 同一行（rowY と Y が重なる）かつ X が始終点の間。
+  // 薄いセグメント（他エッジの直交線）は迂回対象から除外する。
+  // 理由: エッジ同士の H × V 交差は段階4 のジャンパー弧で表現すべきであり、
+  // ここで迂回すると不自然な U字パスが生成され、jumper も描画されない。
   const inRow = obstacles.filter(
     (b) =>
-      Math.abs(b.y - rowY) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1,
+      !isThinSegment(b) &&
+      Math.abs(b.y - rowY) < b.h / 2 + 2 &&
+      b.x - b.w / 2 < xHigh - 1 &&
+      b.x + b.w / 2 > xLow + 1,
   )
   if (inRow.length === 0) return null
 
@@ -124,8 +133,8 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   // のノードが入っていること（collectObstacles ヘルパーがこれを保証する）。Y 距離の
   // 厳密チェックを省略しているのはこの前提のため。
   // 注: routeAllArrows がエッジセグメント由来の薄い Bbox を obstacles に追加する場合がある。
-  // それら（h<3 または w<3）は別行を遠くで通っていても xOverlap で誤って塞がり判定を
-  // 引き起こすため、塞がり判定からは除外する（経路上の障害物判定 inRow には残す）。
+  // それら（h<3 または w<3）は inRow フィルタ側で既に除外済み (段階4 ジャンパー対応) だが、
+  // 塞がり判定でも xOverlap 誤判定を防ぐため明示的に除外する。
   const downBlocked = inRow.some((obs) =>
     obstacles.some((b) => !isThinSegment(b) && b.y > obs.y + 1 && xOverlap(obs, b)),
   )
@@ -162,18 +171,22 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
   // 垂直移動がなければ迂回対象なし
   if (yLow >= yHigh - 1) return null
 
-  // 経路上の障害ノード = 同一列（colX と X が重なる）かつ Y が始終点の間
+  // 経路上の障害ノード = 同一列（colX と X が重なる）かつ Y が始終点の間。
+  // 薄いセグメント（他エッジの直交線）は迂回対象から除外（段階4 ジャンパー弧で表現）。
   const inCol = obstacles.filter(
     (b) =>
-      Math.abs(b.x - colX) < b.w / 2 + 2 && b.y - b.h / 2 < yHigh - 1 && b.y + b.h / 2 > yLow + 1,
+      !isThinSegment(b) &&
+      Math.abs(b.x - colX) < b.w / 2 + 2 &&
+      b.y - b.h / 2 < yHigh - 1 &&
+      b.y + b.h / 2 > yLow + 1,
   )
   if (inCol.length === 0) return null
 
   // 左右塞がり判定（Y 重なりするノードが直左/直右に存在するか）
   // 前提: obstacles 配列には呼び出し側で「同一列＋直左列＋直右列のみ」をフィルタ済み
   // 注: routeAllArrows がエッジセグメント由来の薄い Bbox を obstacles に追加する場合がある。
-  // それら（h<3 または w<3）は別列を遠くで通っていても yOverlap で誤って塞がり判定を
-  // 引き起こすため、塞がり判定からは除外する（経路上の障害物判定 inCol には残す）。
+  // それら（h<3 または w<3）は inCol フィルタ側で既に除外済み (段階4 ジャンパー対応) だが、
+  // 塞がり判定でも yOverlap 誤判定を防ぐため明示的に除外する。
   const rightBlocked = inCol.some((obs) =>
     obstacles.some((b) => !isThinSegment(b) && b.x > obs.x + 1 && yOverlap(obs, b)),
   )
@@ -314,8 +327,9 @@ export function detectDiagonalDetour(
 
   const my = (s.y + e.y) / 2
 
-  // source 列衝突: source 縦セグメント (s.y → my) と重なる障害
+  // source 列衝突: source 縦セグメント (s.y → my) と重なる障害ノード（薄いセグメントは除外）
   const sourceColHits = obstacles.filter((b) => {
+    if (isThinSegment(b)) return false
     const yLow = Math.min(s.y, my)
     const yHigh = Math.max(s.y, my)
     return (
@@ -323,8 +337,9 @@ export function detectDiagonalDetour(
     )
   })
 
-  // target 列衝突: target 縦セグメント (my → e.y) と重なる障害
+  // target 列衝突: target 縦セグメント (my → e.y) と重なる障害ノード（薄いセグメントは除外）
   const targetColHits = obstacles.filter((b) => {
+    if (isThinSegment(b)) return false
     const yLow = Math.min(my, e.y)
     const yHigh = Math.max(my, e.y)
     return (
@@ -334,10 +349,12 @@ export function detectDiagonalDetour(
 
   // 中央水平セグメント衝突: Y ≈ my で X が source-target 間 (早期計算で全 kind 分岐に提供)
   // source/target 列の hit は対応する column detour で既に回避済みのため除外し、
-  // 純粋に中央水平セグメント上のみに存在する障害だけを評価対象にする。
+  // 純粋に中央水平セグメント上のみに存在する障害ノードだけを評価対象にする。
+  // 薄いセグメント（他エッジ）はジャンパー側で扱うためここでも除外。
   const sourceColSet = new Set(sourceColHits)
   const targetColSet = new Set(targetColHits)
   const middleRowHits = obstacles.filter((b) => {
+    if (isThinSegment(b)) return false
     if (sourceColSet.has(b) || targetColSet.has(b)) return false
     const xLow = Math.min(s.x, e.x)
     const xHigh = Math.max(s.x, e.x)
