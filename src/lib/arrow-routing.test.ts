@@ -1514,3 +1514,71 @@ describe('buildArrowPath segments — diagonal detour (4 kinds)', () => {
     expect(result.segments.map((sg) => sg.orientation)).toEqual(['v', 'h', 'v', 'h', 'v', 'h', 'v'])
   })
 })
+
+describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
+  it('水平直線: segments は単一 H', () => {
+    const s = { x: 100, y: 200 }, e = { x: 300, y: 200 }
+    const fc = { x: 50, y: 200 }, tc = { x: 350, y: 200 }
+    const r = buildArrowPath(s, e, fc, tc)
+    expect(r.segments).toEqual([
+      { orientation: 'h', fixed: 200, range: [100, 300] },
+    ])
+  })
+
+  it('垂直直線: segments は単一 V', () => {
+    const s = { x: 200, y: 100 }, e = { x: 200, y: 300 }
+    const fc = { x: 200, y: 50 }, tc = { x: 200, y: 350 }
+    const r = buildArrowPath(s, e, fc, tc)
+    expect(r.segments).toEqual([
+      { orientation: 'v', fixed: 200, range: [100, 300] },
+    ])
+  })
+
+  it('H 迂回（下迂回）: segments は H-V-H-V-H の 5 セグ', () => {
+    const s = { x: 276, y: 200 }, e = { x: 524, y: 200 }
+    const fc = { x: 200, y: 200 }, tc = { x: 600, y: 200 }
+    const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.segments).toEqual([
+      { orientation: 'h', fixed: 200, range: [276, 290] },
+      { orientation: 'v', fixed: 290, range: [200, 242] },
+      { orientation: 'h', fixed: 242, range: [290, 510] },
+      { orientation: 'v', fixed: 510, range: [200, 242] },
+      { orientation: 'h', fixed: 200, range: [510, 524] },
+    ])
+  })
+
+  it('V 迂回（右迂回）: segments は V-H-V-H-V の 5 セグ', () => {
+    const s = { x: 200, y: 276 }, e = { x: 200, y: 524 }
+    const fc = { x: 200, y: 200 }, tc = { x: 200, y: 600 }
+    const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.segments).toEqual([
+      { orientation: 'v', fixed: 200, range: [276, 290] },
+      { orientation: 'h', fixed: 290, range: [200, 290] },
+      { orientation: 'v', fixed: 290, range: [290, 510] },
+      { orientation: 'h', fixed: 510, range: [200, 290] },
+      { orientation: 'v', fixed: 200, range: [510, 524] },
+    ])
+  })
+
+  it('斜め配置（障害なし）: segments は H-V-H の 3 セグ', () => {
+    const s = { x: 200, y: 100 }, e = { x: 400, y: 300 }
+    const fc = { x: 200, y: 100 }, tc = { x: 400, y: 300 }
+    const r = buildArrowPath(s, e, fc, tc)
+    expect(r.segments).toEqual([
+      { orientation: 'h', fixed: 100, range: [200, 300] },
+      { orientation: 'v', fixed: 300, range: [100, 300] },
+      { orientation: 'h', fixed: 300, range: [300, 400] },
+    ])
+  })
+
+  it('水平直線（障害なし、別案件）: 単一 H', () => {
+    const s = { x: 200, y: 100 }, e = { x: 400, y: 100 }
+    const fc = { x: 200, y: 100 }, tc = { x: 400, y: 100 }
+    const r = buildArrowPath(s, e, fc, tc)
+    expect(r.segments).toEqual([
+      { orientation: 'h', fixed: 100, range: [200, 400] },
+    ])
+  })
+})
