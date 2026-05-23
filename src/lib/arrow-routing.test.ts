@@ -1153,6 +1153,25 @@ describe('detectDiagonalDetour', () => {
     }
   })
 
+  it('should pick targetDetourX past middle-row hit in both-detour when middle-row hit exists', () => {
+    // both-detour で sourceDetourX (新ロジック target 方向) + targetDetourX (新ロジック source 方向) 両方適用。
+    // s=(100, 100), e=(300, 300), my=200
+    // sourceColHit: (100, 200), targetColHit: (300, 200), middleRowHit: (200, 200)
+    // 期待: sourceDetourX = max(140, 240) + 14 = 254 (既存)
+    //       targetDetourX = min(260, 160) - 14 = 146 (新ロジック適用)
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 40 }, // sourceColHit
+      { x: 300, y: 200, w: 80, h: 40 }, // targetColHit
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('both-detour')
+    if (r?.kind === 'both-detour') {
+      expect(r.sourceDetourX).toBe(254) // 既存
+      expect(r.targetDetourX).toBe(146) // 新ロジック適用 (旧来は 354)
+    }
+  })
+
   it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
     // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
     // source 店舗/ステータス変更 (col0=100, row0=100)
