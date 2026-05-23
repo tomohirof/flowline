@@ -72,7 +72,9 @@ function escalateDetourTrack(
     const checkNodeCollision = i > 0
     const occupied = obstacles.some((b) => {
       if (orientation === 'h') {
-        if (isThinSegment(b) && b.h < 3) {
+        // 薄い H セグメント (h < 3) のみが H 方向のトラック衝突を起こしうる。
+        // V 方向の薄いセグメント (w < 3, h は通常) は同方向の Y 座標重なりが少ないので除外。
+        if (b.h < 3) {
           if (Math.abs(b.y - fixed) >= TRACK_COLLISION_TOLERANCE) return false
           return b.x - b.w / 2 < rHigh && b.x + b.w / 2 > rLow
         }
@@ -82,7 +84,7 @@ function escalateDetourTrack(
         }
         return false
       } else {
-        if (isThinSegment(b) && b.w < 3) {
+        if (b.w < 3) {
           if (Math.abs(b.x - fixed) >= TRACK_COLLISION_TOLERANCE) return false
           return b.y - b.h / 2 < rHigh && b.y + b.h / 2 > rLow
         }
@@ -1029,10 +1031,17 @@ export function segmentsToD(
       // sweep: 進行方向に応じた弧の向き。常に「上膨らみ」になる組み合わせ（右進行=1, 左進行=0）
       const sweep = goingRight ? 1 : 0
       const r = JUMP_RADIUS
+      // 前アークの終点 (進行方向座標)。重複/逆進アークを抑止するためのガード。
+      // 2 つの交差点が 2 * JUMP_RADIUS = 10px 未満で並ぶと beforeX が前 afterX より後退し
+      // path が自己交差するため、その場合は当該アークを skip する。
+      let lastAfter = goingRight ? -Infinity : Infinity
       for (const jx of sorted) {
         const beforeX = goingRight ? jx - r : jx + r
         const afterX = goingRight ? jx + r : jx - r
+        // 進行方向に beforeX が lastAfter より進んでいない (≤ 等価含む) ならスキップ
+        if (goingRight ? beforeX <= lastAfter : beforeX >= lastAfter) continue
         d += ` L${beforeX},${seg.fixed} A${r},${r} 0 0 ${sweep} ${afterX},${seg.fixed}`
+        lastAfter = afterX
       }
     }
     d += ` L${endX},${endY}`

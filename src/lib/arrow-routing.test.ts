@@ -1652,6 +1652,31 @@ describe('segmentsToD', () => {
     const d = segmentsToD(segs, jumps)
     expect(d).toBe('M0,200 L200,200 L200,400')
   })
+
+  it('密集ジャンプ: 2 * JUMP_RADIUS 未満で並ぶ交差は重複アーク描画を防止', () => {
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 200, range: [0, 400] }]
+    // 進行方向: 100 (afterX=105) → 108 (beforeX=103) は 105 より後退 → スキップ
+    const jumps = new Map([[0, [100, 108]]])
+    const d = segmentsToD(segs, jumps)
+    // 1 番目のアークのみ描画され、2 番目はスキップされる
+    expect(d).toBe('M0,200 L95,200 A5,5 0 0 1 105,200 L400,200')
+  })
+
+  it('密集ジャンプ（逆方向）: goingRight=false でも重複が抑止される', () => {
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 200, range: [400, 0] }]
+    // 進行方向: 300 (afterX=295) → 292 (beforeX=297) は 295 より後退 → スキップ
+    const jumps = new Map([[0, [300, 292]]])
+    const d = segmentsToD(segs, jumps)
+    expect(d).toBe('M400,200 L305,200 A5,5 0 0 0 295,200 L0,200')
+  })
+
+  it('十分離れた密集ジャンプ: 両方描画される', () => {
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 200, range: [0, 400] }]
+    // 100 (afterX=105) → 200 (beforeX=195) は 105 より進行 → 両方描画
+    const jumps = new Map([[0, [100, 200]]])
+    const d = segmentsToD(segs, jumps)
+    expect(d).toBe('M0,200 L95,200 A5,5 0 0 1 105,200 L195,200 A5,5 0 0 1 205,200 L400,200')
+  })
 })
 
 describe('detectCrossings', () => {
