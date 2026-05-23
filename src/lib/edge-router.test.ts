@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { routeAllArrows } from './edge-router'
+import { routeAllArrows, routeAllArrowsWithJumpers } from './edge-router'
 import type { ArrowResolveContext } from './edge-router'
 import type { Bbox } from './arrow-routing'
 
@@ -147,5 +147,71 @@ describe('routeAllArrows', () => {
         "M250,100 L264,100 L264,114.5 L536,114.5 L536,100 L550,100",
       ]
     `)
+  })
+})
+
+describe('routeAllArrowsWithJumpers', () => {
+  it('交差なし: routeAllArrows と完全同一の出力', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B' },
+      { id: 'a2', from: 'C', to: 'D' },
+    ]
+    const ctxMap: Record<string, ArrowResolveContext> = {
+      a1: makeCtx(0, 100, 200, 100),
+      a2: makeCtx(0, 300, 200, 300),  // 平行で交差しない
+    }
+    const baseline = routeAllArrows(arrows, (a) => ctxMap[a.id] ?? null)
+    const result = routeAllArrowsWithJumpers(arrows, (a) => ctxMap[a.id] ?? null)
+    expect(result.map((r) => r?.d)).toEqual(baseline.map((r) => r?.d))
+  })
+
+  it('X字交差: 片方の H セグメントに弧が挿入される', () => {
+    // 共有 from='A' を使い、routeAllArrows の障害物バイパスを発動させ
+    // 純粋な H×V 交差を作る
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B' },
+      { id: 'a2', from: 'A', to: 'C' },
+    ]
+    const ctxMap: Record<string, ArrowResolveContext> = {
+      a1: makeCtx(0, 200, 600, 200),    // 水平
+      a2: makeCtx(300, 0, 300, 400),    // 垂直
+    }
+    const result = routeAllArrowsWithJumpers(arrows, (a) => ctxMap[a.id] ?? null)
+    // どちらか片方の d に "A5,5" が含まれる（弧マーカー）
+    const hasArc = result.some((r) => r?.d.includes('A5,5'))
+    expect(hasArc).toBe(true)
+    // segments 自体は不変
+    const baseline = routeAllArrows(arrows, (a) => ctxMap[a.id] ?? null)
+    expect(result[0]?.segments).toEqual(baseline[0]?.segments)
+    expect(result[1]?.segments).toEqual(baseline[1]?.segments)
+  })
+
+  it('null context は null のまま伝播する', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B' },
+      { id: 'a2', from: 'C', to: 'D' },
+    ]
+    const result = routeAllArrowsWithJumpers(arrows, (a) =>
+      a.id === 'a1' ? makeCtx(0, 100, 200, 100) : null,
+    )
+    expect(result[0]).not.toBeNull()
+    expect(result[1]).toBeNull()
+  })
+
+  it('決定論性: 同じ入力を 10 回流して全結果の d が一致', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B' },
+      { id: 'a2', from: 'A', to: 'C' },
+    ]
+    const ctxMap: Record<string, ArrowResolveContext> = {
+      a1: makeCtx(0, 200, 600, 200),
+      a2: makeCtx(300, 0, 300, 400),
+    }
+    const runs = Array.from({ length: 10 }, () =>
+      routeAllArrowsWithJumpers(arrows, (a) => ctxMap[a.id] ?? null).map((r) => r?.d),
+    )
+    for (let i = 1; i < runs.length; i++) {
+      expect(runs[i]).toEqual(runs[0])
+    }
   })
 })
