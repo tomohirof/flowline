@@ -1039,6 +1039,48 @@ export function buildObstacles(args: BuildObstaclesArgs): Bbox[] {
  * 水平セグメントなら `{w:0, h:1}`、垂直なら `{w:1, h:0}`。
  * 長さを 1 に水増ししない（実態に忠実に degenerate を表現する）方針。
  */
+export const JUMP_RADIUS = 5
+/** ジャンパーアーク半径にマージンを加えた交差検出用の余裕幅。detectCrossings（Task C1）で使用予定。 */
+export const CROSSING_MARGIN = JUMP_RADIUS + 2
+
+/**
+ * EdgeSegment[] と各セグメントのジャンパー位置から SVG path d 属性を生成する。
+ * jumpsPerSegment は segment index → 跨ぎ位置（H セグメントなら x 座標）の配列。
+ * V セグメントには跨ぎが入らない（規約上）。
+ *
+ * 注: jumps なしモード（jumpsPerSegment 省略）は段階4 実装前でも使える。
+ * range は進行方向順 [start, end] を前提とする（start > end も許容）。
+ */
+export function segmentsToD(
+  segments: EdgeSegment[],
+  jumpsPerSegment?: Map<number, number[]>,
+): string {
+  if (segments.length === 0) return ''
+  const first = segments[0]
+  const startX = first.orientation === 'h' ? first.range[0] : first.fixed
+  const startY = first.orientation === 'v' ? first.range[0] : first.fixed
+  let d = `M${startX},${startY}`
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i]
+    const endX = seg.orientation === 'h' ? seg.range[1] : seg.fixed
+    const endY = seg.orientation === 'v' ? seg.range[1] : seg.fixed
+    const jumps = jumpsPerSegment?.get(i)
+    if (seg.orientation === 'h' && jumps && jumps.length > 0) {
+      const goingRight = seg.range[0] < seg.range[1]
+      const sorted = [...jumps].sort((a, b) => (goingRight ? a - b : b - a))
+      const sweep = goingRight ? 1 : 0
+      const r = JUMP_RADIUS
+      for (const jx of sorted) {
+        const beforeX = goingRight ? jx - r : jx + r
+        const afterX = goingRight ? jx + r : jx - r
+        d += ` L${beforeX},${seg.fixed} A${r},${r} 0 0 ${sweep} ${afterX},${seg.fixed}`
+      }
+    }
+    d += ` L${endX},${endY}`
+  }
+  return d
+}
+
 export function segmentsToBboxes(segments: EdgeSegment[]): Bbox[] {
   return segments.map((s) => {
     const r0 = Math.min(s.range[0], s.range[1])

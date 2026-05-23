@@ -10,6 +10,7 @@ import {
   exitPt,
   entryPt,
   segmentsToBboxes,
+  segmentsToD,
   DS,
   type Bbox,
   type EdgeSegment,
@@ -1580,4 +1581,40 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
     ])
   })
 
+})
+
+describe('segmentsToD', () => {
+  it('空配列 → 空文字列', () => {
+    expect(segmentsToD([])).toBe('')
+  })
+
+  it('水平直線 1 セグ（range[0] < range[1]）', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'h', fixed: 200, range: [100, 300] },
+    ]
+    expect(segmentsToD(segs)).toBe('M100,200 L300,200')
+  })
+
+  it('水平直線 1 セグ（range[0] > range[1]、逆方向）', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'h', fixed: 200, range: [300, 100] },
+    ]
+    expect(segmentsToD(segs)).toBe('M300,200 L100,200')
+  })
+
+  it('垂直直線 1 セグ', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'v', fixed: 200, range: [100, 300] },
+    ]
+    expect(segmentsToD(segs)).toBe('M200,100 L200,300')
+  })
+
+  it('Z字 3セグ', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'v', fixed: 200, range: [100, 200] },
+      { orientation: 'h', fixed: 200, range: [200, 400] },
+      { orientation: 'v', fixed: 400, range: [200, 300] },
+    ]
+    expect(segmentsToD(segs)).toBe('M200,100 L200,200 L400,200 L400,300')
+  })
 })
