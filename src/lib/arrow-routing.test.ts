@@ -867,7 +867,7 @@ describe('detectDiagonalDetour', () => {
     })
   })
 
-  it('should prefer right detour when both sides of target column are blocked', () => {
+  it('should pick source-side detourX when target-detour has middle-row hit on left', () => {
     const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
     const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
     const L: Bbox = { x: 400, y: 250, w: 152, h: 56 }
@@ -1187,7 +1187,7 @@ describe('detectDiagonalDetour', () => {
     expect(r?.kind).toBe('target-detour')
     if (r?.kind === 'target-detour') {
       // 旧ロジック: leftBlocked (450 が 600 の左、Y 重なり) → 右迂回 = 600+76+14 = 690
-      // 新ロジック (バグ): targetDirection=-1 強制 → min(524, 374) - 14 = 360 (additionalBlocker 中心 450 を貫通する位置)
+      // もし新ロジックを誤って適用していたら: targetDirection=-1 強制 → min(524, 374) - 14 = 360 (additionalBlocker 中心 450 を貫通)
       expect(r.detourX).toBe(690)
     }
   })
