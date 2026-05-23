@@ -231,6 +231,7 @@ type DiagonalDetourResult =
  *   指定時は binary blocker 判定をスキップし、targetDirection 方向に hits ∪ middleHitsToClear の
  *   union 最遠端 + DETOUR_MARGIN を取る新ロジックを使う。これにより source-detour で中央水平
  *   セグメントが middle-row 障害を貫通するバグを解消する。両フィールド必須。
+ *   opts 指定時 blockers 引数は参照されない (呼び出し側は obstacles など任意の値を渡せる)。
  */
 function pickDetourX(
   hits: Bbox[],
@@ -382,15 +383,18 @@ export function detectDiagonalDetour(
     return Math.abs(b.y - my) < b.h / 2 + 2 && b.x - b.w / 2 < xHigh - 1 && b.x + b.w / 2 > xLow + 1
   })
 
+  // issue #374 の新ロジック pickDetourX(opts) に渡す target 方向。source-detour と
+  // both-detour.sourceDetourX で共通。
+  const targetDirection: 1 | -1 = e.x > s.x ? 1 : -1
+
   if (sourceColHits.length > 0 && targetColHits.length > 0) {
     // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
-    const targetIds = new Set(targetColHits)
     const sourceIds = new Set(sourceColHits)
-    const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
     const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
-    // sourceDetourX: 新ロジック (issue #374) で middleRowHits も extent に含める。
-    const sourceDetourX = pickDetourX(sourceColHits, srcBlockers, [s.y, my], obstacles, {
-      targetDirection: e.x > s.x ? 1 : -1,
+    // sourceDetourX: 新ロジック (issue #374)。opts 指定時は pickDetourX 内で blockers が
+    // 参照されないため第 2 引数には obstacles を渡す (dead code 防止)。
+    const sourceDetourX = pickDetourX(sourceColHits, obstacles, [s.y, my], obstacles, {
+      targetDirection,
       middleHitsToClear: middleRowHits,
     })
     // targetDetourX: 旧ロジック維持。target-detour 系の対称対応は issue #375 で別途。
@@ -413,7 +417,7 @@ export function detectDiagonalDetour(
 
   if (sourceColHits.length > 0 && targetColHits.length === 0) {
     const detourX = pickDetourX(sourceColHits, obstacles, [s.y, my], obstacles, {
-      targetDirection: e.x > s.x ? 1 : -1,
+      targetDirection,
       middleHitsToClear: middleRowHits,
     })
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)

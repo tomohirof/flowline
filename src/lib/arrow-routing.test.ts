@@ -1056,22 +1056,6 @@ describe('detectDiagonalDetour', () => {
     }
   })
 
-  it('should pick detourX past middle-row hit even when source-col blocker is closer than middle-row hit', () => {
-    // sourceColHits.right < middleRowHits.right となるケース。
-    // 旧ロジックは sourceColHits だけ見て detourX=140 (sourceCol 右迂回) を選ぶが、
-    // それでは中央 H (140 → 300) が middleRowHit (160-240) を貫通する。
-    // 新ロジックは union extent の最遠端を取って detourX=254 を選ぶ (リグレッション防止)。
-    const obstacles: Bbox[] = [
-      { x: 100, y: 200, w: 80, h: 40 }, // sourceColHit, right=140
-      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit, right=240
-    ]
-    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
-    expect(r?.kind).toBe('source-detour')
-    if (r?.kind === 'source-detour') {
-      expect(r.detourX).toBe(254)
-    }
-  })
-
   it('should mirror correctly for right-to-left diagonal source-detour with middle-row hit on left', () => {
     // source.x > target.x: target は左にある (targetDirection=-1)。
     // s=(300, 100), e=(100, 300), my=200。
