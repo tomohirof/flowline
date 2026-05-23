@@ -62,7 +62,7 @@ import {
   calcMultiDropTargets,
   cellFromPos as cellFromPosLib,
 } from '../../lib/flow-engine'
-import { routeAllArrows, type ArrowResolveContext } from '../../lib/edge-router'
+import { routeAllArrowsWithJumpers, type ArrowResolveContext } from '../../lib/edge-router'
 import { isGroupParent, isGroupSub, getGroupWidth } from '../../lib/lane-group-utils'
 
 // =============================================
@@ -1468,8 +1468,8 @@ export default function FlowEditor({
     }
   }
 
-  // routeAllArrows でマルチエッジ協調ルーティング（id 順で逐次計算し、先行 segments を後続 obstacles に含める）
-  const allArrowPaths = routeAllArrows(arrows, resolveArrowContext)
+  // routeAllArrowsWithJumpers でマルチエッジ協調ルーティング（id 順で逐次計算し、先行 segments を後続 obstacles に含める）
+  const allArrowPaths = routeAllArrowsWithJumpers(arrows, resolveArrowContext)
 
   // arrows[i] に対応するパスを id ベースで引く Map（O(1) ルックアップ）
   const pathByArrowId = new Map<string, ArrowPathResult | null>()

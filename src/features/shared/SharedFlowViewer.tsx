@@ -14,7 +14,7 @@ import {
   type Bbox,
   type ObstacleNode,
 } from '../../lib/arrow-routing'
-import { routeAllArrows } from '../../lib/edge-router'
+import { routeAllArrowsWithJumpers } from '../../lib/edge-router'
 import type { ArrowResolveContext } from '../../lib/edge-router'
 import { formatRelativeTime } from '../../lib/relative-time'
 import { isGroupSub, isGroupParent, getGroupWidth } from '../../lib/lane-group-utils'
@@ -121,7 +121,7 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     original: a,
   }))
 
-  const routedPaths = routeAllArrows(arrowsForRouting, (mapped): ArrowResolveContext | null => {
+  const routedPaths = routeAllArrowsWithJumpers(arrowsForRouting, (mapped): ArrowResolveContext | null => {
     const arrow = mapped.original
     const fromNode = nodeById[arrow.fromNodeId]
     const toNode = nodeById[arrow.toNodeId]
