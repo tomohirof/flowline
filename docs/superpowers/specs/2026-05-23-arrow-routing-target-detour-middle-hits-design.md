@@ -98,12 +98,12 @@ middleRowHit range [750.5, 902.5] は 736.5 より右 → 衝突なし ✓
 
 ## 変更内容まとめ
 
-| 変更箇所 | 行 (現行) | 変更概要 |
-|---------|----------|---------|
-| target-detour 分岐 | L420 | `pickDetourX(..., opts?)` で opts を条件付きで渡す |
-| both-detour.targetDetourX | L409 | 同上 |
-| middle-only fallback (L475) | L475 | スコープ外。後述。 |
-| コメント | L416-L418 | issue #375 follow-up コメントを削除/置換 |
+| 変更箇所                    | 行 (現行) | 変更概要                                           |
+| --------------------------- | --------- | -------------------------------------------------- |
+| target-detour 分岐          | L420      | `pickDetourX(..., opts?)` で opts を条件付きで渡す |
+| both-detour.targetDetourX   | L409      | 同上                                               |
+| middle-only fallback (L475) | L475      | スコープ外。後述。                                 |
+| コメント                    | L416-L418 | issue #375 follow-up コメントを削除/置換           |
 
 ### middle-only fallback (L475) を対象外とする理由
 
