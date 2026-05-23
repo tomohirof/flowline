@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { BRAND } from './constants/brand'
@@ -12,6 +13,10 @@ import { VerifyPage } from './features/auth/VerifyPage'
 import { DemoEditorPage } from './features/editor/pages/DemoEditorPage'
 import { JoinProjectPage } from './features/projects/JoinProjectPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
+
+const DevRenderPage = import.meta.env.DEV
+  ? lazy(() => import('./dev/DevRenderPage').then((m) => ({ default: m.DevRenderPage })))
+  : null
 
 function Header() {
   const { t } = useTranslation()
@@ -28,7 +33,8 @@ function Header() {
     location.pathname === '/try' ||
     location.pathname.match(/^\/flows\/[^/]+$/) ||
     location.pathname.match(/^\/shared\/[^/]+$/) ||
-    location.pathname.match(/^\/join\/[^/]+$/)
+    location.pathname.match(/^\/join\/[^/]+$/) ||
+    location.pathname.startsWith('/dev/')
   ) {
     return null
   }
@@ -122,6 +128,16 @@ function App() {
             <Route path="/shared/:token" element={<SharedFlowPage />} />
             <Route path="/join/:token" element={<JoinProjectPage />} />
             <Route path="/try" element={<DemoEditorPage />} />
+            {DevRenderPage && (
+              <Route
+                path="/dev/render"
+                element={
+                  <Suspense fallback={null}>
+                    <DevRenderPage />
+                  </Suspense>
+                }
+              />
+            )}
           </Routes>
         </main>
       </AuthProvider>

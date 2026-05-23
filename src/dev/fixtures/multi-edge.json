@@ -1,0 +1,36 @@
+{
+  "id": "fixture-multi-edge",
+  "title": "Multi-edge — parallel arrows between same pair",
+  "themeId": "cloud",
+  "shareToken": null,
+  "projectId": null,
+  "createdAt": "2026-01-01T00:00:00Z",
+  "updatedAt": "2026-01-01T00:00:00Z",
+  "lanes": [
+    { "id": "lane-1", "name": "A", "colorIndex": 0, "position": 0 },
+    { "id": "lane-2", "name": "B", "colorIndex": 1, "position": 1 }
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "laneId": "lane-1",
+      "rowIndex": 1,
+      "label": "Source",
+      "note": null,
+      "orderIndex": 0
+    },
+    {
+      "id": "n2",
+      "laneId": "lane-2",
+      "rowIndex": 1,
+      "label": "Sink",
+      "note": null,
+      "orderIndex": 1
+    }
+  ],
+  "arrows": [
+    { "id": "a1", "fromNodeId": "n1", "toNodeId": "n2", "comment": "request" },
+    { "id": "a2", "fromNodeId": "n2", "toNodeId": "n1", "comment": "response" },
+    { "id": "a3", "fromNodeId": "n1", "toNodeId": "n2", "comment": "retry", "dash": "4 4" }
+  ]
+}
