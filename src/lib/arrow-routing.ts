@@ -39,6 +39,66 @@ const yOverlap = (a: Bbox, b: Bbox): boolean => Math.abs(a.y - b.y) < (a.h + b.h
 // 線分を除外する用途で使う。経路上の障害物判定（inRow/inCol）には引き続き使う。
 const isThinSegment = (b: Bbox): boolean => b.h < 3 || b.w < 3
 
+const TRACK_GAP = 8
+const MAX_TRACK_ESCALATIONS = 6
+const TRACK_COLLISION_TOLERANCE = 4
+
+/**
+ * 算出済みの detour 座標が
+ * (a) 同方向の薄いエッジセグメント、または (b) ノード との衝突がある場合、
+ * direction 方向に TRACK_GAP ずつシフトして空きトラックを探す。
+ *
+ * @param initialFixed 初期 detour 座標（H なら Y、V なら X）
+ * @param crossRange 跨ぐ範囲。H なら [xStart, xEnd]、V なら [yStart, yEnd]
+ * @param orientation detour segment の向き
+ * @param obstacles 全障害物（薄いセグメントとノードの両方を含む）
+ * @param direction +1 or -1: initialFixed から遠ざかる方向
+ * @returns 衝突しない fixed 座標。MAX_TRACK_ESCALATIONS 回試行してもダメなら最終値を返す
+ */
+function escalateDetourTrack(
+  initialFixed: number,
+  crossRange: [number, number],
+  orientation: 'h' | 'v',
+  obstacles: Bbox[],
+  direction: 1 | -1,
+): number {
+  const rLow = Math.min(crossRange[0], crossRange[1])
+  const rHigh = Math.max(crossRange[0], crossRange[1])
+  let fixed = initialFixed
+  for (let i = 0; i < MAX_TRACK_ESCALATIONS; i++) {
+    // 初期位置 (i=0) はノード衝突を許容する (既存ルータがこの位置を妥当と判断済み)。
+    // 薄いセグメント衝突のみを検出して escalate する。
+    // i>=1 ではシフト先がノード内に入らないようノード衝突もチェックする。
+    const checkNodeCollision = i > 0
+    const occupied = obstacles.some((b) => {
+      if (orientation === 'h') {
+        if (isThinSegment(b) && b.h < 3) {
+          if (Math.abs(b.y - fixed) >= TRACK_COLLISION_TOLERANCE) return false
+          return b.x - b.w / 2 < rHigh && b.x + b.w / 2 > rLow
+        }
+        if (checkNodeCollision && !isThinSegment(b)) {
+          if (Math.abs(b.y - fixed) >= b.h / 2) return false
+          return b.x - b.w / 2 < rHigh && b.x + b.w / 2 > rLow
+        }
+        return false
+      } else {
+        if (isThinSegment(b) && b.w < 3) {
+          if (Math.abs(b.x - fixed) >= TRACK_COLLISION_TOLERANCE) return false
+          return b.y - b.h / 2 < rHigh && b.y + b.h / 2 > rLow
+        }
+        if (checkNodeCollision && !isThinSegment(b)) {
+          if (Math.abs(b.x - fixed) >= b.w / 2) return false
+          return b.y - b.h / 2 < rHigh && b.y + b.h / 2 > rLow
+        }
+        return false
+      }
+    })
+    if (!occupied) return fixed
+    fixed += direction * TRACK_GAP
+  }
+  return fixed
+}
+
 function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
   // 水平直線でなければ迂回しない
   if (Math.abs(e.y - s.y) >= 2) return null
@@ -75,9 +135,11 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   const goDown = !downBlocked || upBlocked
 
   // detourY: 障害ノード群の最下端 + マージン or 最上端 - マージン
-  const detourY = goDown
+  const initialDetourY = goDown
     ? Math.max(...inRow.map((o) => o.y + o.h / 2)) + DETOUR_MARGIN
     : Math.min(...inRow.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
+  const direction: 1 | -1 = goDown ? 1 : -1
+  const detourY = escalateDetourTrack(initialDetourY, [s.x, e.x], 'h', obstacles, direction)
 
   return { detourY }
 }
@@ -121,9 +183,11 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
   const goRight = !rightBlocked || leftBlocked
 
   // detourX: 障害ノード群の最右端 + マージン or 最左端 - マージン
-  const detourX = goRight
+  const initialDetourX = goRight
     ? Math.max(...inCol.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
     : Math.min(...inCol.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+  const direction: 1 | -1 = goRight ? 1 : -1
+  const detourX = escalateDetourTrack(initialDetourX, [s.y, e.y], 'v', obstacles, direction)
 
   return { detourX }
 }
@@ -148,7 +212,12 @@ type DiagonalDetourResult =
  * blockers は方向判定対象のブロッカー候補。target/source 列同士の相互ブロッキングを防ぐ
  * ため、both-detour では呼び出し側が反対側列の hits を除外した blockers を渡す。
  */
-function pickDetourX(hits: Bbox[], blockers: Bbox[]): number {
+function pickDetourX(
+  hits: Bbox[],
+  blockers: Bbox[],
+  crossRange: [number, number],
+  obstacles: Bbox[],
+): number {
   // 薄い線分 (エッジセグメント由来 Bbox) は方向判定から除外。
   // detectDetour / detectVerticalDetour と同じ理由 (yOverlap 誤判定を防ぐ)。
   const rightBlocked = hits.some((obs) =>
@@ -158,9 +227,11 @@ function pickDetourX(hits: Bbox[], blockers: Bbox[]): number {
     blockers.some((b) => !isThinSegment(b) && b.x < obs.x - 1 && yOverlap(obs, b)),
   )
   const goRight = !rightBlocked || leftBlocked
-  return goRight
+  const initialDetourX = goRight
     ? Math.max(...hits.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
     : Math.min(...hits.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+  const direction: 1 | -1 = goRight ? 1 : -1
+  return escalateDetourTrack(initialDetourX, crossRange, 'v', obstacles, direction)
 }
 
 /**
@@ -204,9 +275,11 @@ function computeShiftedMy(
     obstacles.some((b) => !isThinSegment(b) && b.y < obs.y - 1 && inBetween(b) && xOverlap(obs, b)),
   )
   const goDown = !downBlocked || upBlocked
-  const shiftedMy = goDown
+  const initialShiftedMy = goDown
     ? Math.max(...middleRowHits.map((o) => o.y + o.h / 2)) + DETOUR_MARGIN
     : Math.min(...middleRowHits.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
+  const direction: 1 | -1 = goDown ? 1 : -1
+  const shiftedMy = escalateDetourTrack(initialShiftedMy, [s.x, e.x], 'h', obstacles, direction)
 
   // range-check: source 行 / target 行を侵食しないこと
   // 複数障害の高さが異なる場合に保守的な (最も厳しい) 余白を取るため max を使う。
@@ -214,10 +287,6 @@ function computeShiftedMy(
   const lo = yLow + bboxHMax / 2 + 1
   const hi = yHigh - bboxHMax / 2 - 1
   // 範囲外 → 元の my を返す。
-  // 注意: 呼び出し元が source/target/both-detour を選択しており column detour が
-  // 既に発生する場合、この経路では middleRowHits の障害は回避されない。これは
-  // shift-my の単独経路 (L270+) のような escalation 機構を持たないためで、
-  // 行間が狭い稀なケースで残存しうる既知の制約。
   if (shiftedMy >= lo && shiftedMy <= hi) return shiftedMy
   return my
 }
@@ -279,8 +348,8 @@ export function detectDiagonalDetour(
     const sourceIds = new Set(sourceColHits)
     const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
     const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
-    const sourceDetourX = pickDetourX(sourceColHits, srcBlockers)
-    const targetDetourX = pickDetourX(targetColHits, tgtBlockers)
+    const sourceDetourX = pickDetourX(sourceColHits, srcBlockers, [s.y, my], obstacles)
+    const targetDetourX = pickDetourX(targetColHits, tgtBlockers, [my, e.y], obstacles)
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
@@ -288,14 +357,14 @@ export function detectDiagonalDetour(
   }
 
   if (targetColHits.length > 0 && sourceColHits.length === 0) {
-    const detourX = pickDetourX(targetColHits, obstacles)
+    const detourX = pickDetourX(targetColHits, obstacles, [my, e.y], obstacles)
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
     return { kind: 'target-detour', my: shiftedMy, detourX, approachY }
   }
 
   if (sourceColHits.length > 0 && targetColHits.length === 0) {
-    const detourX = pickDetourX(sourceColHits, obstacles)
+    const detourX = pickDetourX(sourceColHits, obstacles, [s.y, my], obstacles)
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
     return { kind: 'source-detour', departY, detourX, my: shiftedMy }
@@ -312,9 +381,11 @@ export function detectDiagonalDetour(
       obstacles.some((b) => !isThinSegment(b) && b.y < obs.y - 1 && xOverlap(obs, b)),
     )
     const goDown = !downBlocked || upBlocked
-    const shiftedMy = goDown
+    const initialShiftedMy = goDown
       ? Math.max(...middleRowHits.map((o) => o.y + o.h / 2)) + DETOUR_MARGIN
       : Math.min(...middleRowHits.map((o) => o.y - o.h / 2)) - DETOUR_MARGIN
+    const direction: 1 | -1 = goDown ? 1 : -1
+    const shiftedMy = escalateDetourTrack(initialShiftedMy, [s.x, e.x], 'h', obstacles, direction)
 
     // ガード: shiftedMy が source 行 / target 行を侵食しないこと
     // 複数障害の高さが異なる場合に保守的な (最も厳しい) 余白を取るため max を使う。
@@ -332,7 +403,7 @@ export function detectDiagonalDetour(
     // detourX は障害の左右どちらかに DETOUR_MARGIN 取られているため、s.x と e.x の
     // どちらが detourX と同じ側にあるかで衝突しない kind が決まる。
     // 左→右 (s.x < e.x) でも右→左 (s.x > e.x) でも幾何学的に正しく判定できる (#359)。
-    const detourX = pickDetourX(middleRowHits, obstacles)
+    const detourX = pickDetourX(middleRowHits, obstacles, [s.y, e.y], obstacles)
     const obsRight = Math.max(...middleRowHits.map((o) => o.x + o.w / 2))
     const obsLeft = Math.min(...middleRowHits.map((o) => o.x - o.w / 2))
     // source-detour 中央水平 = [min(detourX, e.x), max(detourX, e.x)]

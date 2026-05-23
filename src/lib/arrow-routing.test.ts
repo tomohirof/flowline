@@ -1732,3 +1732,45 @@ describe('detectCrossings', () => {
     expect(result[0].jumperEdgeId).toBe('b')
   })
 })
+
+describe('escalateDetourTrack（buildArrowPath 経由で検証）', () => {
+  it('薄いセグメント衝突なし: 元の detourY のまま', () => {
+    const s = { x: 100, y: 200 }
+    const e = { x: 500, y: 200 }
+    const fc = { x: 50, y: 200 }
+    const tc = { x: 550, y: 200 }
+    const B: Bbox = { x: 300, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    // 障害ノード B 中心 y=200, h=56 → 下端 y=228, +DETOUR_MARGIN(14) → detourY=242
+    expect(r.my).toBe(242)
+  })
+
+  it('薄いセグメント衝突あり: TRACK_GAP=8 だけ direction 方向にシフト', () => {
+    const s = { x: 100, y: 200 }
+    const e = { x: 500, y: 200 }
+    const fc = { x: 50, y: 200 }
+    const tc = { x: 550, y: 200 }
+    const B: Bbox = { x: 300, y: 200, w: 152, h: 56 }
+    // detourY 候補 y=242 に既存の薄い H セグメントを配置（goDown=true、direction=+1）
+    const thinH: Bbox = { x: 300, y: 242, w: 200, h: 1 }
+    const r = buildArrowPath(s, e, fc, tc, [B, thinH])
+    // 衝突するので 242 + 8 = 250 にシフト
+    expect(r.my).toBe(250)
+  })
+
+  it('MAX_TRACK_ESCALATIONS 超過: 最終値を返す（無限ループしない）', () => {
+    const s = { x: 100, y: 200 }
+    const e = { x: 500, y: 200 }
+    const fc = { x: 50, y: 200 }
+    const tc = { x: 550, y: 200 }
+    const B: Bbox = { x: 300, y: 200, w: 152, h: 56 }
+    // 薄い H を 8px 間隔で 10 個並べて escalation を強制
+    const thins: Bbox[] = []
+    for (let i = 0; i < 10; i++) {
+      thins.push({ x: 300, y: 242 + i * 8, w: 200, h: 1 })
+    }
+    // 6 回 escalation して 242 + 6*8 = 290 で打ち切り
+    const r = buildArrowPath(s, e, fc, tc, [B, ...thins])
+    expect(r.my).toBe(290)
+  })
+})
