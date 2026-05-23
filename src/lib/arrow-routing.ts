@@ -226,13 +226,34 @@ type DiagonalDetourResult =
  *
  * blockers は方向判定対象のブロッカー候補。target/source 列同士の相互ブロッキングを防ぐ
  * ため、both-detour では呼び出し側が反対側列の hits を除外した blockers を渡す。
+ *
+ * opts (issue #374):
+ *   指定時は binary blocker 判定をスキップし、targetDirection 方向に hits ∪ middleHitsToClear の
+ *   union 最遠端 + DETOUR_MARGIN を取る新ロジックを使う。これにより source-detour で中央水平
+ *   セグメントが middle-row 障害を貫通するバグを解消する。両フィールド必須。
  */
 function pickDetourX(
   hits: Bbox[],
   blockers: Bbox[],
   crossRange: [number, number],
   obstacles: Bbox[],
+  opts?: {
+    targetDirection: 1 | -1
+    middleHitsToClear: Bbox[]
+  },
 ): number {
+  if (opts) {
+    // 新ロジック (issue #374): hits ∪ middleHitsToClear の最遠端を取る。
+    // sourceColHits だけ見ていた旧ロジックでは middleRowHits を貫通する detourX を選んでしまう。
+    const extent = [...hits, ...opts.middleHitsToClear]
+    const initialDetourX =
+      opts.targetDirection === 1
+        ? Math.max(...extent.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
+        : Math.min(...extent.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
+    return escalateDetourTrack(initialDetourX, crossRange, 'v', obstacles, opts.targetDirection)
+  }
+
+  // 既存ロジック (opts 未指定時): binary blocker 判定による方向決定。
   // 薄い線分 (エッジセグメント由来 Bbox) は方向判定から除外。
   // detectDetour / detectVerticalDetour と同じ理由 (yOverlap 誤判定を防ぐ)。
   const rightBlocked = hits.some((obs) =>
