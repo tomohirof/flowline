@@ -389,14 +389,22 @@ export function detectDiagonalDetour(
 
   if (sourceColHits.length > 0 && targetColHits.length > 0) {
     // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
+    // srcBlockers / tgtBlockers は opts 未指定時 (= middleRowHits 空) の binary blocker 判定で
+    // 使われる。opts 指定時は pickDetourX 内で参照されないが、両ルートに対応するため両方で
+    // 渡しておく。
+    const targetIds = new Set(targetColHits)
     const sourceIds = new Set(sourceColHits)
+    const srcBlockers = obstacles.filter((b) => !targetIds.has(b))
     const tgtBlockers = obstacles.filter((b) => !sourceIds.has(b))
-    // sourceDetourX: 新ロジック (issue #374)。opts 指定時は pickDetourX 内で blockers が
-    // 参照されないため第 2 引数には obstacles を渡す (dead code 防止)。
-    const sourceDetourX = pickDetourX(sourceColHits, obstacles, [s.y, my], obstacles, {
-      targetDirection,
-      middleHitsToClear: middleRowHits,
-    })
+    // sourceDetourX: middleRowHits が非空 → 新ロジック (issue #374)、空 → 旧ロジック (blocker 回避)。
+    // 旧ロジック fallback は sourceColHit の隣接列 blocker による貫通リグレッションを防ぐため。
+    const sourceDetourX = pickDetourX(
+      sourceColHits,
+      srcBlockers,
+      [s.y, my],
+      obstacles,
+      middleRowHits.length > 0 ? { targetDirection, middleHitsToClear: middleRowHits } : undefined,
+    )
     // targetDetourX: 旧ロジック維持。target-detour 系の対称対応は issue #375 で別途。
     const targetDetourX = pickDetourX(targetColHits, tgtBlockers, [my, e.y], obstacles)
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
@@ -416,10 +424,16 @@ export function detectDiagonalDetour(
   }
 
   if (sourceColHits.length > 0 && targetColHits.length === 0) {
-    const detourX = pickDetourX(sourceColHits, obstacles, [s.y, my], obstacles, {
-      targetDirection,
-      middleHitsToClear: middleRowHits,
-    })
+    // middleRowHits が空のときは新ロジック (target 方向強制) を使わず旧ロジックに戻す:
+    // sourceColHit の隣接列に blocker があるケースで V セグメントが blocker を貫通する
+    // リグレッションを防ぐため。
+    const detourX = pickDetourX(
+      sourceColHits,
+      obstacles,
+      [s.y, my],
+      obstacles,
+      middleRowHits.length > 0 ? { targetDirection, middleHitsToClear: middleRowHits } : undefined,
+    )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
     return { kind: 'source-detour', departY, detourX, my: shiftedMy }

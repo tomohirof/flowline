@@ -1074,6 +1074,25 @@ describe('detectDiagonalDetour', () => {
     }
   })
 
+  it('should fall back to blocker-aware logic when middle-row hit is empty (regression guard)', () => {
+    // Codex P1 リグレッション: source-detour で middleRowHits が空 のとき opts を渡すと
+    // pickDetourX が targetDirection 側に detourX を強制し、隣接列の blocker を貫通する。
+    // 期待: middleRowHits 空 → 旧ロジック (binary blocker 判定) に戻り、左迂回を選択。
+    // s=(200,128), e=(600,372): sourceColHit (200,170) + additionalBlocker (350,170, 隣接列)。
+    // additionalBlocker は y=170 → my=250 から |170-250|=80 で middle row 圏外 (h/2+2=30)。
+    const obstacles: Bbox[] = [
+      { x: 200, y: 170, w: 152, h: 56 }, // sourceColHit, right=276
+      { x: 350, y: 170, w: 152, h: 56 }, // 隣接列 blocker, range [274, 426]
+    ]
+    const r = detectDiagonalDetour({ x: 200, y: 128 }, { x: 600, y: 372 }, obstacles)
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      // 旧ロジック: rightBlocked=true → 左迂回 = 200 - 76 - 14 = 110
+      // 新ロジック (バグ): targetDirection=+1 強制 = 276 + 14 = 290 (additionalBlocker を貫通)
+      expect(r.detourX).toBe(110)
+    }
+  })
+
   it('should pick sourceDetourX past middle-row hit in both-detour when middle-row hit exists on target side', () => {
     // both-detour: source col と target col 両方に障害あり、加えて middle 行にも障害あり。
     // s=(100, 100), e=(300, 300), my=200。
