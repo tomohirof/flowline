@@ -1112,6 +1112,29 @@ describe('detectDiagonalDetour', () => {
     }
   })
 
+  // --- issue #375: target-detour にも middle-row 障害認識を追加 (対称対応) ---
+
+  it('should pick detourX past middle-row hit when target-detour selected and middle-row hit exists', () => {
+    // issue #375 再現 (source-detour の対称): target-col blocker + middle-row hit。
+    // s=(100, 100), e=(300, 300), my=200。target は右 (e.x > s.x → targetDirection_normal = +1)。
+    // targetColHit: (300, 200) → target col=300
+    // middleRowHit: (200, 200) → middle col
+    // 期待: 新ロジック (符号反転) で detourX = min(targetCol.left=260, middleRow.left=160) - 14 = 146
+    // (source-detour とは符号が逆: target-detour 中央 H [s.x, detourX] を obstacles の source 側に通す)
+    const obstacles: Bbox[] = [
+      { x: 300, y: 200, w: 80, h: 40 }, // targetColHit, left=260
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit, left=160
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('target-detour')
+    if (r?.kind === 'target-detour') {
+      // detourX = min(260, 160) - 14 = 146 (source 方向 push)
+      expect(r.detourX).toBe(146)
+      // shift-my: 200 + 20 + 14 = 234 (h=40, range 内)
+      expect(r.my).toBe(234)
+    }
+  })
+
   it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
     // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
     // source 店舗/ステータス変更 (col0=100, row0=100)
