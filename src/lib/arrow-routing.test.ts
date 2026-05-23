@@ -1172,6 +1172,24 @@ describe('detectDiagonalDetour', () => {
     }
   })
 
+  it('should fall back to blocker-aware logic when middle-row hit is empty (target-detour regression guard)', () => {
+    // issue #374 と対称のリグレッションガード: target-detour で middleRowHits が空 のとき
+    // opts を渡すと隣接列 blocker を貫通する。期待: 空 → 旧ロジック (binary blocker) に戻る。
+    // s=(200,128), e=(600,372): targetColHit (600, 330) + additionalBlocker (450, 330, 隣接列)。
+    // additionalBlocker は y=330 → my=250 から |330-250|=80 で middle row 圏外 (h/2+2=30)。
+    const obstacles: Bbox[] = [
+      { x: 600, y: 330, w: 152, h: 56 }, // targetColHit, left=524
+      { x: 450, y: 330, w: 152, h: 56 }, // 隣接列 blocker, range [374, 526]
+    ]
+    const r = detectDiagonalDetour({ x: 200, y: 128 }, { x: 600, y: 372 }, obstacles)
+    expect(r?.kind).toBe('target-detour')
+    if (r?.kind === 'target-detour') {
+      // 旧ロジック: leftBlocked (450 が 600 の左、Y 重なり) → 右迂回 = 600+76+14 = 690
+      // 新ロジック (バグ): targetDirection=-1 強制 → min(524, 374) - 14 = 360 (additionalBlocker 中心 450 を貫通する位置)
+      expect(r.detourX).toBe(690)
+    }
+  })
+
   it('should avoid middle-row obstacle in issue #366 reproduction case', () => {
     // issue #366: 菱形 (fromSide:"bottom") + 3点同時障害
     // source 店舗/ステータス変更 (col0=100, row0=100)
