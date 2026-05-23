@@ -64,15 +64,19 @@ function escalateDetourTrack(
   orientation: 'h' | 'v',
   obstacles: Bbox[],
   direction: 1 | -1,
+  checkInitialNodeCollision = false,
 ): number {
   const rLow = Math.min(crossRange[0], crossRange[1])
   const rHigh = Math.max(crossRange[0], crossRange[1])
   let fixed = initialFixed
   for (let i = 0; i < MAX_TRACK_ESCALATIONS; i++) {
-    // 初期位置 (i=0) はノード衝突を許容する (既存ルータがこの位置を妥当と判断済み)。
-    // 薄いセグメント衝突のみを検出して escalate する。
-    // i>=1 ではシフト先がノード内に入らないようノード衝突もチェックする。
-    const checkNodeCollision = i > 0
+    // 初期位置 (i=0) はデフォルトではノード衝突を許容する (既存ルータがこの位置を妥当と判断済み)。
+    // ただし checkInitialNodeCollision=true のときは i=0 でもノード衝突をチェックする。
+    // pickDetourX の opts ブランチ (issue #374 / #375) では initialDetourX が hits 以外の
+    // obstacle 中心と一致しうるため、この経路から true を渡してノード貫通を防ぐ。
+    // 薄いセグメント衝突は常に検出して escalate する。
+    // i>=1 ではシフト先がノード内に入らないよう常にノード衝突もチェックする。
+    const checkNodeCollision = checkInitialNodeCollision || i > 0
     const occupied = obstacles.some((b) => {
       if (orientation === 'h') {
         // 薄い H セグメント (h < 3) のみが H 方向のトラック衝突を起こしうる。
@@ -251,7 +255,16 @@ function pickDetourX(
       opts.targetDirection === 1
         ? Math.max(...extent.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
         : Math.min(...extent.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-    return escalateDetourTrack(initialDetourX, crossRange, 'v', obstacles, opts.targetDirection)
+    // initialDetourX は hits ∪ middleHitsToClear の union 最遠端であり、
+    // hits 以外の obstacle 中心と一致しうるため、i=0 でもノード衝突をチェックする。
+    return escalateDetourTrack(
+      initialDetourX,
+      crossRange,
+      'v',
+      obstacles,
+      opts.targetDirection,
+      true,
+    )
   }
 
   // 既存ロジック (opts 未指定時): binary blocker 判定による方向決定。
@@ -387,6 +400,16 @@ export function detectDiagonalDetour(
   // both-detour.sourceDetourX で共通。
   const targetDirection: 1 | -1 = e.x > s.x ? 1 : -1
 
+  // pickDetourX に渡す opts を生成するヘルパ。middleRowHits が空のときは undefined を返して
+  // 旧ロジック (binary blocker 回避) に fallback する。source / target で符号が逆になる点は
+  // dir 引数で明示する (target-detour 系では -targetDirection を渡す)。
+  const makeOpts = (
+    dir: 1 | -1,
+  ): { targetDirection: 1 | -1; middleHitsToClear: Bbox[] } | undefined =>
+    middleRowHits.length > 0
+      ? { targetDirection: dir, middleHitsToClear: middleRowHits }
+      : undefined
+
   if (sourceColHits.length > 0 && targetColHits.length > 0) {
     // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
     // srcBlockers / tgtBlockers は opts 未指定時 (= middleRowHits 空) の binary blocker 判定で
@@ -403,21 +426,34 @@ export function detectDiagonalDetour(
       srcBlockers,
       [s.y, my],
       obstacles,
-      middleRowHits.length > 0 ? { targetDirection, middleHitsToClear: middleRowHits } : undefined,
+      makeOpts(targetDirection),
     )
-    // targetDetourX: 旧ロジック維持。target-detour 系の対称対応は issue #375 で別途。
-    const targetDetourX = pickDetourX(targetColHits, tgtBlockers, [my, e.y], obstacles)
+    // targetDetourX: source-detour とは符号が逆の targetDirection で symmetric に対応 (issue #375)。
+    const targetDetourX = pickDetourX(
+      targetColHits,
+      tgtBlockers,
+      [my, e.y],
+      obstacles,
+      makeOpts(-targetDirection as 1 | -1),
+    )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
     return { kind: 'both-detour', departY, sourceDetourX, my: shiftedMy, targetDetourX, approachY }
   }
 
-  // 注: target-detour の detourX 計算は対称的に opts { targetDirection, middleHitsToClear } を
-  // 渡せる API を持つが、本 PR (issue #374) では source-detour のみに適用してリグレッションリスクを
-  // 抑える。target-detour / both-detour.tgtDetourX の対称対応は issue #375 でフォローアップ予定。
+  // target-detour の opts.targetDirection は source-detour とは符号が逆。
+  // 中央 H = [s.x, detourX] を middleRowHits の source 側に通すため detourX を -targetDirection
+  // (= source) 方向に push する。middleRowHits 空時は旧ロジック (binary blocker) に fallback
+  // して隣接列 blocker 貫通リグレッションを防ぐ (issue #374 と同パターン)。
   if (targetColHits.length > 0 && sourceColHits.length === 0) {
-    const detourX = pickDetourX(targetColHits, obstacles, [my, e.y], obstacles)
+    const detourX = pickDetourX(
+      targetColHits,
+      obstacles,
+      [my, e.y],
+      obstacles,
+      makeOpts(-targetDirection as 1 | -1),
+    )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
     return { kind: 'target-detour', my: shiftedMy, detourX, approachY }
@@ -432,7 +468,7 @@ export function detectDiagonalDetour(
       obstacles,
       [s.y, my],
       obstacles,
-      middleRowHits.length > 0 ? { targetDirection, middleHitsToClear: middleRowHits } : undefined,
+      makeOpts(targetDirection),
     )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
