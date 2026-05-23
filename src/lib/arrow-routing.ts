@@ -387,6 +387,16 @@ export function detectDiagonalDetour(
   // both-detour.sourceDetourX で共通。
   const targetDirection: 1 | -1 = e.x > s.x ? 1 : -1
 
+  // pickDetourX に渡す opts を生成するヘルパ。middleRowHits が空のときは undefined を返して
+  // 旧ロジック (binary blocker 回避) に fallback する。source / target で符号が逆になる点は
+  // dir 引数で明示する (target-detour 系では -targetDirection を渡す)。
+  const makeOpts = (
+    dir: 1 | -1,
+  ): { targetDirection: 1 | -1; middleHitsToClear: Bbox[] } | undefined =>
+    middleRowHits.length > 0
+      ? { targetDirection: dir, middleHitsToClear: middleRowHits }
+      : undefined
+
   if (sourceColHits.length > 0 && targetColHits.length > 0) {
     // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
     // srcBlockers / tgtBlockers は opts 未指定時 (= middleRowHits 空) の binary blocker 判定で
@@ -403,7 +413,7 @@ export function detectDiagonalDetour(
       srcBlockers,
       [s.y, my],
       obstacles,
-      middleRowHits.length > 0 ? { targetDirection, middleHitsToClear: middleRowHits } : undefined,
+      makeOpts(targetDirection),
     )
     // targetDetourX: source-detour とは符号が逆の targetDirection で symmetric に対応 (issue #375)。
     const targetDetourX = pickDetourX(
@@ -411,12 +421,7 @@ export function detectDiagonalDetour(
       tgtBlockers,
       [my, e.y],
       obstacles,
-      middleRowHits.length > 0
-        ? {
-            targetDirection: (e.x > s.x ? -1 : 1) as 1 | -1,
-            middleHitsToClear: middleRowHits,
-          }
-        : undefined,
+      makeOpts(-targetDirection as 1 | -1),
     )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
@@ -434,12 +439,7 @@ export function detectDiagonalDetour(
       obstacles,
       [my, e.y],
       obstacles,
-      middleRowHits.length > 0
-        ? {
-            targetDirection: (e.x > s.x ? -1 : 1) as 1 | -1,
-            middleHitsToClear: middleRowHits,
-          }
-        : undefined,
+      makeOpts(-targetDirection as 1 | -1),
     )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
@@ -455,7 +455,7 @@ export function detectDiagonalDetour(
       obstacles,
       [s.y, my],
       obstacles,
-      middleRowHits.length > 0 ? { targetDirection, middleHitsToClear: middleRowHits } : undefined,
+      makeOpts(targetDirection),
     )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
