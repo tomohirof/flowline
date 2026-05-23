@@ -127,4 +127,25 @@ describe('routeAllArrows', () => {
     expect(findById(r1, arrows1, 'a1')).toBe(findById(r2, arrows2, 'a1'))
     expect(findById(r1, arrows1, 'z1')).toBe(findById(r2, arrows2, 'z1'))
   })
+
+  it('snapshot: 3エッジ累積ルーティングの d 出力が安定する', () => {
+    const arrows = [
+      { id: 'a1', from: 'A', to: 'B' },
+      { id: 'a2', from: 'C', to: 'D' },
+      { id: 'a3', from: 'E', to: 'F' },
+    ]
+    const ctxMap: Record<string, ArrowResolveContext> = {
+      a1: makeCtx(0, 100, 800, 100),
+      a2: makeCtx(100, 200, 700, 300),
+      a3: makeCtx(200, 100, 600, 100),
+    }
+    const result = routeAllArrows(arrows, (a) => ctxMap[a.id] ?? null)
+    expect(result.map((r) => r?.d)).toMatchInlineSnapshot(`
+      [
+        "M50,100 L750,100",
+        "M100,225 L100,250 L700,250 L700,275",
+        "M250,100 L264,100 L264,114.5 L536,114.5 L536,100 L550,100",
+      ]
+    `)
+  })
 })
