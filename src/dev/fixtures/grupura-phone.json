@@ -1,0 +1,397 @@
+{
+  "id": "grupura-phone",
+  "title": "グルプラ-電話",
+  "themeId": "cloud",
+  "shareToken": null,
+  "projectId": null,
+  "createdAt": "2026-05-23T00:00:00Z",
+  "updatedAt": "2026-05-23T00:00:00Z",
+  "lanes": [
+    {
+      "id": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "name": "ユーザー",
+      "colorIndex": 0,
+      "position": 0,
+      "groupId": "c25abf8f-a5fe-45a9-b85c-9493753d50aa",
+      "groupRole": "parent"
+    },
+    {
+      "id": "538482df-14dc-47f0-8680-7739b01f1a8f",
+      "name": "ユーザー (2)",
+      "colorIndex": 0,
+      "position": 1,
+      "groupId": "c25abf8f-a5fe-45a9-b85c-9493753d50aa",
+      "groupRole": "sub"
+    },
+    {
+      "id": "9f83083b-80a4-4052-9219-81f363976661",
+      "name": "店舗",
+      "colorIndex": 1,
+      "position": 2,
+      "groupId": null,
+      "groupRole": null
+    },
+    {
+      "id": "f258fe85-5d7b-4271-a12f-66062c8e4576",
+      "name": "グルプラ",
+      "colorIndex": 2,
+      "position": 3,
+      "groupId": "e08b4827-97f4-4f49-91e5-14de186c89a8",
+      "groupRole": "parent"
+    },
+    {
+      "id": "c6e3aae5-337c-4e1f-a39d-e4a82665c839",
+      "name": "グルプラ (2)",
+      "colorIndex": 2,
+      "position": 4,
+      "groupId": "e08b4827-97f4-4f49-91e5-14de186c89a8",
+      "groupRole": "sub"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "04cd1781-50ac-4f52-b532-d12043134188",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 1,
+      "label": "一覧ページ",
+      "note": null,
+      "orderIndex": 0
+    },
+    {
+      "id": "662c3f36-c0b5-4201-8895-55d705a900c0",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 0,
+      "label": "本体サイト\n流入",
+      "note": null,
+      "orderIndex": 1
+    },
+    {
+      "id": "5c527b64-2fe8-4f05-97ba-34d747a2a49f",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 2,
+      "label": "店舗詳細",
+      "note": null,
+      "orderIndex": 2
+    },
+    {
+      "id": "8722bbba-546c-4c93-8865-74004861372b",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 3,
+      "label": "電話予約",
+      "note": null,
+      "orderIndex": 3
+    },
+    {
+      "id": "79e7f3e8-fcba-44c2-b671-415b46e94113",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 14,
+      "label": "宴会実施",
+      "note": null,
+      "orderIndex": 4
+    },
+    {
+      "id": "3bcefd63-5083-4b88-815b-64219dedc31f",
+      "laneId": "9f83083b-80a4-4052-9219-81f363976661",
+      "rowIndex": 14,
+      "label": "宴会実施",
+      "note": null,
+      "orderIndex": 5
+    },
+    {
+      "id": "3cbf6528-3a32-491b-a52f-184740ad1011",
+      "laneId": "9f83083b-80a4-4052-9219-81f363976661",
+      "rowIndex": 15,
+      "label": "ステータス変更",
+      "note": null,
+      "orderIndex": 6
+    },
+    {
+      "id": "28edc092-65aa-4bb3-acb2-4ddde2802c3b",
+      "laneId": "f258fe85-5d7b-4271-a12f-66062c8e4576",
+      "rowIndex": 16,
+      "label": "確認連絡",
+      "note": null,
+      "orderIndex": 7
+    },
+    {
+      "id": "3ec80ce7-1b8b-4343-b412-bf55fc5b235b",
+      "laneId": "9f83083b-80a4-4052-9219-81f363976661",
+      "rowIndex": 16,
+      "label": "確認連絡",
+      "note": null,
+      "orderIndex": 8
+    },
+    {
+      "id": "4300b260-7260-4b5b-83f7-8ddcdf0030a5",
+      "laneId": "c6e3aae5-337c-4e1f-a39d-e4a82665c839",
+      "rowIndex": 17,
+      "label": "請求",
+      "note": null,
+      "orderIndex": 9
+    },
+    {
+      "id": "1f97a3b9-fea7-4efb-bcc2-45290e46d8b7",
+      "laneId": "9f83083b-80a4-4052-9219-81f363976661",
+      "rowIndex": 17,
+      "label": "請求",
+      "note": null,
+      "orderIndex": 10
+    },
+    {
+      "id": "bc0028f1-57d9-465f-87c3-bcad6f603cb3",
+      "laneId": "538482df-14dc-47f0-8680-7739b01f1a8f",
+      "rowIndex": 0,
+      "label": "ガイド\n流入",
+      "note": null,
+      "orderIndex": 11
+    },
+    {
+      "id": "42432d1d-1c76-4016-b8d9-e2fc81f6d5b3",
+      "laneId": "f258fe85-5d7b-4271-a12f-66062c8e4576",
+      "rowIndex": 5,
+      "label": "ガイダンス\n（名前）",
+      "note": null,
+      "orderIndex": 12
+    },
+    {
+      "id": "f58efc6d-d1a4-4f16-ae64-527e31b01533",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 5,
+      "label": "ガイダンス\n（名前/日付・人数）",
+      "note": null,
+      "orderIndex": 13
+    },
+    {
+      "id": "39047c2d-5ba3-439a-91a2-4bdf713ca713",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 4,
+      "label": "コール",
+      "note": null,
+      "orderIndex": 14
+    },
+    {
+      "id": "a7e070aa-b520-4047-8fbf-1bfa956e82b2",
+      "laneId": "f258fe85-5d7b-4271-a12f-66062c8e4576",
+      "rowIndex": 4,
+      "label": "コール",
+      "note": null,
+      "orderIndex": 15
+    },
+    {
+      "id": "c9e3425a-4cf0-4d74-8bc6-2c19b9a824de",
+      "laneId": "f258fe85-5d7b-4271-a12f-66062c8e4576",
+      "rowIndex": 6,
+      "label": "ガイダンス\n（日付・人数）",
+      "note": null,
+      "orderIndex": 16
+    },
+    {
+      "id": "5b844c8c-668c-4904-8610-a5fd11f96d7b",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 6,
+      "label": "ガイダンス\n（日付・人数）",
+      "note": null,
+      "orderIndex": 17
+    },
+    {
+      "id": "7a72ee73-5e3b-4bdc-b105-abbc8681817c",
+      "laneId": "9f83083b-80a4-4052-9219-81f363976661",
+      "rowIndex": 7,
+      "label": "店舗へ接続",
+      "note": null,
+      "orderIndex": 18
+    },
+    {
+      "id": "d729d944-5422-4976-ae6c-f3d71729e883",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 10,
+      "label": "問い合わせ・予約",
+      "note": null,
+      "orderIndex": 19
+    },
+    {
+      "id": "a570ebe3-de51-4f17-986f-249b37e41ec7",
+      "laneId": "9f83083b-80a4-4052-9219-81f363976661",
+      "rowIndex": 10,
+      "label": "問い合わせ・予約",
+      "note": null,
+      "orderIndex": 20
+    },
+    {
+      "id": "7ffb8479-9dae-4213-8b11-147d15d98fc9",
+      "laneId": "9f83083b-80a4-4052-9219-81f363976661",
+      "rowIndex": 8,
+      "label": "接続可否",
+      "note": null,
+      "orderIndex": 21
+    },
+    {
+      "id": "2d9a56a6-4d35-4508-9a52-7a6009312d55",
+      "laneId": "f258fe85-5d7b-4271-a12f-66062c8e4576",
+      "rowIndex": 11,
+      "label": "折り返し電話",
+      "note": null,
+      "orderIndex": 22
+    },
+    {
+      "id": "9237388d-fbff-45a2-bd1e-f78a3b07e954",
+      "laneId": "002c120c-482c-4e65-8cea-27a31a01d97f",
+      "rowIndex": 11,
+      "label": "折り返し電話",
+      "note": null,
+      "orderIndex": 23
+    }
+  ],
+  "arrows": [
+    {
+      "id": "d82be009-f374-4153-a6a5-6aeec56844ab",
+      "fromNodeId": "662c3f36-c0b5-4201-8895-55d705a900c0",
+      "toNodeId": "04cd1781-50ac-4f52-b532-d12043134188",
+      "comment": null
+    },
+    {
+      "id": "ccebd51f-c9eb-41e6-a75c-db8129a77f6d",
+      "fromNodeId": "04cd1781-50ac-4f52-b532-d12043134188",
+      "toNodeId": "5c527b64-2fe8-4f05-97ba-34d747a2a49f",
+      "comment": null
+    },
+    {
+      "id": "f78d5b8d-c7bd-4fea-a7a3-57ab5d6bff3c",
+      "fromNodeId": "79e7f3e8-fcba-44c2-b671-415b46e94113",
+      "toNodeId": "3bcefd63-5083-4b88-815b-64219dedc31f",
+      "comment": null
+    },
+    {
+      "id": "8d099615-d665-4dff-b99d-d827034c15d5",
+      "fromNodeId": "28edc092-65aa-4bb3-acb2-4ddde2802c3b",
+      "toNodeId": "4300b260-7260-4b5b-83f7-8ddcdf0030a5",
+      "comment": null
+    },
+    {
+      "id": "18bc205f-a74d-44f9-bc71-b7e5bf001885",
+      "fromNodeId": "4300b260-7260-4b5b-83f7-8ddcdf0030a5",
+      "toNodeId": "1f97a3b9-fea7-4efb-bcc2-45290e46d8b7",
+      "comment": null
+    },
+    {
+      "id": "03ede925-4ba5-4b60-8c0b-f37059e8652f",
+      "fromNodeId": "5c527b64-2fe8-4f05-97ba-34d747a2a49f",
+      "toNodeId": "8722bbba-546c-4c93-8865-74004861372b",
+      "comment": null
+    },
+    {
+      "id": "5aec0a21-4d0b-4770-af59-d3bcb49f6426",
+      "fromNodeId": "3bcefd63-5083-4b88-815b-64219dedc31f",
+      "toNodeId": "3cbf6528-3a32-491b-a52f-184740ad1011",
+      "comment": null
+    },
+    {
+      "id": "3015bb20-6877-424b-af9c-7253e93b4192",
+      "fromNodeId": "28edc092-65aa-4bb3-acb2-4ddde2802c3b",
+      "toNodeId": "3ec80ce7-1b8b-4343-b412-bf55fc5b235b",
+      "comment": null
+    },
+    {
+      "id": "b2cac713-a0f6-44eb-bf35-5b1f27c00538",
+      "fromNodeId": "3cbf6528-3a32-491b-a52f-184740ad1011",
+      "toNodeId": "28edc092-65aa-4bb3-acb2-4ddde2802c3b",
+      "comment": null
+    },
+    {
+      "id": "fcda877d-4003-48ef-80ce-d879fda769d1",
+      "fromNodeId": "3cbf6528-3a32-491b-a52f-184740ad1011",
+      "toNodeId": "28edc092-65aa-4bb3-acb2-4ddde2802c3b",
+      "comment": null
+    },
+    {
+      "id": "87a7bd6a-1da9-4bb9-aaf8-22380dcb5ac0",
+      "fromNodeId": "bc0028f1-57d9-465f-87c3-bcad6f603cb3",
+      "toNodeId": "5c527b64-2fe8-4f05-97ba-34d747a2a49f",
+      "comment": null
+    },
+    {
+      "id": "5e634294-8d72-4a82-bd24-591af9878944",
+      "fromNodeId": "3cbf6528-3a32-491b-a52f-184740ad1011",
+      "toNodeId": "4300b260-7260-4b5b-83f7-8ddcdf0030a5",
+      "comment": null
+    },
+    {
+      "id": "687ad799-5012-43a2-936a-207917313d81",
+      "fromNodeId": "42432d1d-1c76-4016-b8d9-e2fc81f6d5b3",
+      "toNodeId": "f58efc6d-d1a4-4f16-ae64-527e31b01533",
+      "comment": null
+    },
+    {
+      "id": "ee2bc6c5-1ab2-4f93-8183-f91222755c6a",
+      "fromNodeId": "8722bbba-546c-4c93-8865-74004861372b",
+      "toNodeId": "39047c2d-5ba3-439a-91a2-4bdf713ca713",
+      "comment": null
+    },
+    {
+      "id": "3d5723d2-d575-4a26-8aec-7cc7bc5dd379",
+      "fromNodeId": "39047c2d-5ba3-439a-91a2-4bdf713ca713",
+      "toNodeId": "a7e070aa-b520-4047-8fbf-1bfa956e82b2",
+      "comment": null
+    },
+    {
+      "id": "2dcfb249-a330-47e3-8db5-c79fe07741f6",
+      "fromNodeId": "a7e070aa-b520-4047-8fbf-1bfa956e82b2",
+      "toNodeId": "42432d1d-1c76-4016-b8d9-e2fc81f6d5b3",
+      "comment": null
+    },
+    {
+      "id": "0e42eca8-9668-41c7-b949-fc79c659898d",
+      "fromNodeId": "42432d1d-1c76-4016-b8d9-e2fc81f6d5b3",
+      "toNodeId": "c9e3425a-4cf0-4d74-8bc6-2c19b9a824de",
+      "comment": null
+    },
+    {
+      "id": "a5df137c-b2b1-41c6-8443-3010440e98ce",
+      "fromNodeId": "c9e3425a-4cf0-4d74-8bc6-2c19b9a824de",
+      "toNodeId": "5b844c8c-668c-4904-8610-a5fd11f96d7b",
+      "comment": null
+    },
+    {
+      "id": "14afdfec-3359-4671-9e68-96f9251a6974",
+      "fromNodeId": "c9e3425a-4cf0-4d74-8bc6-2c19b9a824de",
+      "toNodeId": "7a72ee73-5e3b-4bdc-b105-abbc8681817c",
+      "comment": null
+    },
+    {
+      "id": "2c18fe61-3b8c-498e-9693-5e9c4dfd3aff",
+      "fromNodeId": "d729d944-5422-4976-ae6c-f3d71729e883",
+      "toNodeId": "a570ebe3-de51-4f17-986f-249b37e41ec7",
+      "comment": null
+    },
+    {
+      "id": "a06d8cbc-4103-44e0-881b-97687216110e",
+      "fromNodeId": "7a72ee73-5e3b-4bdc-b105-abbc8681817c",
+      "toNodeId": "7ffb8479-9dae-4213-8b11-147d15d98fc9",
+      "comment": null
+    },
+    {
+      "id": "677e8a96-4711-4426-809f-78219492daee",
+      "fromNodeId": "7ffb8479-9dae-4213-8b11-147d15d98fc9",
+      "toNodeId": "a570ebe3-de51-4f17-986f-249b37e41ec7",
+      "comment": "接続"
+    },
+    {
+      "id": "e2c7d47b-558e-4ca3-8b1a-930f6bdb88a0",
+      "fromNodeId": "7ffb8479-9dae-4213-8b11-147d15d98fc9",
+      "toNodeId": "2d9a56a6-4d35-4508-9a52-7a6009312d55",
+      "comment": "繋がらず"
+    },
+    {
+      "id": "9ac832a9-d166-4a0f-a4ff-5178b06ded01",
+      "fromNodeId": "2d9a56a6-4d35-4508-9a52-7a6009312d55",
+      "toNodeId": "9237388d-fbff-45a2-bd1e-f78a3b07e954",
+      "comment": null
+    },
+    {
+      "id": "57aa7072-921f-4400-b781-e39176916a8f",
+      "fromNodeId": "a570ebe3-de51-4f17-986f-249b37e41ec7",
+      "toNodeId": "3bcefd63-5083-4b88-815b-64219dedc31f",
+      "comment": "この間、連絡しないのはOK？"
+    }
+  ]
+}
