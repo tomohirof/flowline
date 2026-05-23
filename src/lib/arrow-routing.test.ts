@@ -11,10 +11,13 @@ import {
   entryPt,
   segmentsToBboxes,
   segmentsToD,
+  detectCrossings,
   DS,
   type Bbox,
   type EdgeSegment,
   type ObstacleNode,
+  type EdgeWithSegments,
+  type Crossing,
 } from './arrow-routing'
 import type { ArrowSide } from './types'
 
@@ -1616,5 +1619,76 @@ describe('segmentsToD', () => {
       { orientation: 'v', fixed: 400, range: [200, 300] },
     ]
     expect(segmentsToD(segs)).toBe('M200,100 L200,200 L400,200 L400,300')
+  })
+})
+
+describe('detectCrossings', () => {
+  it('交差なし: 空配列を返す', () => {
+    const edges: EdgeWithSegments[] = [
+      { id: 'a', segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }] },
+      { id: 'b', segments: [{ orientation: 'h' as const, fixed: 200, range: [0, 200] as [number, number] }] },
+    ]
+    expect(detectCrossings(edges)).toEqual([])
+  })
+
+  it('H × V 交差: 1 件検出', () => {
+    const edges: EdgeWithSegments[] = [
+      { id: 'a', segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }] },
+      { id: 'b', segments: [{ orientation: 'v' as const, fixed: 100, range: [0, 200] as [number, number] }] },
+    ]
+    const result = detectCrossings(edges)
+    expect(result).toHaveLength(1)
+    expect(result[0]).toEqual({ x: 100, y: 100, jumperEdgeId: 'a', jumperSegmentIndex: 0 })
+  })
+
+  it('端点マージン: CROSSING_MARGIN=7 以内の交差は除外', () => {
+    // V の fixed=95 は H の終点 100 から 5px (< CROSSING_MARGIN=7) なので除外
+    const edges: EdgeWithSegments[] = [
+      { id: 'a', segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 100] as [number, number] }] },
+      { id: 'b', segments: [{ orientation: 'v' as const, fixed: 95, range: [0, 200] as [number, number] }] },
+    ]
+    expect(detectCrossings(edges)).toEqual([])
+  })
+
+  it('同一エッジ内の自己交差は無視', () => {
+    const edges: EdgeWithSegments[] = [
+      { id: 'a', segments: [
+        { orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] },
+        { orientation: 'v' as const, fixed: 100, range: [50, 150] as [number, number] },
+      ]},
+    ]
+    expect(detectCrossings(edges)).toEqual([])
+  })
+
+  it('相互ジャンプ: A(H+V) と B(H+V) が絡み合う配置で 2 件検出', () => {
+    // A: H(y=100, x=[0,200]) + V(x=150, y=[100,300])
+    // B: H(y=200, x=[100,300]) + V(x=50, y=[0,200])
+    // 交差点:
+    //   A の H(y=100) × B の V(x=50): (50, 100) — jumperEdgeId=A
+    //   B の H(y=200) × A の V(x=150): (150, 200) — jumperEdgeId=B
+    const edges: EdgeWithSegments[] = [
+      { id: 'A', segments: [
+        { orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] },
+        { orientation: 'v' as const, fixed: 150, range: [100, 300] as [number, number] },
+      ]},
+      { id: 'B', segments: [
+        { orientation: 'h' as const, fixed: 200, range: [100, 300] as [number, number] },
+        { orientation: 'v' as const, fixed: 50, range: [0, 200] as [number, number] },
+      ]},
+    ]
+    const result = detectCrossings(edges)
+    expect(result).toHaveLength(2)
+    expect(result).toContainEqual({ x: 50, y: 100, jumperEdgeId: 'A', jumperSegmentIndex: 0 })
+    expect(result).toContainEqual({ x: 150, y: 200, jumperEdgeId: 'B', jumperSegmentIndex: 0 })
+  })
+
+  it('V セグメントが基準でも H が jumper になる: 規約確認', () => {
+    const edges: EdgeWithSegments[] = [
+      { id: 'a', segments: [{ orientation: 'v' as const, fixed: 100, range: [0, 200] as [number, number] }] },
+      { id: 'b', segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }] },
+    ]
+    const result = detectCrossings(edges)
+    expect(result).toHaveLength(1)
+    expect(result[0].jumperEdgeId).toBe('b')
   })
 })

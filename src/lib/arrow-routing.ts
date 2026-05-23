@@ -969,6 +969,57 @@ export function segmentsToD(
   return d
 }
 
+export interface EdgeWithSegments {
+  id: string
+  segments: EdgeSegment[]
+}
+
+export interface Crossing {
+  x: number
+  y: number
+  jumperEdgeId: string         // 跨ぐ側（H セグメントを持つエッジ）
+  jumperSegmentIndex: number   // そのエッジの何番目の segment か
+}
+
+/**
+ * 全エッジ間の H × V 交差を列挙する。
+ * 規約: 水平セグメントが垂直セグメントを跨ぐ（H が jumper）。
+ * 同一エッジ内の交差は無視（自己ループ防止）。
+ *
+ * ループ順序 (i, j, si 昇順) と push 順序が決定論性の根拠。
+ */
+export function detectCrossings(edges: EdgeWithSegments[]): Crossing[] {
+  const out: Crossing[] = []
+  for (let i = 0; i < edges.length; i++) {
+    for (let j = 0; j < edges.length; j++) {
+      if (i === j) continue
+      for (let si = 0; si < edges[i].segments.length; si++) {
+        const segH = edges[i].segments[si]
+        if (segH.orientation !== 'h') continue
+        for (const segV of edges[j].segments) {
+          if (segV.orientation !== 'v') continue
+          const hLow = Math.min(segH.range[0], segH.range[1])
+          const hHigh = Math.max(segH.range[0], segH.range[1])
+          const vLow = Math.min(segV.range[0], segV.range[1])
+          const vHigh = Math.max(segV.range[0], segV.range[1])
+          if (
+            hLow + CROSSING_MARGIN < segV.fixed && segV.fixed < hHigh - CROSSING_MARGIN &&
+            vLow + CROSSING_MARGIN < segH.fixed && segH.fixed < vHigh - CROSSING_MARGIN
+          ) {
+            out.push({
+              x: segV.fixed,
+              y: segH.fixed,
+              jumperEdgeId: edges[i].id,
+              jumperSegmentIndex: si,
+            })
+          }
+        }
+      }
+    }
+  }
+  return out
+}
+
 export function segmentsToBboxes(segments: EdgeSegment[]): Bbox[] {
   return segments.map((s) => {
     const r0 = Math.min(s.range[0], s.range[1])
