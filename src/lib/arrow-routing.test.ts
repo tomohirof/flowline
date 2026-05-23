@@ -1620,6 +1620,46 @@ describe('segmentsToD', () => {
     ]
     expect(segmentsToD(segs)).toBe('M200,100 L200,200 L400,200 L400,300')
   })
+
+  it('jumps あり: 単一ジャンプ点（goingRight）', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'h', fixed: 200, range: [100, 300] },
+    ]
+    const jumps = new Map([[0, [200]]])
+    const d = segmentsToD(segs, jumps)
+    expect(d).toBe('M100,200 L195,200 A5,5 0 0 1 205,200 L300,200')
+  })
+
+  it('jumps あり: 単一ジャンプ点（逆方向 goingRight=false）', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'h', fixed: 200, range: [300, 100] },
+    ]
+    const jumps = new Map([[0, [200]]])
+    const d = segmentsToD(segs, jumps)
+    // sweep=0（逆方向でも上膨らみ）
+    expect(d).toBe('M300,200 L205,200 A5,5 0 0 0 195,200 L100,200')
+  })
+
+  it('jumps あり: 複数ジャンプ点が進行方向順にソートされる', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'h', fixed: 200, range: [100, 400] },
+    ]
+    // 順序を逆に渡しても、進行方向（左→右）で 150 → 300 の順に処理される
+    const jumps = new Map([[0, [300, 150]]])
+    const d = segmentsToD(segs, jumps)
+    expect(d).toBe('M100,200 L145,200 A5,5 0 0 1 155,200 L295,200 A5,5 0 0 1 305,200 L400,200')
+  })
+
+  it('V セグの jumps エントリは無視される', () => {
+    const segs: EdgeSegment[] = [
+      { orientation: 'h', fixed: 200, range: [0, 200] },
+      { orientation: 'v', fixed: 200, range: [200, 400] },
+    ]
+    // V セグの index=1 に jumps を渡しても V には弧が乗らない（規約）
+    const jumps = new Map([[1, [300]]])
+    const d = segmentsToD(segs, jumps)
+    expect(d).toBe('M0,200 L200,200 L200,400')
+  })
 })
 
 describe('detectCrossings', () => {
