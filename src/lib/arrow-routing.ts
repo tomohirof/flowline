@@ -405,8 +405,19 @@ export function detectDiagonalDetour(
       obstacles,
       middleRowHits.length > 0 ? { targetDirection, middleHitsToClear: middleRowHits } : undefined,
     )
-    // targetDetourX: 旧ロジック維持。target-detour 系の対称対応は issue #375 で別途。
-    const targetDetourX = pickDetourX(targetColHits, tgtBlockers, [my, e.y], obstacles)
+    // targetDetourX: source-detour とは符号が逆の targetDirection で symmetric に対応 (issue #375)。
+    const targetDetourX = pickDetourX(
+      targetColHits,
+      tgtBlockers,
+      [my, e.y],
+      obstacles,
+      middleRowHits.length > 0
+        ? {
+            targetDirection: (e.x > s.x ? -1 : 1) as 1 | -1,
+            middleHitsToClear: middleRowHits,
+          }
+        : undefined,
+    )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
