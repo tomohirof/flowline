@@ -660,6 +660,26 @@ describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
     const r = buildArrowPath(sDia, eDia, { x: 200, y: 100 }, { x: 600, y: 400 }, [B])
     expect(r.d).toBe('M200,134 L200,250 L690,250 L690,352 L600,352 L600,366')
   })
+
+  it('should not cross row obstacles when source has single-side blocker and target is on opposite side (issue #374)', () => {
+    // issue #374 再現: source-col blocker と middle-row blocker が同じ行にあり、
+    // 旧ロジックは左迂回して中央 H が両 blocker を貫通していた。
+    // 新ロジックは sourceCol + middleRow の union 最遠端まで detourX を張り出して
+    // 中央 H が他ノードを跨がない source-detour パスを生成する。
+    const sBug = { x: 100, y: 100 }
+    const eBug = { x: 300, y: 300 }
+    const fcBug = { x: 100, y: 50 }
+    const tcBug = { x: 300, y: 350 }
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 40 }, // sourceColHit (row y=200, source col=100)
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit (row y=200, middle col)
+    ]
+    const r = buildArrowPath(sBug, eBug, fcBug, tcBug, obstacles)
+    // 中央水平 H は y=234 (shift-my) で detourX=254 → e.x=300 を辿るので
+    // middleRowHit (x=160-240, y=200, h=40 → y=180-220) には触れない。
+    // departY = clampOffset(100, 234, 14) = 114
+    expect(r.d).toBe('M100,100 L100,114 L254,114 L254,234 L300,234 L300,300')
+  })
 })
 
 describe('collectDiagonalObstacles', () => {
@@ -1010,6 +1030,82 @@ describe('detectDiagonalDetour', () => {
       expect(r.my).toBe(239) // shifted: 200 (障害中心) + 25 (h/2) + 14 (DETOUR_MARGIN)
       expect(r.departY).toBe(114) // clampOffset(100, 239, 14)
       expect(r.approachY).toBe(286) // clampOffset(300, 239, 14)
+    }
+  })
+
+  // --- issue #374: pickDetourX に middle-row 障害認識を追加 ---
+
+  it('should pick detourX past middle-row hit when source-detour selected and middle-row hit is on target side', () => {
+    // issue #374 再現: source-col blocker (片側)、中央 H が他ノードを貫通するケース。
+    // s=(100, 100), e=(300, 300), my=200。target は右にある (e.x > s.x)。
+    // sourceColHits: (100, 200) → 旧来は左迂回 (左に blocker なし、右に middleRow があるため右 blocked と判定)
+    // middleRowHits: (200, 200) → これも detourX の extent に含めるべき
+    // 期待: 新ロジックで detourX = max(140, 240) + 14 = 254 (sourceCol + middleRow の union 最遠端 + DETOUR_MARGIN)
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 40 }, // sourceColHit (source col=100, row y=200)
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit (row y=200, source/target col 以外)
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      // detourX = max(sourceColHit.right=140, middleRowHit.right=240) + 14 = 254
+      expect(r.detourX).toBe(254)
+      // h=40, yLow=100, yHigh=300, bboxHMax=40, lo=121, hi=279 → shift-my OK
+      // shift-my で goDown=true → 200 + 20 + 14 = 234 (range 内)
+      expect(r.my).toBe(234)
+    }
+  })
+
+  it('should pick detourX past middle-row hit even when source-col blocker is closer than middle-row hit', () => {
+    // sourceColHits.right < middleRowHits.right となるケース。
+    // 旧ロジックは sourceColHits だけ見て detourX=140 (sourceCol 右迂回) を選ぶが、
+    // それでは中央 H (140 → 300) が middleRowHit (160-240) を貫通する。
+    // 新ロジックは union extent の最遠端を取って detourX=254 を選ぶ (リグレッション防止)。
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 40 }, // sourceColHit, right=140
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit, right=240
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      expect(r.detourX).toBe(254)
+    }
+  })
+
+  it('should mirror correctly for right-to-left diagonal source-detour with middle-row hit on left', () => {
+    // source.x > target.x: target は左にある (targetDirection=-1)。
+    // s=(300, 100), e=(100, 300), my=200。
+    // sourceColHits: (300, 200) → source col=300
+    // middleRowHits: (200, 200) → middle col
+    // 期待: detourX = min(sourceCol.left=260, middleRow.left=160) - 14 = 146 (左迂回 + middleRow を回避)
+    const obstacles: Bbox[] = [
+      { x: 300, y: 200, w: 80, h: 40 }, // sourceColHit, left=260
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit, left=160
+    ]
+    const r = detectDiagonalDetour({ x: 300, y: 100 }, { x: 100, y: 300 }, obstacles)
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      // detourX = min(260, 160) - 14 = 146
+      expect(r.detourX).toBe(146)
+    }
+  })
+
+  it('should pick sourceDetourX past middle-row hit in both-detour when middle-row hit exists on target side', () => {
+    // both-detour: source col と target col 両方に障害あり、加えて middle 行にも障害あり。
+    // s=(100, 100), e=(300, 300), my=200。
+    // sourceColHit: (100, 200), targetColHit: (300, 200), middleRowHit: (200, 200)
+    // 期待: sourceDetourX = max(sourceCol.right=140, middleRow.right=240) + 14 = 254
+    //       targetDetourX = 既存ロジック (本 PR 対象外) = 300 + 40 + 14 = 354
+    const obstacles: Bbox[] = [
+      { x: 100, y: 200, w: 80, h: 40 }, // sourceColHit
+      { x: 300, y: 200, w: 80, h: 40 }, // targetColHit
+      { x: 200, y: 200, w: 80, h: 40 }, // middleRowHit
+    ]
+    const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
+    expect(r?.kind).toBe('both-detour')
+    if (r?.kind === 'both-detour') {
+      expect(r.sourceDetourX).toBe(254) // 新ロジック適用
+      expect(r.targetDetourX).toBe(354) // 旧ロジック維持 (issue #375 で対応)
     }
   })
 
