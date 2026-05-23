@@ -64,15 +64,19 @@ function escalateDetourTrack(
   orientation: 'h' | 'v',
   obstacles: Bbox[],
   direction: 1 | -1,
+  checkInitialNodeCollision = false,
 ): number {
   const rLow = Math.min(crossRange[0], crossRange[1])
   const rHigh = Math.max(crossRange[0], crossRange[1])
   let fixed = initialFixed
   for (let i = 0; i < MAX_TRACK_ESCALATIONS; i++) {
-    // 初期位置 (i=0) はノード衝突を許容する (既存ルータがこの位置を妥当と判断済み)。
-    // 薄いセグメント衝突のみを検出して escalate する。
-    // i>=1 ではシフト先がノード内に入らないようノード衝突もチェックする。
-    const checkNodeCollision = i > 0
+    // 初期位置 (i=0) はデフォルトではノード衝突を許容する (既存ルータがこの位置を妥当と判断済み)。
+    // ただし checkInitialNodeCollision=true のときは i=0 でもノード衝突をチェックする。
+    // pickDetourX の opts ブランチ (issue #374 / #375) では initialDetourX が hits 以外の
+    // obstacle 中心と一致しうるため、この経路から true を渡してノード貫通を防ぐ。
+    // 薄いセグメント衝突は常に検出して escalate する。
+    // i>=1 ではシフト先がノード内に入らないよう常にノード衝突もチェックする。
+    const checkNodeCollision = checkInitialNodeCollision || i > 0
     const occupied = obstacles.some((b) => {
       if (orientation === 'h') {
         // 薄い H セグメント (h < 3) のみが H 方向のトラック衝突を起こしうる。
@@ -251,7 +255,16 @@ function pickDetourX(
       opts.targetDirection === 1
         ? Math.max(...extent.map((o) => o.x + o.w / 2)) + DETOUR_MARGIN
         : Math.min(...extent.map((o) => o.x - o.w / 2)) - DETOUR_MARGIN
-    return escalateDetourTrack(initialDetourX, crossRange, 'v', obstacles, opts.targetDirection)
+    // initialDetourX は hits ∪ middleHitsToClear の union 最遠端であり、
+    // hits 以外の obstacle 中心と一致しうるため、i=0 でもノード衝突をチェックする。
+    return escalateDetourTrack(
+      initialDetourX,
+      crossRange,
+      'v',
+      obstacles,
+      opts.targetDirection,
+      true,
+    )
   }
 
   // 既存ロジック (opts 未指定時): binary blocker 判定による方向決定。

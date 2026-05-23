@@ -1209,11 +1209,10 @@ describe('detectDiagonalDetour', () => {
     if (r?.kind === 'target-detour') {
       // 修正前は r.detourX === 310 で additionalBlocker (x-range [234, 386]) を貫通する。
       // 修正後は escalateDetourTrack が i=0 でも node 衝突を検出し、direction=-1 で TRACK_GAP=8 ずつ左へシフトする。
-      // MAX_TRACK_ESCALATIONS=6 制限により完全に抜けられない可能性があるが、
-      // 重要なのは「310 そのまま返さず最低でも escalation を試みる」こと。
-      expect(r.detourX).not.toBe(310)
-      // additionalBlocker から離れる方向 (左, direction=-1) に escalate しているはず
-      expect(r.detourX).toBeLessThan(310)
+      // 310 → 302 → 294 → 286 → 278 → 270 → 262 (MAX_TRACK_ESCALATIONS=6 で打ち切り)。
+      // 262 はまだ additionalBlocker (x-range [234, 386]) 内だが、escalation を試みた結果として最終値を返す。
+      // 重要なのは「310 そのまま返さず escalation を実行する」こと。
+      expect(r.detourX).toBe(262)
     }
   })
 
