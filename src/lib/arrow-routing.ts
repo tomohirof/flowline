@@ -580,11 +580,11 @@ export const buildArrowPath = (
       // 6 セグメント: M → 水平(departX まで) → 垂直(detourY まで) → 水平(approachX まで)
       //               → 垂直(e.y まで) → 水平(e.x へ進入)
       const segments: EdgeSegment[] = [
-        { orientation: 'h', fixed: s.y, range: [s.x, departX] },         // s.x → departX
-        { orientation: 'v', fixed: departX, range: [s.y, detourY] },      // s.y → detourY
+        { orientation: 'h', fixed: s.y, range: [s.x, departX] }, // s.x → departX
+        { orientation: 'v', fixed: departX, range: [s.y, detourY] }, // s.y → detourY
         { orientation: 'h', fixed: detourY, range: [departX, approachX] }, // departX → approachX
-        { orientation: 'v', fixed: approachX, range: [detourY, e.y] },    // detourY → e.y
-        { orientation: 'h', fixed: e.y, range: [approachX, e.x] },        // approachX → e.x
+        { orientation: 'v', fixed: approachX, range: [detourY, e.y] }, // detourY → e.y
+        { orientation: 'h', fixed: e.y, range: [approachX, e.x] }, // approachX → e.x
       ]
       return { d: segmentsToD(segments), mx: (s.x + e.x) / 2, my: detourY, segments }
     }
@@ -602,11 +602,11 @@ export const buildArrowPath = (
       // 6 セグメント: M → 垂直(departY まで) → 水平(detourX まで) → 垂直(approachY まで)
       //               → 水平(e.x まで) → 垂直(e.y へ進入)
       const segments: EdgeSegment[] = [
-        { orientation: 'v', fixed: s.x, range: [s.y, departY] },          // s.y → departY
-        { orientation: 'h', fixed: departY, range: [s.x, detourX] },       // s.x → detourX
+        { orientation: 'v', fixed: s.x, range: [s.y, departY] }, // s.y → departY
+        { orientation: 'h', fixed: departY, range: [s.x, detourX] }, // s.x → detourX
         { orientation: 'v', fixed: detourX, range: [departY, approachY] }, // departY → approachY
-        { orientation: 'h', fixed: approachY, range: [detourX, e.x] },     // detourX → e.x
-        { orientation: 'v', fixed: e.x, range: [approachY, e.y] },         // approachY → e.y
+        { orientation: 'h', fixed: approachY, range: [detourX, e.x] }, // detourX → e.x
+        { orientation: 'v', fixed: e.x, range: [approachY, e.y] }, // approachY → e.y
       ]
       return { d: segmentsToD(segments), mx: detourX, my: (s.y + e.y) / 2, segments }
     }
@@ -617,44 +617,44 @@ export const buildArrowPath = (
         case 'target-detour': {
           const { my, detourX, approachY } = dDetour
           const segments: EdgeSegment[] = [
-            { orientation: 'v', fixed: s.x, range: [s.y, my] },           // s.y → my
-            { orientation: 'h', fixed: my, range: [s.x, detourX] },        // s.x → detourX
-            { orientation: 'v', fixed: detourX, range: [my, approachY] },  // my → approachY
+            { orientation: 'v', fixed: s.x, range: [s.y, my] }, // s.y → my
+            { orientation: 'h', fixed: my, range: [s.x, detourX] }, // s.x → detourX
+            { orientation: 'v', fixed: detourX, range: [my, approachY] }, // my → approachY
             { orientation: 'h', fixed: approachY, range: [detourX, e.x] }, // detourX → e.x
-            { orientation: 'v', fixed: e.x, range: [approachY, e.y] },     // approachY → e.y
+            { orientation: 'v', fixed: e.x, range: [approachY, e.y] }, // approachY → e.y
           ]
           return { d: segmentsToD(segments), mx: (s.x + detourX) / 2, my, segments }
         }
         case 'source-detour': {
           const { departY, detourX, my } = dDetour
           const segments: EdgeSegment[] = [
-            { orientation: 'v', fixed: s.x, range: [s.y, departY] },       // s.y → departY
-            { orientation: 'h', fixed: departY, range: [s.x, detourX] },   // s.x → detourX
-            { orientation: 'v', fixed: detourX, range: [departY, my] },     // departY → my
-            { orientation: 'h', fixed: my, range: [detourX, e.x] },         // detourX → e.x
-            { orientation: 'v', fixed: e.x, range: [my, e.y] },             // my → e.y
+            { orientation: 'v', fixed: s.x, range: [s.y, departY] }, // s.y → departY
+            { orientation: 'h', fixed: departY, range: [s.x, detourX] }, // s.x → detourX
+            { orientation: 'v', fixed: detourX, range: [departY, my] }, // departY → my
+            { orientation: 'h', fixed: my, range: [detourX, e.x] }, // detourX → e.x
+            { orientation: 'v', fixed: e.x, range: [my, e.y] }, // my → e.y
           ]
           return { d: segmentsToD(segments), mx: (detourX + e.x) / 2, my, segments }
         }
         case 'both-detour': {
           const { departY, sourceDetourX, my, targetDetourX, approachY } = dDetour
           const segments: EdgeSegment[] = [
-            { orientation: 'v', fixed: s.x, range: [s.y, departY] },                          // s.y → departY
-            { orientation: 'h', fixed: departY, range: [s.x, sourceDetourX] },                // s.x → sourceDetourX
-            { orientation: 'v', fixed: sourceDetourX, range: [departY, my] },                 // departY → my
-            { orientation: 'h', fixed: my, range: [sourceDetourX, targetDetourX] },           // sourceDetourX → targetDetourX
-            { orientation: 'v', fixed: targetDetourX, range: [my, approachY] },               // my → approachY
-            { orientation: 'h', fixed: approachY, range: [targetDetourX, e.x] },              // targetDetourX → e.x
-            { orientation: 'v', fixed: e.x, range: [approachY, e.y] },                        // approachY → e.y
+            { orientation: 'v', fixed: s.x, range: [s.y, departY] }, // s.y → departY
+            { orientation: 'h', fixed: departY, range: [s.x, sourceDetourX] }, // s.x → sourceDetourX
+            { orientation: 'v', fixed: sourceDetourX, range: [departY, my] }, // departY → my
+            { orientation: 'h', fixed: my, range: [sourceDetourX, targetDetourX] }, // sourceDetourX → targetDetourX
+            { orientation: 'v', fixed: targetDetourX, range: [my, approachY] }, // my → approachY
+            { orientation: 'h', fixed: approachY, range: [targetDetourX, e.x] }, // targetDetourX → e.x
+            { orientation: 'v', fixed: e.x, range: [approachY, e.y] }, // approachY → e.y
           ]
           return { d: segmentsToD(segments), mx: (sourceDetourX + targetDetourX) / 2, my, segments }
         }
         case 'shift-my': {
           const { my } = dDetour
           const segments: EdgeSegment[] = [
-            { orientation: 'v', fixed: s.x, range: [s.y, my] },   // s.y → my
-            { orientation: 'h', fixed: my, range: [s.x, e.x] },    // s.x → e.x
-            { orientation: 'v', fixed: e.x, range: [my, e.y] },    // my → e.y
+            { orientation: 'v', fixed: s.x, range: [s.y, my] }, // s.y → my
+            { orientation: 'h', fixed: my, range: [s.x, e.x] }, // s.x → e.x
+            { orientation: 'v', fixed: e.x, range: [my, e.y] }, // my → e.y
           ]
           return { d: segmentsToD(segments), mx: (s.x + e.x) / 2, my, segments }
         }
@@ -678,10 +678,10 @@ export const buildArrowPath = (
     my = (s.y + e.y) / 2
     if (Math.abs(dx) < 2) {
       // 垂直直線
-      segments = [{ orientation: 'v', fixed: s.x, range: [s.y, e.y] }]  // s.y → e.y
+      segments = [{ orientation: 'v', fixed: s.x, range: [s.y, e.y] }] // s.y → e.y
     } else {
       // 水平直線
-      segments = [{ orientation: 'h', fixed: s.y, range: [s.x, e.x] }]  // s.x → e.x
+      segments = [{ orientation: 'h', fixed: s.y, range: [s.x, e.x] }] // s.x → e.x
     }
   } else {
     // 出口が縦方向かどうかを判定（ノード中心との差で判別）
@@ -694,9 +694,9 @@ export const buildArrowPath = (
       mx = (s.x + e.x) / 2
       my = cmy
       segments = [
-        { orientation: 'v', fixed: s.x, range: [s.y, cmy] },   // s.y → cmy
-        { orientation: 'h', fixed: cmy, range: [s.x, e.x] },    // s.x → e.x
-        { orientation: 'v', fixed: e.x, range: [cmy, e.y] },    // cmy → e.y
+        { orientation: 'v', fixed: s.x, range: [s.y, cmy] }, // s.y → cmy
+        { orientation: 'h', fixed: cmy, range: [s.x, e.x] }, // s.x → e.x
+        { orientation: 'v', fixed: e.x, range: [cmy, e.y] }, // cmy → e.y
       ]
     } else if (!sV && !eV) {
       // 両方横出口: Z字パス（縦方向に折り返す）→ ラベルは中央垂直セグメント上
@@ -704,15 +704,15 @@ export const buildArrowPath = (
       mx = cmx
       my = (s.y + e.y) / 2
       segments = [
-        { orientation: 'h', fixed: s.y, range: [s.x, cmx] },   // s.x → cmx
-        { orientation: 'v', fixed: cmx, range: [s.y, e.y] },    // s.y → e.y
-        { orientation: 'h', fixed: e.y, range: [cmx, e.x] },    // cmx → e.x
+        { orientation: 'h', fixed: s.y, range: [s.x, cmx] }, // s.x → cmx
+        { orientation: 'v', fixed: cmx, range: [s.y, e.y] }, // s.y → e.y
+        { orientation: 'h', fixed: e.y, range: [cmx, e.x] }, // cmx → e.x
       ]
     } else if (sV) {
       // 縦出口→横入口: L字パス → ラベルは長辺の中点
       segments = [
-        { orientation: 'v', fixed: s.x, range: [s.y, e.y] },   // s.y → e.y
-        { orientation: 'h', fixed: e.y, range: [s.x, e.x] },    // s.x → e.x
+        { orientation: 'v', fixed: s.x, range: [s.y, e.y] }, // s.y → e.y
+        { orientation: 'h', fixed: e.y, range: [s.x, e.x] }, // s.x → e.x
       ]
       if (Math.abs(e.y - s.y) >= Math.abs(e.x - s.x)) {
         // 縦辺が長い（または等長）: 縦辺の中点
@@ -726,8 +726,8 @@ export const buildArrowPath = (
     } else {
       // 横出口→縦入口: L字パス → ラベルは長辺の中点
       segments = [
-        { orientation: 'h', fixed: s.y, range: [s.x, e.x] },   // s.x → e.x
-        { orientation: 'v', fixed: e.x, range: [s.y, e.y] },    // s.y → e.y
+        { orientation: 'h', fixed: s.y, range: [s.x, e.x] }, // s.x → e.x
+        { orientation: 'v', fixed: e.x, range: [s.y, e.y] }, // s.y → e.y
       ]
       if (Math.abs(e.x - s.x) >= Math.abs(e.y - s.y)) {
         // 横辺が長い（または等長）: 横辺の中点
@@ -1048,8 +1048,8 @@ export interface EdgeWithSegments {
 export interface Crossing {
   x: number
   y: number
-  jumperEdgeId: string         // 跨ぐ側（H セグメントを持つエッジ）
-  jumperSegmentIndex: number   // そのエッジの何番目の segment か
+  jumperEdgeId: string // 跨ぐ側（H セグメントを持つエッジ）
+  jumperSegmentIndex: number // そのエッジの何番目の segment か
 }
 
 /**
@@ -1074,8 +1074,10 @@ export function detectCrossings(edges: EdgeWithSegments[]): Crossing[] {
           const vLow = Math.min(segV.range[0], segV.range[1])
           const vHigh = Math.max(segV.range[0], segV.range[1])
           if (
-            hLow + CROSSING_MARGIN < segV.fixed && segV.fixed < hHigh - CROSSING_MARGIN &&
-            vLow + CROSSING_MARGIN < segH.fixed && segH.fixed < vHigh - CROSSING_MARGIN
+            hLow + CROSSING_MARGIN < segV.fixed &&
+            segV.fixed < hHigh - CROSSING_MARGIN &&
+            vLow + CROSSING_MARGIN < segH.fixed &&
+            segH.fixed < vHigh - CROSSING_MARGIN
           ) {
             out.push({
               x: segV.fixed,

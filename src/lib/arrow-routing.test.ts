@@ -17,7 +17,6 @@ import {
   type EdgeSegment,
   type ObstacleNode,
   type EdgeWithSegments,
-  type Crossing,
 } from './arrow-routing'
 import type { ArrowSide } from './types'
 
@@ -1521,21 +1520,21 @@ describe('buildArrowPath segments — diagonal detour (4 kinds)', () => {
 
 describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
   it('水平直線: segments は単一 H', () => {
-    const s = { x: 100, y: 200 }, e = { x: 300, y: 200 }
-    const fc = { x: 50, y: 200 }, tc = { x: 350, y: 200 }
+    const s = { x: 100, y: 200 },
+      e = { x: 300, y: 200 }
+    const fc = { x: 50, y: 200 },
+      tc = { x: 350, y: 200 }
     const r = buildArrowPath(s, e, fc, tc)
-    expect(r.segments).toEqual([
-      { orientation: 'h', fixed: 200, range: [100, 300] },
-    ])
+    expect(r.segments).toEqual([{ orientation: 'h', fixed: 200, range: [100, 300] }])
   })
 
   it('垂直直線: segments は単一 V', () => {
-    const s = { x: 200, y: 100 }, e = { x: 200, y: 300 }
-    const fc = { x: 200, y: 50 }, tc = { x: 200, y: 350 }
+    const s = { x: 200, y: 100 },
+      e = { x: 200, y: 300 }
+    const fc = { x: 200, y: 50 },
+      tc = { x: 200, y: 350 }
     const r = buildArrowPath(s, e, fc, tc)
-    expect(r.segments).toEqual([
-      { orientation: 'v', fixed: 200, range: [100, 300] },
-    ])
+    expect(r.segments).toEqual([{ orientation: 'v', fixed: 200, range: [100, 300] }])
   })
 
   it('H 迂回（下迂回）: segments は H-V-H-V-H の 5 セグ', () => {
@@ -1543,16 +1542,18 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
     //   障害 y=200, h=56 → 中央y=228。障害が下塞がり → detourY = 228+DETOUR_MARGIN(14) = 242
     //   s.x=276, departX = 276+DEPART_GAP(14) = 290
     //   e.x=524, approachX = 524-APPROACH_GAP(14) = 510
-    const s = { x: 276, y: 200 }, e = { x: 524, y: 200 }
-    const fc = { x: 200, y: 200 }, tc = { x: 600, y: 200 }
+    const s = { x: 276, y: 200 },
+      e = { x: 524, y: 200 }
+    const fc = { x: 200, y: 200 },
+      tc = { x: 600, y: 200 }
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B])
     expect(r.segments).toEqual([
-      { orientation: 'h', fixed: 200, range: [276, 290] },    // s.x → departX
-      { orientation: 'v', fixed: 290, range: [200, 242] },    // s.y → detourY
-      { orientation: 'h', fixed: 242, range: [290, 510] },    // departX → approachX
-      { orientation: 'v', fixed: 510, range: [242, 200] },    // detourY → e.y (下→上)
-      { orientation: 'h', fixed: 200, range: [510, 524] },    // approachX → e.x
+      { orientation: 'h', fixed: 200, range: [276, 290] }, // s.x → departX
+      { orientation: 'v', fixed: 290, range: [200, 242] }, // s.y → detourY
+      { orientation: 'h', fixed: 242, range: [290, 510] }, // departX → approachX
+      { orientation: 'v', fixed: 510, range: [242, 200] }, // detourY → e.y (下→上)
+      { orientation: 'h', fixed: 200, range: [510, 524] }, // approachX → e.x
     ])
   })
 
@@ -1560,22 +1561,26 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
     // 障害 B: x=200, w=152 → 中央x=276。障害が右塞がり → detourX = 276+DETOUR_MARGIN(14) = 290
     //   s.y=276, departY = 276+DEPART_GAP(14) = 290
     //   e.y=524, approachY = 524-APPROACH_GAP(14) = 510
-    const s = { x: 200, y: 276 }, e = { x: 200, y: 524 }
-    const fc = { x: 200, y: 200 }, tc = { x: 200, y: 600 }
+    const s = { x: 200, y: 276 },
+      e = { x: 200, y: 524 }
+    const fc = { x: 200, y: 200 },
+      tc = { x: 200, y: 600 }
     const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B])
     expect(r.segments).toEqual([
-      { orientation: 'v', fixed: 200, range: [276, 290] },    // s.y → departY
-      { orientation: 'h', fixed: 290, range: [200, 290] },    // s.x → detourX
-      { orientation: 'v', fixed: 290, range: [290, 510] },    // departY → approachY
-      { orientation: 'h', fixed: 510, range: [290, 200] },    // detourX → e.x (右→左)
-      { orientation: 'v', fixed: 200, range: [510, 524] },    // approachY → e.y
+      { orientation: 'v', fixed: 200, range: [276, 290] }, // s.y → departY
+      { orientation: 'h', fixed: 290, range: [200, 290] }, // s.x → detourX
+      { orientation: 'v', fixed: 290, range: [290, 510] }, // departY → approachY
+      { orientation: 'h', fixed: 510, range: [290, 200] }, // detourX → e.x (右→左)
+      { orientation: 'v', fixed: 200, range: [510, 524] }, // approachY → e.y
     ])
   })
 
   it('斜め配置（障害なし）: segments は H-V-H の 3 セグ', () => {
-    const s = { x: 200, y: 100 }, e = { x: 400, y: 300 }
-    const fc = { x: 200, y: 100 }, tc = { x: 400, y: 300 }
+    const s = { x: 200, y: 100 },
+      e = { x: 400, y: 300 }
+    const fc = { x: 200, y: 100 },
+      tc = { x: 400, y: 300 }
     const r = buildArrowPath(s, e, fc, tc)
     expect(r.segments).toEqual([
       { orientation: 'h', fixed: 100, range: [200, 300] },
@@ -1583,7 +1588,6 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
       { orientation: 'h', fixed: 300, range: [300, 400] },
     ])
   })
-
 })
 
 describe('segmentsToD', () => {
@@ -1592,23 +1596,17 @@ describe('segmentsToD', () => {
   })
 
   it('水平直線 1 セグ（range[0] < range[1]）', () => {
-    const segs: EdgeSegment[] = [
-      { orientation: 'h', fixed: 200, range: [100, 300] },
-    ]
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 200, range: [100, 300] }]
     expect(segmentsToD(segs)).toBe('M100,200 L300,200')
   })
 
   it('水平直線 1 セグ（range[0] > range[1]、逆方向）', () => {
-    const segs: EdgeSegment[] = [
-      { orientation: 'h', fixed: 200, range: [300, 100] },
-    ]
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 200, range: [300, 100] }]
     expect(segmentsToD(segs)).toBe('M300,200 L100,200')
   })
 
   it('垂直直線 1 セグ', () => {
-    const segs: EdgeSegment[] = [
-      { orientation: 'v', fixed: 200, range: [100, 300] },
-    ]
+    const segs: EdgeSegment[] = [{ orientation: 'v', fixed: 200, range: [100, 300] }]
     expect(segmentsToD(segs)).toBe('M200,100 L200,300')
   })
 
@@ -1622,18 +1620,14 @@ describe('segmentsToD', () => {
   })
 
   it('jumps あり: 単一ジャンプ点（goingRight）', () => {
-    const segs: EdgeSegment[] = [
-      { orientation: 'h', fixed: 200, range: [100, 300] },
-    ]
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 200, range: [100, 300] }]
     const jumps = new Map([[0, [200]]])
     const d = segmentsToD(segs, jumps)
     expect(d).toBe('M100,200 L195,200 A5,5 0 0 1 205,200 L300,200')
   })
 
   it('jumps あり: 単一ジャンプ点（逆方向 goingRight=false）', () => {
-    const segs: EdgeSegment[] = [
-      { orientation: 'h', fixed: 200, range: [300, 100] },
-    ]
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 200, range: [300, 100] }]
     const jumps = new Map([[0, [200]]])
     const d = segmentsToD(segs, jumps)
     // sweep=0（逆方向でも上膨らみ）
@@ -1641,9 +1635,7 @@ describe('segmentsToD', () => {
   })
 
   it('jumps あり: 複数ジャンプ点が進行方向順にソートされる', () => {
-    const segs: EdgeSegment[] = [
-      { orientation: 'h', fixed: 200, range: [100, 400] },
-    ]
+    const segs: EdgeSegment[] = [{ orientation: 'h', fixed: 200, range: [100, 400] }]
     // 順序を逆に渡しても、進行方向（左→右）で 150 → 300 の順に処理される
     const jumps = new Map([[0, [300, 150]]])
     const d = segmentsToD(segs, jumps)
@@ -1665,16 +1657,28 @@ describe('segmentsToD', () => {
 describe('detectCrossings', () => {
   it('交差なし: 空配列を返す', () => {
     const edges: EdgeWithSegments[] = [
-      { id: 'a', segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }] },
-      { id: 'b', segments: [{ orientation: 'h' as const, fixed: 200, range: [0, 200] as [number, number] }] },
+      {
+        id: 'a',
+        segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }],
+      },
+      {
+        id: 'b',
+        segments: [{ orientation: 'h' as const, fixed: 200, range: [0, 200] as [number, number] }],
+      },
     ]
     expect(detectCrossings(edges)).toEqual([])
   })
 
   it('H × V 交差: 1 件検出', () => {
     const edges: EdgeWithSegments[] = [
-      { id: 'a', segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }] },
-      { id: 'b', segments: [{ orientation: 'v' as const, fixed: 100, range: [0, 200] as [number, number] }] },
+      {
+        id: 'a',
+        segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }],
+      },
+      {
+        id: 'b',
+        segments: [{ orientation: 'v' as const, fixed: 100, range: [0, 200] as [number, number] }],
+      },
     ]
     const result = detectCrossings(edges)
     expect(result).toHaveLength(1)
@@ -1684,18 +1688,27 @@ describe('detectCrossings', () => {
   it('端点マージン: CROSSING_MARGIN=7 以内の交差は除外', () => {
     // V の fixed=95 は H の終点 100 から 5px (< CROSSING_MARGIN=7) なので除外
     const edges: EdgeWithSegments[] = [
-      { id: 'a', segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 100] as [number, number] }] },
-      { id: 'b', segments: [{ orientation: 'v' as const, fixed: 95, range: [0, 200] as [number, number] }] },
+      {
+        id: 'a',
+        segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 100] as [number, number] }],
+      },
+      {
+        id: 'b',
+        segments: [{ orientation: 'v' as const, fixed: 95, range: [0, 200] as [number, number] }],
+      },
     ]
     expect(detectCrossings(edges)).toEqual([])
   })
 
   it('同一エッジ内の自己交差は無視', () => {
     const edges: EdgeWithSegments[] = [
-      { id: 'a', segments: [
-        { orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] },
-        { orientation: 'v' as const, fixed: 100, range: [50, 150] as [number, number] },
-      ]},
+      {
+        id: 'a',
+        segments: [
+          { orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] },
+          { orientation: 'v' as const, fixed: 100, range: [50, 150] as [number, number] },
+        ],
+      },
     ]
     expect(detectCrossings(edges)).toEqual([])
   })
@@ -1707,14 +1720,20 @@ describe('detectCrossings', () => {
     //   A の H(y=100) × B の V(x=50): (50, 100) — jumperEdgeId=A
     //   B の H(y=200) × A の V(x=150): (150, 200) — jumperEdgeId=B
     const edges: EdgeWithSegments[] = [
-      { id: 'A', segments: [
-        { orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] },
-        { orientation: 'v' as const, fixed: 150, range: [100, 300] as [number, number] },
-      ]},
-      { id: 'B', segments: [
-        { orientation: 'h' as const, fixed: 200, range: [100, 300] as [number, number] },
-        { orientation: 'v' as const, fixed: 50, range: [0, 200] as [number, number] },
-      ]},
+      {
+        id: 'A',
+        segments: [
+          { orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] },
+          { orientation: 'v' as const, fixed: 150, range: [100, 300] as [number, number] },
+        ],
+      },
+      {
+        id: 'B',
+        segments: [
+          { orientation: 'h' as const, fixed: 200, range: [100, 300] as [number, number] },
+          { orientation: 'v' as const, fixed: 50, range: [0, 200] as [number, number] },
+        ],
+      },
     ]
     const result = detectCrossings(edges)
     expect(result).toHaveLength(2)
@@ -1724,8 +1743,14 @@ describe('detectCrossings', () => {
 
   it('V セグメントが基準でも H が jumper になる: 規約確認', () => {
     const edges: EdgeWithSegments[] = [
-      { id: 'a', segments: [{ orientation: 'v' as const, fixed: 100, range: [0, 200] as [number, number] }] },
-      { id: 'b', segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }] },
+      {
+        id: 'a',
+        segments: [{ orientation: 'v' as const, fixed: 100, range: [0, 200] as [number, number] }],
+      },
+      {
+        id: 'b',
+        segments: [{ orientation: 'h' as const, fixed: 100, range: [0, 200] as [number, number] }],
+      },
     ]
     const result = detectCrossings(edges)
     expect(result).toHaveLength(1)

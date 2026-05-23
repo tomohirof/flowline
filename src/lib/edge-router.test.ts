@@ -158,7 +158,7 @@ describe('routeAllArrowsWithJumpers', () => {
     ]
     const ctxMap: Record<string, ArrowResolveContext> = {
       a1: makeCtx(0, 100, 200, 100),
-      a2: makeCtx(0, 300, 200, 300),  // 平行で交差しない
+      a2: makeCtx(0, 300, 200, 300), // 平行で交差しない
     }
     const baseline = routeAllArrows(arrows, (a) => ctxMap[a.id] ?? null)
     const result = routeAllArrowsWithJumpers(arrows, (a) => ctxMap[a.id] ?? null)
@@ -173,8 +173,8 @@ describe('routeAllArrowsWithJumpers', () => {
       { id: 'a2', from: 'A', to: 'C' },
     ]
     const ctxMap: Record<string, ArrowResolveContext> = {
-      a1: makeCtx(0, 200, 600, 200),    // 水平
-      a2: makeCtx(300, 0, 300, 400),    // 垂直
+      a1: makeCtx(0, 200, 600, 200), // 水平
+      a2: makeCtx(300, 0, 300, 400), // 垂直
     }
     const result = routeAllArrowsWithJumpers(arrows, (a) => ctxMap[a.id] ?? null)
     // どちらか片方の d に "A5,5" が含まれる（弧マーカー）

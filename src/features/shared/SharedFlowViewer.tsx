@@ -121,53 +121,56 @@ export function SharedFlowViewer({ flow }: SharedFlowViewerProps) {
     original: a,
   }))
 
-  const routedPaths = routeAllArrowsWithJumpers(arrowsForRouting, (mapped): ArrowResolveContext | null => {
-    const arrow = mapped.original
-    const fromNode = nodeById[arrow.fromNodeId]
-    const toNode = nodeById[arrow.toNodeId]
-    if (!fromNode || !toNode) return null
+  const routedPaths = routeAllArrowsWithJumpers(
+    arrowsForRouting,
+    (mapped): ArrowResolveContext | null => {
+      const arrow = mapped.original
+      const fromNode = nodeById[arrow.fromNodeId]
+      const toNode = nodeById[arrow.toNodeId]
+      if (!fromNode || !toNode) return null
 
-    const fli = laneIdToIndex[fromNode.laneId]
-    const tli = laneIdToIndex[toNode.laneId]
-    if (fli === undefined || tli === undefined) return null
+      const fli = laneIdToIndex[fromNode.laneId]
+      const tli = laneIdToIndex[toNode.laneId]
+      if (fli === undefined || tli === undefined) return null
 
-    const f = ct(fli, fromNode.rowIndex)
-    const t = ct(tli, toNode.rowIndex)
-    const hw = TW / 2,
-      hh = TH / 2
+      const f = ct(fli, fromNode.rowIndex)
+      const t = ct(tli, toNode.rowIndex)
+      const hw = TW / 2,
+        hh = TH / 2
 
-    // 同一行/同一レーン/斜め配置に応じて obstacles を組み立てる（迂回判定用）
-    const obstacles: Bbox[] = buildObstacles({
-      nodes: obstacleNodes,
-      fromKey: fromNode.id,
-      toKey: toNode.id,
-      fromCx: f.x,
-      fromCy: f.y,
-      toCx: t.x,
-      toCy: t.y,
-      sameRow: fromNode.rowIndex === toNode.rowIndex,
-      sameLane: fromNode.laneId === toNode.laneId,
-      rowH: RH,
-      colW: LW + G,
-      bboxW: TW,
-      bboxH: TH,
-    })
+      // 同一行/同一レーン/斜め配置に応じて obstacles を組み立てる（迂回判定用）
+      const obstacles: Bbox[] = buildObstacles({
+        nodes: obstacleNodes,
+        fromKey: fromNode.id,
+        toKey: toNode.id,
+        fromCx: f.x,
+        fromCy: f.y,
+        toCx: t.x,
+        toCy: t.y,
+        sameRow: fromNode.rowIndex === toNode.rowIndex,
+        sameLane: fromNode.laneId === toNode.laneId,
+        rowH: RH,
+        colW: LW + G,
+        bboxW: TW,
+        bboxH: TH,
+      })
 
-    return {
-      from: f,
-      to: t,
-      config: {
-        hw,
-        hh,
-        rh: RH,
-        fromShape: fromNode.shape as 'diamond' | undefined,
-        toShape: toNode.shape as 'diamond' | undefined,
-        fromSide: arrow.fromSide ?? undefined,
-        toSide: arrow.toSide ?? undefined,
-      },
-      nodeObstacles: obstacles,
-    }
-  })
+      return {
+        from: f,
+        to: t,
+        config: {
+          hw,
+          hh,
+          rh: RH,
+          fromShape: fromNode.shape as 'diamond' | undefined,
+          toShape: toNode.shape as 'diamond' | undefined,
+          fromSide: arrow.fromSide ?? undefined,
+          toSide: arrow.toSide ?? undefined,
+        },
+        nodeObstacles: obstacles,
+      }
+    },
+  )
 
   const arrowPaths = flow.arrows
     .map((a, i) => ({ arrow: a, path: routedPaths[i] }))
