@@ -1067,7 +1067,9 @@ export function segmentsToD(
     const jumps = jumpsPerSegment?.get(i)
     if (seg.orientation === 'h' && jumps && jumps.length > 0) {
       const goingRight = seg.range[0] < seg.range[1]
+      // 進行方向順に跨ぎ点を並べる（始点→終点へ）
       const sorted = [...jumps].sort((a, b) => (goingRight ? a - b : b - a))
+      // sweep: 進行方向に応じた弧の向き。常に「上膨らみ」になる組み合わせ（右進行=1, 左進行=0）
       const sweep = goingRight ? 1 : 0
       const r = JUMP_RADIUS
       for (const jx of sorted) {
