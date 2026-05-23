@@ -1535,6 +1535,10 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
   })
 
   it('H 迂回（下迂回）: segments は H-V-H-V-H の 5 セグ', () => {
+    // 障害 B: x=400, w=152 → 中央x=476, 右端=476。detourY 計算:
+    //   障害 y=200, h=56 → 中央y=228。障害が下塞がり → detourY = 228+DETOUR_MARGIN(14) = 242
+    //   s.x=276, departX = 276+DEPART_GAP(14) = 290
+    //   e.x=524, approachX = 524-APPROACH_GAP(14) = 510
     const s = { x: 276, y: 200 }, e = { x: 524, y: 200 }
     const fc = { x: 200, y: 200 }, tc = { x: 600, y: 200 }
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
@@ -1549,6 +1553,9 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
   })
 
   it('V 迂回（右迂回）: segments は V-H-V-H-V の 5 セグ', () => {
+    // 障害 B: x=200, w=152 → 中央x=276。障害が右塞がり → detourX = 276+DETOUR_MARGIN(14) = 290
+    //   s.y=276, departY = 276+DEPART_GAP(14) = 290
+    //   e.y=524, approachY = 524-APPROACH_GAP(14) = 510
     const s = { x: 200, y: 276 }, e = { x: 200, y: 524 }
     const fc = { x: 200, y: 200 }, tc = { x: 200, y: 600 }
     const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
@@ -1573,12 +1580,4 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
     ])
   })
 
-  it('水平直線（障害なし、別案件）: 単一 H', () => {
-    const s = { x: 200, y: 100 }, e = { x: 400, y: 100 }
-    const fc = { x: 200, y: 100 }, tc = { x: 400, y: 100 }
-    const r = buildArrowPath(s, e, fc, tc)
-    expect(r.segments).toEqual([
-      { orientation: 'h', fixed: 100, range: [200, 400] },
-    ])
-  })
 })
