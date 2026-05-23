@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { BRAND } from './constants/brand'
@@ -12,8 +13,10 @@ import { VerifyPage } from './features/auth/VerifyPage'
 import { DemoEditorPage } from './features/editor/pages/DemoEditorPage'
 import { JoinProjectPage } from './features/projects/JoinProjectPage'
 import { useAuth, AuthProvider } from './hooks/useAuth'
-import { DevRenderPage } from './dev/DevRenderPage'
-import { fixtures as devFixtures } from './dev/fixtures'
+
+const DevRenderPage = import.meta.env.DEV
+  ? lazy(() => import('./dev/DevRenderPage').then((m) => ({ default: m.DevRenderPage })))
+  : null
 
 function Header() {
   const { t } = useTranslation()
@@ -125,8 +128,15 @@ function App() {
             <Route path="/shared/:token" element={<SharedFlowPage />} />
             <Route path="/join/:token" element={<JoinProjectPage />} />
             <Route path="/try" element={<DemoEditorPage />} />
-            {import.meta.env.DEV && (
-              <Route path="/dev/render" element={<DevRenderPage fixtures={devFixtures} />} />
+            {DevRenderPage && (
+              <Route
+                path="/dev/render"
+                element={
+                  <Suspense fallback={null}>
+                    <DevRenderPage />
+                  </Suspense>
+                }
+              />
             )}
           </Routes>
         </main>

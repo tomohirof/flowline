@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeAll, afterEach, beforeEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import type { Flow } from '../features/editor/types'
@@ -45,10 +45,6 @@ const renderAt = (search: string) =>
   )
 
 describe('DevRenderPage', () => {
-  beforeEach(() => {
-    document.title = ''
-  })
-
   it('lists available fixtures when no fixture query param is provided', () => {
     renderAt('')
     const list = screen.getByTestId('dev-fixture-list')
