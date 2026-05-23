@@ -1545,11 +1545,11 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
     const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B])
     expect(r.segments).toEqual([
-      { orientation: 'h', fixed: 200, range: [276, 290] },
-      { orientation: 'v', fixed: 290, range: [200, 242] },
-      { orientation: 'h', fixed: 242, range: [290, 510] },
-      { orientation: 'v', fixed: 510, range: [200, 242] },
-      { orientation: 'h', fixed: 200, range: [510, 524] },
+      { orientation: 'h', fixed: 200, range: [276, 290] },    // s.x → departX
+      { orientation: 'v', fixed: 290, range: [200, 242] },    // s.y → detourY
+      { orientation: 'h', fixed: 242, range: [290, 510] },    // departX → approachX
+      { orientation: 'v', fixed: 510, range: [242, 200] },    // detourY → e.y (下→上)
+      { orientation: 'h', fixed: 200, range: [510, 524] },    // approachX → e.x
     ])
   })
 
@@ -1562,11 +1562,11 @@ describe('buildArrowPath segments 構造（リファクタ安全網）', () => {
     const B: Bbox = { x: 200, y: 400, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B])
     expect(r.segments).toEqual([
-      { orientation: 'v', fixed: 200, range: [276, 290] },
-      { orientation: 'h', fixed: 290, range: [200, 290] },
-      { orientation: 'v', fixed: 290, range: [290, 510] },
-      { orientation: 'h', fixed: 510, range: [200, 290] },
-      { orientation: 'v', fixed: 200, range: [510, 524] },
+      { orientation: 'v', fixed: 200, range: [276, 290] },    // s.y → departY
+      { orientation: 'h', fixed: 290, range: [200, 290] },    // s.x → detourX
+      { orientation: 'v', fixed: 290, range: [290, 510] },    // departY → approachY
+      { orientation: 'h', fixed: 510, range: [290, 200] },    // detourX → e.x (右→左)
+      { orientation: 'v', fixed: 200, range: [510, 524] },    // approachY → e.y
     ])
   })
 
