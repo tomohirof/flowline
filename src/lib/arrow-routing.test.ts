@@ -872,13 +872,15 @@ describe('detectDiagonalDetour', () => {
     const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
     const L: Bbox = { x: 400, y: 250, w: 152, h: 56 }
     const r = detectDiagonalDetour(s, e, [B, R, L])
-    // L は中央行 (y=my=250) 上にあり target-detour の中央水平セグメント [s.x=200, detourX=690]
-    // を貫通するため、my を shiftedMy=292 (#366 修正) にシフトする。direction (right) は detourX で検証。
+    // L は中央行 (y=my=250) 上にあり middleRowHits として検出される。issue #375 の新ロジックで
+    // 中央水平 H = [s.x, detourX] を middleRowHits の source 側に通すため、detourX = min(B.left=524,
+    // L.left=324) - 14 = 310 を選ぶ。central H [200, 310] は L range [324, 476] と重ならない。
+    // shiftedMy=292 は computeShiftedMy が並行に適用され、my 軸でも L を回避 (二重防御)。
     expect(r).toEqual({
       kind: 'target-detour',
-      my: 292, // 250 + 28 + 14 (障害下端 + DETOUR_MARGIN)
-      detourX: 690, // 右優先
-      approachY: 358, // clampOffset(372, 292, 14) = 372 - 14 = 358 (偶然 unshift と同値)
+      my: 292, // 250 + 28 + 14 (障害下端 + DETOUR_MARGIN) — shiftedMy は新ロジックと独立
+      detourX: 310, // issue #375: min(B.left=524, L.left=324) - 14 (source 方向 push)
+      approachY: 358, // clampOffset(372, 292, 14) = 372 - 14
     })
   })
 
