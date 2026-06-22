@@ -390,8 +390,9 @@ export function detectDiagonalDetour(
   // - targetDirection (target 方向): source-detour / both-detour.sourceDetourX 用 (#374)。
   // - sourceDirection (source 方向): target-detour 用 (#353)。中央水平 [s.x, detourX] が
   //   targetColHit を貫通しないよう detourX を source 側へ寄せる。
+  // 冒頭で |e.x - s.x| < 2 を早期 return 済みのため両者は常に符号反転の関係 (片方更新漏れを防ぐ)。
   const targetDirection: 1 | -1 = e.x > s.x ? 1 : -1
-  const sourceDirection: 1 | -1 = s.x > e.x ? 1 : -1
+  const sourceDirection: 1 | -1 = -targetDirection as 1 | -1
 
   if (sourceColHits.length > 0 && targetColHits.length > 0) {
     // 相互ブロッキング回避: 反対側列の hits は方向判定から除外。対応する迂回パスで既に回避済み。
@@ -431,12 +432,10 @@ export function detectDiagonalDetour(
     const middleHThroughTargetCol = targetColHits.some(
       (b) => Math.abs(b.y - shiftedMy) < b.h / 2 + 2,
     )
-    const detourX = middleHThroughTargetCol
-      ? pickDetourX(targetColHits, obstacles, [my, e.y], obstacles, {
-          detourDirection: sourceDirection,
-          middleHitsToClear: middleRowHits,
-        })
-      : pickDetourX(targetColHits, obstacles, [my, e.y], obstacles)
+    const detourOpts = middleHThroughTargetCol
+      ? { detourDirection: sourceDirection, middleHitsToClear: middleRowHits }
+      : undefined
+    const detourX = pickDetourX(targetColHits, obstacles, [my, e.y], obstacles, detourOpts)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
     return { kind: 'target-detour', my: shiftedMy, detourX, approachY }
   }
