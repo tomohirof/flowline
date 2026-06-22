@@ -1191,6 +1191,37 @@ describe('detectDiagonalDetour', () => {
     }
   })
 
+  it('should not penetrate middle-row hit in #368 real layout (RH=84, diamond fromSide:bottom)', () => {
+    // issue #368: 実 layout (RH=84, TH=56, 菱形 DS=34) で shiftedMy の range-check が失敗し
+    // 原 my にフォールバックするケース。row17.y=100 基準:
+    //   s = (100, 134)  菱形下頂点 (row17.y + DS=34)
+    //   e = (300, 240)  target 上辺進入 (row19.y=268 - TH/2=28)
+    //   my = 187 (= (134+240)/2)
+    //   source 列障害 (店舗 row18 確認連絡): (100, 184)
+    //   中央行障害 (グルプラ row18 確認連絡): (200, 184) — x[124,276]
+    // 期待: source-detour。shiftedMy は range-check 失敗で 187 のままだが、#374 の union ロジックで
+    // detourX が中央障害の右端 + DETOUR_MARGIN まで張り出すため中央水平 [detourX, e.x] が貫通しない。
+    const s368 = { x: 100, y: 134 }
+    const e368 = { x: 300, y: 240 }
+    const mid: Bbox = { x: 200, y: 184, w: 152, h: 56 } // x[124,276]
+    const obstacles: Bbox[] = [
+      { x: 100, y: 184, w: 152, h: 56 }, // source 列障害
+      mid, // 中央行障害
+    ]
+    const r = detectDiagonalDetour(s368, e368, obstacles)
+    expect(r?.kind).toBe('source-detour')
+    if (r?.kind === 'source-detour') {
+      // #368 の核心条件: shiftedMy の range-check 失敗で原 my=187 にフォールバックする
+      // (shift-down 候補 226 > hi=211 / shift-up 候補 142 < lo=163 のため範囲外)。
+      expect(r.my).toBe(187)
+      // それでも detourX = max(source.right=176, mid.right=276) + 14 = 290 (中央障害の右外)
+      expect(r.detourX).toBe(290)
+      // 中央水平 [detourX, e.x] が中央障害の x 範囲 [124,276] を侵さないこと
+      const hMin = Math.min(r.detourX, e368.x)
+      expect(hMin).toBeGreaterThanOrEqual(mid.x + mid.w / 2) // 290 >= 276
+    }
+  })
+
   it('should fall back to original my when shiftedMy exceeds row bounds', () => {
     // 行間隔が狭く shiftedMy が source 行 / target 行を侵食するケース
     // s=(100, 100), e=(300, 160), my=130 — 行差 60 で狭い
