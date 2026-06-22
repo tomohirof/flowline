@@ -1,0 +1,253 @@
+{
+  "id": "fixture-353",
+  "title": "グルプラ-電話 (#353 repro)",
+  "themeId": "cloud",
+  "shareToken": "dev-353",
+  "projectId": null,
+  "createdAt": "2026-06-22T00:00:00.000Z",
+  "updatedAt": "2026-06-22T00:00:00.000Z",
+  "lanes": [
+    {
+      "id": "44167e0e-5fea-4b0c-bb6d-ec91bdd0369f",
+      "name": "ユーザー",
+      "colorIndex": 0,
+      "position": 0
+    },
+    {
+      "id": "e0a8c1d5-4fad-4824-92d8-7deb99d64b70",
+      "name": "電話",
+      "colorIndex": 1,
+      "position": 1,
+      "groupId": "83c1053c-62ed-4398-9a1e-0766274d4547",
+      "groupRole": "parent"
+    },
+    {
+      "id": "23fb388a-02c7-4f77-b270-6a23ca276e17",
+      "name": "電話 (2)",
+      "colorIndex": 1,
+      "position": 2,
+      "groupId": "83c1053c-62ed-4398-9a1e-0766274d4547",
+      "groupRole": "sub"
+    },
+    {
+      "id": "35261338-abef-4fdc-a5bf-0fec761ea861",
+      "name": "lane3",
+      "colorIndex": 2,
+      "position": 3
+    },
+    {
+      "id": "0686b03c-b6c6-4c80-88ea-7da5e0c7fb5f",
+      "name": "lane4",
+      "colorIndex": 3,
+      "position": 4
+    }
+  ],
+  "nodes": [
+    {
+      "id": "396271ca-60eb-4a8b-946f-61b4a6af3528",
+      "laneId": "44167e0e-5fea-4b0c-bb6d-ec91bdd0369f",
+      "rowIndex": 0,
+      "label": "サイト訪問",
+      "note": null,
+      "orderIndex": 0
+    },
+    {
+      "id": "e3a20503-38d9-4914-8fa8-4fb3c335dd23",
+      "laneId": "44167e0e-5fea-4b0c-bb6d-ec91bdd0369f",
+      "rowIndex": 1,
+      "label": "会員",
+      "note": null,
+      "orderIndex": 1,
+      "shape": "diamond"
+    },
+    {
+      "id": "ca69a2ef-e8b4-45db-9644-94dfb4fd036a",
+      "laneId": "44167e0e-5fea-4b0c-bb6d-ec91bdd0369f",
+      "rowIndex": 2,
+      "label": "そ",
+      "note": null,
+      "orderIndex": 2
+    },
+    {
+      "id": "d4b8931e-418c-4b3e-b082-daede216dc26",
+      "laneId": "44167e0e-5fea-4b0c-bb6d-ec91bdd0369f",
+      "rowIndex": 3,
+      "label": "作業",
+      "note": null,
+      "orderIndex": 3
+    },
+    {
+      "id": "f4e947e4-37a0-4abc-816f-d52c323e0b8e",
+      "laneId": "e0a8c1d5-4fad-4824-92d8-7deb99d64b70",
+      "rowIndex": 2,
+      "label": "電話する",
+      "note": null,
+      "orderIndex": 4
+    },
+    {
+      "id": "622766d4-35e4-4780-87e2-b59cacfe5b68",
+      "laneId": "e0a8c1d5-4fad-4824-92d8-7deb99d64b70",
+      "rowIndex": 3,
+      "label": "会員か否か",
+      "note": null,
+      "orderIndex": 5,
+      "shape": "diamond"
+    },
+    {
+      "id": "fba329be-d103-4990-9605-b50a81e2ab12",
+      "laneId": "23fb388a-02c7-4f77-b270-6a23ca276e17",
+      "rowIndex": 4,
+      "label": "会員登録",
+      "note": null,
+      "orderIndex": 6
+    },
+    {
+      "id": "09cc3897-2705-44b3-923c-940aaf66ce94",
+      "laneId": "e0a8c1d5-4fad-4824-92d8-7deb99d64b70",
+      "rowIndex": 5,
+      "label": "電話番号と\n確認番号表示",
+      "note": null,
+      "orderIndex": 7
+    },
+    {
+      "id": "b2165b88-a35e-430f-a131-35063e0487ad",
+      "laneId": "e0a8c1d5-4fad-4824-92d8-7deb99d64b70",
+      "rowIndex": 6,
+      "label": "架電",
+      "note": null,
+      "orderIndex": 8
+    },
+    {
+      "id": "4a62c952-9024-422d-8b0b-85bc51099943",
+      "laneId": "e0a8c1d5-4fad-4824-92d8-7deb99d64b70",
+      "rowIndex": 8,
+      "label": "telタグから",
+      "note": null,
+      "orderIndex": 9
+    },
+    {
+      "id": "97d43681-7e51-4381-9fdd-13e7481b15ed",
+      "laneId": "23fb388a-02c7-4f77-b270-6a23ca276e17",
+      "rowIndex": 8,
+      "label": "別電話から",
+      "note": null,
+      "orderIndex": 10
+    },
+    {
+      "id": "c271f406-6ce2-40e5-b317-858cfe334ea2",
+      "laneId": "23fb388a-02c7-4f77-b270-6a23ca276e17",
+      "rowIndex": 9,
+      "label": "確認番号入力",
+      "note": null,
+      "orderIndex": 11
+    },
+    {
+      "id": "9f1e85bf-14a7-4dd8-ba42-e469f73c467d",
+      "laneId": "23fb388a-02c7-4f77-b270-6a23ca276e17",
+      "rowIndex": 10,
+      "label": "電話がつながる",
+      "note": null,
+      "orderIndex": 12
+    }
+  ],
+  "arrows": [
+    {
+      "id": "0085f156-afd7-48aa-b661-fc8cd04134a5",
+      "fromNodeId": "396271ca-60eb-4a8b-946f-61b4a6af3528",
+      "toNodeId": "e3a20503-38d9-4914-8fa8-4fb3c335dd23",
+      "comment": null
+    },
+    {
+      "id": "e91e1b88-8944-4a9b-a44e-c85a81cdaee1",
+      "fromNodeId": "e3a20503-38d9-4914-8fa8-4fb3c335dd23",
+      "toNodeId": "ca69a2ef-e8b4-45db-9644-94dfb4fd036a",
+      "comment": null
+    },
+    {
+      "id": "9c0f1af3-6315-423e-9011-2571ee217e2b",
+      "fromNodeId": "ca69a2ef-e8b4-45db-9644-94dfb4fd036a",
+      "toNodeId": "d4b8931e-418c-4b3e-b082-daede216dc26",
+      "comment": null
+    },
+    {
+      "id": "0eb951b1-1501-4f7c-82ef-f24ff4b8704a",
+      "fromNodeId": "622766d4-35e4-4780-87e2-b59cacfe5b68",
+      "toNodeId": "09cc3897-2705-44b3-923c-940aaf66ce94",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "1378eece-35a4-4413-99cb-5626492a21ef",
+      "fromNodeId": "622766d4-35e4-4780-87e2-b59cacfe5b68",
+      "toNodeId": "fba329be-d103-4990-9605-b50a81e2ab12",
+      "comment": null,
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "09c26894-0872-4c75-9497-02bc735e8ee6",
+      "fromNodeId": "fba329be-d103-4990-9605-b50a81e2ab12",
+      "toNodeId": "09cc3897-2705-44b3-923c-940aaf66ce94",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "4bd1e786-4fa6-462c-8981-12b5fec83897",
+      "fromNodeId": "f4e947e4-37a0-4abc-816f-d52c323e0b8e",
+      "toNodeId": "622766d4-35e4-4780-87e2-b59cacfe5b68",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "3bea0583-41e9-4075-87ae-1af6143e7844",
+      "fromNodeId": "09cc3897-2705-44b3-923c-940aaf66ce94",
+      "toNodeId": "b2165b88-a35e-430f-a131-35063e0487ad",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eb84409f-e9be-4a4f-bc88-c1f33269e4b9",
+      "fromNodeId": "b2165b88-a35e-430f-a131-35063e0487ad",
+      "toNodeId": "4a62c952-9024-422d-8b0b-85bc51099943",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "45e5d518-bb79-439b-8a2a-ac519862a33a",
+      "fromNodeId": "b2165b88-a35e-430f-a131-35063e0487ad",
+      "toNodeId": "97d43681-7e51-4381-9fdd-13e7481b15ed",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ba05ccc8-b870-4c81-a843-703452b3d3c2",
+      "fromNodeId": "97d43681-7e51-4381-9fdd-13e7481b15ed",
+      "toNodeId": "c271f406-6ce2-40e5-b317-858cfe334ea2",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "1564f784-f290-4739-bb95-32c8f485fced",
+      "fromNodeId": "c271f406-6ce2-40e5-b317-858cfe334ea2",
+      "toNodeId": "9f1e85bf-14a7-4dd8-ba42-e469f73c467d",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "64331fe8-686f-44f8-a316-909b886750a9",
+      "fromNodeId": "4a62c952-9024-422d-8b0b-85bc51099943",
+      "toNodeId": "9f1e85bf-14a7-4dd8-ba42-e469f73c467d",
+      "comment": null,
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}
