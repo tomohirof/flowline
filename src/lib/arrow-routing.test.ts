@@ -618,8 +618,9 @@ describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
     const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 }
     const Bt: Bbox = { x: 600, y: 250, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [Bs, Bt])
-    expect(r.d).toBe('M200,128 L200,142 L290,142 L290,250 L690,250 L690,358 L600,358 L600,372')
-    expect(r.mx).toBe((290 + 690) / 2)
+    // #375: targetDetourX が source 側 (510) に寄り、中央 H [290,510] が Bt を貫通しない。
+    expect(r.d).toBe('M200,128 L200,142 L290,142 L290,250 L510,250 L510,358 L600,358 L600,372')
+    expect(r.mx).toBe((290 + 510) / 2)
     expect(r.my).toBe(250)
   })
 
@@ -1000,11 +1001,43 @@ describe('detectDiagonalDetour', () => {
     expect(r).toEqual({
       kind: 'both-detour',
       departY: 142,
-      sourceDetourX: 290,
+      sourceDetourX: 290, // 200 + 76 + 14 (source 側 hit を target 方向へ)
       my: 250,
-      targetDetourX: 690,
+      // #375: my (=250) が targetColHit (y=250) の Y 範囲内に残るため、targetDetourX を source 側へ
+      // 寄せる。旧来は 690 (右) で中央 H [290,690] が Bt (x[524,676]) を貫通していた。
+      targetDetourX: 600 - 76 - 14, // 510 (source 側迂回)
       approachY: 358,
     })
+  })
+
+  it('should keep both-detour central H clear of both column nodes (#375 non-penetration)', () => {
+    const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 } // source col, x[124,276]
+    const Bt: Bbox = { x: 600, y: 250, w: 152, h: 56 } // target col, x[524,676]
+    const r = detectDiagonalDetour(s, e, [Bs, Bt])
+    expect(r?.kind).toBe('both-detour')
+    if (r?.kind === 'both-detour') {
+      // 中央 H = [sourceDetourX, targetDetourX] は順方向 (反転しない) かつ両列ノードを跨がない
+      expect(r.sourceDetourX).toBeLessThan(r.targetDetourX) // 290 < 510 (forward)
+      expect(r.sourceDetourX).toBeGreaterThanOrEqual(Bs.x + Bs.w / 2) // 290 >= 276
+      expect(r.targetDetourX).toBeLessThanOrEqual(Bt.x - Bt.w / 2) // 510 <= 524
+    }
+  })
+
+  it('should not invert both-detour central H when a middle-row hit sits between the columns (#375)', () => {
+    // targetColHit を縦長にして my シフト後も Y 範囲に残す → gate 発火。
+    // 中央 hit は sourceDetourX (target 方向) が回避し、targetDetourX は targetColHit のみを
+    // source 側でクリアするため中央 H は反転しない。
+    const Bs: Bbox = { x: 200, y: 250, w: 152, h: 56 } // source col, right=276
+    const Bt: Bbox = { x: 600, y: 250, w: 152, h: 120 } // target col (縦長), left=524, y[190,310]
+    const L: Bbox = { x: 400, y: 250, w: 152, h: 56 } // middle row hit, right=476
+    const r = detectDiagonalDetour(s, e, [Bs, Bt, L])
+    expect(r?.kind).toBe('both-detour')
+    if (r?.kind === 'both-detour') {
+      expect(r.my).toBe(292) // L 下端 278 + 14
+      expect(r.sourceDetourX).toBe(490) // max(Bs.right=276, L.right=476) + 14 (middle を target 方向で回避)
+      expect(r.targetDetourX).toBe(510) // Bt.left=524 - 14 (targetCol のみ source 側でクリア)
+      expect(r.sourceDetourX).toBeLessThan(r.targetDetourX) // 490 < 510 forward (反転なし)
+    }
   })
 
   it('should shift my when source-detour selected AND middle-row obstacle exists', () => {
@@ -1122,7 +1155,8 @@ describe('detectDiagonalDetour', () => {
     // s=(100, 100), e=(300, 300), my=200。
     // sourceColHit: (100, 200), targetColHit: (300, 200), middleRowHit: (200, 200)
     // 期待: sourceDetourX = max(sourceCol.right=140, middleRow.right=240) + 14 = 254
-    //       targetDetourX = 既存ロジック (本 PR 対象外) = 300 + 40 + 14 = 354
+    //       targetDetourX = 354。#375: my シフト (234) で targetColHit (y=200,h40→y[180,220]) を
+    //       抜けるため gate 不発 → 旧ロジック。中央 H [254,354] は y=234 で全障害をクリアし順方向。
     const obstacles: Bbox[] = [
       { x: 100, y: 200, w: 80, h: 40 }, // sourceColHit
       { x: 300, y: 200, w: 80, h: 40 }, // targetColHit
@@ -1131,8 +1165,8 @@ describe('detectDiagonalDetour', () => {
     const r = detectDiagonalDetour({ x: 100, y: 100 }, { x: 300, y: 300 }, obstacles)
     expect(r?.kind).toBe('both-detour')
     if (r?.kind === 'both-detour') {
-      expect(r.sourceDetourX).toBe(254) // 新ロジック適用
-      expect(r.targetDetourX).toBe(354) // 旧ロジック維持 (issue #375 で対応)
+      expect(r.sourceDetourX).toBe(254) // 新ロジック適用 (#374)
+      expect(r.targetDetourX).toBe(354) // gate 不発 (shift で targetCol を抜ける) → 旧ロジック維持
     }
   })
 
