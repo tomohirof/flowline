@@ -332,6 +332,15 @@ function computeShiftedMy(
 }
 
 /**
+ * 中央水平セグメント (y) が targetColHit の Y 範囲を跨ぐか判定する (#353 / #375 のゲート)。
+ * true のときだけ detourX を source 方向へ寄せる必要がある (false なら shift で抜けており旧ロジックで安全)。
+ * target-detour と both-detour.targetDetourX で共通利用。
+ */
+function middleHitsTargetCol(targetColHits: Bbox[], y: number): boolean {
+  return targetColHits.some((b) => Math.abs(b.y - y) < b.h / 2 + 2)
+}
+
+/**
  * 斜め配置矢印 (異行×異レーン) の Z字パス 3 セグメント (source 縦/中央水平/target 縦) と
  * 障害ノードの衝突を判定し、迂回パスを記述する DiagonalDetourResult を返す。
  * 障害なしまたは斜めでない (水平・垂直直線) ときは null を返す。
@@ -415,20 +424,15 @@ export function detectDiagonalDetour(
         : undefined,
     )
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
-    // #375: targetDetourX も target-detour と対称に gate 化する。shiftedMy が targetColHit の Y
-    // 範囲内に残るときだけ detourX を source 方向へ寄せ、中央 H [sourceDetourX, targetDetourX] が
-    // targetColHit を貫通しないようにする。shift で Y 範囲外へ抜けていれば旧ロジック維持で
-    // over-forcing を避ける (target-detour と同じゲート設計)。
-    // middleHitsToClear は [] とする: both-detour では中央行 hit を sourceDetourX が target 方向で
-    // 既に回避済みのため、targetDetourX 側でも回避すると両 detourX が同じ hit を挟んで中央 H が
-    // 反転する。targetDetourX は targetColHit のみを source 側でクリアすればよい。
-    const targetMiddleHThrough = targetColHits.some((b) => Math.abs(b.y - shiftedMy) < b.h / 2 + 2)
+    // #375: targetDetourX も target-detour と対称に gate 化 (shiftedMy が targetColHit の Y 範囲に
+    // 残るときだけ source 方向へ寄せる)。middleHitsToClear=[] とするのは、both-detour では中央行 hit を
+    // sourceDetourX が target 方向で既に回避済みで、targetDetourX 側でも回避すると中央 H が反転するため。
     const targetDetourX = pickDetourX(
       targetColHits,
       tgtBlockers,
       [my, e.y],
       obstacles,
-      targetMiddleHThrough
+      middleHitsTargetCol(targetColHits, shiftedMy)
         ? { detourDirection: sourceDirection, middleHitsToClear: [] }
         : undefined,
     )
@@ -443,10 +447,7 @@ export function detectDiagonalDetour(
     // 残るとき、detourX を target 側 (旧ロジックの右優先) へ置くと中央水平が targetColHit を貫通する。
     // この場合のみ detourX を source 側へ強制して貫通を防ぐ。
     // shift で targetColHit の Y 範囲外へ抜けている場合は貫通しないため旧ロジックを維持し over-forcing を避ける。
-    const middleHThroughTargetCol = targetColHits.some(
-      (b) => Math.abs(b.y - shiftedMy) < b.h / 2 + 2,
-    )
-    const detourOpts = middleHThroughTargetCol
+    const detourOpts = middleHitsTargetCol(targetColHits, shiftedMy)
       ? { detourDirection: sourceDirection, middleHitsToClear: middleRowHits }
       : undefined
     const detourX = pickDetourX(targetColHits, obstacles, [my, e.y], obstacles, detourOpts)
