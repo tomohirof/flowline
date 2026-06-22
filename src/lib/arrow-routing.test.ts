@@ -594,8 +594,10 @@ describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
   it('should produce 6-segment target-detour path when obstacle in target column (core bug case)', () => {
     const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
     const r = buildArrowPath(s, e, fc, tc, [B])
-    expect(r.d).toBe('M200,128 L200,250 L690,250 L690,358 L600,358 L600,372')
-    expect(r.mx).toBe((200 + 690) / 2)
+    // #353: detourX は source 側 (510 = 障害左端 524 - DETOUR_MARGIN)。中央水平 [200,510] は
+    // targetColHit の x 範囲 [524,676] に侵入しない。
+    expect(r.d).toBe('M200,128 L200,250 L510,250 L510,358 L600,358 L600,372')
+    expect(r.mx).toBe((200 + 510) / 2)
     expect(r.my).toBe(250)
   })
 
@@ -658,7 +660,8 @@ describe('buildArrowPath - 斜め迂回（異行×異レーン）', () => {
     const eDia = { x: 600, y: 366 } // approx 中心 (600,400) - DS(34) 上
     const B: Bbox = { x: 600, y: 250, w: 152, h: 56 } // target 列障害
     const r = buildArrowPath(sDia, eDia, { x: 200, y: 100 }, { x: 600, y: 400 }, [B])
-    expect(r.d).toBe('M200,134 L200,250 L690,250 L690,352 L600,352 L600,366')
+    // #353: detourX は source 側 (510)。中央水平が targetColHit を貫通しない。
+    expect(r.d).toBe('M200,134 L200,250 L510,250 L510,352 L600,352 L600,366')
   })
 
   it('should not cross row obstacles when source has single-side blocker and target is on opposite side (issue #374)', () => {
@@ -850,21 +853,41 @@ describe('detectDiagonalDetour', () => {
     expect(r).toEqual({
       kind: 'target-detour',
       my: 250,
-      detourX: 600 + 76 + 14, // 690 (右迂回: 障害右端 + DETOUR_MARGIN)
+      // #353: my (=250) が targetColHit (y=250) の Y 範囲内に残るため、detourX を右に置くと
+      // 中央水平 [s.x=200, detourX] が targetColHit を貫通する。→ source 側 (左) へ迂回。
+      detourX: 600 - 76 - 14, // 510 (source 側迂回: 障害左端 - DETOUR_MARGIN)
       approachY: 372 - 14, // 358
     })
   })
 
-  it('should return target-detour with left-side detourX when target column is right-blocked', () => {
-    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 }
-    const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
-    const r = detectDiagonalDetour(s, e, [B, R])
-    expect(r).toEqual({
-      kind: 'target-detour',
-      my: 250,
-      detourX: 600 - 76 - 14, // 510 (左迂回)
-      approachY: 358,
-    })
+  it('should route detourX to source side so middle horizontal never penetrates target-column node (#353)', () => {
+    // 実フロー再現 (grupura-phone): source=左列, target=右列。target 列に target ノードの
+    // 真上ブロッカー (node12「確認番号入力」相当) があり、中央行には他障害が無い。
+    // my はシフトされず targetColHit の Y 範囲内に残るため detourX は source 側に寄せる。
+    const B: Bbox = { x: 600, y: 250, w: 152, h: 56 } // target col blocker, x-extent [524, 676]
+    const r = detectDiagonalDetour(s, e, [B])
+    expect(r?.kind).toBe('target-detour')
+    if (r?.kind === 'target-detour') {
+      expect(r.detourX).toBe(510) // 524 - 14, source 側
+      // 中央水平 [s.x, detourX] が targetColHit の x 範囲 [524, 676] に侵入しないこと
+      const hMax = Math.max(s.x, r.detourX)
+      expect(hMax).toBeLessThanOrEqual(B.x - B.w / 2) // 510 <= 524
+    }
+  })
+
+  it('should still detour to source side when arrow runs right-to-left (#353 mirror)', () => {
+    // 右→左対角線。source が右、target が左。中央水平 [s.x, detourX] が target 列ノードを
+    // 貫通しないよう detourX は source 側 (右) へ寄せる。
+    const sR = { x: 600, y: 128 }
+    const eR = { x: 200, y: 372 }
+    const B: Bbox = { x: 200, y: 250, w: 152, h: 56 } // target col (左) blocker, x-extent [124, 276]
+    const r = detectDiagonalDetour(sR, eR, [B])
+    expect(r?.kind).toBe('target-detour')
+    if (r?.kind === 'target-detour') {
+      expect(r.detourX).toBe(200 + 76 + 14) // 290 (source 側 = 右), 障害右端 + DETOUR_MARGIN
+      const hMin = Math.min(sR.x, r.detourX)
+      expect(hMin).toBeGreaterThanOrEqual(B.x + B.w / 2) // 290 >= 276
+    }
   })
 
   it('should prefer right detour when both sides of target column are blocked', () => {
@@ -872,12 +895,13 @@ describe('detectDiagonalDetour', () => {
     const R: Bbox = { x: 800, y: 250, w: 152, h: 56 }
     const L: Bbox = { x: 400, y: 250, w: 152, h: 56 }
     const r = detectDiagonalDetour(s, e, [B, R, L])
-    // L は中央行 (y=my=250) 上にあり target-detour の中央水平セグメント [s.x=200, detourX=690]
-    // を貫通するため、my を shiftedMy=292 (#366 修正) にシフトする。direction (right) は detourX で検証。
+    // L は中央行 (y=my=250) 上にあり、my を shiftedMy=292 (#366 修正) にシフトする。
+    // シフト後 my=292 は targetColHit B (y∈[222,278]) の範囲外に抜けるため中央水平は B を
+    // 貫通せず、#353 の source 側強制は発動しない (over-forcing 回避)。よって right 優先のまま。
     expect(r).toEqual({
       kind: 'target-detour',
       my: 292, // 250 + 28 + 14 (障害下端 + DETOUR_MARGIN)
-      detourX: 690, // 右優先
+      detourX: 690, // 右優先 (shift で貫通解消済み)
       approachY: 358, // clampOffset(372, 292, 14) = 372 - 14 = 358 (偶然 unshift と同値)
     })
   })
