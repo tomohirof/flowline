@@ -414,10 +414,24 @@ export function detectDiagonalDetour(
         ? { detourDirection: targetDirection, middleHitsToClear: middleRowHits }
         : undefined,
     )
-    // targetDetourX: 旧ロジック維持。both-detour は中央行 hit があると sourceDetourX/targetDetourX が
-    // 同じ middle hit を両側から避けて交差しうるため、対称対応は issue #375 で別途扱う。
-    const targetDetourX = pickDetourX(targetColHits, tgtBlockers, [my, e.y], obstacles)
     const shiftedMy = computeShiftedMy(s, e, my, middleRowHits, obstacles)
+    // #375: targetDetourX も target-detour と対称に gate 化する。shiftedMy が targetColHit の Y
+    // 範囲内に残るときだけ detourX を source 方向へ寄せ、中央 H [sourceDetourX, targetDetourX] が
+    // targetColHit を貫通しないようにする。shift で Y 範囲外へ抜けていれば旧ロジック維持で
+    // over-forcing を避ける (target-detour と同じゲート設計)。
+    // middleHitsToClear は [] とする: both-detour では中央行 hit を sourceDetourX が target 方向で
+    // 既に回避済みのため、targetDetourX 側でも回避すると両 detourX が同じ hit を挟んで中央 H が
+    // 反転する。targetDetourX は targetColHit のみを source 側でクリアすればよい。
+    const targetMiddleHThrough = targetColHits.some((b) => Math.abs(b.y - shiftedMy) < b.h / 2 + 2)
+    const targetDetourX = pickDetourX(
+      targetColHits,
+      tgtBlockers,
+      [my, e.y],
+      obstacles,
+      targetMiddleHThrough
+        ? { detourDirection: sourceDirection, middleHitsToClear: [] }
+        : undefined,
+    )
     const departY = clampOffset(s.y, shiftedMy, DEPART_GAP)
     const approachY = clampOffset(e.y, shiftedMy, APPROACH_GAP)
     return { kind: 'both-detour', departY, sourceDetourX, my: shiftedMy, targetDetourX, approachY }

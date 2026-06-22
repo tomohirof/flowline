@@ -1,0 +1,23 @@
+{
+  "id": "fixture-375",
+  "title": "both-detour (#375 repro)",
+  "themeId": "cloud",
+  "shareToken": "dev-375",
+  "projectId": null,
+  "createdAt": "2026-06-23T00:00:00.000Z",
+  "updatedAt": "2026-06-23T00:00:00.000Z",
+  "lanes": [
+    { "id": "laneA", "name": "A", "colorIndex": 0, "position": 0 },
+    { "id": "laneB", "name": "B", "colorIndex": 1, "position": 1 },
+    { "id": "laneC", "name": "C", "colorIndex": 2, "position": 2 }
+  ],
+  "nodes": [
+    { "id": "nA", "laneId": "laneA", "rowIndex": 0, "label": "開始", "note": null, "orderIndex": 0 },
+    { "id": "nSrcBlk", "laneId": "laneA", "rowIndex": 1, "label": "源ブロッカー", "note": null, "orderIndex": 1 },
+    { "id": "nTgtBlk", "laneId": "laneC", "rowIndex": 1, "label": "標的ブロッカー", "note": null, "orderIndex": 2 },
+    { "id": "nD", "laneId": "laneC", "rowIndex": 2, "label": "終了", "note": null, "orderIndex": 3 }
+  ],
+  "arrows": [
+    { "id": "aBoth", "fromNodeId": "nA", "toNodeId": "nD", "comment": null, "fromSide": "bottom", "toSide": "top" }
+  ]
+}
