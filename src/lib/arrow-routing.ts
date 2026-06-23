@@ -104,7 +104,61 @@ function escalateDetourTrack(
   return fixed
 }
 
-function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number } | null {
+/**
+ * depart / approach 脚（迂回パスの始点側・終点側の水平 or 垂直セグメント）が、
+ * 経路上の最寄り障害物を貫通しないよう脚の長さ(gap)を clamp する (issue #328)。
+ *
+ * 脚は origin から進行方向へ伸び、その先端で直交方向へ折れる。先端が障害物の
+ * 手前端を越えると貫通するため、gap を「最寄り障害物の手前端までの距離 - DETOUR_MARGIN」
+ * 以下に抑える。距離が DETOUR_MARGIN 未満（origin が障害物に密着）なら gap=0 となり、
+ * 折れ点が origin に一致する＝旧 5 セグ路（始点直下/直上で折れる）と等価に縮退する。
+ *
+ * @param origin  脚の起点座標（軸上のスカラー。水平脚なら s.x/e.x、垂直脚なら s.y/e.y）
+ * @param dir     進行方向（+1 = 右/下, -1 = 左/上）
+ * @param spans   経路上障害物の軸方向占有範囲 [lowEdge, highEdge] の配列。
+ *                **空配列を渡してはならない**（Math.min(...[]) = Infinity となり clamp が無効化される）。
+ *                呼び出し側は inRow/inCol が空でないことを保証済みの場合のみ呼ぶこと。
+ * @param maxGap  通常時の脚長（DEPART_GAP / APPROACH_GAP）
+ * @param halfSpan 始終点間距離の半分（脚が中央を越えて自己交差しないための上限）
+ */
+function clampLegGap(
+  origin: number,
+  dir: 1 | -1,
+  spans: Array<[number, number]>,
+  maxGap: number,
+  halfSpan: number,
+): number {
+  // dir>0 では手前端 = lowEdge、dir<0 では手前端 = highEdge。
+  // dir を掛けることで「進行方向に見た origin からの符号付き距離」に正規化する。
+  const distances = spans.map(([lo, hi]) => (dir > 0 ? lo - origin : origin - hi))
+  const nearest = Math.min(...distances)
+  return Math.max(0, Math.min(maxGap, halfSpan, nearest - DETOUR_MARGIN))
+}
+
+/**
+ * depart 脚 (origin 側) / approach 脚 (target 側) の折れ点座標を対称に算出する (issue #328)。
+ * 横迂回では (origin,target)=(s.x,e.x)・spans は inRow の X 範囲、
+ * 縦迂回では (origin,target)=(s.y,e.y)・spans は inCol の Y 範囲を渡す。
+ * spans は空であってはならない（clampLegGap の契約）。
+ */
+function computeLegEndpoints(
+  origin: number,
+  target: number,
+  spans: Array<[number, number]>,
+): { depart: number; approach: number } {
+  const sign: 1 | -1 = origin < target ? 1 : -1 // origin !== target は呼び出し側が保証
+  const half = Math.abs(target - origin) / 2
+  return {
+    depart: origin + sign * clampLegGap(origin, sign, spans, DEPART_GAP, half),
+    approach: target - sign * clampLegGap(target, -sign as 1 | -1, spans, APPROACH_GAP, half),
+  }
+}
+
+function detectDetour(
+  s: Point,
+  e: Point,
+  obstacles: Bbox[],
+): { detourY: number; departX: number; approachX: number } | null {
   // 水平直線でなければ迂回しない
   if (Math.abs(e.y - s.y) >= 2) return null
 
@@ -152,10 +206,19 @@ function detectDetour(s: Point, e: Point, obstacles: Bbox[]): { detourY: number 
   const direction: 1 | -1 = goDown ? 1 : -1
   const detourY = escalateDetourTrack(initialDetourY, [s.x, e.x], 'h', obstacles, direction)
 
-  return { detourY }
+  // depart/approach 脚クリアランス (issue #328): inRow 障害物の X 占有範囲を使い、
+  // 始点側・終点側の水平脚が障害物を貫通しない範囲に departX/approachX を clamp する。
+  const spans = inRow.map((o): [number, number] => [o.x - o.w / 2, o.x + o.w / 2])
+  const { depart: departX, approach: approachX } = computeLegEndpoints(s.x, e.x, spans)
+
+  return { detourY, departX, approachX }
 }
 
-function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX: number } | null {
+function detectVerticalDetour(
+  s: Point,
+  e: Point,
+  obstacles: Bbox[],
+): { detourX: number; departY: number; approachY: number } | null {
   // 垂直直線でなければ迂回しない
   if (Math.abs(e.x - s.x) >= 2) return null
 
@@ -204,7 +267,12 @@ function detectVerticalDetour(s: Point, e: Point, obstacles: Bbox[]): { detourX:
   const direction: 1 | -1 = goRight ? 1 : -1
   const detourX = escalateDetourTrack(initialDetourX, [s.y, e.y], 'v', obstacles, direction)
 
-  return { detourX }
+  // depart/approach 脚クリアランス (issue #328): inCol 障害物の Y 占有範囲を使い、
+  // 始点側・終点側の垂直脚が障害物を貫通しない範囲に departY/approachY を clamp する。
+  const spans = inCol.map((o): [number, number] => [o.y - o.h / 2, o.y + o.h / 2])
+  const { depart: departY, approach: approachY } = computeLegEndpoints(s.y, e.y, spans)
+
+  return { detourX, departY, approachY }
 }
 
 type DiagonalDetourResult =
@@ -671,15 +739,8 @@ export const buildArrowPath = (
   if (obstacles && obstacles.length > 0) {
     const detour = detectDetour(s, e, obstacles)
     if (detour) {
-      const { detourY } = detour
-      // |e.x - s.x| / 2 で clamp。ノード幅が縮小しても departX/approachX が反対側を越えて
-      // パスが自己交差するのを防ぐ防御コード（detectDetour で水平距離は保証されるが、レイアウト
-      // 変更時の silent breakage 回避用）。DEPART_GAP/APPROACH_GAP が同値（対称設計）の場合、
-      // clamp が効くと中央で接合する（縮退ケースでは中央水平セグメントがゼロ長になる）。
-      const sign = Math.sign(dx)
-      const halfDx = Math.abs(dx) / 2
-      const departX = s.x + sign * Math.min(DEPART_GAP, halfDx)
-      const approachX = e.x - sign * Math.min(APPROACH_GAP, halfDx)
+      // departX/approachX は detectDetour 側で算出済み（障害物クリアランス clamp 含む, issue #328）。
+      const { detourY, departX, approachX } = detour
       // 6 セグメント: M → 水平(departX まで) → 垂直(detourY まで) → 水平(approachX まで)
       //               → 垂直(e.y まで) → 水平(e.x へ進入)
       const segments: EdgeSegment[] = [
@@ -694,14 +755,8 @@ export const buildArrowPath = (
 
     const vDetour = detectVerticalDetour(s, e, obstacles)
     if (vDetour) {
-      const { detourX } = vDetour
-      // |e.y - s.y| / 2 で clamp。横版（上方の detectDetour ブロック）と対称な防御コードで、
-      // ノード高が縮小しても departY/approachY が反対側を越えて自己交差するのを防ぐ。
-      // 縮退ケースでは中央垂直セグメントがゼロ長になる。
-      const sign = Math.sign(dy)
-      const halfDy = Math.abs(dy) / 2
-      const departY = s.y + sign * Math.min(DEPART_GAP, halfDy)
-      const approachY = e.y - sign * Math.min(APPROACH_GAP, halfDy)
+      // departY/approachY は detectVerticalDetour 側で算出済み（障害物クリアランス clamp 含む, issue #328）。
+      const { detourX, departY, approachY } = vDetour
       // 6 セグメント: M → 垂直(departY まで) → 水平(detourX まで) → 垂直(approachY まで)
       //               → 水平(e.x まで) → 垂直(e.y へ進入)
       const segments: EdgeSegment[] = [
