@@ -156,20 +156,88 @@ describe('buildArrowPath - obstacles 引数（迂回モード）', () => {
       expect(lastY).toBe(e.y)
     })
 
-    it('水平距離が DEPART_GAP*2 未満の場合 departX/approachX は中央で接合し自己交差しない', () => {
-      // 水平距離=20, DEPART_GAP=APPROACH_GAP=14。Math.min(14, 10) で 10 に clamp される
-      // s=(100,200), e=(120,200) で間に B (110,200) を置いて迂回を強制
+    it('水平距離が DEPART_GAP*2 未満かつ障害物が密着 → 両脚ゼロ長で s.x/e.x 直上を降下（issue #328）', () => {
+      // 水平距離=20, DEPART_GAP=APPROACH_GAP=14。s=(100,200), e=(120,200) の間を
+      // B span x[102,118] がほぼ埋める密レイアウト。
       const sN = { x: 100, y: 200 }
       const eN = { x: 120, y: 200 }
       const fcN = { x: 80, y: 200 }
       const tcN = { x: 140, y: 200 }
       const B: Bbox = { x: 110, y: 200, w: 16, h: 56 }
       const r = buildArrowPath(sN, eN, fcN, tcN, [B])
-      // departX = 100 + 1 * Math.min(14, 10) = 110
-      // approachX = 120 - 1 * Math.min(14, 10) = 110
-      // → 中央 (110) で接合。departX も approachX も s.x/e.x を越えない
-      expect(r.d).toBe('M100,200 L110,200 L110,242 L110,242 L110,200 L120,200')
+      // 旧挙動は departX=approachX=110（中央接合）で、垂直降下が B(x[102,118]) を貫通していた。
+      // #328 修正後: departGap=approachGap=0 → departX=100, approachX=120。
+      // 降下は B の左外 (100) / 右外 (120) で起こり貫通しない。自己交差もしない (100 ≤ 120)。
+      expect(r.d).toBe('M100,200 L100,200 L100,242 L120,242 L120,200 L120,200')
     })
+  })
+})
+
+describe('buildArrowPath - depart/approach 脚の障害物クリアランス (issue #328)', () => {
+  // PR #327 で追加した 6 セグ迂回パスの depart 脚 (s.x→departX) / approach 脚
+  // (approachX→e.x) は y=s.y / y=e.y のまま水平移動するため、inRow 障害物の手前端が
+  // s.x / e.x から GAP(=14) 以内に来る密レイアウトでは脚が障害物を貫通しうる。
+  // departGap/approachGap を max(0, min(GAP, halfDx, 障害物までの距離 - DETOUR_MARGIN)) で
+  // clamp し、貫通を防ぐ（degenerate 時は脚ゼロ長＝旧 5 セグ路と等価）。
+  const fc = { x: 200, y: 200 }
+  const tc = { x: 700, y: 200 }
+
+  it('depart 脚: 障害物左端が s.x から GAP 未満 → 垂直降下を s.x まで引き戻す（脚ゼロ長）', () => {
+    const s = { x: 276, y: 200 }
+    const e = { x: 600, y: 200 }
+    // B span [284,436]: 左端 284 は s.x(276) から 8px → departGap = max(0,min(14,_,8-14)) = 0
+    const B: Bbox = { x: 360, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    // departX = 276（脚ゼロ長）, approachX = 600-14 = 586, detourY = 228+14 = 242
+    expect(r.d).toBe('M276,200 L276,200 L276,242 L586,242 L586,200 L600,200')
+  })
+
+  it('depart 脚: 障害物左端が s.x から GAP〜2*GAP → margin を保って departX を縮小', () => {
+    const s = { x: 276, y: 200 }
+    const e = { x: 600, y: 200 }
+    // B span [296,448]: 左端 296 は s.x から 20px → departGap = min(14,20-14) = 6 → departX = 282
+    const B: Bbox = { x: 372, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, fc, tc, [B])
+    expect(r.d).toBe('M276,200 L282,200 L282,242 L586,242 L586,200 L600,200')
+  })
+
+  it('approach 脚: 障害物右端が e.x から GAP〜2*GAP → margin を保って approachX を縮小', () => {
+    const s = { x: 200, y: 200 }
+    const e = { x: 524, y: 200 }
+    // B span [352,504]: 右端 504 は e.x(524) から 20px → approachGap = 6 → approachX = 518
+    const B: Bbox = { x: 428, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, { x: 100, y: 200 }, { x: 600, y: 200 }, [B])
+    // departX = 200+14 = 214, detourY = 242
+    expect(r.d).toBe('M200,200 L214,200 L214,242 L518,242 L518,200 L524,200')
+  })
+
+  it('右→左方向（s.x>e.x）でも depart/approach 脚を clamp（ミラー）', () => {
+    const s = { x: 600, y: 200 }
+    const e = { x: 276, y: 200 }
+    // sign=-1。B span [428,580]: 右端 580 は s.x(600) から 20px → departGap = 6 → departX = 594
+    const B: Bbox = { x: 504, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, { x: 700, y: 200 }, { x: 200, y: 200 }, [B])
+    // approach 側: 左端 428 は e.x(276) から 152px → approachGap = 14 → approachX = 290
+    expect(r.d).toBe('M600,200 L594,200 L594,242 L290,242 L290,200 L276,200')
+  })
+
+  it('縦迂回 depart 脚: 障害物上端が s.y から GAP〜2*GAP → departY を縮小', () => {
+    const s = { x: 200, y: 228 }
+    const e = { x: 200, y: 572 }
+    // B span Y [248,304]: 上端 248 は s.y(228) から 20px → departY = 228+6 = 234
+    const B: Bbox = { x: 200, y: 276, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, { x: 200, y: 200 }, { x: 200, y: 600 }, [B])
+    // detourX = 276+14 = 290, approachY = 572-14 = 558
+    expect(r.d).toBe('M200,228 L200,234 L290,234 L290,558 L200,558 L200,572')
+  })
+
+  it('通常レイアウト（障害物端が 2*GAP 以上離れる）は departX/approachX 不変（回帰ガード）', () => {
+    const s = { x: 276, y: 200 }
+    const e = { x: 524, y: 200 }
+    // B span [324,476]: 両端とも 48px 離れる → 従来どおり departX=290, approachX=510
+    const B: Bbox = { x: 400, y: 200, w: 152, h: 56 }
+    const r = buildArrowPath(s, e, { x: 200, y: 200 }, { x: 600, y: 200 }, [B])
+    expect(r.d).toBe('M276,200 L290,200 L290,242 L510,242 L510,200 L524,200')
   })
 })
 
@@ -452,17 +520,17 @@ describe('buildArrowPath - 縦方向迂回（同一レーン）', () => {
       expect(lastX).toBe(e.x)
     })
 
-    it('垂直距離が DEPART_GAP*2 未満の場合 departY/approachY は中央で接合し自己交差しない', () => {
+    it('垂直距離が DEPART_GAP*2 未満かつ障害物が密着 → 両脚ゼロ長で s.y/e.y 上を移動（issue #328）', () => {
       const sN = { x: 200, y: 100 }
       const eN = { x: 200, y: 120 }
       const fcN = { x: 200, y: 80 }
       const tcN = { x: 200, y: 140 }
-      const B: Bbox = { x: 200, y: 110, w: 152, h: 16 }
+      const B: Bbox = { x: 200, y: 110, w: 152, h: 16 } // span y[102,118]
       const r = buildArrowPath(sN, eN, fcN, tcN, [B])
-      // departY = 100 + 1 * Math.min(14, 10) = 110
-      // approachY = 120 - 1 * Math.min(14, 10) = 110
-      // detourX = 200 + 76 + 14 = 290
-      expect(r.d).toBe('M200,100 L200,110 L290,110 L290,110 L200,110 L200,120')
+      // 旧挙動は departY=approachY=110（中央接合）で、水平移動が B(y[102,118]) を貫通していた。
+      // #328 修正後: departGap=approachGap=0 → departY=100, approachY=120。
+      // 水平移動は B の上外 (100) / 下外 (120) で起こり貫通しない。detourX = 290。
+      expect(r.d).toBe('M200,100 L200,100 L290,100 L290,120 L200,120 L200,120')
     })
   })
 })
