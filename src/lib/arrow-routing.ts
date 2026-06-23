@@ -115,7 +115,9 @@ function escalateDetourTrack(
  *
  * @param origin  脚の起点座標（軸上のスカラー。水平脚なら s.x/e.x、垂直脚なら s.y/e.y）
  * @param dir     進行方向（+1 = 右/下, -1 = 左/上）
- * @param spans   経路上障害物の軸方向占有範囲 [lowEdge, highEdge] の配列
+ * @param spans   経路上障害物の軸方向占有範囲 [lowEdge, highEdge] の配列。
+ *                **空配列を渡してはならない**（Math.min(...[]) = Infinity となり clamp が無効化される）。
+ *                呼び出し側は inRow/inCol が空でないことを保証済みの場合のみ呼ぶこと。
  * @param maxGap  通常時の脚長（DEPART_GAP / APPROACH_GAP）
  * @param halfSpan 始終点間距離の半分（脚が中央を越えて自己交差しないための上限）
  */
@@ -131,6 +133,25 @@ function clampLegGap(
   const distances = spans.map(([lo, hi]) => (dir > 0 ? lo - origin : origin - hi))
   const nearest = Math.min(...distances)
   return Math.max(0, Math.min(maxGap, halfSpan, nearest - DETOUR_MARGIN))
+}
+
+/**
+ * depart 脚 (origin 側) / approach 脚 (target 側) の折れ点座標を対称に算出する (issue #328)。
+ * 横迂回では (origin,target)=(s.x,e.x)・spans は inRow の X 範囲、
+ * 縦迂回では (origin,target)=(s.y,e.y)・spans は inCol の Y 範囲を渡す。
+ * spans は空であってはならない（clampLegGap の契約）。
+ */
+function computeLegEndpoints(
+  origin: number,
+  target: number,
+  spans: Array<[number, number]>,
+): { depart: number; approach: number } {
+  const sign: 1 | -1 = origin < target ? 1 : -1 // origin !== target は呼び出し側が保証
+  const half = Math.abs(target - origin) / 2
+  return {
+    depart: origin + sign * clampLegGap(origin, sign, spans, DEPART_GAP, half),
+    approach: target - sign * clampLegGap(target, -sign as 1 | -1, spans, APPROACH_GAP, half),
+  }
 }
 
 function detectDetour(
@@ -187,11 +208,8 @@ function detectDetour(
 
   // depart/approach 脚クリアランス (issue #328): inRow 障害物の X 占有範囲を使い、
   // 始点側・終点側の水平脚が障害物を貫通しない範囲に departX/approachX を clamp する。
-  const sign: 1 | -1 = s.x < e.x ? 1 : -1 // xLow < xHigh 保証済みなので 0 にならない
-  const halfDx = Math.abs(e.x - s.x) / 2
   const spans = inRow.map((o): [number, number] => [o.x - o.w / 2, o.x + o.w / 2])
-  const departX = s.x + sign * clampLegGap(s.x, sign, spans, DEPART_GAP, halfDx)
-  const approachX = e.x - sign * clampLegGap(e.x, -sign as 1 | -1, spans, APPROACH_GAP, halfDx)
+  const { depart: departX, approach: approachX } = computeLegEndpoints(s.x, e.x, spans)
 
   return { detourY, departX, approachX }
 }
@@ -251,11 +269,8 @@ function detectVerticalDetour(
 
   // depart/approach 脚クリアランス (issue #328): inCol 障害物の Y 占有範囲を使い、
   // 始点側・終点側の垂直脚が障害物を貫通しない範囲に departY/approachY を clamp する。
-  const sign: 1 | -1 = s.y < e.y ? 1 : -1 // yLow < yHigh 保証済みなので 0 にならない
-  const halfDy = Math.abs(e.y - s.y) / 2
   const spans = inCol.map((o): [number, number] => [o.y - o.h / 2, o.y + o.h / 2])
-  const departY = s.y + sign * clampLegGap(s.y, sign, spans, DEPART_GAP, halfDy)
-  const approachY = e.y - sign * clampLegGap(e.y, -sign as 1 | -1, spans, APPROACH_GAP, halfDy)
+  const { depart: departY, approach: approachY } = computeLegEndpoints(s.y, e.y, spans)
 
   return { detourX, departY, approachY }
 }
@@ -724,10 +739,7 @@ export const buildArrowPath = (
   if (obstacles && obstacles.length > 0) {
     const detour = detectDetour(s, e, obstacles)
     if (detour) {
-      // departX/approachX は detectDetour 側で以下を満たすよう算出済み (issue #328):
-      //   - DEPART_GAP/APPROACH_GAP と |dx|/2 で clamp（自己交差防止・対称設計）
-      //   - inRow 障害物の手前端 - DETOUR_MARGIN を越えない（depart/approach 脚の貫通防止）
-      // 縮退ケースでは脚がゼロ長になり、垂直降下が s.x/e.x 直上で起こる（旧 5 セグ路と等価）。
+      // departX/approachX は detectDetour 側で算出済み（障害物クリアランス clamp 含む, issue #328）。
       const { detourY, departX, approachX } = detour
       // 6 セグメント: M → 水平(departX まで) → 垂直(detourY まで) → 水平(approachX まで)
       //               → 垂直(e.y まで) → 水平(e.x へ進入)
@@ -743,10 +755,7 @@ export const buildArrowPath = (
 
     const vDetour = detectVerticalDetour(s, e, obstacles)
     if (vDetour) {
-      // departY/approachY は detectVerticalDetour 側で算出済み (issue #328):
-      //   - DEPART_GAP/APPROACH_GAP と |dy|/2 で clamp（自己交差防止・対称設計）
-      //   - inCol 障害物の手前端 - DETOUR_MARGIN を越えない（depart/approach 脚の貫通防止）
-      // 縮退ケースでは脚がゼロ長になり、水平移動が s.y/e.y 上で起こる（旧 5 セグ路と等価）。
+      // departY/approachY は detectVerticalDetour 側で算出済み（障害物クリアランス clamp 含む, issue #328）。
       const { detourX, departY, approachY } = vDetour
       // 6 セグメント: M → 垂直(departY まで) → 水平(detourX まで) → 垂直(approachY まで)
       //               → 水平(e.x まで) → 垂直(e.y へ進入)
